@@ -1,7 +1,10 @@
 package cff
 
-import "context"
-import "github.com/uber-go/tally"
+import (
+	"context"
+
+	"github.com/uber-go/tally"
+)
 
 // Option TODO
 type Option interface {

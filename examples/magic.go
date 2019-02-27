@@ -33,7 +33,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		cff.Provide(req),
 		cff.Result(&res),
 		cff.Scope(h.scope),
-		cff.Instrument("HandleFoo"),
+		cff.InstrumentFlow("HandleFoo"),
 
 		cff.Tasks(
 			func(req *Request) (*GetManagerRequest, *ListUsersRequest) {

@@ -34,6 +34,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		if ctx.Err() != nil {
 			h.scope.Counter("task.skipped").Inc(1)
 			h.scope.Counter("task.skipped").Inc(1)
+			h.scope.Counter("taskflow.skipped").Inc(1)
 			return ctx.Err()
 		}
 
@@ -52,6 +53,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		if ctx.Err() != nil {
 			h.scope.Counter("task.skipped").Inc(1)
 			h.scope.Counter("task.skipped").Inc(1)
+			h.scope.Counter("taskflow.skipped").Inc(1)
 			return ctx.Err()
 		}
 		var (
@@ -97,6 +99,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		wg1.Wait()
 		if err != nil {
+			h.scope.Counter("taskflow.error").Inc(1)
 			return err
 		}
 
@@ -109,6 +112,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		if ctx.Err() != nil {
 			h.scope.Counter("task.skipped").Inc(1)
+			h.scope.Counter("taskflow.skipped").Inc(1)
 			return ctx.Err()
 		}
 
@@ -129,6 +133,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		}
 
 		if ctx.Err() != nil {
+			h.scope.Counter("taskflow.skipped").Inc(1)
 			return ctx.Err()
 		}
 
@@ -136,10 +141,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		v7, err = h.ses.BatchSendEmail(v6)
 		if err != nil {
 
+			h.scope.Counter("taskflow.error").Inc(1)
 			return err
 		}
 
 		if ctx.Err() != nil {
+			h.scope.Counter("taskflow.skipped").Inc(1)
 			return ctx.Err()
 		}
 
@@ -153,6 +160,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		}(v7)
 
 		*(&res) = v8
+
+		if err != nil {
+			h.scope.Counter("taskflow.error").Inc(1)
+		} else {
+			h.scope.Counter("taskflow.success").Inc(1)
+		}
 
 		return err
 	}(ctx, req)
