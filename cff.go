@@ -6,43 +6,43 @@ import (
 	"github.com/uber-go/tally"
 )
 
-// Option TODO
-type Option interface {
+// FlowOption TODO
+type FlowOption interface {
 	cffOption()
 }
 
 // Provide TODO
-func Provide(args ...interface{}) Option {
+func Provide(args ...interface{}) FlowOption {
 	panic("code not generated; run cff")
 }
 
 // Result TODO
-func Result(results ...interface{}) Option {
+func Result(results ...interface{}) FlowOption {
 	panic("code not generated; run cff")
 }
 
 // Scope TODO
-func Scope(scope tally.Scope) Option {
+func Scope(scope tally.Scope) FlowOption {
 	panic("code not generated; run cff")
 }
 
 // Tasks TODO
-func Tasks(tasks ...interface{}) Option {
+func Tasks(tasks ...interface{}) FlowOption {
 	panic("code not generated; run cff")
 }
 
 // InstrumentFlow TODO
-func InstrumentFlow(name string) Option {
+func InstrumentFlow(name string) FlowOption {
 	panic("code not generated; run cff")
 }
 
 // Flow TODO
-func Flow(ctx context.Context, opts ...Option) error {
+func Flow(ctx context.Context, opts ...FlowOption) error {
 	panic("code not generated; run cff")
 }
 
 // Task TODO
-func Task(fn interface{}, opts ...TaskOption) Option {
+func Task(fn interface{}, opts ...TaskOption) FlowOption {
 	panic("code not generated; run cff")
 }
 
