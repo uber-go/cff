@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/format"
 	"go/parser"
-	"go/printer"
 	"go/token"
 	"go/types"
 	"io"
@@ -131,7 +131,7 @@ func (g *generator) GenerateFile(f *file) error {
 	}
 
 	buff.Reset()
-	err = printer.Fprint(&buff, fset, file)
+	err = format.Node(&buff, fset, file)
 
 	// TODO(abg): Configurable output file name/template
 	outputDir := g.outputDir
@@ -205,7 +205,7 @@ func (g *generator) printTypeHash(t types.Type) string {
 
 func (g *generator) printExpr(e ast.Expr) string {
 	var buff bytes.Buffer
-	printer.Fprint(&buff, g.fset, e)
+	format.Node(&buff, g.fset, e)
 	return buff.String()
 }
 

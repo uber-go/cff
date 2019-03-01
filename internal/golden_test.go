@@ -48,8 +48,6 @@ func discoverTestCases(t *testing.T, dir string) []*testCase {
 }
 
 func TestCodeIsUpToDate(t *testing.T) {
-	t.Skip("monorepo is reformatting the generated code; FIXME")
-
 	defer func() {
 		if t.Failed() {
 			t.Log("Try re-running with --generate")
