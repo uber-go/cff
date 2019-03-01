@@ -125,7 +125,7 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 }
 
 // SerialFailableFlow runs the provided function in-order using a flow.
-func SerialFailableFlow(f1, f2 func() error) error {
+func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 	type t1 struct{}
 	type t2 struct{}
 	type t3 struct{}
@@ -172,7 +172,7 @@ func SerialFailableFlow(f1, f2 func() error) error {
 		*(&out) = v10
 
 		return err
-	}(context.Background())
+	}(ctx)
 }
 
 // ProduceMultiple has a task which produces multiple values.

@@ -53,7 +53,7 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 }
 
 // SerialFailableFlow runs the provided function in-order using a flow.
-func SerialFailableFlow(f1, f2 func() error) error {
+func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 	type t1 struct{}
 	type t2 struct{}
 	type t3 struct{}
@@ -61,7 +61,7 @@ func SerialFailableFlow(f1, f2 func() error) error {
 	// We use the types to make f2 depend on f1.
 	var out t3
 	return cff.Flow(
-		context.Background(),
+		ctx,
 		cff.Result(&out),
 		cff.Tasks(
 			func() (t1, error) {

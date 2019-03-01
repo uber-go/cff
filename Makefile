@@ -4,4 +4,4 @@ test:
 
 .PHONY: generate
 generate:
-	go test -run TestCodeIsUpToDate ./internal --generate
+	go run ./cmd/cff ./internal/tests/...

@@ -2,6 +2,6 @@
     [ ] Cycle detection
         [ ] Normal cycles
         [ ] Cycles caused by predicates
-    [ ] Task execution after context cancelation
+    [x] Task execution after context cancelation
     [ ] Task errors for concurrent tasks
     [ ] Recovery in concurrent tasks

@@ -29,6 +29,7 @@ func TestFlowWithoutParameters(t *testing.T) {
 func TestSerialFailures(t *testing.T) {
 	t.Run("first function fails", func(t *testing.T) {
 		err := SerialFailableFlow(
+			context.Background(),
 			func() error {
 				return errors.New("great sadness")
 			},
@@ -42,6 +43,7 @@ func TestSerialFailures(t *testing.T) {
 
 	t.Run("second function fails", func(t *testing.T) {
 		err := SerialFailableFlow(
+			context.Background(),
 			func() error { return nil },
 			func() error {
 				return errors.New("failure")
@@ -53,4 +55,55 @@ func TestSerialFailures(t *testing.T) {
 
 func TestProduceMultiple(t *testing.T) {
 	require.NoError(t, ProduceMultiple())
+}
+
+func TestContextCancelation(t *testing.T) {
+	dontCallMe := func(t *testing.T) func() error {
+		return func() error {
+			t.Fatal("this function must not be called")
+			return nil
+		}
+	}
+
+	t.Run("cancel before first", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+
+		cancel()
+		err := SerialFailableFlow(ctx, dontCallMe(t), dontCallMe(t))
+		require.Error(t, err)
+		assert.Equal(t, ctx.Err(), err)
+	})
+
+	t.Run("cancel before second", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+
+		err := SerialFailableFlow(ctx,
+			func() error {
+				require.NoError(t, ctx.Err(), "context can't be done yet")
+				cancel()
+				return nil
+			},
+			dontCallMe(t),
+		)
+		require.Error(t, err)
+		assert.Equal(t, ctx.Err(), err)
+	})
+
+	t.Run("cancel before third", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+
+		err := SerialFailableFlow(ctx,
+			func() error {
+				require.NoError(t, ctx.Err(), "context can't be done yet")
+				return nil
+			},
+			func() error {
+				require.NoError(t, ctx.Err(), "context can't be done yet")
+				cancel()
+				return nil
+			},
+		)
+		require.Error(t, err)
+		assert.Equal(t, ctx.Err(), err)
+	})
 }
