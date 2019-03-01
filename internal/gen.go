@@ -88,7 +88,7 @@ func (g *generator) GenerateFile(f *file) error {
 		tmpFile, tmpErr := ioutil.TempFile("", "*.go")
 		if tmpErr == nil {
 			if _, writeErr := buff.WriteTo(tmpFile); writeErr == nil {
-				err = fmt.Errorf("%v\noutputted temporary file to %s\n", err, tmpFile.Name())
+				err = fmt.Errorf("%v\noutputted temporary file to %s", err, tmpFile.Name())
 			}
 		}
 
@@ -229,7 +229,12 @@ const _tmpl = `
 {{- $schedule := .Flow.Schedule -}}
 {{- $flow := .Flow -}}
 {{- with .Flow -}}
-func(ctx {{ $context }}.Context, {{- range .Inputs -}}
+func(ctx {{ $context }}.Context,
+{{- if $flow.Scope -}}
+{{- $tally := import "github.com/uber-go/tally" -}}
+scope {{$tally}}.Scope,
+{{- end -}}
+{{- range .Inputs -}}
 	v{{ typeHash .Type }} {{ type .Type }},
 {{- end }}) (err error) {
 	{{ range $schedIdx, $sched := $schedule }}
@@ -237,12 +242,12 @@ func(ctx {{ $context }}.Context, {{- range .Inputs -}}
 			{{- range $thisSchedIdx, $sched := $schedule -}}
 				{{- range $task := $sched -}}
 					{{- if (and ($task.Instrument) (ge $thisSchedIdx $schedIdx)) -}}
-						{{ expr $flow.Scope }}.Counter("task.skipped").Inc(1)
+						scope.Counter("task.skipped").Inc(1)
 					{{ end -}}
 				{{- end -}}
 			{{- end -}}
 			{{ if $flow.Instrument -}}
-				{{ expr $flow.Scope }}.Counter("taskflow.skipped").Inc(1)
+				scope.Counter("taskflow.skipped").Inc(1)
 			{{- end }}
 			return ctx.Err()
 		}
@@ -259,28 +264,28 @@ func(ctx {{ $context }}.Context, {{- range .Inputs -}}
 					if err != nil {
 						{{ if .RecoverWith -}}
 							{{ if .Instrument -}}
-								{{ expr $flow.Scope }}.Counter("task.error").Inc(1)
-								{{ expr $flow.Scope }}.Counter("task.recovered").Inc(1)
+								scope.Counter("task.error").Inc(1)
+								scope.Counter("task.recovered").Inc(1)
 							{{- end }} 
 							{{ template "taskResultList" . }} = {{ range $i, $v := .RecoverWith -}}
 								{{ if gt $i 0 }},{{ end }}{{ expr $v }}
 							{{- end }}, nil
 						{{- else -}}
 							{{ if .Instrument -}}
-								{{ expr $flow.Scope }}.Counter("task.error").Inc(1)
+								scope.Counter("task.error").Inc(1)
 							{{- end }} 
 							{{ if $flow.Instrument -}}
-								{{ expr $flow.Scope }}.Counter("taskflow.error").Inc(1)
+								scope.Counter("taskflow.error").Inc(1)
 							{{- end }} 
 							return err
 						{{- end }}
 					} {{ if .Instrument }} else {
-						{{ expr $flow.Scope }}.Counter("task.success").Inc(1)
+						scope.Counter("task.success").Inc(1)
 					} {{ end }}
 				{{ end }}
 				{{ if .Predicate }}
 					} {{ if .Instrument }} else {
-					{{ expr $flow.Scope }}.Counter("task.skipped").Inc(1)
+					scope.Counter("task.skipped").Inc(1)
 				} {{ end }}
 				{{ end }}
 			{{ end }}
@@ -302,7 +307,7 @@ func(ctx {{ $context }}.Context, {{- range .Inputs -}}
 				go func() {
 					defer {{ $wg }}.Done()
 					{{ if .Instrument -}}
-						timer := {{ expr $flow.Scope }}.Timer("task.timing").Start()
+						timer := scope.Timer("task.timing").Start()
 						defer timer.Stop()
 					{{- end }} 
 
@@ -316,8 +321,8 @@ func(ctx {{ $context }}.Context, {{- range .Inputs -}}
 						if {{ $serr }} != nil {
 							{{ if .RecoverWith -}}
 								{{ if .Instrument -}}
-									{{ expr $flow.Scope }}.Counter("task.error").Inc(1)
-									{{ expr $flow.Scope }}.Counter("task.recovered").Inc(1)
+									scope.Counter("task.error").Inc(1)
+									scope.Counter("task.recovered").Inc(1)
 								{{- end }} 
 
 								{{ template "taskResultList" . }} = {{ range $i, $v := .RecoverWith -}}
@@ -325,14 +330,14 @@ func(ctx {{ $context }}.Context, {{- range .Inputs -}}
 								{{- end }}, nil
 							{{- else -}}
 								{{ if .Instrument -}}
-									{{ expr $flow.Scope }}.Counter("task.error").Inc(1)
+									scope.Counter("task.error").Inc(1)
 								{{- end }} 
 								{{ $once }}.Do(func() {
 									err = {{ $serr }}
 								})
 							{{- end }}
 						} {{ if .Instrument }} else {
-							{{ expr $flow.Scope }}.Counter("task.success").Inc(1)
+							scope.Counter("task.success").Inc(1)
 						} {{ end }}
 					{{ end }}
 					{{ if .Predicate }}
@@ -343,7 +348,7 @@ func(ctx {{ $context }}.Context, {{- range .Inputs -}}
 			{{ $wg }}.Wait()
 			if err != nil {
 				{{ if $flow.Instrument -}}
-					{{ expr $flow.Scope }}.Counter("taskflow.error").Inc(1)
+					scope.Counter("taskflow.error").Inc(1)
 				{{- end }} 
 				return err
 			}
@@ -367,15 +372,15 @@ func(ctx {{ $context }}.Context, {{- range .Inputs -}}
 
 	{{ if $flow.Instrument -}}
 	if err != nil {
-		{{ expr $flow.Scope }}.Counter("taskflow.error").Inc(1)
+		scope.Counter("taskflow.error").Inc(1)
 	} else {
-		{{ expr $flow.Scope }}.Counter("taskflow.success").Inc(1)
+		scope.Counter("taskflow.success").Inc(1)
 	}
 
 	{{- end }} 
 
 	return err
-}({{ expr .Ctx }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
+}({{ expr .Ctx }}{{ with $flow.Scope }}, {{ expr . }} {{end}}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
 {{- end -}}
 
 {{- define "taskResultVarDecl" -}}
