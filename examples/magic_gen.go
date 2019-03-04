@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/uber-go/tally"
+	"go.uber.org/zap"
 )
 
 // Request TODO
@@ -21,20 +22,31 @@ type Response struct {
 }
 
 type fooHandler struct {
-	mgr   *ManagerRepository
-	users *UserReposistory
-	ses   *SESClient
-	scope tally.Scope
+	mgr    *ManagerRepository
+	users  *UserRepository
+	ses    *SESClient
+	scope  tally.Scope
+	logger *zap.Logger
 }
 
 func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
 	var res *Response
-	err := func(ctx context.Context, v1 *Request) (err error) {
+	err := func(ctx context.Context, scope tally.Scope,
+		logger *zap.Logger, v1 *Request) (err error) {
 
 		if ctx.Err() != nil {
-			h.scope.Counter("task.skipped").Inc(1)
-			h.scope.Counter("task.skipped").Inc(1)
-			h.scope.Counter("taskflow.skipped").Inc(1)
+			scope.Counter("task.skipped").Inc(1)
+			logger.Debug("task skipped",
+				zap.String("name", "FormSendEmailRequest"),
+				zap.Error(ctx.Err()),
+			)
+			scope.Counter("task.skipped").Inc(1)
+			logger.Debug("task skipped",
+				zap.String("name", "FormSendEmailRequest"),
+				zap.Error(ctx.Err()),
+			)
+			scope.Counter("taskflow.skipped").Inc(1)
+			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
 			return ctx.Err()
 		}
 
@@ -51,9 +63,18 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		}(v1)
 
 		if ctx.Err() != nil {
-			h.scope.Counter("task.skipped").Inc(1)
-			h.scope.Counter("task.skipped").Inc(1)
-			h.scope.Counter("taskflow.skipped").Inc(1)
+			scope.Counter("task.skipped").Inc(1)
+			logger.Debug("task skipped",
+				zap.String("name", "FormSendEmailRequest"),
+				zap.Error(ctx.Err()),
+			)
+			scope.Counter("task.skipped").Inc(1)
+			logger.Debug("task skipped",
+				zap.String("name", "FormSendEmailRequest"),
+				zap.Error(ctx.Err()),
+			)
+			scope.Counter("taskflow.skipped").Inc(1)
+			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
 			return ctx.Err()
 		}
 		var (
@@ -81,25 +102,30 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var v5 *ListUsersResponse
 		go func() {
 			defer wg1.Done()
-			timer := h.scope.Timer("task.timing").Start()
+			timer := scope.Timer("task.timing").Start()
 			defer timer.Stop()
 
 			var err1 error
 			v5, err = h.users.List(v3)
 			if err1 != nil {
-				h.scope.Counter("task.error").Inc(1)
-				h.scope.Counter("task.recovered").Inc(1)
+				scope.Counter("task.error").Inc(1)
+				scope.Counter("task.recovered").Inc(1)
+				logger.Error("task error recovered",
+					zap.String("name", "FormSendEmailRequest"),
+					zap.Error(err),
+				)
 
 				v5, err = &ListUsersResponse{}, nil
 			} else {
-				h.scope.Counter("task.success").Inc(1)
+				scope.Counter("task.success").Inc(1)
+				logger.Debug("task succeeded", zap.String("name", "FormSendEmailRequest"))
 			}
 
 		}()
 
 		wg1.Wait()
 		if err != nil {
-			h.scope.Counter("taskflow.error").Inc(1)
+			scope.Counter("taskflow.error").Inc(1)
 			return err
 		}
 
@@ -111,8 +137,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		)
 
 		if ctx.Err() != nil {
-			h.scope.Counter("task.skipped").Inc(1)
-			h.scope.Counter("taskflow.skipped").Inc(1)
+			scope.Counter("task.skipped").Inc(1)
+			logger.Debug("task skipped",
+				zap.String("name", "FormSendEmailRequest"),
+				zap.Error(ctx.Err()),
+			)
+			scope.Counter("taskflow.skipped").Inc(1)
+			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
 			return ctx.Err()
 		}
 
@@ -129,11 +160,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}(v4, v5)
 
 		} else {
-			h.scope.Counter("task.skipped").Inc(1)
+			scope.Counter("task.skipped").Inc(1)
+			logger.Debug("task skipped", zap.String("name", "FormSendEmailRequest"))
 		}
 
 		if ctx.Err() != nil {
-			h.scope.Counter("taskflow.skipped").Inc(1)
+			scope.Counter("taskflow.skipped").Inc(1)
+			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
 			return ctx.Err()
 		}
 
@@ -141,12 +174,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		v7, err = h.ses.BatchSendEmail(v6)
 		if err != nil {
 
-			h.scope.Counter("taskflow.error").Inc(1)
+			scope.Counter("taskflow.error").Inc(1)
 			return err
 		}
 
 		if ctx.Err() != nil {
-			h.scope.Counter("taskflow.skipped").Inc(1)
+			scope.Counter("taskflow.skipped").Inc(1)
+			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
 			return ctx.Err()
 		}
 
@@ -162,56 +196,69 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		*(&res) = v8
 
 		if err != nil {
-			h.scope.Counter("taskflow.error").Inc(1)
+			scope.Counter("taskflow.error").Inc(1)
 		} else {
-			h.scope.Counter("taskflow.success").Inc(1)
+			scope.Counter("taskflow.success").Inc(1)
+			logger.Debug("taskflow succeeded", zap.String("name", "HandleFoo"))
 		}
 
 		return err
-	}(ctx, req)
+	}(ctx, h.scope, h.logger, req)
 	return res, err
 }
 
+// ManagerRepository TODO
 type ManagerRepository struct{}
 
+// GetManagerRequest TODO
 type GetManagerRequest struct {
 	LDAPGroup string
 }
 
+// GetManagerResponse TODO
 type GetManagerResponse struct {
 	Email string
 }
 
+// Get TODO
 func (*ManagerRepository) Get(req *GetManagerRequest) (*GetManagerResponse, error) {
 	return &GetManagerResponse{Email: "boss@example.com"}, nil
 }
 
-type UserReposistory struct{}
+// UserRepository TODO
+type UserRepository struct{}
 
+// ListUsersRequest TODO
 type ListUsersRequest struct {
 	LDAPGroup string
 }
 
+// ListUsersResponse TODO
 type ListUsersResponse struct {
 	Emails []string
 }
 
-func (*UserReposistory) List(req *ListUsersRequest) (*ListUsersResponse, error) {
+// List TODO
+func (*UserRepository) List(req *ListUsersRequest) (*ListUsersResponse, error) {
 	return &ListUsersResponse{
 		Emails: []string{"a@example.com", "b@example.com"},
 	}, nil
 }
 
+// SESClient TODO
 type SESClient struct{}
 
+// SendEmailRequest TODO
 type SendEmailRequest struct {
 	Address string
 }
 
+// SendEmailResponse TODO
 type SendEmailResponse struct {
 	MessageID string
 }
 
+// BatchSendEmail TODO
 func (*SESClient) BatchSendEmail(req []*SendEmailRequest) ([]*SendEmailResponse, error) {
 	res := make([]*SendEmailResponse, len(req))
 	for i := range req {

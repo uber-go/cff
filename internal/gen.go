@@ -230,9 +230,11 @@ const _tmpl = `
 {{- $flow := .Flow -}}
 {{- with .Flow -}}
 func(ctx {{ $context }}.Context,
-{{- if $flow.Scope -}}
+{{- if $flow.ObservabilityEnabled -}}
 {{- $tally := import "github.com/uber-go/tally" -}}
-scope {{$tally}}.Scope,
+{{- $zap := import "go.uber.org/zap" -}}
+scope {{ $tally }}.Scope,
+logger *{{ $zap }}.Logger,
 {{- end -}}
 {{- range .Inputs -}}
 	v{{ typeHash .Type }} {{ type .Type }},
@@ -243,11 +245,16 @@ scope {{$tally}}.Scope,
 				{{- range $task := $sched -}}
 					{{- if (and ($task.Instrument) (ge $thisSchedIdx $schedIdx)) -}}
 						scope.Counter("task.skipped").Inc(1)
+						logger.Debug("task skipped",
+									 zap.String("name", {{ expr $task.Instrument.Name }}),
+								     zap.Error(ctx.Err()),
+									)
 					{{ end -}}
 				{{- end -}}
 			{{- end -}}
 			{{ if $flow.Instrument -}}
 				scope.Counter("taskflow.skipped").Inc(1)
+				logger.Debug("taskflow skipped", zap.String("name", {{ expr $flow.Instrument.Name }}))
 			{{- end }}
 			return ctx.Err()
 		}
@@ -266,6 +273,10 @@ scope {{$tally}}.Scope,
 							{{ if .Instrument -}}
 								scope.Counter("task.error").Inc(1)
 								scope.Counter("task.recovered").Inc(1)
+								logger.Error("task error recovered", 
+										     zap.String("name", {{ expr .Instrument.Name }}),
+										     zap.Error(err),
+										    )
 							{{- end }} 
 							{{ template "taskResultList" . }} = {{ range $i, $v := .RecoverWith -}}
 								{{ if gt $i 0 }},{{ end }}{{ expr $v }}
@@ -281,11 +292,13 @@ scope {{$tally}}.Scope,
 						{{- end }}
 					} {{ if .Instrument }} else {
 						scope.Counter("task.success").Inc(1)
+						logger.Debug("task succeeded", zap.String("name", {{ expr .Instrument.Name }}))
 					} {{ end }}
 				{{ end }}
 				{{ if .Predicate }}
 					} {{ if .Instrument }} else {
 					scope.Counter("task.skipped").Inc(1)
+					logger.Debug("task skipped", zap.String("name", {{ expr .Instrument.Name }}))
 				} {{ end }}
 				{{ end }}
 			{{ end }}
@@ -323,6 +336,10 @@ scope {{$tally}}.Scope,
 								{{ if .Instrument -}}
 									scope.Counter("task.error").Inc(1)
 									scope.Counter("task.recovered").Inc(1)
+					                logger.Error("task error recovered",
+												 zap.String("name", {{ expr .Instrument.Name }}),
+												 zap.Error(err),
+												)
 								{{- end }} 
 
 								{{ template "taskResultList" . }} = {{ range $i, $v := .RecoverWith -}}
@@ -338,6 +355,7 @@ scope {{$tally}}.Scope,
 							{{- end }}
 						} {{ if .Instrument }} else {
 							scope.Counter("task.success").Inc(1)
+							logger.Debug("task succeeded", zap.String("name", {{ expr .Instrument.Name }}))
 						} {{ end }}
 					{{ end }}
 					{{ if .Predicate }}
@@ -375,12 +393,13 @@ scope {{$tally}}.Scope,
 		scope.Counter("taskflow.error").Inc(1)
 	} else {
 		scope.Counter("taskflow.success").Inc(1)
+		logger.Debug("taskflow succeeded", zap.String("name", {{ expr $flow.Instrument.Name }}))
 	}
 
 	{{- end }} 
 
 	return err
-}({{ expr .Ctx }}{{ with $flow.Scope }}, {{ expr . }} {{end}}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
+}({{ expr .Ctx }}{{ if $flow.Instrument }}, {{ expr $flow.Scope }}, {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
 {{- end -}}
 
 {{- define "taskResultVarDecl" -}}

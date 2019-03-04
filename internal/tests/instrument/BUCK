@@ -3,12 +3,28 @@ load("//.macros:go_library.bzl", "go_library")
 load("//.macros:go_linter.bzl", "go_linter")
 load("//.macros:go_test.bzl", "go_test")
 
+go_binary(
+    name = "instrument",
+    deps = [
+        "//third-party/github.com/uber-go/tally:lib",
+        "//third-party/go.uber.org/zap:lib",
+    ],
+    srcs = glob(
+        include = ["*.go"],
+        exclude = ["*_test.go"],
+    ),
+    visibility = ["PUBLIC"],
+)
+
 go_test(
     name = "internal_tests",
     coverage_mode = "set",
     deps = [
         "//third-party/github.com/stretchr/testify/assert:lib",
         "//third-party/github.com/uber-go/tally:lib",
+        "//third-party/go.uber.org/zap:lib",
+        "//third-party/go.uber.org/zap/zapcore:lib",
+        "//third-party/go.uber.org/zap/zaptest/observer:lib",
     ],
     library = ":lib",
     srcs = glob(include = ["*_test.go"]),
@@ -16,8 +32,11 @@ go_test(
 
 go_library(
     name = "lib",
-    deps = ["//third-party/github.com/uber-go/tally:lib"],
-    package_name = "go.uber.org/cff/internal/tests/metrics",
+    deps = [
+        "//third-party/github.com/uber-go/tally:lib",
+        "//third-party/go.uber.org/zap:lib",
+    ],
+    package_name = "go.uber.org/cff/internal/tests/instrument",
     srcs = glob(
         include = ["*.go"],
         exclude = ["*_test.go"],
@@ -38,14 +57,4 @@ go_linter(
             "*_string.go",
         ],
     ),
-)
-
-go_binary(
-    name = "metrics",
-    deps = ["//third-party/github.com/uber-go/tally:lib"],
-    srcs = glob(
-        include = ["*.go"],
-        exclude = ["*_test.go"],
-    ),
-    visibility = ["PUBLIC"],
 )

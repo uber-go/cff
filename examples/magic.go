@@ -8,6 +8,7 @@ import (
 
 	"go.uber.org/cff"
 	"github.com/uber-go/tally"
+	"go.uber.org/zap"
 )
 
 // Request TODO
@@ -21,10 +22,11 @@ type Response struct {
 }
 
 type fooHandler struct {
-	mgr   *ManagerRepository
-	users *UserReposistory
-	ses   *SESClient
-	scope tally.Scope
+	mgr    *ManagerRepository
+	users  *UserRepository
+	ses    *SESClient
+	scope  tally.Scope
+	logger *zap.Logger
 }
 
 func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
@@ -33,6 +35,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		cff.Provide(req),
 		cff.Result(&res),
 		cff.Scope(h.scope),
+		cff.Logger(h.logger),
 		cff.InstrumentFlow("HandleFoo"),
 
 		cff.Tasks(
@@ -79,46 +82,58 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 	return res, err
 }
 
+// ManagerRepository TODO
 type ManagerRepository struct{}
 
+// GetManagerRequest TODO
 type GetManagerRequest struct {
 	LDAPGroup string
 }
 
+// GetManagerResponse TODO
 type GetManagerResponse struct {
 	Email string
 }
 
+// Get TODO
 func (*ManagerRepository) Get(req *GetManagerRequest) (*GetManagerResponse, error) {
 	return &GetManagerResponse{Email: "boss@example.com"}, nil
 }
 
-type UserReposistory struct{}
+// UserRepository TODO
+type UserRepository struct{}
 
+// ListUsersRequest TODO
 type ListUsersRequest struct {
 	LDAPGroup string
 }
 
+// ListUsersResponse TODO
 type ListUsersResponse struct {
 	Emails []string
 }
 
-func (*UserReposistory) List(req *ListUsersRequest) (*ListUsersResponse, error) {
+// List TODO
+func (*UserRepository) List(req *ListUsersRequest) (*ListUsersResponse, error) {
 	return &ListUsersResponse{
 		Emails: []string{"a@example.com", "b@example.com"},
 	}, nil
 }
 
+// SESClient TODO
 type SESClient struct{}
 
+// SendEmailRequest TODO
 type SendEmailRequest struct {
 	Address string
 }
 
+// SendEmailResponse TODO
 type SendEmailResponse struct {
 	MessageID string
 }
 
+// BatchSendEmail TODO
 func (*SESClient) BatchSendEmail(req []*SendEmailRequest) ([]*SendEmailResponse, error) {
 	res := make([]*SendEmailResponse, len(req))
 	for i := range req {

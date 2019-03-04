@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	cffImportPath  = "go.uber.org/cff"
-	tallyScopePath = "github.com/uber-go/tally"
+	cffImportPath = "go.uber.org/cff"
 )
 
 type compiler struct {
@@ -139,8 +138,9 @@ func (c *compiler) compileFile(astFile *ast.File) *file {
 type flow struct {
 	ast.Node
 
-	Ctx   ast.Expr // the expression that is a local variable of type context.Context
-	Scope ast.Expr // the expression that is a local variable of type tally.Scope
+	Ctx    ast.Expr // the expression that is a local variable of type context.Context
+	Scope  ast.Expr // the expression that is a local variable of type tally.Scope
+	Logger ast.Expr // the expression that is a local variable of type *zap.Logger
 
 	Inputs  []*input
 	Outputs []*output
@@ -156,7 +156,8 @@ type flow struct {
 	// executed.
 	Schedule [][]*task
 
-	Instrument *instrument
+	Instrument           *instrument
+	ObservabilityEnabled bool
 
 	providers *typeutil.Map // map[types.Type]int (index in Tasks)
 }
@@ -198,6 +199,8 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			}
 		case "Scope":
 			flow.Scope = c.compileScope(&flow, ce)
+		case "Logger":
+			flow.Logger = c.compileLogger(&flow, ce)
 		case "InstrumentFlow":
 			flow.Instrument = c.compileInstrument(&flow, ce)
 		case "Tasks":
@@ -345,7 +348,7 @@ type task struct {
 	Outputs []types.Type // non error results
 
 	Predicate   *predicate  // non-nil if Predicate was provided
-	Instrument  *instrument // non-nil if Metrics was provided
+	Instrument  *instrument // non-nil if Scope and Logger were provided
 	RecoverWith []ast.Expr
 }
 
@@ -427,7 +430,7 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 		case "RecoverWith":
 			errResults := call.Args
 			if len(errResults) != len(t.Outputs) {
-				c.errf("%v: RecoverWith must produce the same number of results as the task: "+
+				c.errf("%v: cff.RecoverWith must produce the same number of results as the task: "+
 					"expected %v, got %v", c.nodePosition(opt), len(t.Outputs), len(errResults))
 				continue
 			}
@@ -436,7 +439,7 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 				give := c.info.TypeOf(er)
 				want := t.Outputs[i]
 				if !types.AssignableTo(give, want) {
-					c.errf("%v: RecoverWith result at position %v of type %v cannot be used as %v",
+					c.errf("%v: cff.RecoverWith result at position %v of type %v cannot be used as %v",
 						c.nodePosition(er), i+1, give, want)
 				}
 			}
@@ -461,7 +464,7 @@ type predicate struct {
 
 func (c *compiler) compilePredicate(t *task, call *ast.CallExpr) *predicate {
 	if len(call.Args) != 1 {
-		c.errf("%v: Predicate accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
+		c.errf("%v: cff.Predicate accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
 		return nil
 	}
 
@@ -470,7 +473,7 @@ func (c *compiler) compilePredicate(t *task, call *ast.CallExpr) *predicate {
 
 	sig, ok := fnType.(*types.Signature)
 	if !ok {
-		c.errf("%v: Predicate expected a function but received %v", c.nodePosition(fn), fnType)
+		c.errf("%v: cff.Predicate expected a function but received %v", c.nodePosition(fn), fnType)
 		return nil
 	}
 
@@ -497,7 +500,7 @@ func (c *compiler) compilePredicate(t *task, call *ast.CallExpr) *predicate {
 		ptype := param.Type()
 		if isContext(ptype) {
 			// TODO(abg): We can support this pretty easily.
-			c.errf("%v: Predicate may not depend on the context", c.position(param.Pos()))
+			c.errf("%v: cff.Predicate may not depend on the context", c.position(param.Pos()))
 		} else {
 			inputs = append(inputs, ptype)
 		}
@@ -517,19 +520,20 @@ type instrument struct {
 func (c *compiler) compileInstrument(flow *flow, call *ast.CallExpr) *instrument {
 	// TODO(jacobg): Accept additional tags
 	if len(call.Args) != 1 {
-		c.errf("%v: Instrument accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
+		c.errf("%v: cff.Instrument accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
 		return nil
 	}
 
-	if flow.Scope == nil {
-		c.errf("%v: Instrument can only be used if cff.Scope is used to provide the tally.Scope", c.nodePosition(call))
+	if flow.Scope == nil || flow.Logger == nil {
+		c.errf("%v: cff.Instrument requires a tally.Scope and *zap.Logger to be provided: use cff.Scope and cff.Logger", c.nodePosition(call))
 		return nil
 	}
+	flow.ObservabilityEnabled = true
 
 	name := call.Args[0]
 	nameType := c.info.TypeOf(name)
 	if nt, ok := nameType.(*types.Basic); !ok || nt.Kind() != types.String {
-		c.errf("%v: Instrument accepts a single string argument, got %v", c.nodePosition(name), nameType)
+		c.errf("%v: cff.Instrument accepts a single string argument, got %v", c.nodePosition(name), nameType)
 		return nil
 	}
 
@@ -576,7 +580,16 @@ func (c *compiler) compileOutput(o ast.Expr) *output {
 
 func (c *compiler) compileScope(flow *flow, call *ast.CallExpr) ast.Expr {
 	if len(call.Args) != 1 {
-		c.errf("%v: Instrument accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
+		c.errf("%v: cff.Scope accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
+		return nil
+	}
+
+	return call.Args[0]
+}
+
+func (c *compiler) compileLogger(flow *flow, call *ast.CallExpr) ast.Expr {
+	if len(call.Args) != 1 {
+		c.errf("%v: cff.Logger accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
 		return nil
 	}
 

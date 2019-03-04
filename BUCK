@@ -3,7 +3,10 @@ load("//.macros:go_linter.bzl", "go_linter")
 
 go_library(
     name = "lib",
-    deps = ["//third-party/github.com/uber-go/tally:lib"],
+    deps = [
+        "//third-party/github.com/uber-go/tally:lib",
+        "//third-party/go.uber.org/zap:lib",
+    ],
     package_name = "go.uber.org/cff",
     srcs = glob(
         include = ["*.go"],

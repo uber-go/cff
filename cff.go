@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/uber-go/tally"
+	"go.uber.org/zap"
 )
 
 // FlowOption TODO
@@ -23,6 +24,11 @@ func Result(results ...interface{}) FlowOption {
 
 // Scope TODO
 func Scope(scope tally.Scope) FlowOption {
+	panic("code not generated; run cff")
+}
+
+// Logger TODO
+func Logger(logger *zap.Logger) FlowOption {
 	panic("code not generated; run cff")
 }
 
