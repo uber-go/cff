@@ -1,7 +1,113 @@
+[ ] Optimize graph scheduling algorithm. Currently, the algorithm groups
+    together nodes with the same distance from root (values requested with
+    cff.Result). Instead, maximal distance from root should only be used as a
+    filtering criteria. The algorithm should group together all nodes with
+    dependencies that have all been scheduled.
+
+# MVP
+
+The following MUST be done (in no particular order) before others are allowed
+to use this.
+
 [ ] Tests
     [ ] Cycle detection
         [ ] Normal cycles
         [ ] Cycles caused by predicates
-    [x] Task execution after context cancelation
     [ ] Task errors for concurrent tasks
     [ ] Recovery in concurrent tasks
+
+[ ] Naming
+    [ ] Rename Provide to Params or Args. Users may end up confusing the
+        behavior of cff.Provide with fx.Provide.
+    [ ] Rename Result to Results if using Params or Returns if using Args.
+        They should both be plural and mirrored.
+    [ ] Rename Scope to Metrics. Scope is a generic overloaded terms so we
+        should explicate that this is for metrics.
+    [ ] Rename RecoverWith to Fallback or similar. The name RecoverWith might
+        imply that the function also catches panics, which is explictly not
+        going to be true.
+
+[ ] Panic Handling. We need to capture panics for tasks executed inside new
+    goroutines and propagate them back to the flow's goroutine (the original
+    goroutine). We SHOULD NOT capture top-level panics in the flow because
+    that's the caller's choice, and therefore their responsibility.
+
+[ ] Usability improvements
+    [ ] Tasks should support Task(..) calls. This should be as simple as
+        checking if the passed expression has type FlowOption instead of
+        allowing only functions.
+    [ ] RecoverWith should verify that the provided function actually has the
+        ability to return errors.
+
+[x] Logging
+    [x] Debug-level logging when an instrumented task finishes executing.
+    [x] Warn-level logging when an instrumented task with RecoverWith fails
+        and is recovered from.
+
+[ ] Metrics
+    [ ] Emit task and flow names. We currently emit metrics to the provided
+        scope but we don't include the task name or flow name (passed in with
+        the Instrument call) in the emitted metrics.
+
+[ ] Figure out monorepo integration. The tool currently writes files next to
+    the original source files for all tagged Go files in a package. This may
+    have to be altered to operate on individual files. Talk to your local
+    monorepo expert.
+
+# Post MVP
+
+The following functionality may be added after the work above has been
+handled.
+
+[ ] Tracing. For tasks that have instrumentation enabled, we should emit new
+    Jaeger spans with relevant tags in the new tasks. This will give a more
+    complete picture of the concurrent executions.
+
+[ ] Customizable observability. Instrumenting a Task or Flow currently
+    requires that all three: metrics, logging, and tracing are configured. If
+    it does not add too much complexity, the generated code can conceivably
+    skip the portion of observability that isn't configured. So if a tracer
+    was not provided, the tracing code isn't generated.
+
+# Future Plans
+
+[ ] Runtime component. Currently, CFF eliminates itself from the generated
+    code, removing the dependency on CFF itself from actual compiled binary.
+    This won't be possbile forever as we'll want to move some of the logic in
+    the generated code into CFF as a library component. This will be useful
+    especially with worker pools and observers.
+
+[ ] Worker pools. The concurrency logic is currently very basic: fan-out to a
+    bunch of goroutines, fan-in with a WaitGroup. This should be replaced in
+    the future with a worker pool so that we're not constantly spinning up new
+    goroutines. The worker pool can either be managed in the generated code or
+    with a CFF-library level "Executor" type. This will be especially
+    important for batch execution support, where we would not want the number
+    of goroutines to grow unbounded.
+
+[ ] Batch task execution. Given a task that produces `[]T`, we want the
+    ability to fire off `len([]T)` instances of another task that operates on
+    `T`.
+
+[ ] Observers (naming TBD). We will want to support decorator-style
+    user-provided functions that are executed before and after each task.
+    These functions will not have access to the arguments and results of the
+    function but they will have some control over execution. Observers will
+    have a signature similar to the following.
+
+        func(context.Context, cff.T) error
+
+    Where the name of the type T is TBD but which will have the following
+    method,
+
+        func (*T) Run(context.Context) error
+
+    The observer will call that method when it's ready to execute that task,
+    and will receive the error returned by the task, giving it the ability to
+    handle that error.
+
+    If done correctly, we should be able to move the logging, metrics, and
+    tracing logic into observers.
+
+[ ] Decorators. Optionally, we may want to support full-fledged decorators
+    which have access to the arguments and results as `interface{}`s.
