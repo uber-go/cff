@@ -15,14 +15,14 @@ func Serial(e error, r string) (string, error) {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
 		var v1 string
-		v1, err = func() (string, error) {
+		var err0 error
+		v1, err0 = func() (string, error) {
 			return "foo", e
 		}()
-		if err != nil {
+		if err0 != nil {
 
-			v1, err = r, nil
+			v1, err0 = r, nil
 		}
 
 		*(&s) = v1

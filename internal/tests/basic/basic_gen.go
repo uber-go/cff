@@ -20,7 +20,6 @@ func SimpleFlow() (string, error) {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
 		var v2 int64
 		v2 = func(i int) int64 {
 			return int64(i)
@@ -35,13 +34,12 @@ func SimpleFlow() (string, error) {
 		)
 
 		wg1.Add(2)
-
 		var v3 *foo
+		var err1 error
 		go func() {
 			defer wg1.Done()
 
-			var err1 error
-			v3, err = func(i int) (*foo, error) {
+			v3, err1 = func(i int) (*foo, error) {
 				return &foo{i}, nil
 			}(v1)
 			if err1 != nil {
@@ -52,14 +50,20 @@ func SimpleFlow() (string, error) {
 			}
 
 		}()
-
 		var v4 *bar
+		var err2 error
 		go func() {
 			defer wg1.Done()
 
-			v4 = func(i int64) *bar {
-				return &bar{i}
+			v4, err2 = func(i int64) (*bar, error) {
+				return &bar{i}, nil
 			}(v2)
+			if err2 != nil {
+
+				once1.Do(func() {
+					err = err2
+				})
+			}
 
 		}()
 
@@ -79,14 +83,14 @@ func SimpleFlow() (string, error) {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
 		var v5 string
-		v5, err = func(*foo, *bar) (string, error) {
+		var err3 error
+		v5, err3 = func(*foo, *bar) (string, error) {
 			return "hello world", nil
 		}(v3, v4)
-		if err != nil {
+		if err3 != nil {
 
-			return err
+			return err3
 		}
 
 		*(&message) = v5
@@ -104,7 +108,6 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
 		var v6 *bytes.Buffer
 		v6 = func() *bytes.Buffer {
 			return bytes.NewBufferString("hello world")
@@ -113,7 +116,6 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
 		var v7 io.Reader
 		v7 = func(b *bytes.Buffer) io.Reader { return b }(v6)
 
@@ -137,33 +139,32 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
 		var v8 t1
-		v8, err = func() (t1, error) {
+		var err6 error
+		v8, err6 = func() (t1, error) {
 			return t1{}, f1()
 		}()
-		if err != nil {
+		if err6 != nil {
 
-			return err
+			return err6
 		}
 
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
 		var v9 t2
-		v9, err = func(t1) (t2, error) {
+		var err7 error
+		v9, err7 = func(t1) (t2, error) {
 			return t2{}, f2()
 		}(v8)
-		if err != nil {
+		if err7 != nil {
 
-			return err
+			return err7
 		}
 
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
 		var v10 t3
 		v10 = func(t2) t3 {
 			return t3{}
@@ -196,7 +197,6 @@ func ProduceMultiple() error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
 		var (
 			v12 t2
 			v13 t3
@@ -208,7 +208,6 @@ func ProduceMultiple() error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
 		var v14 t4
 		v14 = func(t2, t3) t4 {
 			return t4{}

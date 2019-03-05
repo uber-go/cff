@@ -21,10 +21,11 @@ const (
 )
 
 type compiler struct {
-	pkg    *types.Package
-	fset   *token.FileSet
-	info   *types.Info
-	errors []error
+	pkg        *types.Package
+	fset       *token.FileSet
+	info       *types.Info
+	taskSerial int
+	errors     []error
 }
 
 func newCompiler(fset *token.FileSet, info *types.Info, pkg *types.Package) *compiler {
@@ -339,6 +340,8 @@ type task struct {
 
 	// Whether the last result is an error.
 	HasError bool
+	// Serial is a unique serially incrementing number for each task.
+	Serial int
 
 	// Dependencies are the types required for the task, including inputs and
 	// predicate inputs.
@@ -365,7 +368,8 @@ func (c *compiler) compileTask(flow *flow, f ast.Expr, opts []ast.Expr) *task {
 		return nil
 	}
 
-	t := task{Sig: sig, Node: f}
+	t := task{Sig: sig, Node: f, Serial: c.taskSerial}
+	c.taskSerial++
 
 	params := sig.Params()
 	for i := 0; i < params.Len(); i++ {

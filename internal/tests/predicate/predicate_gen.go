@@ -16,7 +16,6 @@ func Simple(f func(), pred bool) error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
 		var v1 string
 		if func() bool { return pred }() {
 			v1 = func() string {
@@ -51,7 +50,6 @@ func ExtraDependencies() error {
 		)
 
 		wg0.Add(2)
-
 		var v3 t1
 		go func() {
 			defer wg0.Done()
@@ -59,7 +57,6 @@ func ExtraDependencies() error {
 			v3 = func(int) t1 { return t1{} }(v2)
 
 		}()
-
 		var v4 t2
 		go func() {
 			defer wg0.Done()
@@ -90,7 +87,6 @@ func ExtraDependencies() error {
 		)
 
 		wg1.Add(2)
-
 		var v1 string
 		go func() {
 			defer wg1.Done()
@@ -98,7 +94,6 @@ func ExtraDependencies() error {
 			v1 = func(int) string { return "foo" }(v2)
 
 		}()
-
 		var v5 t3
 		go func() {
 			defer wg1.Done()

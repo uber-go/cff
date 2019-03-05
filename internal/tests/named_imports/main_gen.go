@@ -13,7 +13,6 @@ func run(ctx newctx.Context) error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
 		var v2 struct{}
 		v2 = func(string) struct{} {
 			panic("don't call me")

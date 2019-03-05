@@ -262,20 +262,21 @@ logger *{{ $zap }}.Logger,
 			{{/* If there is only one task, don't use errgroup. We're using
 			     range but it'll be called only once. */}}
 			{{- range . }}
+				{{- $serr := printf "err%d" .Serial -}}
 				{{ template "taskResultVarDecl" . -}}
 				{{ if .Predicate }}
 					if {{ template "callTask" .Predicate }} {
 				{{- end }}
 				{{ template "taskResultList" . }} = {{ template "callTask" . }}
 				{{ if .HasError -}}
-					if err != nil {
+					if {{ $serr }} != nil {
 						{{ if .RecoverWith -}}
 							{{ if .Instrument -}}
 								scope.Counter("task.error").Inc(1)
 								scope.Counter("task.recovered").Inc(1)
 								logger.Error("task error recovered", 
 										     zap.String("name", {{ expr .Instrument.Name }}),
-										     zap.Error(err),
+										     zap.Error({{ $serr }}),
 										    )
 							{{- end }} 
 							{{ template "taskResultList" . }} = {{ range $i, $v := .RecoverWith -}}
@@ -288,7 +289,7 @@ logger *{{ $zap }}.Logger,
 							{{ if $flow.Instrument -}}
 								scope.Counter("taskflow.error").Inc(1)
 							{{- end }} 
-							return err
+							return {{ $serr }}
 						{{- end }}
 					} {{ if .Instrument }} else {
 						scope.Counter("task.success").Inc(1)
@@ -307,7 +308,6 @@ logger *{{ $zap }}.Logger,
 			     can't return them. */}}
 			{{- $once := printf "once%v" $schedIdx -}}
 			{{- $wg := printf "wg%v" $schedIdx -}}
-			{{- $serr := printf "err%v" $schedIdx -}}
 			{{- $sync := import "sync" -}}
 			var (
 				{{ $wg }} {{ $sync }}.WaitGroup
@@ -316,6 +316,7 @@ logger *{{ $zap }}.Logger,
 
 			{{ $wg }}.Add({{ len . }})
 			{{ range . }}
+				{{- $serr := printf "err%v" .Serial -}}
 				{{ template "taskResultVarDecl" . }}
 				go func() {
 					defer {{ $wg }}.Done()
@@ -327,8 +328,6 @@ logger *{{ $zap }}.Logger,
 					{{ if .Predicate }}
 						if {{ template "callTask" .Predicate }} {
 					{{ end }}
-					{{ if .HasError }}var {{ $serr }} error
-					{{ end -}}
 					{{ template "taskResultList" . }} = {{ template "callTask" . }}
 					{{ if .HasError -}}
 						if {{ $serr }} != nil {
@@ -338,7 +337,7 @@ logger *{{ $zap }}.Logger,
 									scope.Counter("task.recovered").Inc(1)
 					                logger.Error("task error recovered",
 												 zap.String("name", {{ expr .Instrument.Name }}),
-												 zap.Error(err),
+												 zap.Error({{ $serr }}),
 												)
 								{{- end }} 
 
@@ -405,11 +404,14 @@ logger *{{ $zap }}.Logger,
 {{- define "taskResultVarDecl" -}}
 {{ if eq (len .Outputs) 1 -}}
 	{{ range .Outputs }}var v{{ typeHash . }} {{ type . }}{{ end }}
+	{{- if .HasError }}
+	var {{ printf "err%d" .Serial }} error{{ end }}
 {{- else -}}
 	var (
 		{{ range .Outputs -}}
 			v{{ typeHash . }} {{ type . }}
-		{{ end -}}
+		{{ end }}
+		{{- if .HasError }}{{ printf "err%d" .Serial }} error{{ end }}
 	)
 {{- end }}
 {{- end -}}
@@ -417,7 +419,7 @@ logger *{{ $zap }}.Logger,
 {{- define "taskResultList" -}}
 {{- range $i, $t := .Outputs -}}
 	{{ if gt $i 0 }},{{ end }}v{{ typeHash $t }}
-{{- end }}{{ if .HasError }}, err{{ end }}
+{{- end }}{{ if .HasError }}, {{ printf "err%d" .Serial }}{{ end }}
 {{- end -}}
 
 {{- define "callTask" -}}

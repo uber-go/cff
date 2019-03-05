@@ -26,8 +26,8 @@ func SimpleFlow() (string, error) {
 			func(i int) (*foo, error) {
 				return &foo{i}, nil
 			},
-			func(i int64) *bar {
-				return &bar{i}
+			func(i int64) (*bar, error) {
+				return &bar{i}, nil
 			},
 			func(*foo, *bar) (string, error) {
 				return "hello world", nil
