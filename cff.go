@@ -18,11 +18,11 @@ type FlowOption interface {
 	cffOption()
 }
 
-// Provide specifies inputs for a Flow that do not come from tasks. These
+// Params specifies inputs for a Flow that do not come from tasks. These
 // values are made available to the Flow as-is.
 //
-//  cff.Provide(request)
-func Provide(args ...interface{}) FlowOption {
+//  cff.Params(request)
+func Params(args ...interface{}) FlowOption {
 	panic("code not generated; run cff")
 }
 

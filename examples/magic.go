@@ -32,7 +32,7 @@ type fooHandler struct {
 func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
 	var res *Response
 	err := cff.Flow(ctx,
-		cff.Provide(req),
+		cff.Params(req),
 		cff.Result(&res),
 		cff.Scope(h.scope),
 		cff.Logger(h.logger),

@@ -190,7 +190,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 		}
 
 		switch f.Name() {
-		case "Provide":
+		case "Params":
 			for _, i := range ce.Args {
 				flow.Inputs = append(flow.Inputs, c.compileInput(i))
 			}

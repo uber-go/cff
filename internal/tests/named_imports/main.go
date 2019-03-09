@@ -11,7 +11,7 @@ import (
 func run(ctx newctx.Context) error {
 	var result struct{}
 	return cffv2.Flow(ctx,
-		cffv2.Provide("foo"),
+		cffv2.Params("foo"),
 		cffv2.Result(&result),
 		cffv2.Tasks(
 			func(string) struct{} {

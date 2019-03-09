@@ -17,7 +17,7 @@ type bar struct{ i int64 }
 func SimpleFlow() (string, error) {
 	var message string
 	err := cff.Flow(context.Background(),
-		cff.Provide(1),
+		cff.Params(1),
 		cff.Result(&message),
 		cff.Tasks(
 			func(i int) int64 {
@@ -95,7 +95,7 @@ func ProduceMultiple() error {
 	var out t4
 	return cff.Flow(
 		context.Background(),
-		cff.Provide(t1{}),
+		cff.Params(t1{}),
 		cff.Result(&out),
 		cff.Tasks(
 			func(t1) (t2, t3) {

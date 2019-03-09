@@ -28,7 +28,7 @@ To use CFF, write code using the APIs exported by the
 ```go
 var result Response
 err := cff.Flow(
-    cff.Provide(request),
+    cff.Params(request),
     cff.Result(&response),
     cff.Tasks(
         client.GetUser,

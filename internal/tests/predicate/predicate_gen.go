@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-// Simple rurns the provided function in a task flow if the provided boolean
+// Simple runs the provided function in a task flow if the provided boolean
 // is true.
 func Simple(f func(), pred bool) error {
 	var s string

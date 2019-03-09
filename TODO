@@ -17,7 +17,7 @@ to use this.
     [ ] Recovery in concurrent tasks
 
 [ ] Naming
-    [ ] Rename Provide to Params or Args. Users may end up confusing the
+    [x] Rename Provide to Params or Args. Users may end up confusing the
         behavior of cff.Provide with fx.Provide.
     [ ] Rename Result to Results if using Params or Returns if using Args.
         They should both be plural and mirrored.
