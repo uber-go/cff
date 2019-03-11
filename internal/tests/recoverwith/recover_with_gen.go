@@ -11,10 +11,10 @@ import (
 func Serial(e error, r string) (string, error) {
 	var s string
 	err := func(ctx context.Context) (err error) {
-
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		var v1 string
 		var err0 error
 		v1, err0 = func() (string, error) {

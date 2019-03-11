@@ -27,8 +27,9 @@ func TestInstrument(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(2), counters["task.success+"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.success+"].Value())
+	assert.Equal(t, int64(1), counters["task.success+name=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["task.success+name=uint8"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.success+name=AtoiRun"].Value())
 
 	// logs
 	expectedLevel := zap.DebugLevel
@@ -61,8 +62,8 @@ func TestInstrumentError(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.error+"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.error+"].Value())
+	assert.Equal(t, int64(1), counters["task.error+name=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.error+name=AtoiRun"].Value())
 
 	// logs
 	logEntries := observedLogs.All()
@@ -86,8 +87,9 @@ func TestInstrumentCancelledContext(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(2), counters["task.skipped+"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.skipped+"].Value())
+	assert.Equal(t, int64(1), counters["task.skipped+name=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["task.skipped+name=uint8"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.skipped+name=AtoiRun"].Value())
 
 	// logs
 	expectedLevel := zap.DebugLevel
@@ -121,8 +123,10 @@ func TestInstrumentRecover(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.success+"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.success+"].Value())
+	assert.Equal(t, int64(1), counters["task.success+name=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["task.error+name=uint8"].Value())
+	assert.Equal(t, int64(1), counters["task.recovered+name=uint8"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.success+name=AtoiRun"].Value())
 
 	// logs
 	expected := []struct {

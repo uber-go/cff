@@ -36,44 +36,52 @@ type h struct {
 func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 	err = func(ctx context.Context, scope tally.Scope,
 		logger *zap.Logger, v1 string) (err error) {
-
+		flowTags := map[string]string{"name": "AtoiRun"}
 		if ctx.Err() != nil {
-			scope.Counter("task.skipped").Inc(1)
+			s0t0Tags := map[string]string{"name": "Atoi"}
+			scope.Tagged(s0t0Tags).Counter("task.skipped").Inc(1)
 			logger.Debug("task skipped",
 				zap.String("name", "Atoi"),
 				zap.Error(ctx.Err()),
 			)
-			scope.Counter("task.skipped").Inc(1)
+
+			s1t0Tags := map[string]string{"name": "uint8"}
+			scope.Tagged(s1t0Tags).Counter("task.skipped").Inc(1)
 			logger.Debug("task skipped",
 				zap.String("name", "uint8"),
 				zap.Error(ctx.Err()),
 			)
-			scope.Counter("taskflow.skipped").Inc(1)
+			scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
 			logger.Debug("taskflow skipped", zap.String("name", "AtoiRun"))
 			return ctx.Err()
 		}
+
+		s0t0Tags := map[string]string{"name": "Atoi"}
 		var v2 int
 		var err0 error
 		v2, err0 = strconv.Atoi(v1)
 		if err0 != nil {
-			scope.Counter("task.error").Inc(1)
-			scope.Counter("taskflow.error").Inc(1)
+			scope.Tagged(s0t0Tags).Counter("task.error").Inc(1)
+			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 			return err0
 		} else {
-			scope.Counter("task.success").Inc(1)
+			scope.Tagged(s0t0Tags).Counter("task.success").Inc(1)
 			logger.Debug("task succeeded", zap.String("name", "Atoi"))
 		}
 
 		if ctx.Err() != nil {
-			scope.Counter("task.skipped").Inc(1)
+			s1t0Tags := map[string]string{"name": "uint8"}
+			scope.Tagged(s1t0Tags).Counter("task.skipped").Inc(1)
 			logger.Debug("task skipped",
 				zap.String("name", "uint8"),
 				zap.Error(ctx.Err()),
 			)
-			scope.Counter("taskflow.skipped").Inc(1)
+			scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
 			logger.Debug("taskflow skipped", zap.String("name", "AtoiRun"))
 			return ctx.Err()
 		}
+
+		s1t0Tags := map[string]string{"name": "uint8"}
 		var v3 uint8
 		var err1 error
 		v3, err1 = func(i int) (uint8, error) {
@@ -83,24 +91,24 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 			return 0, errors.New("int can not fit into 8 bits")
 		}(v2)
 		if err1 != nil {
-			scope.Counter("task.error").Inc(1)
-			scope.Counter("task.recovered").Inc(1)
+			scope.Tagged(s1t0Tags).Counter("task.error").Inc(1)
+			scope.Tagged(s1t0Tags).Counter("task.recovered").Inc(1)
 			logger.Error("task error recovered",
 				zap.String("name", "uint8"),
 				zap.Error(err1),
 			)
 			v3, err1 = uint8(0), nil
 		} else {
-			scope.Counter("task.success").Inc(1)
+			scope.Tagged(s1t0Tags).Counter("task.success").Inc(1)
 			logger.Debug("task succeeded", zap.String("name", "uint8"))
 		}
 
 		*(&res) = v3
 
 		if err != nil {
-			scope.Counter("taskflow.error").Inc(1)
+			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 		} else {
-			scope.Counter("taskflow.success").Inc(1)
+			scope.Tagged(flowTags).Counter("taskflow.success").Inc(1)
 			logger.Debug("taskflow succeeded", zap.String("name", "AtoiRun"))
 		}
 

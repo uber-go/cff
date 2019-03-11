@@ -16,10 +16,10 @@ type bar struct{ i int64 }
 func SimpleFlow() (string, error) {
 	var message string
 	err := func(ctx context.Context, v1 int) (err error) {
-
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		var v2 int64
 		v2 = func(i int) int64 {
 			return int64(i)
@@ -83,6 +83,7 @@ func SimpleFlow() (string, error) {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		var v5 string
 		var err3 error
 		v5, err3 = func(*foo, *bar) (string, error) {
@@ -104,10 +105,10 @@ func SimpleFlow() (string, error) {
 func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 	var r io.Reader
 	err := func(ctx context.Context) (err error) {
-
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		var v6 *bytes.Buffer
 		v6 = func() *bytes.Buffer {
 			return bytes.NewBufferString("hello world")
@@ -116,6 +117,7 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		var v7 io.Reader
 		v7 = func(b *bytes.Buffer) io.Reader { return b }(v6)
 
@@ -135,10 +137,10 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 	// We use the types to make f2 depend on f1.
 	var out t3
 	return func(ctx context.Context) (err error) {
-
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		var v8 t1
 		var err6 error
 		v8, err6 = func() (t1, error) {
@@ -152,6 +154,7 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		var v9 t2
 		var err7 error
 		v9, err7 = func(t1) (t2, error) {
@@ -165,6 +168,7 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		var v10 t3
 		v10 = func(t2) t3 {
 			return t3{}
@@ -193,10 +197,10 @@ func ProduceMultiple() error {
 
 	var out t4
 	return func(ctx context.Context, v11 t1) (err error) {
-
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		var (
 			v12 t2
 			v13 t3
@@ -208,6 +212,7 @@ func ProduceMultiple() error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		var v14 t4
 		v14 = func(t2, t3) t4 {
 			return t4{}

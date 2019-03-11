@@ -12,10 +12,10 @@ import (
 func Simple(f func(), pred bool) error {
 	var s string
 	return func(ctx context.Context) (err error) {
-
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		var v1 string
 		if func() bool { return pred }() {
 			v1 = func() string {
@@ -40,7 +40,6 @@ func ExtraDependencies() error {
 
 	var out t3
 	return func(ctx context.Context, v2 int) (err error) {
-
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}

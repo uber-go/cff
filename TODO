@@ -44,8 +44,8 @@ to use this.
     [x] Warn-level logging when an instrumented task with RecoverWith fails
         and is recovered from.
 
-[ ] Metrics
-    [ ] Emit task and flow names. We currently emit metrics to the provided
+[x] Metrics
+    [x] Emit task and flow names. We currently emit metrics to the provided
         scope but we don't include the task name or flow name (passed in with
         the Instrument call) in the emitted metrics.
 

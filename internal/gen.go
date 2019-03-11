@@ -239,21 +239,27 @@ logger *{{ $zap }}.Logger,
 {{- range .Inputs -}}
 	v{{ typeHash .Type }} {{ type .Type }},
 {{- end }}) (err error) {
+	{{- if $flow.Instrument -}}
+	flowTags := map[string]string{"name": {{ expr $flow.Instrument.Name }}}
+	{{- end -}}
 	{{ range $schedIdx, $sched := $schedule }}
 		if ctx.Err() != nil {
 			{{- range $thisSchedIdx, $sched := $schedule -}}
-				{{- range $task := $sched -}}
+				{{- range $idx, $task := $sched -}}
 					{{- if (and ($task.Instrument) (ge $thisSchedIdx $schedIdx)) -}}
-						scope.Counter("task.skipped").Inc(1)
+						{{- $taskName := expr $task.Instrument.Name }}
+						{{- $tagsVar := print "s" $thisSchedIdx "t" $idx "Tags" }}
+						{{ $tagsVar }} := map[string]string{"name": {{ $taskName }}}
+						scope.Tagged({{ $tagsVar }}).Counter("task.skipped").Inc(1)
 						logger.Debug("task skipped",
-									 zap.String("name", {{ expr $task.Instrument.Name }}),
+									 zap.String("name", {{ $taskName }}),
 								     zap.Error(ctx.Err()),
 									)
 					{{ end -}}
 				{{- end -}}
 			{{- end -}}
 			{{ if $flow.Instrument -}}
-				scope.Counter("taskflow.skipped").Inc(1)
+				scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
 				logger.Debug("taskflow skipped", zap.String("name", {{ expr $flow.Instrument.Name }}))
 			{{- end }}
 			return ctx.Err()
@@ -261,7 +267,12 @@ logger *{{ $zap }}.Logger,
 		{{ if eq (len .) 1 -}}
 			{{/* If there is only one task, don't use errgroup. We're using
 			     range but it'll be called only once. */}}
-			{{- range . }}
+			{{- range $idx, $task := . }}
+			{{- with $task }}
+				{{- $tagsVar := print "s" $schedIdx "t" $idx "Tags" }}
+				{{ if .Instrument -}}
+					{{ $tagsVar }} := map[string]string{"name": {{ expr .Instrument.Name }}}
+				{{ end }}
 				{{- $serr := printf "err%d" .Serial -}}
 				{{ template "taskResultVarDecl" . -}}
 				{{ if .Predicate }}
@@ -272,36 +283,37 @@ logger *{{ $zap }}.Logger,
 					if {{ $serr }} != nil {
 						{{ if .RecoverWith -}}
 							{{ if .Instrument -}}
-								scope.Counter("task.error").Inc(1)
-								scope.Counter("task.recovered").Inc(1)
-								logger.Error("task error recovered", 
+								scope.Tagged({{ $tagsVar }}).Counter("task.error").Inc(1)
+								scope.Tagged({{ $tagsVar }}).Counter("task.recovered").Inc(1)
+								logger.Error("task error recovered",
 										     zap.String("name", {{ expr .Instrument.Name }}),
 										     zap.Error({{ $serr }}),
 										    )
-							{{- end }} 
+							{{- end }}
 							{{ template "taskResultList" . }} = {{ range $i, $v := .RecoverWith -}}
 								{{ if gt $i 0 }},{{ end }}{{ expr $v }}
 							{{- end }}, nil
 						{{- else -}}
 							{{ if .Instrument -}}
-								scope.Counter("task.error").Inc(1)
-							{{- end }} 
+								scope.Tagged({{ $tagsVar }}).Counter("task.error").Inc(1)
+							{{- end }}
 							{{ if $flow.Instrument -}}
-								scope.Counter("taskflow.error").Inc(1)
-							{{- end }} 
+								scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
+							{{- end }}
 							return {{ $serr }}
 						{{- end }}
 					} {{ if .Instrument }} else {
-						scope.Counter("task.success").Inc(1)
+						scope.Tagged({{ $tagsVar }}).Counter("task.success").Inc(1)
 						logger.Debug("task succeeded", zap.String("name", {{ expr .Instrument.Name }}))
 					} {{ end }}
 				{{ end }}
 				{{ if .Predicate }}
 					} {{ if .Instrument }} else {
-					scope.Counter("task.skipped").Inc(1)
+					scope.Tagged({{ $tagsVar }}).Counter("task.skipped").Inc(1)
 					logger.Debug("task skipped", zap.String("name", {{ expr .Instrument.Name }}))
 				} {{ end }}
 				{{ end }}
+			{{ end }}
 			{{ end }}
 		{{ else -}}
 			{{/* For >1 tasks, we need the variables to be in scope since we
@@ -321,9 +333,10 @@ logger *{{ $zap }}.Logger,
 				go func() {
 					defer {{ $wg }}.Done()
 					{{ if .Instrument -}}
-						timer := scope.Timer("task.timing").Start()
+						tags := map[string]string{"name": {{ expr .Instrument.Name }}}
+						timer := scope.Tagged(tags).Timer("task.timing").Start()
 						defer timer.Stop()
-					{{- end }} 
+					{{- end }}
 
 					{{ if .Predicate }}
 						if {{ template "callTask" .Predicate }} {
@@ -333,27 +346,27 @@ logger *{{ $zap }}.Logger,
 						if {{ $serr }} != nil {
 							{{ if .RecoverWith -}}
 								{{ if .Instrument -}}
-									scope.Counter("task.error").Inc(1)
-									scope.Counter("task.recovered").Inc(1)
+									scope.Tagged(tags).Counter("task.error").Inc(1)
+									scope.Tagged(tags).Counter("task.recovered").Inc(1)
 					                logger.Error("task error recovered",
 												 zap.String("name", {{ expr .Instrument.Name }}),
 												 zap.Error({{ $serr }}),
 												)
-								{{- end }} 
+								{{- end }}
 
 								{{ template "taskResultList" . }} = {{ range $i, $v := .RecoverWith -}}
 									{{ if gt $i 0 }},{{ end }}{{ expr $v }}
 								{{- end }}, nil
 							{{- else -}}
 								{{ if .Instrument -}}
-									scope.Counter("task.error").Inc(1)
-								{{- end }} 
+									scope.Tagged(tags).Counter("task.error").Inc(1)
+								{{- end }}
 								{{ $once }}.Do(func() {
 									err = {{ $serr }}
 								})
 							{{- end }}
 						} {{ if .Instrument }} else {
-							scope.Counter("task.success").Inc(1)
+							scope.Tagged(tags).Counter("task.success").Inc(1)
 							logger.Debug("task succeeded", zap.String("name", {{ expr .Instrument.Name }}))
 						} {{ end }}
 					{{ end }}
@@ -365,8 +378,8 @@ logger *{{ $zap }}.Logger,
 			{{ $wg }}.Wait()
 			if err != nil {
 				{{ if $flow.Instrument -}}
-					scope.Counter("taskflow.error").Inc(1)
-				{{- end }} 
+					scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
+				{{- end }}
 				return err
 			}
 
@@ -389,13 +402,13 @@ logger *{{ $zap }}.Logger,
 
 	{{ if $flow.Instrument -}}
 	if err != nil {
-		scope.Counter("taskflow.error").Inc(1)
+		scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 	} else {
-		scope.Counter("taskflow.success").Inc(1)
+		scope.Tagged(flowTags).Counter("taskflow.success").Inc(1)
 		logger.Debug("taskflow succeeded", zap.String("name", {{ expr $flow.Instrument.Name }}))
 	}
 
-	{{- end }} 
+	{{- end }}
 
 	return err
 }({{ expr .Ctx }}{{ if $flow.Instrument }}, {{ expr $flow.Scope }}, {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
