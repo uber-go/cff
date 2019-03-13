@@ -139,9 +139,9 @@ func (c *compiler) compileFile(astFile *ast.File) *file {
 type flow struct {
 	ast.Node
 
-	Ctx    ast.Expr // the expression that is a local variable of type context.Context
-	Scope  ast.Expr // the expression that is a local variable of type tally.Scope
-	Logger ast.Expr // the expression that is a local variable of type *zap.Logger
+	Ctx     ast.Expr // the expression that is a local variable of type context.Context
+	Metrics ast.Expr // the expression that is a local variable of type tally.Scope
+	Logger  ast.Expr // the expression that is a local variable of type *zap.Logger
 
 	Inputs  []*input
 	Outputs []*output
@@ -198,8 +198,8 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			for _, o := range ce.Args {
 				flow.Outputs = append(flow.Outputs, c.compileOutput(o))
 			}
-		case "Scope":
-			flow.Scope = c.compileScope(&flow, ce)
+		case "Metrics":
+			flow.Metrics = c.compileMetrics(&flow, ce)
 		case "Logger":
 			flow.Logger = c.compileLogger(&flow, ce)
 		case "InstrumentFlow":
@@ -351,7 +351,7 @@ type task struct {
 	Outputs []types.Type // non error results
 
 	Predicate   *predicate  // non-nil if Predicate was provided
-	Instrument  *instrument // non-nil if Scope and Logger were provided
+	Instrument  *instrument // non-nil if Metrics and Logger were provided
 	RecoverWith []ast.Expr
 }
 
@@ -528,8 +528,8 @@ func (c *compiler) compileInstrument(flow *flow, call *ast.CallExpr) *instrument
 		return nil
 	}
 
-	if flow.Scope == nil || flow.Logger == nil {
-		c.errf("%v: cff.Instrument requires a tally.Scope and *zap.Logger to be provided: use cff.Scope and cff.Logger", c.nodePosition(call))
+	if flow.Metrics == nil || flow.Logger == nil {
+		c.errf("%v: cff.Instrument requires a tally.Scope and *zap.Logger to be provided: use cff.Metrics and cff.Logger", c.nodePosition(call))
 		return nil
 	}
 	flow.ObservabilityEnabled = true
@@ -582,9 +582,9 @@ func (c *compiler) compileOutput(o ast.Expr) *output {
 	}
 }
 
-func (c *compiler) compileScope(flow *flow, call *ast.CallExpr) ast.Expr {
+func (c *compiler) compileMetrics(flow *flow, call *ast.CallExpr) ast.Expr {
 	if len(call.Args) != 1 {
-		c.errf("%v: cff.Scope accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
+		c.errf("%v: cff.Metrics accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
 		return nil
 	}
 

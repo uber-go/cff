@@ -21,7 +21,7 @@ to use this.
         behavior of cff.Provide with fx.Provide.
     [x] Rename Result to Results if using Params or Returns if using Args.
         They should both be plural and mirrored.
-    [ ] Rename Scope to Metrics. Scope is a generic overloaded terms so we
+    [x] Rename Scope to Metrics. Scope is a generic overloaded terms so we
         should explicate that this is for metrics.
     [ ] Rename RecoverWith to Fallback or similar. The name RecoverWith might
         imply that the function also catches panics, which is explictly not

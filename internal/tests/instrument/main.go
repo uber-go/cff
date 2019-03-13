@@ -38,7 +38,7 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
-		cff.Scope(h.scope),
+		cff.Metrics(h.scope),
 		cff.Logger(h.logger),
 		cff.InstrumentFlow("AtoiRun"),
 

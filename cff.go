@@ -37,9 +37,9 @@ func Results(results ...interface{}) FlowOption {
 	panic("code not generated; run cff")
 }
 
-// Scope provides the Tally scope to which metrics will be logged for Tasks
+// Metrics provides the Tally scope to which metrics will be logged for Tasks
 // and Flows that have been instrumented with Instrument or InstrumentFlow.
-func Scope(scope tally.Scope) FlowOption {
+func Metrics(scope tally.Scope) FlowOption {
 	panic("code not generated; run cff")
 }
 
