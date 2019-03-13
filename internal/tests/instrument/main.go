@@ -37,7 +37,7 @@ type h struct {
 func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
-		cff.Result(&res),
+		cff.Results(&res),
 		cff.Scope(h.scope),
 		cff.Logger(h.logger),
 		cff.InstrumentFlow("AtoiRun"),

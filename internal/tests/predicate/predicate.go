@@ -14,7 +14,7 @@ func Simple(f func(), pred bool) error {
 	var s string
 	return cff.Flow(
 		context.Background(),
-		cff.Result(&s),
+		cff.Results(&s),
 		cff.Task(
 			func() string {
 				f()
@@ -36,7 +36,7 @@ func ExtraDependencies() error {
 	return cff.Flow(
 		context.Background(),
 		cff.Params(int(42)),
-		cff.Result(&out),
+		cff.Results(&out),
 		cff.Tasks(
 			func(int) string { return "foo" },
 			func(int) t1 { return t1{} },

@@ -14,7 +14,7 @@ func Serial(e error, r string) (string, error) {
 	var s string
 	err := cff.Flow(
 		context.Background(),
-		cff.Result(&s),
+		cff.Results(&s),
 		cff.Task(func() (string, error) {
 			return "foo", e
 		}, cff.RecoverWith(r)),

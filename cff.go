@@ -26,14 +26,14 @@ func Params(args ...interface{}) FlowOption {
 	panic("code not generated; run cff")
 }
 
-// Result specifies one or more outputs for a Flow as pointers.
+// Results specifies one or more outputs for a Flow as pointers.
 //
 //  var result *Response
 //  err := cff.Flow(ctx,
-//    cff.Result(&result),
+//    cff.Results(&result),
 //    cff.Tasks(...),
 //  )
-func Result(results ...interface{}) FlowOption {
+func Results(results ...interface{}) FlowOption {
 	panic("code not generated; run cff")
 }
 
@@ -116,10 +116,10 @@ func InstrumentFlow(name string) FlowOption {
 // is made available to all tasks in the Flow.
 //
 // A Flow MUST have at least one Task (specified with Task or Tasks), and at
-// least one Result.
+// least one Results.
 //
 //  cff.Flow(ctx,
-//    cff.Result(&result),
+//    cff.Results(&result),
 //    cff.Tasks(
 //      ...
 //    ),

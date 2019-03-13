@@ -29,10 +29,10 @@ To use CFF, write code using the APIs exported by the
 var result Response
 err := cff.Flow(
     cff.Params(request),
-    cff.Result(&response),
+    cff.Results(&response),
     cff.Tasks(
         client.GetUser,
-        func(*GetUserResponse) *FooResult {
+        func(*GetUserResponse) *FooResults {
             ...
         },
         mapper.FormatResponse,

@@ -33,7 +33,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 	var res *Response
 	err := cff.Flow(ctx,
 		cff.Params(req),
-		cff.Result(&res),
+		cff.Results(&res),
 		cff.Scope(h.scope),
 		cff.Logger(h.logger),
 		cff.InstrumentFlow("HandleFoo"),

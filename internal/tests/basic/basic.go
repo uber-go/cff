@@ -18,7 +18,7 @@ func SimpleFlow() (string, error) {
 	var message string
 	err := cff.Flow(context.Background(),
 		cff.Params(1),
-		cff.Result(&message),
+		cff.Results(&message),
 		cff.Tasks(
 			func(i int) int64 {
 				return int64(i)
@@ -41,7 +41,7 @@ func SimpleFlow() (string, error) {
 func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 	var r io.Reader
 	err := cff.Flow(ctx,
-		cff.Result(&r),
+		cff.Results(&r),
 		cff.Tasks(
 			func() *bytes.Buffer {
 				return bytes.NewBufferString("hello world")
@@ -62,7 +62,7 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 	var out t3
 	return cff.Flow(
 		ctx,
-		cff.Result(&out),
+		cff.Results(&out),
 		cff.Tasks(
 			func() (t1, error) {
 				return t1{}, f1()
@@ -96,7 +96,7 @@ func ProduceMultiple() error {
 	return cff.Flow(
 		context.Background(),
 		cff.Params(t1{}),
-		cff.Result(&out),
+		cff.Results(&out),
 		cff.Tasks(
 			func(t1) (t2, t3) {
 				return t2{}, t3{}

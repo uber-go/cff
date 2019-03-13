@@ -19,7 +19,7 @@ to use this.
 [ ] Naming
     [x] Rename Provide to Params or Args. Users may end up confusing the
         behavior of cff.Provide with fx.Provide.
-    [ ] Rename Result to Results if using Params or Returns if using Args.
+    [x] Rename Result to Results if using Params or Returns if using Args.
         They should both be plural and mirrored.
     [ ] Rename Scope to Metrics. Scope is a generic overloaded terms so we
         should explicate that this is for metrics.

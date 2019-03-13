@@ -9,27 +9,27 @@ import (
 
 type cycle struct{}
 
-type Foo struct{} // a
-type Bar struct{} // b
-type Baz struct{} // c
-type Moo struct{} // d
+type foo struct{} // a
+type bar struct{} // b
+type baz struct{} // c
+type moo struct{} // d
 
-func (c *cycle) Cycle(ctx context.Context) (res *Moo, err error) {
+func (c *cycle) Cycle(ctx context.Context) (res *moo, err error) {
 	cff.Flow(ctx,
-		cff.Result(&res),
+		cff.Results(&res),
 
 		cff.Tasks(
 			// b -> a
-			func(b *Bar) *Foo {
-				return &Foo{}
+			func(b *bar) *foo {
+				return &foo{}
 			},
 			// a -> (c, b)
-			func(a *Foo) (*Baz, *Bar) {
-				return &Baz{}, &Bar{}
+			func(a *foo) (*baz, *bar) {
+				return &baz{}, &bar{}
 			},
 			// c -> d*
-			func(c *Baz) *Moo {
-				return &Moo{}
+			func(c *baz) *moo {
+				return &moo{}
 			},
 		),
 	)

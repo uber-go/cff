@@ -194,7 +194,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			for _, i := range ce.Args {
 				flow.Inputs = append(flow.Inputs, c.compileInput(i))
 			}
-		case "Result":
+		case "Results":
 			for _, o := range ce.Args {
 				flow.Outputs = append(flow.Outputs, c.compileOutput(o))
 			}
@@ -571,7 +571,7 @@ func (c *compiler) compileOutput(o ast.Expr) *output {
 	t := c.info.TypeOf(o)
 	p, ok := t.(*types.Pointer)
 	if !ok {
-		c.errf("%v: invalid parameter to cff.Result: "+
+		c.errf("%v: invalid parameter to cff.Results: "+
 			"expected pointer, got %v", c.nodePosition(o), t)
 		return nil
 	}
