@@ -264,136 +264,81 @@ logger *{{ $zap }}.Logger,
 			{{- end }}
 			return ctx.Err()
 		}
-		{{ if eq (len .) 1 -}}
-			{{/* If there is only one task, don't use errgroup. We're using
-			     range but it'll be called only once. */}}
-			{{- range $idx, $task := . }}
-			{{- with $task }}
-				{{- $tagsVar := print "s" $schedIdx "t" $idx "Tags" }}
+
+		{{- $once := printf "once%v" $schedIdx -}}
+		{{- $wg := printf "wg%v" $schedIdx -}}
+		{{- $sync := import "sync" }}
+		var (
+			{{ $wg }} {{ $sync }}.WaitGroup
+			{{ $once }} {{ $sync }}.Once
+		)
+
+		{{ $wg }}.Add({{ len . }})
+		{{ range . }}
+			{{- $serr := printf "err%v" .Serial -}}
+			{{ template "taskResultVarDecl" . }}
+			go func() {
+				defer {{ $wg }}.Done()
 				{{ if .Instrument -}}
-					{{ $tagsVar }} := map[string]string{"name": {{ expr .Instrument.Name }}}
-				{{ end }}
-				{{- $serr := printf "err%d" .Serial -}}
-				{{ template "taskResultVarDecl" . -}}
+					tags := map[string]string{"name": {{ expr .Instrument.Name }}}
+					timer := scope.Tagged(tags).Timer("task.timing").Start()
+					defer timer.Stop()
+				{{- end }}
+
 				{{ if .Predicate }}
 					if {{ template "callTask" .Predicate }} {
-				{{- end }}
+				{{ end }}
 				{{ template "taskResultList" . }} = {{ template "callTask" . }}
 				{{ if .HasError -}}
 					if {{ $serr }} != nil {
 						{{ if .RecoverWith -}}
 							{{ if .Instrument -}}
-								scope.Tagged({{ $tagsVar }}).Counter("task.error").Inc(1)
-								scope.Tagged({{ $tagsVar }}).Counter("task.recovered").Inc(1)
+								scope.Tagged(tags).Counter("task.error").Inc(1)
+								scope.Tagged(tags).Counter("task.recovered").Inc(1)
 								logger.Error("task error recovered",
-										     zap.String("name", {{ expr .Instrument.Name }}),
-										     zap.Error({{ $serr }}),
-										    )
+											 zap.String("name", {{ expr .Instrument.Name }}),
+											 zap.Error({{ $serr }}),
+											)
 							{{- end }}
+
 							{{ template "taskResultList" . }} = {{ range $i, $v := .RecoverWith -}}
 								{{ if gt $i 0 }},{{ end }}{{ expr $v }}
 							{{- end }}, nil
 						{{- else -}}
 							{{ if .Instrument -}}
-								scope.Tagged({{ $tagsVar }}).Counter("task.error").Inc(1)
+								scope.Tagged(tags).Counter("task.error").Inc(1)
 							{{- end }}
-							{{ if $flow.Instrument -}}
-								scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
-							{{- end }}
-							return {{ $serr }}
+							{{ $once }}.Do(func() {
+								err = {{ $serr }}
+							})
 						{{- end }}
 					} {{ if .Instrument }} else {
-						scope.Tagged({{ $tagsVar }}).Counter("task.success").Inc(1)
+						scope.Tagged(tags).Counter("task.success").Inc(1)
 						logger.Debug("task succeeded", zap.String("name", {{ expr .Instrument.Name }}))
 					} {{ end }}
 				{{ end }}
 				{{ if .Predicate }}
-					} {{ if .Instrument }} else {
-					scope.Tagged({{ $tagsVar }}).Counter("task.skipped").Inc(1)
-					logger.Debug("task skipped", zap.String("name", {{ expr .Instrument.Name }}))
-				} {{ end }}
+					}
 				{{ end }}
-			{{ end }}
-			{{ end }}
-		{{ else -}}
-			{{/* For >1 tasks, we need the variables to be in scope since we
-			     can't return them. */}}
-			{{- $once := printf "once%v" $schedIdx -}}
-			{{- $wg := printf "wg%v" $schedIdx -}}
-			{{- $sync := import "sync" -}}
-			var (
-				{{ $wg }} {{ $sync }}.WaitGroup
-				{{ $once }} {{ $sync }}.Once
-			)
-
-			{{ $wg }}.Add({{ len . }})
-			{{ range . }}
-				{{- $serr := printf "err%v" .Serial -}}
-				{{ template "taskResultVarDecl" . }}
-				go func() {
-					defer {{ $wg }}.Done()
-					{{ if .Instrument -}}
-						tags := map[string]string{"name": {{ expr .Instrument.Name }}}
-						timer := scope.Tagged(tags).Timer("task.timing").Start()
-						defer timer.Stop()
-					{{- end }}
-
-					{{ if .Predicate }}
-						if {{ template "callTask" .Predicate }} {
-					{{ end }}
-					{{ template "taskResultList" . }} = {{ template "callTask" . }}
-					{{ if .HasError -}}
-						if {{ $serr }} != nil {
-							{{ if .RecoverWith -}}
-								{{ if .Instrument -}}
-									scope.Tagged(tags).Counter("task.error").Inc(1)
-									scope.Tagged(tags).Counter("task.recovered").Inc(1)
-					                logger.Error("task error recovered",
-												 zap.String("name", {{ expr .Instrument.Name }}),
-												 zap.Error({{ $serr }}),
-												)
-								{{- end }}
-
-								{{ template "taskResultList" . }} = {{ range $i, $v := .RecoverWith -}}
-									{{ if gt $i 0 }},{{ end }}{{ expr $v }}
-								{{- end }}, nil
-							{{- else -}}
-								{{ if .Instrument -}}
-									scope.Tagged(tags).Counter("task.error").Inc(1)
-								{{- end }}
-								{{ $once }}.Do(func() {
-									err = {{ $serr }}
-								})
-							{{- end }}
-						} {{ if .Instrument }} else {
-							scope.Tagged(tags).Counter("task.success").Inc(1)
-							logger.Debug("task succeeded", zap.String("name", {{ expr .Instrument.Name }}))
-						} {{ end }}
-					{{ end }}
-					{{ if .Predicate }}
-						}
-					{{ end }}
-				}()
-			{{ end }}
-			{{ $wg }}.Wait()
-			if err != nil {
-				{{ if $flow.Instrument -}}
-					scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
-				{{- end }}
-				return err
-			}
-
-			// Prevent variable unused errors.
-			var (
-				_ = &{{ $once }}
-				{{ range . -}}
-					{{ range .Outputs -}}
-						_ = &v{{ typeHash .}}
-					{{ end -}}
-				{{ end }}
-			)
-
+			}()
 		{{ end }}
+		{{ $wg }}.Wait()
+		if err != nil {
+			{{ if $flow.Instrument -}}
+				scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
+			{{- end }}
+			return err
+		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &{{ $once }}
+			{{ range . -}}
+				{{ range .Outputs -}}
+					_ = &v{{ typeHash .}}
+				{{ end -}}
+			{{ end }}
+		)
 	{{ end }}
 
 	{{ range .Outputs }}

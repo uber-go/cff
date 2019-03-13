@@ -19,11 +19,33 @@ func SimpleFlow() (string, error) {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+		var (
+			wg0   sync.WaitGroup
+			once0 sync.Once
+		)
 
+		wg0.Add(1)
 		var v2 int64
-		v2 = func(i int) int64 {
-			return int64(i)
-		}(v1)
+		go func() {
+			defer wg0.Done()
+
+			v2 = func(i int) int64 {
+				return int64(i)
+			}(v1)
+
+		}()
+
+		wg0.Wait()
+		if err != nil {
+
+			return err
+		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once0
+			_ = &v2
+		)
 
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -83,16 +105,40 @@ func SimpleFlow() (string, error) {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+		var (
+			wg2   sync.WaitGroup
+			once2 sync.Once
+		)
 
+		wg2.Add(1)
 		var v5 string
 		var err3 error
-		v5, err3 = func(*foo, *bar) (string, error) {
-			return "hello world", nil
-		}(v3, v4)
-		if err3 != nil {
+		go func() {
+			defer wg2.Done()
 
-			return err3
+			v5, err3 = func(*foo, *bar) (string, error) {
+				return "hello world", nil
+			}(v3, v4)
+			if err3 != nil {
+
+				once2.Do(func() {
+					err = err3
+				})
+			}
+
+		}()
+
+		wg2.Wait()
+		if err != nil {
+
+			return err
 		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once2
+			_ = &v5
+		)
 
 		*(&message) = v5
 
@@ -108,18 +154,62 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+		var (
+			wg0   sync.WaitGroup
+			once0 sync.Once
+		)
 
+		wg0.Add(1)
 		var v6 *bytes.Buffer
-		v6 = func() *bytes.Buffer {
-			return bytes.NewBufferString("hello world")
+		go func() {
+			defer wg0.Done()
+
+			v6 = func() *bytes.Buffer {
+				return bytes.NewBufferString("hello world")
+			}()
+
 		}()
+
+		wg0.Wait()
+		if err != nil {
+
+			return err
+		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once0
+			_ = &v6
+		)
 
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+		var (
+			wg1   sync.WaitGroup
+			once1 sync.Once
+		)
 
+		wg1.Add(1)
 		var v7 io.Reader
-		v7 = func(b *bytes.Buffer) io.Reader { return b }(v6)
+		go func() {
+			defer wg1.Done()
+
+			v7 = func(b *bytes.Buffer) io.Reader { return b }(v6)
+
+		}()
+
+		wg1.Wait()
+		if err != nil {
+
+			return err
+		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once1
+			_ = &v7
+		)
 
 		*(&r) = v7
 
@@ -140,39 +230,109 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+		var (
+			wg0   sync.WaitGroup
+			once0 sync.Once
+		)
 
+		wg0.Add(1)
 		var v8 t1
 		var err6 error
-		v8, err6 = func() (t1, error) {
-			return t1{}, f1()
-		}()
-		if err6 != nil {
+		go func() {
+			defer wg0.Done()
 
-			return err6
+			v8, err6 = func() (t1, error) {
+				return t1{}, f1()
+			}()
+			if err6 != nil {
+
+				once0.Do(func() {
+					err = err6
+				})
+			}
+
+		}()
+
+		wg0.Wait()
+		if err != nil {
+
+			return err
 		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once0
+			_ = &v8
+		)
 
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+		var (
+			wg1   sync.WaitGroup
+			once1 sync.Once
+		)
 
+		wg1.Add(1)
 		var v9 t2
 		var err7 error
-		v9, err7 = func(t1) (t2, error) {
-			return t2{}, f2()
-		}(v8)
-		if err7 != nil {
+		go func() {
+			defer wg1.Done()
 
-			return err7
+			v9, err7 = func(t1) (t2, error) {
+				return t2{}, f2()
+			}(v8)
+			if err7 != nil {
+
+				once1.Do(func() {
+					err = err7
+				})
+			}
+
+		}()
+
+		wg1.Wait()
+		if err != nil {
+
+			return err
 		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once1
+			_ = &v9
+		)
 
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+		var (
+			wg2   sync.WaitGroup
+			once2 sync.Once
+		)
 
+		wg2.Add(1)
 		var v10 t3
-		v10 = func(t2) t3 {
-			return t3{}
-		}(v9)
+		go func() {
+			defer wg2.Done()
+
+			v10 = func(t2) t3 {
+				return t3{}
+			}(v9)
+
+		}()
+
+		wg2.Wait()
+		if err != nil {
+
+			return err
+		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once2
+			_ = &v10
+		)
 
 		*(&out) = v10
 
@@ -200,23 +360,68 @@ func ProduceMultiple() error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+		var (
+			wg0   sync.WaitGroup
+			once0 sync.Once
+		)
 
+		wg0.Add(1)
 		var (
 			v12 t2
 			v13 t3
 		)
-		v12, v13 = func(t1) (t2, t3) {
-			return t2{}, t3{}
-		}(v11)
+		go func() {
+			defer wg0.Done()
+
+			v12, v13 = func(t1) (t2, t3) {
+				return t2{}, t3{}
+			}(v11)
+
+		}()
+
+		wg0.Wait()
+		if err != nil {
+
+			return err
+		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once0
+			_ = &v12
+			_ = &v13
+		)
 
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+		var (
+			wg1   sync.WaitGroup
+			once1 sync.Once
+		)
 
+		wg1.Add(1)
 		var v14 t4
-		v14 = func(t2, t3) t4 {
-			return t4{}
-		}(v12, v13)
+		go func() {
+			defer wg1.Done()
+
+			v14 = func(t2, t3) t4 {
+				return t4{}
+			}(v12, v13)
+
+		}()
+
+		wg1.Wait()
+		if err != nil {
+
+			return err
+		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once1
+			_ = &v14
+		)
 
 		*(&out) = v14
 

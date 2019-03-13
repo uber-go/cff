@@ -15,15 +15,38 @@ func Simple(f func(), pred bool) error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+		var (
+			wg0   sync.WaitGroup
+			once0 sync.Once
+		)
 
+		wg0.Add(1)
 		var v1 string
-		if func() bool { return pred }() {
-			v1 = func() string {
-				f()
-				return "foo"
-			}()
+		go func() {
+			defer wg0.Done()
 
+			if func() bool { return pred }() {
+
+				v1 = func() string {
+					f()
+					return "foo"
+				}()
+
+			}
+
+		}()
+
+		wg0.Wait()
+		if err != nil {
+
+			return err
 		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once0
+			_ = &v1
+		)
 
 		*(&s) = v1
 

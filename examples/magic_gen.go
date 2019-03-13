@@ -52,18 +52,41 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
 			return ctx.Err()
 		}
+		var (
+			wg0   sync.WaitGroup
+			once0 sync.Once
+		)
 
+		wg0.Add(1)
 		var (
 			v2 *GetManagerRequest
 			v3 *ListUsersRequest
 		)
-		v2, v3 = func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
-			return &GetManagerRequest{
-					LDAPGroup: req.LDAPGroup,
-				}, &ListUsersRequest{
-					LDAPGroup: req.LDAPGroup,
-				}
-		}(v1)
+		go func() {
+			defer wg0.Done()
+
+			v2, v3 = func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
+				return &GetManagerRequest{
+						LDAPGroup: req.LDAPGroup,
+					}, &ListUsersRequest{
+						LDAPGroup: req.LDAPGroup,
+					}
+			}(v1)
+
+		}()
+
+		wg0.Wait()
+		if err != nil {
+			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
+			return err
+		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once0
+			_ = &v2
+			_ = &v3
+		)
 
 		if ctx.Err() != nil {
 			s1t1Tags := map[string]string{"name": "FormSendEmailRequest"}
@@ -152,54 +175,121 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
 			return ctx.Err()
 		}
+		var (
+			wg2   sync.WaitGroup
+			once2 sync.Once
+		)
 
-		s2t0Tags := map[string]string{"name": "FormSendEmailRequest"}
+		wg2.Add(1)
 		var v6 []*SendEmailRequest
-		if func(req *GetManagerRequest) bool {
-			return req.LDAPGroup != "everyone"
-		}(v2) {
-			v6 = func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest {
-				var reqs []*SendEmailRequest
-				for _, u := range users.Emails {
-					reqs = append(reqs, &SendEmailRequest{Address: u})
-				}
-				return reqs
-			}(v4, v5)
+		go func() {
+			defer wg2.Done()
+			tags := map[string]string{"name": "FormSendEmailRequest"}
+			timer := scope.Tagged(tags).Timer("task.timing").Start()
+			defer timer.Stop()
 
-		} else {
-			scope.Tagged(s2t0Tags).Counter("task.skipped").Inc(1)
-			logger.Debug("task skipped", zap.String("name", "FormSendEmailRequest"))
+			if func(req *GetManagerRequest) bool {
+				return req.LDAPGroup != "everyone"
+			}(v2) {
+
+				v6 = func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest {
+					var reqs []*SendEmailRequest
+					for _, u := range users.Emails {
+						reqs = append(reqs, &SendEmailRequest{Address: u})
+					}
+					return reqs
+				}(v4, v5)
+
+			}
+
+		}()
+
+		wg2.Wait()
+		if err != nil {
+			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
+			return err
 		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once2
+			_ = &v6
+		)
 
 		if ctx.Err() != nil {
 			scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
 			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
 			return ctx.Err()
 		}
+		var (
+			wg3   sync.WaitGroup
+			once3 sync.Once
+		)
 
+		wg3.Add(1)
 		var v7 []*SendEmailResponse
 		var err2 error
-		v7, err2 = h.ses.BatchSendEmail(v6)
-		if err2 != nil {
+		go func() {
+			defer wg3.Done()
 
+			v7, err2 = h.ses.BatchSendEmail(v6)
+			if err2 != nil {
+
+				once3.Do(func() {
+					err = err2
+				})
+			}
+
+		}()
+
+		wg3.Wait()
+		if err != nil {
 			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
-			return err2
+			return err
 		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once3
+			_ = &v7
+		)
 
 		if ctx.Err() != nil {
 			scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
 			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
 			return ctx.Err()
 		}
+		var (
+			wg4   sync.WaitGroup
+			once4 sync.Once
+		)
 
+		wg4.Add(1)
 		var v8 *Response
-		v8 = func(responses []*SendEmailResponse) *Response {
-			var r Response
-			for _, res := range responses {
-				r.MessageIDs = append(r.MessageIDs, res.MessageID)
-			}
-			return &r
-		}(v7)
+		go func() {
+			defer wg4.Done()
+
+			v8 = func(responses []*SendEmailResponse) *Response {
+				var r Response
+				for _, res := range responses {
+					r.MessageIDs = append(r.MessageIDs, res.MessageID)
+				}
+				return &r
+			}(v7)
+
+		}()
+
+		wg4.Wait()
+		if err != nil {
+			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
+			return err
+		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once4
+			_ = &v8
+		)
 
 		*(&res) = v8
 

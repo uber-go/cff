@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"sync"
 
 	"github.com/uber-go/tally"
 	"go.uber.org/zap"
@@ -55,19 +56,44 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 			logger.Debug("taskflow skipped", zap.String("name", "AtoiRun"))
 			return ctx.Err()
 		}
+		var (
+			wg0   sync.WaitGroup
+			once0 sync.Once
+		)
 
-		s0t0Tags := map[string]string{"name": "Atoi"}
+		wg0.Add(1)
 		var v2 int
 		var err0 error
-		v2, err0 = strconv.Atoi(v1)
-		if err0 != nil {
-			scope.Tagged(s0t0Tags).Counter("task.error").Inc(1)
+		go func() {
+			defer wg0.Done()
+			tags := map[string]string{"name": "Atoi"}
+			timer := scope.Tagged(tags).Timer("task.timing").Start()
+			defer timer.Stop()
+
+			v2, err0 = strconv.Atoi(v1)
+			if err0 != nil {
+				scope.Tagged(tags).Counter("task.error").Inc(1)
+				once0.Do(func() {
+					err = err0
+				})
+			} else {
+				scope.Tagged(tags).Counter("task.success").Inc(1)
+				logger.Debug("task succeeded", zap.String("name", "Atoi"))
+			}
+
+		}()
+
+		wg0.Wait()
+		if err != nil {
 			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
-			return err0
-		} else {
-			scope.Tagged(s0t0Tags).Counter("task.success").Inc(1)
-			logger.Debug("task succeeded", zap.String("name", "Atoi"))
+			return err
 		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once0
+			_ = &v2
+		)
 
 		if ctx.Err() != nil {
 			s1t0Tags := map[string]string{"name": "uint8"}
@@ -80,28 +106,53 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 			logger.Debug("taskflow skipped", zap.String("name", "AtoiRun"))
 			return ctx.Err()
 		}
+		var (
+			wg1   sync.WaitGroup
+			once1 sync.Once
+		)
 
-		s1t0Tags := map[string]string{"name": "uint8"}
+		wg1.Add(1)
 		var v3 uint8
 		var err1 error
-		v3, err1 = func(i int) (uint8, error) {
-			if i > -1 && i < 256 {
-				return uint8(i), nil
+		go func() {
+			defer wg1.Done()
+			tags := map[string]string{"name": "uint8"}
+			timer := scope.Tagged(tags).Timer("task.timing").Start()
+			defer timer.Stop()
+
+			v3, err1 = func(i int) (uint8, error) {
+				if i > -1 && i < 256 {
+					return uint8(i), nil
+				}
+				return 0, errors.New("int can not fit into 8 bits")
+			}(v2)
+			if err1 != nil {
+				scope.Tagged(tags).Counter("task.error").Inc(1)
+				scope.Tagged(tags).Counter("task.recovered").Inc(1)
+				logger.Error("task error recovered",
+					zap.String("name", "uint8"),
+					zap.Error(err1),
+				)
+
+				v3, err1 = uint8(0), nil
+			} else {
+				scope.Tagged(tags).Counter("task.success").Inc(1)
+				logger.Debug("task succeeded", zap.String("name", "uint8"))
 			}
-			return 0, errors.New("int can not fit into 8 bits")
-		}(v2)
-		if err1 != nil {
-			scope.Tagged(s1t0Tags).Counter("task.error").Inc(1)
-			scope.Tagged(s1t0Tags).Counter("task.recovered").Inc(1)
-			logger.Error("task error recovered",
-				zap.String("name", "uint8"),
-				zap.Error(err1),
-			)
-			v3, err1 = uint8(0), nil
-		} else {
-			scope.Tagged(s1t0Tags).Counter("task.success").Inc(1)
-			logger.Debug("task succeeded", zap.String("name", "uint8"))
+
+		}()
+
+		wg1.Wait()
+		if err != nil {
+			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
+			return err
 		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once1
+			_ = &v3
+		)
 
 		*(&res) = v3
 
