@@ -154,3 +154,69 @@ func TestInstrumentRecover(t *testing.T) {
 		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
 	}
 }
+
+func TestInstrumentAnnotationOrder(t *testing.T) {
+	scope := tally.NewTestScope("", nil)
+	core, observedLogs := observer.New(zap.DebugLevel)
+	logger := zap.New(core)
+	h := &h{scope: scope, logger: logger}
+	ctx := context.Background()
+	v, err := h.do(ctx, "1")
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, v)
+
+	// metrics
+	counters := scope.Snapshot().Counters()
+	for k := range counters {
+		t.Logf("got counter with key %q", k)
+	}
+	assert.Equal(t, int64(1), counters["task.success+name=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.success+name=AtoiDo"].Value())
+
+	// logs
+	expectedLevel := zap.DebugLevel
+	expectedMessages := []string{
+		"task succeeded",
+		"taskflow succeeded",
+	}
+	logEntries := observedLogs.All()
+	assert.Equal(t, len(expectedMessages), len(logEntries))
+	for i, entry := range logEntries {
+		assert.Equal(t, expectedLevel, entry.Level)
+		assert.Equal(t, expectedMessages[i], entry.Message)
+		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
+	}
+}
+
+func TestInstrumentTaskButNotFlow(t *testing.T) {
+	scope := tally.NewTestScope("", nil)
+	core, observedLogs := observer.New(zap.DebugLevel)
+	logger := zap.New(core)
+	h := &h{scope: scope, logger: logger}
+	ctx := context.Background()
+	v, err := h.work(ctx, "1")
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, v)
+
+	// metrics
+	counters := scope.Snapshot().Counters()
+	for k := range counters {
+		t.Logf("got counter with key %q", k)
+	}
+	assert.Equal(t, int64(1), counters["task.success+name=Atoi"].Value())
+
+	// logs
+	expectedLevel := zap.DebugLevel
+	expectedMessages := []string{
+		"task succeeded",
+	}
+	logEntries := observedLogs.All()
+	assert.Equal(t, len(expectedMessages), len(logEntries))
+	for i, entry := range logEntries {
+		assert.Equal(t, expectedLevel, entry.Level)
+		assert.Equal(t, expectedMessages[i], entry.Message)
+		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
+	}
+}

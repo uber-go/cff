@@ -356,7 +356,7 @@ logger *{{ $zap }}.Logger,
 	{{- end }}
 
 	return err
-}({{ expr .Ctx }}{{ if $flow.Instrument }}, {{ expr $flow.Metrics }}, {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
+}({{ expr .Ctx }}{{ if $flow.ObservabilityEnabled }}, {{ expr $flow.Metrics }}, {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
 {{- end -}}
 
 {{- define "taskResultVarDecl" -}}

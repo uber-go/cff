@@ -218,6 +218,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			c.errf("%v: undefined cff function %q", c.nodePosition(ce), f.Name())
 		}
 	}
+	c.validateInstrument(&flow)
 
 	for i, t := range flow.Tasks {
 		for _, o := range t.Outputs {
@@ -297,6 +298,14 @@ func (c *compiler) validateTasks(f *flow) {
 	if flowInputs.Len() > 0 {
 		// TODO: ordering is unspecified so sort
 		c.errf("unused inputs: %v", flowInputs.KeysString())
+	}
+}
+
+func (c *compiler) validateInstrument(f *flow) {
+	if f.ObservabilityEnabled {
+		if f.Metrics == nil || f.Logger == nil {
+			c.errf("v%: cff.Instrument requires a tally.Scope and *zap.Logger to be provided: use cff.Metrics and cff.Logger", c.nodePosition(f.Node))
+		}
 	}
 }
 
@@ -528,10 +537,6 @@ func (c *compiler) compileInstrument(flow *flow, call *ast.CallExpr) *instrument
 		return nil
 	}
 
-	if flow.Metrics == nil || flow.Logger == nil {
-		c.errf("%v: cff.Instrument requires a tally.Scope and *zap.Logger to be provided: use cff.Metrics and cff.Logger", c.nodePosition(call))
-		return nil
-	}
 	flow.ObservabilityEnabled = true
 
 	name := call.Args[0]

@@ -167,3 +167,130 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 	}(ctx, h.scope, h.logger, req)
 	return
 }
+
+func (h *h) do(ctx context.Context, req string) (res int, err error) {
+	err = func(ctx context.Context, scope tally.Scope,
+		logger *zap.Logger, v1 string) (err error) {
+		flowTags := map[string]string{"name": "AtoiDo"}
+		if ctx.Err() != nil {
+			s0t0Tags := map[string]string{"name": "Atoi"}
+			scope.Tagged(s0t0Tags).Counter("task.skipped").Inc(1)
+			logger.Debug("task skipped",
+				zap.String("name", "Atoi"),
+				zap.Error(ctx.Err()),
+			)
+			scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
+			logger.Debug("taskflow skipped", zap.String("name", "AtoiDo"))
+			return ctx.Err()
+		}
+		var (
+			wg0   sync.WaitGroup
+			once0 sync.Once
+		)
+
+		wg0.Add(1)
+		var v2 int
+		var err2 error
+		go func() {
+			defer wg0.Done()
+			tags := map[string]string{"name": "Atoi"}
+			timer := scope.Tagged(tags).Timer("task.timing").Start()
+			defer timer.Stop()
+
+			v2, err2 = strconv.Atoi(v1)
+			if err2 != nil {
+				scope.Tagged(tags).Counter("task.error").Inc(1)
+				once0.Do(func() {
+					err = err2
+				})
+			} else {
+				scope.Tagged(tags).Counter("task.success").Inc(1)
+				logger.Debug("task succeeded", zap.String("name", "Atoi"))
+			}
+
+		}()
+
+		wg0.Wait()
+		if err != nil {
+			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
+			return err
+		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once0
+			_ = &v2
+		)
+
+		*(&res) = v2
+
+		if err != nil {
+			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
+		} else {
+			scope.Tagged(flowTags).Counter("taskflow.success").Inc(1)
+			logger.Debug("taskflow succeeded", zap.String("name", "AtoiDo"))
+		}
+
+		return err
+	}(ctx, h.scope, h.logger, req)
+	return
+}
+
+func (h *h) work(ctx context.Context, req string) (res int, err error) {
+	err = func(ctx context.Context, scope tally.Scope,
+		logger *zap.Logger, v1 string) (err error) {
+		if ctx.Err() != nil {
+			s0t0Tags := map[string]string{"name": "Atoi"}
+			scope.Tagged(s0t0Tags).Counter("task.skipped").Inc(1)
+			logger.Debug("task skipped",
+				zap.String("name", "Atoi"),
+				zap.Error(ctx.Err()),
+			)
+
+			return ctx.Err()
+		}
+		var (
+			wg0   sync.WaitGroup
+			once0 sync.Once
+		)
+
+		wg0.Add(1)
+		var v2 int
+		var err3 error
+		go func() {
+			defer wg0.Done()
+			tags := map[string]string{"name": "Atoi"}
+			timer := scope.Tagged(tags).Timer("task.timing").Start()
+			defer timer.Stop()
+
+			v2, err3 = strconv.Atoi(v1)
+			if err3 != nil {
+				scope.Tagged(tags).Counter("task.error").Inc(1)
+				once0.Do(func() {
+					err = err3
+				})
+			} else {
+				scope.Tagged(tags).Counter("task.success").Inc(1)
+				logger.Debug("task succeeded", zap.String("name", "Atoi"))
+			}
+
+		}()
+
+		wg0.Wait()
+		if err != nil {
+
+			return err
+		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once0
+			_ = &v2
+		)
+
+		*(&res) = v2
+
+		return err
+	}(ctx, h.scope, h.logger, req)
+	return
+}

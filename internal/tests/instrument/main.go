@@ -60,3 +60,32 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 	)
 	return
 }
+
+func (h *h) do(ctx context.Context, req string) (res int, err error) {
+	err = cff.Flow(ctx,
+		cff.Params(req),
+		cff.Results(&res),
+		cff.InstrumentFlow("AtoiDo"),
+		cff.Metrics(h.scope),
+		cff.Logger(h.logger),
+		cff.Task(
+			strconv.Atoi,
+			cff.Instrument("Atoi"),
+		),
+	)
+	return
+}
+
+func (h *h) work(ctx context.Context, req string) (res int, err error) {
+	err = cff.Flow(ctx,
+		cff.Params(req),
+		cff.Results(&res),
+		cff.Metrics(h.scope),
+		cff.Logger(h.logger),
+		cff.Task(
+			strconv.Atoi,
+			cff.Instrument("Atoi"),
+		),
+	)
+	return
+}
