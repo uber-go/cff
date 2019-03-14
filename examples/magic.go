@@ -60,7 +60,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		),
 		cff.Task(
 			h.users.List,
-			cff.RecoverWith(&ListUsersResponse{}),
+			cff.FallbackWith(&ListUsersResponse{}),
 			cff.Instrument("FormSendEmailRequest"),
 		),
 		cff.Task(

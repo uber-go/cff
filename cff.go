@@ -137,18 +137,18 @@ type TaskOption interface {
 	cffTaskOption()
 }
 
-// RecoverWith specifies that if the corresponding Task failed with an error,
-// we should recover from that error and return the provided values insted.
+// FallbackWith specifies that if the corresponding Task failed with an error,
+// we should recover from that error and return the provided values instead.
 //
 // This function accepts the same number of values as returned by the Task
 // with exactly the same types. This DOES NOT include the error type returned
 // by the Task.
 //
-//   cff.Task(client.ListUsers, cff.RecoverWith(cachedUserList))
+//   cff.Task(client.ListUsers, cff.FallbackWith(cachedUserList))
 //
 // Note that this function DOES NOT recover from Task panics. If panics should
 // be handled, it is the caller or the Task implementation's responsibility.
-func RecoverWith(results ...interface{}) TaskOption {
+func FallbackWith(results ...interface{}) TaskOption {
 	panic("code not generated; run cff")
 }
 

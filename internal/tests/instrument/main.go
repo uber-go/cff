@@ -54,7 +54,7 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 				}
 				return 0, errors.New("int can not fit into 8 bits")
 			},
-			cff.RecoverWith(uint8(0)),
+			cff.FallbackWith(uint8(0)),
 			cff.Instrument("uint8"),
 		),
 	)

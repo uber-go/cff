@@ -1,4 +1,4 @@
-package recoverwith
+package fallbackwith
 
 import (
 	"errors"

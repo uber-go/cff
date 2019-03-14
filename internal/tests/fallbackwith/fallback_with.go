@@ -1,6 +1,6 @@
 // +build cff
 
-package recoverwith
+package fallbackwith
 
 import (
 	"context"
@@ -17,7 +17,7 @@ func Serial(e error, r string) (string, error) {
 		cff.Results(&s),
 		cff.Task(func() (string, error) {
 			return "foo", e
-		}, cff.RecoverWith(r)),
+		}, cff.FallbackWith(r)),
 	)
 	return s, err
 }

@@ -350,9 +350,9 @@ type task struct {
 	Inputs  []types.Type // non ctx params
 	Outputs []types.Type // non error results
 
-	Predicate   *predicate  // non-nil if Predicate was provided
-	Instrument  *instrument // non-nil if Metrics and Logger were provided
-	RecoverWith []ast.Expr
+	Predicate    *predicate  // non-nil if Predicate was provided
+	Instrument   *instrument // non-nil if Scope and Logger were provided
+	FallbackWith []ast.Expr
 }
 
 func (c *compiler) compileTask(flow *flow, f ast.Expr, opts []ast.Expr) *task {
@@ -431,10 +431,10 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 		}
 
 		switch fn.Name() {
-		case "RecoverWith":
+		case "FallbackWith":
 			errResults := call.Args
 			if len(errResults) != len(t.Outputs) {
-				c.errf("%v: cff.RecoverWith must produce the same number of results as the task: "+
+				c.errf("%v: cff.FallbackWith must produce the same number of results as the task: "+
 					"expected %v, got %v", c.nodePosition(opt), len(t.Outputs), len(errResults))
 				continue
 			}
@@ -443,12 +443,12 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 				give := c.info.TypeOf(er)
 				want := t.Outputs[i]
 				if !types.AssignableTo(give, want) {
-					c.errf("%v: cff.RecoverWith result at position %v of type %v cannot be used as %v",
+					c.errf("%v: cff.FallbackWith result at position %v of type %v cannot be used as %v",
 						c.nodePosition(er), i+1, give, want)
 				}
 			}
 
-			t.RecoverWith = call.Args
+			t.FallbackWith = call.Args
 		case "Predicate":
 			t.Predicate = c.compilePredicate(t, call)
 		case "Instrument":

@@ -12,7 +12,7 @@ go_test(
 
 go_library(
     name = "lib",
-    package_name = "go.uber.org/cff/internal/tests/recoverwith",
+    package_name = "go.uber.org/cff/internal/tests/fallbackwith",
     srcs = glob(
         include = ["*.go"],
         exclude = ["*_test.go"],

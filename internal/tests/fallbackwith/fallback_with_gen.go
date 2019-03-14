@@ -1,6 +1,6 @@
 // +build !cff
 
-package recoverwith
+package fallbackwith
 
 import (
 	"context"

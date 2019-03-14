@@ -23,8 +23,8 @@ to use this.
         They should both be plural and mirrored.
     [x] Rename Scope to Metrics. Scope is a generic overloaded terms so we
         should explicate that this is for metrics.
-    [ ] Rename RecoverWith to Fallback or similar. The name RecoverWith might
-        imply that the function also catches panics, which is explictly not
+    [x] Rename RecoverWith to Fallback or similar. The name RecoverWith might
+        imply that the function also catches panics, which is explicitly not
         going to be true.
 
 [ ] Panic Handling. We need to capture panics for tasks executed inside new
@@ -36,7 +36,7 @@ to use this.
     [ ] Tasks should support Task(..) calls. This should be as simple as
         checking if the passed expression has type FlowOption instead of
         allowing only functions.
-    [ ] RecoverWith should verify that the provided function actually has the
+    [ ] FallbackWith should verify that the provided function actually has the
         ability to return errors.
 
 [x] Logging

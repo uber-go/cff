@@ -291,7 +291,7 @@ logger *{{ $zap }}.Logger,
 				{{ template "taskResultList" . }} = {{ template "callTask" . }}
 				{{ if .HasError -}}
 					if {{ $serr }} != nil {
-						{{ if .RecoverWith -}}
+						{{ if .FallbackWith -}}
 							{{ if .Instrument -}}
 								scope.Tagged(tags).Counter("task.error").Inc(1)
 								scope.Tagged(tags).Counter("task.recovered").Inc(1)
@@ -301,7 +301,7 @@ logger *{{ $zap }}.Logger,
 											)
 							{{- end }}
 
-							{{ template "taskResultList" . }} = {{ range $i, $v := .RecoverWith -}}
+							{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWith -}}
 								{{ if gt $i 0 }},{{ end }}{{ expr $v }}
 							{{- end }}, nil
 						{{- else -}}
