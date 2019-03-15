@@ -18,6 +18,7 @@ import (
 
 const (
 	cffImportPath = "go.uber.org/cff"
+	flowOption    = "go.uber.org/cff.FlowOption"
 )
 
 type compiler struct {
@@ -206,14 +207,18 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			flow.Instrument = c.compileInstrument(&flow, ce)
 		case "Tasks":
 			for _, f := range ce.Args {
-				flow.Tasks = append(flow.Tasks, c.compileTask(&flow, f, nil /* options */))
+				if task := c.compileTask(&flow, f, nil /* options */); task != nil {
+					flow.Tasks = append(flow.Tasks, task)
+				}
 			}
 		case "Task":
 			if len(ce.Args) == 0 {
 				c.errf("%v: cff.Task requires at least one argument", c.nodePosition(ce))
 				continue
 			}
-			flow.Tasks = append(flow.Tasks, c.compileTask(&flow, ce.Args[0], ce.Args[1:]))
+			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
+				flow.Tasks = append(flow.Tasks, task)
+			}
 		default:
 			c.errf("%v: undefined cff function %q", c.nodePosition(ce), f.Name())
 		}
@@ -368,20 +373,41 @@ type task struct {
 	FallbackWith []ast.Expr
 }
 
-func (c *compiler) compileTask(flow *flow, f ast.Expr, opts []ast.Expr) *task {
-	typ := c.info.TypeOf(f)
+func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task {
+	typ := c.info.TypeOf(expr)
+
+	// Support nested cff.Task annotation.
+	if typ.String() == flowOption {
+		var nestedExpr = expr.(*ast.CallExpr)
+		f := typeutil.StaticCallee(c.info, nestedExpr)
+		if f == nil || !isPackagePathEquivalent(f.Pkg(), cffImportPath) {
+			c.errf("%v: expected cff call but got %v", c.nodePosition(nestedExpr),
+				typeutil.Callee(c.info, nestedExpr))
+			return nil
+		}
+		if f.Name() != "Task" {
+			c.errf("%v: expected cff.Task, got cff.%v; only cff.Task is allowed to be nested"+
+				" under cff.Tasks", c.nodePosition(nestedExpr), f.Name())
+			return nil
+		}
+		// Shifting arguments to get to function call within cff.Task.
+		expr = nestedExpr.Args[0]
+		opts = nestedExpr.Args[1:]
+		typ = c.info.TypeOf(expr)
+	}
 	sig, ok := typ.(*types.Signature)
+
 	if !ok {
-		c.errf("%v: expected function, got %v", c.nodePosition(f), typ)
+		c.errf("%v: expected function, got %v", c.nodePosition(expr), typ)
 		return nil
 	}
 
 	if sig.Variadic() {
-		c.errf("%v: variadic functions are not yet supported", c.nodePosition(f))
+		c.errf("%v: variadic functions are not yet supported", c.nodePosition(expr))
 		return nil
 	}
 
-	t := task{Sig: sig, Node: f, Serial: c.taskSerial}
+	t := task{Sig: sig, Node: expr, Serial: c.taskSerial}
 	c.taskSerial++
 
 	params := sig.Params()

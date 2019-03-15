@@ -33,7 +33,7 @@ to use this.
     that's the caller's choice, and therefore their responsibility.
 
 [ ] Usability improvements
-    [ ] Tasks should support Task(..) calls. This should be as simple as
+    [x] Tasks should support Task(..) calls. This should be as simple as
         checking if the passed expression has type FlowOption instead of
         allowing only functions.
     [ ] FallbackWith should verify that the provided function actually has the

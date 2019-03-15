@@ -147,6 +147,79 @@ func SimpleFlow() (string, error) {
 	return message, err
 }
 
+// SimpleFlowNested has a cff.Task task within cff.Tasks.
+func SimpleFlowNested() (string, error) {
+	var message string
+	err := func(ctx context.Context, v1 int) (err error) {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		var (
+			wg0   sync.WaitGroup
+			once0 sync.Once
+		)
+
+		wg0.Add(1)
+		var v2 int64
+		go func() {
+			defer wg0.Done()
+
+			v2 = func() int64 {
+				return int64(1)
+			}()
+
+		}()
+
+		wg0.Wait()
+		if err != nil {
+
+			return err
+		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once0
+			_ = &v2
+		)
+
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		var (
+			wg1   sync.WaitGroup
+			once1 sync.Once
+		)
+
+		wg1.Add(1)
+		var v5 string
+		go func() {
+			defer wg1.Done()
+
+			v5 = func(int64, int) string {
+				return "foo"
+			}(v2, v1)
+
+		}()
+
+		wg1.Wait()
+		if err != nil {
+
+			return err
+		}
+
+		// Prevent variable unused errors.
+		var (
+			_ = &once1
+			_ = &v5
+		)
+
+		*(&message) = v5
+
+		return err
+	}(context.Background(), 1)
+	return message, err
+}
+
 // NoParamsFlow is a flow that does not accept any parameters.
 func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 	var r io.Reader
@@ -237,17 +310,17 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 
 		wg0.Add(1)
 		var v8 t1
-		var err6 error
+		var err8 error
 		go func() {
 			defer wg0.Done()
 
-			v8, err6 = func() (t1, error) {
+			v8, err8 = func() (t1, error) {
 				return t1{}, f1()
 			}()
-			if err6 != nil {
+			if err8 != nil {
 
 				once0.Do(func() {
-					err = err6
+					err = err8
 				})
 			}
 
@@ -275,17 +348,17 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 
 		wg1.Add(1)
 		var v9 t2
-		var err7 error
+		var err9 error
 		go func() {
 			defer wg1.Done()
 
-			v9, err7 = func(t1) (t2, error) {
+			v9, err9 = func(t1) (t2, error) {
 				return t2{}, f2()
 			}(v8)
-			if err7 != nil {
+			if err9 != nil {
 
 				once1.Do(func() {
-					err = err7
+					err = err9
 				})
 			}
 

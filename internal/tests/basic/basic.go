@@ -37,6 +37,25 @@ func SimpleFlow() (string, error) {
 	return message, err
 }
 
+// SimpleFlowNested has a cff.Task task within cff.Tasks.
+func SimpleFlowNested() (string, error) {
+	var message string
+	err := cff.Flow(
+		context.Background(),
+		cff.Params(1),
+		cff.Results(&message),
+		cff.Tasks(
+			func() int64 {
+				return int64(1)
+			},
+			cff.Task(func(int64, int) string {
+				return "foo"
+			}),
+		),
+	)
+	return message, err
+}
+
 // NoParamsFlow is a flow that does not accept any parameters.
 func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 	var r io.Reader
