@@ -256,11 +256,11 @@ func (c *compiler) validateTasks(f *flow) {
 	var (
 		queue      = list.New() // []type.Type
 		visited    typeutil.Map // map[types.Type]struct{}
-		flowInputs typeutil.Map // map[types.Type]struct{}
+		flowInputs typeutil.Map // map[types.Type]*input
 	)
 
 	for _, i := range f.Inputs {
-		flowInputs.Set(i.Type, struct{}{})
+		flowInputs.Set(i.Type, i)
 	}
 
 	for _, o := range f.Outputs {
@@ -296,8 +296,12 @@ func (c *compiler) validateTasks(f *flow) {
 	}
 
 	if flowInputs.Len() > 0 {
-		// TODO: ordering is unspecified so sort
-		c.errf("unused inputs: %v", flowInputs.KeysString())
+		inputs := flowInputs.Keys()
+		for _, inputType := range inputs {
+			inputUntyped := flowInputs.At(inputType)
+			input := inputUntyped.(*input)
+			c.errf("%v: unused input type %v", c.nodePosition(input.Node), input)
+		}
 	}
 }
 
