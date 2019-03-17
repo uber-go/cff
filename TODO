@@ -16,7 +16,7 @@ to use this.
     [ ] Task errors for concurrent tasks
     [ ] Recovery in concurrent tasks
 
-[ ] Naming
+[x] Naming
     [x] Rename Provide to Params or Args. Users may end up confusing the
         behavior of cff.Provide with fx.Provide.
     [x] Rename Result to Results if using Params or Returns if using Args.
@@ -32,11 +32,11 @@ to use this.
     goroutine). We SHOULD NOT capture top-level panics in the flow because
     that's the caller's choice, and therefore their responsibility.
 
-[ ] Usability improvements
+[x] Usability improvements
     [x] Tasks should support Task(..) calls. This should be as simple as
         checking if the passed expression has type FlowOption instead of
         allowing only functions.
-    [ ] FallbackWith should verify that the provided function actually has the
+    [x] FallbackWith should verify that the provided function actually has the
         ability to return errors.
 
 [x] Logging

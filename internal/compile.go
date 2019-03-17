@@ -477,7 +477,22 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 					"expected %v, got %v", c.nodePosition(opt), len(t.Outputs), len(errResults))
 				continue
 			}
-
+			// Verify that Task returns an error for FallbackWith to be used.
+			// TODO: Test this condition once we create true negative tests.
+			var hasError = false
+			results := t.Sig.Results()
+			for i := 0; i < results.Len(); i++ {
+				result := results.At(i)
+				rtype := result.Type()
+				if isError(rtype) {
+					// Found error.
+					hasError = true
+				}
+			}
+			if !hasError {
+				c.errf("%v: Task must return an error for FallbackWith to be used", c.nodePosition(opt))
+				continue
+			}
 			for i, er := range errResults {
 				give := c.info.TypeOf(er)
 				want := t.Outputs[i]
