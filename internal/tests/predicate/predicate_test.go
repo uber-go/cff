@@ -23,6 +23,18 @@ func TestSimplePredicate(t *testing.T) {
 	})
 }
 
+func TestSimpleWithContextTask(t *testing.T) {
+	require.NoError(t, SimpleWithContextTask())
+}
+
+func TestSimpleWithContextPredicate(t *testing.T) {
+	require.NoError(t, SimpleWithContextPredicate())
+}
+
+func TestSimpleWithContextAndPredicate(t *testing.T) {
+	require.NoError(t, SimpleWithContextTaskAndPredicate())
+}
+
 func TestExtraDependencies(t *testing.T) {
 	require.NoError(t, ExtraDependencies())
 }

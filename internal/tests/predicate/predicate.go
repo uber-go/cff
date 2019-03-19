@@ -25,6 +25,66 @@ func Simple(f func(), pred bool) error {
 	)
 }
 
+// SimpleWithContextTask is a task flow which checks that context can be passed into Task w/out
+// errors.
+func SimpleWithContextTask() error {
+	var s string
+	return cff.Flow(
+		context.Background(),
+		cff.Results(&s),
+		cff.Params(int64(2)),
+		cff.Task(
+			func(ctx context.Context) string {
+				return "foo"
+			},
+			cff.Predicate(
+				func(int64) bool {
+					return false
+				}),
+		),
+	)
+}
+
+// SimpleWithContextPredicate is a task flow which checks that context can be passed into
+// Predicate but not Task.
+func SimpleWithContextPredicate() error {
+	var s string
+	return cff.Flow(
+		context.Background(),
+		cff.Results(&s),
+		cff.Params(int64(2)),
+		cff.Task(
+			func() string {
+				return "foo"
+			},
+			cff.Predicate(
+				func(context.Context, int64) bool {
+					return false
+				}),
+		),
+	)
+}
+
+// SimpleWithContextTaskAndPredicate is a task flow which checks that context can be passed into
+// Predicate and Task.
+func SimpleWithContextTaskAndPredicate() error {
+	var s string
+	return cff.Flow(
+		context.Background(),
+		cff.Results(&s),
+		cff.Params(int64(2)),
+		cff.Task(
+			func(ctx context.Context) string {
+				return "foo"
+			},
+			cff.Predicate(
+				func(context.Context, int64) bool {
+					return false
+				}),
+		),
+	)
+}
+
 // ExtraDependencies is a task flow where the predicate has more dependencies
 // than the task.
 func ExtraDependencies() error {

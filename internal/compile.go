@@ -550,24 +550,29 @@ func (c *compiler) compilePredicate(t *task, call *ast.CallExpr) *predicate {
 		c.errf("%v: the function must return a single boolean result", c.nodePosition(fn))
 		return nil
 	}
-
+	var wantCtx = false
 	params := sig.Params()
 	var inputs []types.Type
 	for i := 0; i < params.Len(); i++ {
 		param := params.At(i)
 		ptype := param.Type()
-		if isContext(ptype) {
-			// TODO(abg): We can support this pretty easily.
-			c.errf("%v: cff.Predicate may not depend on the context", c.position(param.Pos()))
-		} else {
+		if !isContext(ptype) {
 			inputs = append(inputs, ptype)
+			continue
 		}
+		// TODO: Test this condition once true negative tests are ready.
+		if i != 0 {
+			c.errf("%v: only the first argument may be context.Context", c.position(param.Pos()))
+			return nil
+		}
+		wantCtx = true
 	}
 
 	t.Dependencies = append(t.Dependencies, inputs...)
 	return &predicate{
-		Node:   fn,
-		Inputs: inputs,
+		Node:    fn,
+		Inputs:  inputs,
+		WantCtx: wantCtx,
 	}
 }
 
