@@ -116,3 +116,6 @@ handled.
 
 [ ] Decorators. Optionally, we may want to support full-fledged decorators
     which have access to the arguments and results as `interface{}`s.
+
+[ ] IDE plugin. When you go-to-definition of a flow, it goes to the generated code
+    rather than the flow definition.
