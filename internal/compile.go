@@ -37,11 +37,10 @@ func newCompiler(fset *token.FileSet, info *types.Info, pkg *types.Package) *com
 	}
 }
 
-func (c *compiler) errf(msg string, args ...interface{}) {
-	if len(args) > 0 {
-		msg = fmt.Sprintf(msg, args...)
-	}
-	c.errors = append(c.errors, errors.New(msg))
+func (c *compiler) errf(msg string, pos token.Position, args ...interface{}) {
+	formattedMsg := fmt.Sprintf("%v: ", pos) + fmt.Sprintf(msg, args...)
+
+	c.errors = append(c.errors, errors.New(formattedMsg))
 }
 
 func (c *compiler) position(pos token.Pos) token.Position {
@@ -123,7 +122,7 @@ func (c *compiler) compileFile(astFile *ast.File) *file {
 			}
 
 			if fn.Name() != "Flow" {
-				c.errf("%v: unknown top-level cff function %q: "+
+				c.errf("unknown top-level cff function %q: "+
 					"only cff.Flow may be called at the top-level", c.nodePosition(n), fn.Name())
 			} else {
 				file.Flows = append(file.Flows, c.compileFlow(astFile, n))
@@ -184,7 +183,7 @@ func (f *flow) addNoOutput() *noOutput {
 
 func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 	if len(call.Args) == 0 {
-		c.errf("%v: ctf.Flow expects at least one argument", c.nodePosition(call))
+		c.errf("ctf.Flow expects at least one argument", c.nodePosition(call))
 		return nil
 	}
 
@@ -197,14 +196,14 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 		arg := astutil.Unparen(arg)
 		ce, ok := arg.(*ast.CallExpr)
 		if !ok {
-			c.errf("%v: expected a function call, got %v",
+			c.errf("expected a function call, got %v",
 				c.nodePosition(arg), astutil.NodeDescription(arg))
 			continue
 		}
 
 		f := typeutil.StaticCallee(c.info, ce)
 		if f == nil || !isPackagePathEquivalent(f.Pkg(), cffImportPath) {
-			c.errf("%v: expected cff call but got %v", c.nodePosition(arg), typeutil.Callee(c.info, ce))
+			c.errf("expected cff call but got %v", c.nodePosition(arg), typeutil.Callee(c.info, ce))
 			continue
 		}
 
@@ -231,14 +230,14 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			}
 		case "Task":
 			if len(ce.Args) == 0 {
-				c.errf("%v: cff.Task requires at least one argument", c.nodePosition(ce))
+				c.errf("cff.Task requires at least one argument", c.nodePosition(ce))
 				continue
 			}
 			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
 				flow.Tasks = append(flow.Tasks, task)
 			}
 		default:
-			c.errf("%v: undefined cff function %q", c.nodePosition(ce), f.Name())
+			c.errf("undefined cff function %q", c.nodePosition(ce), f.Name())
 		}
 	}
 	c.validateInstrument(&flow)
@@ -249,7 +248,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			if prev != nil {
 				pIdx := prev.(int)
 				p := flow.Tasks[pIdx]
-				c.errf("%v: type %v already provided at %v",
+				c.errf("type %v already provided at %v",
 					c.nodePosition(t), o, c.nodePosition(p))
 				continue
 			}
@@ -279,11 +278,18 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 	return &flow
 }
 
+type validateVisitedType struct {
+	Type types.Type
+
+	// Node is the place in the code (either a task or a flow output) that we needed the type
+	Node ast.Node
+}
+
 // validateTasks walks the graph from the bottom of the graph (the outputs) to validate that
 // all outputs are provided by some function.
 func (c *compiler) validateTasks(f *flow) {
 	var (
-		queue      = list.New() // []type.Type
+		queue      = list.New() // []validateVisitedType
 		visited    typeutil.Map // map[types.Type]struct{}
 		flowInputs typeutil.Map // map[types.Type]*input
 	)
@@ -293,38 +299,37 @@ func (c *compiler) validateTasks(f *flow) {
 	}
 
 	for _, o := range f.Outputs {
-		queue.PushBack(o.Type)
+		queue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
 	}
 	for _, o := range f.noOutputs {
-		queue.PushBack(o.Type)
+		queue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
 	}
 
 	for queue.Len() > 0 {
-		t := queue.Remove(queue.Front()).(types.Type)
+		t := queue.Remove(queue.Front()).(validateVisitedType)
 
-		if visited.At(t) != nil {
+		if visited.At(t.Type) != nil {
 			// Two tasks can depend on the same input, and that is OK, but
 			// we cannot allow cycles. Skip processing of a task that has
 			// already been processed and handle cycle detection at a separate stage.
 			continue
 		}
-		visited.Set(t, struct{}{})
+		visited.Set(t.Type, struct{}{})
 
-		if taskIdx, ok := f.providers.At(t).(int); ok {
+		if taskIdx, ok := f.providers.At(t.Type).(int); ok {
 			task := f.Tasks[taskIdx]
 			for _, i := range task.Dependencies {
-				queue.PushBack(i)
+				queue.PushBack(validateVisitedType{Type: i, Node: task.Node})
 			}
 
 			continue
 		}
 
-		if flowInputs.Delete(t) {
+		if flowInputs.Delete(t.Type) {
 			continue
 		}
 
-		// TODO: include path
-		c.errf("no provider found for %v", t)
+		c.errf("no provider found for %v", c.nodePosition(t.Node), t)
 	}
 
 	if flowInputs.Len() > 0 {
@@ -332,7 +337,7 @@ func (c *compiler) validateTasks(f *flow) {
 		for _, inputType := range inputs {
 			inputUntyped := flowInputs.At(inputType)
 			input := inputUntyped.(*input)
-			c.errf("%v: unused input type %v", c.nodePosition(input.Node), input)
+			c.errf("unused input type %v", c.nodePosition(input.Node), input)
 		}
 	}
 }
@@ -340,7 +345,7 @@ func (c *compiler) validateTasks(f *flow) {
 func (c *compiler) validateInstrument(f *flow) {
 	if f.ObservabilityEnabled {
 		if f.Metrics == nil || f.Logger == nil {
-			c.errf("v%: cff.Instrument requires a tally.Scope and *zap.Logger to be provided: use cff.Metrics and cff.Logger", c.nodePosition(f.Node))
+			c.errf("cff.Instrument requires a tally.Scope and *zap.Logger to be provided: use cff.Metrics and cff.Logger", c.nodePosition(f.Node))
 		}
 	}
 }
@@ -417,12 +422,12 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 		var nestedExpr = expr.(*ast.CallExpr)
 		f := typeutil.StaticCallee(c.info, nestedExpr)
 		if f == nil || !isPackagePathEquivalent(f.Pkg(), cffImportPath) {
-			c.errf("%v: expected cff call but got %v", c.nodePosition(nestedExpr),
+			c.errf("expected cff call but got %v", c.nodePosition(nestedExpr),
 				typeutil.Callee(c.info, nestedExpr))
 			return nil
 		}
 		if f.Name() != "Task" {
-			c.errf("%v: expected cff.Task, got cff.%v; only cff.Task is allowed to be nested"+
+			c.errf("expected cff.Task, got cff.%v; only cff.Task is allowed to be nested"+
 				" under cff.Tasks", c.nodePosition(nestedExpr), f.Name())
 			return nil
 		}
@@ -434,12 +439,12 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 	sig, ok := typ.(*types.Signature)
 
 	if !ok {
-		c.errf("%v: expected function, got %v", c.nodePosition(expr), typ)
+		c.errf("expected function, got %v", c.nodePosition(expr), typ)
 		return nil
 	}
 
 	if sig.Variadic() {
-		c.errf("%v: variadic functions are not yet supported", c.nodePosition(expr))
+		c.errf("variadic functions are not yet supported", c.nodePosition(expr))
 		return nil
 	}
 
@@ -456,7 +461,7 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 		}
 
 		if i != 0 {
-			c.errf("%v: only the first argument may be context.Context", c.position(param.Pos()))
+			c.errf("only the first argument may be context.Context", c.position(param.Pos()))
 			return nil
 		}
 		t.WantCtx = true
@@ -473,7 +478,7 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 		}
 
 		if i != results.Len()-1 {
-			c.errf("%v: only the last result may be an error", c.position(result.Pos()))
+			c.errf("only the last result may be an error", c.position(result.Pos()))
 			return nil
 		}
 		t.HasError = true
@@ -492,19 +497,19 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 		// All options are function calls right now.
 		call, ok := opt.(*ast.CallExpr)
 		if !ok {
-			c.errf("%v: expected a function call, got %v", c.nodePosition(opt), astutil.NodeDescription(opt))
+			c.errf("expected a function call, got %v", c.nodePosition(opt), astutil.NodeDescription(opt))
 			continue
 		}
 
 		sel, ok := call.Fun.(*ast.SelectorExpr)
 		if !ok {
-			c.errf("%v: only cff functions may be passed as task options", c.nodePosition(opt))
+			c.errf("only cff functions may be passed as task options", c.nodePosition(opt))
 			continue
 		}
 
 		fn := c.info.Uses[sel.Sel]
 		if fn == nil || !isPackagePathEquivalent(fn.Pkg(), cffImportPath) {
-			c.errf("%v: only cff functions may be passed as task options: "+
+			c.errf("only cff functions may be passed as task options: "+
 				"found package %q", c.nodePosition(opt), fn.Pkg().Path())
 			continue
 		}
@@ -513,7 +518,7 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 		case "FallbackWith":
 			errResults := call.Args
 			if len(errResults) != len(t.Outputs) {
-				c.errf("%v: cff.FallbackWith must produce the same number of results as the task: "+
+				c.errf("cff.FallbackWith must produce the same number of results as the task: "+
 					"expected %v, got %v", c.nodePosition(opt), len(t.Outputs), len(errResults))
 				continue
 			}
@@ -530,14 +535,14 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 				}
 			}
 			if !hasError {
-				c.errf("%v: Task must return an error for FallbackWith to be used", c.nodePosition(opt))
+				c.errf("Task must return an error for FallbackWith to be used", c.nodePosition(opt))
 				continue
 			}
 			for i, er := range errResults {
 				give := c.info.TypeOf(er)
 				want := t.Outputs[i]
 				if !types.AssignableTo(give, want) {
-					c.errf("%v: cff.FallbackWith result at position %v of type %v cannot be used as %v",
+					c.errf("cff.FallbackWith result at position %v of type %v cannot be used as %v",
 						c.nodePosition(er), i+1, give, want)
 				}
 			}
@@ -548,7 +553,7 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 		case "Instrument":
 			t.Instrument = c.compileInstrument(flow, call)
 		default:
-			c.errf("%v: unknown task option %q", c.nodePosition(opt), fn.Name())
+			c.errf("unknown task option %q", c.nodePosition(opt), fn.Name())
 		}
 	}
 }
@@ -562,7 +567,7 @@ type predicate struct {
 
 func (c *compiler) compilePredicate(t *task, call *ast.CallExpr) *predicate {
 	if len(call.Args) != 1 {
-		c.errf("%v: cff.Predicate accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
+		c.errf("cff.Predicate accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
 		return nil
 	}
 
@@ -571,23 +576,23 @@ func (c *compiler) compilePredicate(t *task, call *ast.CallExpr) *predicate {
 
 	sig, ok := fnType.(*types.Signature)
 	if !ok {
-		c.errf("%v: cff.Predicate expected a function but received %v", c.nodePosition(fn), fnType)
+		c.errf("cff.Predicate expected a function but received %v", c.nodePosition(fn), fnType)
 		return nil
 	}
 
 	if sig.Variadic() {
-		c.errf("%v: variadic functions are not yet supported", c.nodePosition(fn))
+		c.errf("variadic functions are not yet supported", c.nodePosition(fn))
 		return nil
 	}
 
 	results := sig.Results()
 	if results.Len() != 1 {
-		c.errf("%v: the function must return a single boolean result", c.nodePosition(fn))
+		c.errf("the function must return a single boolean result", c.nodePosition(fn))
 		return nil
 	}
 
 	if rtype, ok := results.At(0).Type().(*types.Basic); !ok || rtype.Kind() != types.Bool {
-		c.errf("%v: the function must return a single boolean result", c.nodePosition(fn))
+		c.errf("the function must return a single boolean result", c.nodePosition(fn))
 		return nil
 	}
 	var wantCtx = false
@@ -602,7 +607,7 @@ func (c *compiler) compilePredicate(t *task, call *ast.CallExpr) *predicate {
 		}
 		// TODO: Test this condition once true negative tests are ready.
 		if i != 0 {
-			c.errf("%v: only the first argument may be context.Context", c.position(param.Pos()))
+			c.errf("only the first argument may be context.Context", c.position(param.Pos()))
 			return nil
 		}
 		wantCtx = true
@@ -623,7 +628,7 @@ type instrument struct {
 func (c *compiler) compileInstrument(flow *flow, call *ast.CallExpr) *instrument {
 	// TODO(jacobg): Accept additional tags
 	if len(call.Args) != 1 {
-		c.errf("%v: cff.Instrument accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
+		c.errf("cff.Instrument accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
 		return nil
 	}
 
@@ -632,7 +637,7 @@ func (c *compiler) compileInstrument(flow *flow, call *ast.CallExpr) *instrument
 	name := call.Args[0]
 	nameType := c.info.TypeOf(name)
 	if nt, ok := nameType.(*types.Basic); !ok || nt.Kind() != types.String {
-		c.errf("%v: cff.Instrument accepts a single string argument, got %v", c.nodePosition(name), nameType)
+		c.errf("cff.Instrument accepts a single string argument, got %v", c.nodePosition(name), nameType)
 		return nil
 	}
 
@@ -666,7 +671,7 @@ func (c *compiler) compileOutput(o ast.Expr) *output {
 	t := c.info.TypeOf(o)
 	p, ok := t.(*types.Pointer)
 	if !ok {
-		c.errf("%v: invalid parameter to cff.Results: "+
+		c.errf("invalid parameter to cff.Results: "+
 			"expected pointer, got %v", c.nodePosition(o), t)
 		return nil
 	}
@@ -679,7 +684,7 @@ func (c *compiler) compileOutput(o ast.Expr) *output {
 
 func (c *compiler) compileMetrics(flow *flow, call *ast.CallExpr) ast.Expr {
 	if len(call.Args) != 1 {
-		c.errf("%v: cff.Metrics accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
+		c.errf("cff.Metrics accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
 		return nil
 	}
 
@@ -688,7 +693,7 @@ func (c *compiler) compileMetrics(flow *flow, call *ast.CallExpr) ast.Expr {
 
 func (c *compiler) compileLogger(flow *flow, call *ast.CallExpr) ast.Expr {
 	if len(call.Args) != 1 {
-		c.errf("%v: cff.Logger accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
+		c.errf("cff.Logger accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
 		return nil
 	}
 
