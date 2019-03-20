@@ -26,7 +26,9 @@ func SimpleFlow() (string, error) {
 		)
 
 		wg0.Add(1)
+
 		var v2 int64
+
 		go func() {
 			defer wg0.Done()
 
@@ -68,6 +70,7 @@ func SimpleFlow() (string, error) {
 		)
 
 		wg1.Add(2)
+
 		var v3 *foo
 		var err1 error
 		go func() {
@@ -95,6 +98,7 @@ func SimpleFlow() (string, error) {
 			}
 
 		}()
+
 		var v4 *bar
 		var err2 error
 		go func() {
@@ -145,6 +149,7 @@ func SimpleFlow() (string, error) {
 		)
 
 		wg2.Add(1)
+
 		var v5 string
 		var err3 error
 		go func() {
@@ -205,7 +210,9 @@ func SimpleFlowNested() (string, error) {
 		)
 
 		wg0.Add(1)
+
 		var v2 int64
+
 		go func() {
 			defer wg0.Done()
 
@@ -247,7 +254,9 @@ func SimpleFlowNested() (string, error) {
 		)
 
 		wg1.Add(1)
+
 		var v5 string
+
 		go func() {
 			defer wg1.Done()
 
@@ -300,7 +309,9 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 		)
 
 		wg0.Add(1)
+
 		var v6 *bytes.Buffer
+
 		go func() {
 			defer wg0.Done()
 
@@ -342,7 +353,9 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 		)
 
 		wg1.Add(1)
+
 		var v7 io.Reader
+
 		go func() {
 			defer wg1.Done()
 
@@ -398,6 +411,7 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 		)
 
 		wg0.Add(1)
+
 		var v8 t1
 		var err8 error
 		go func() {
@@ -447,6 +461,7 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 		)
 
 		wg1.Add(1)
+
 		var v9 t2
 		var err9 error
 		go func() {
@@ -496,7 +511,9 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 		)
 
 		wg2.Add(1)
+
 		var v10 t3
+
 		go func() {
 			defer wg2.Done()
 
@@ -561,10 +578,10 @@ func ProduceMultiple() error {
 		)
 
 		wg0.Add(1)
-		var (
-			v12 t2
-			v13 t3
-		)
+
+		var v12 t2
+		var v13 t3
+
 		go func() {
 			defer wg0.Done()
 
@@ -607,7 +624,9 @@ func ProduceMultiple() error {
 		)
 
 		wg1.Add(1)
+
 		var v14 t4
+
 		go func() {
 			defer wg1.Done()
 

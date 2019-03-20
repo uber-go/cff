@@ -162,6 +162,24 @@ type flow struct {
 	ObservabilityEnabled bool
 
 	providers *typeutil.Map // map[types.Type]int (index in Tasks)
+
+	noOutputCounter int       // input for unique noOutput name
+	noOutputs       []*output // tracks tasks of no non-error results
+}
+
+// addNoOutput adds a unique noOutput sentinel type to the noOutputs list.
+// The breadth-first searching algorithm visits based on result types, but
+// functions with no return values would not be visited since no function can
+// depend on its outputs and therefore would not be visited or included in the graph.
+// addNoOutput creates a unique sentinel type so that we can pretend that this
+// function is needed to provide the sentinel type for scheduling purposes.
+func (f *flow) addNoOutput() *noOutput {
+	f.noOutputCounter++
+	name := strconv.Itoa(f.noOutputCounter)
+	field := types.NewVar(0, nil, name, &types.Struct{})
+	no := types.NewStruct([]*types.Var{field}, nil)
+	f.noOutputs = append(f.noOutputs, &output{Type: no})
+	return no
 }
 
 func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
@@ -236,6 +254,12 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 				continue
 			}
 		}
+		if t.noOutput != nil {
+			prev := flow.providers.Set(t.noOutput, i)
+			if prev != nil {
+				panic(fmt.Sprintf("cff assertion error: noOutput sentinel types should be unique, found %T for %dth task (defined at %v), expected to be nil", prev, i, t.Node))
+			}
+		}
 	}
 
 	c.validateTasks(&flow)
@@ -269,6 +293,9 @@ func (c *compiler) validateTasks(f *flow) {
 	}
 
 	for _, o := range f.Outputs {
+		queue.PushBack(o.Type)
+	}
+	for _, o := range f.noOutputs {
 		queue.PushBack(o.Type)
 	}
 
@@ -336,6 +363,9 @@ func (c *compiler) scheduleFlow(f *flow) {
 	for _, o := range f.Outputs {
 		g.Roots = append(g.Roots, f.providers.At(o.Type).(int))
 	}
+	for _, o := range f.noOutputs {
+		g.Roots = append(g.Roots, f.providers.At(o.Type).(int))
+	}
 
 	var schedule [][]*task
 	for _, idxSet := range scheduleGraph(g) {
@@ -371,7 +401,13 @@ type task struct {
 	Predicate    *predicate  // non-nil if Predicate was provided
 	Instrument   *instrument // non-nil if Scope and Logger were provided
 	FallbackWith []ast.Expr
+
+	noOutput *noOutput // non-nil if there are no non-error results
 }
+
+// noOutput is a sentinel return type for tasks that have no non-error results.
+// It can not be custom defined type, otherwise it won't work with typeutil.Map.
+type noOutput = types.Struct
 
 func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task {
 	typ := c.info.TypeOf(expr)
@@ -441,6 +477,10 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 			return nil
 		}
 		t.HasError = true
+	}
+
+	if results.Len() == 0 || (results.Len() == 1 && t.HasError) {
+		t.noOutput = flow.addNoOutput()
 	}
 
 	c.interpretTaskOptions(flow, &t, opts)

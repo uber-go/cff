@@ -1,0 +1,46 @@
+load("//.macros:go_binary.bzl", "go_binary")
+load("//.macros:go_library.bzl", "go_library")
+load("//.macros:go_linter.bzl", "go_linter")
+load("//.macros:go_test.bzl", "go_test")
+
+go_test(
+    name = "internal_tests",
+    coverage_mode = "set",
+    deps = ["//third-party/github.com/stretchr/testify/assert:lib"],
+    library = ":lib",
+    srcs = glob(include = ["*_test.go"]),
+)
+
+go_library(
+    name = "lib",
+    package_name = "go.uber.org/cff/internal/tests/noresults",
+    srcs = glob(
+        include = ["*.go"],
+        exclude = ["*_test.go"],
+    ),
+    tests = [":internal_tests"],
+    visibility = ["PUBLIC"],
+)
+
+go_linter(
+    name = "linter",
+    srcs = glob(
+        include = ["*.go"],
+        exclude = [
+            "mock_*.go",
+            "mocks.go",
+            "*_mock.go",
+            "*_mock_test.go",
+            "*_string.go",
+        ],
+    ),
+)
+
+go_binary(
+    name = "noresults",
+    srcs = glob(
+        include = ["*.go"],
+        exclude = ["*_test.go"],
+    ),
+    visibility = ["PUBLIC"],
+)

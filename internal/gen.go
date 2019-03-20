@@ -305,7 +305,7 @@ logger *{{ $zap }}.Logger,
 				{{ if .Predicate }}
 					if {{ template "callTask" .Predicate }} {
 				{{ end }}
-				{{ template "taskResultList" . }} = {{ template "callTask" . }}
+				{{ template "taskResultList" . }}{{ if or .HasError (len .Outputs) }} = {{ end }}{{ template "callTask" . }}
 				{{ if .HasError -}}
 					if {{ $serr }} != nil {
 						{{ if .FallbackWith -}}
@@ -377,24 +377,16 @@ logger *{{ $zap }}.Logger,
 {{- end -}}
 
 {{- define "taskResultVarDecl" -}}
-{{ if eq (len .Outputs) 1 -}}
-	{{ range .Outputs }}var v{{ typeHash . }} {{ type . }}{{ end }}
-	{{- if .HasError }}
-	var {{ printf "err%d" .Serial }} error{{ end }}
-{{- else -}}
-	var (
-		{{ range .Outputs -}}
-			v{{ typeHash . }} {{ type . }}
-		{{ end }}
-		{{- if .HasError }}{{ printf "err%d" .Serial }} error{{ end }}
-	)
+{{ range .Outputs }}
+var v{{ typeHash . }} {{ type . }}
 {{- end }}
+{{ if .HasError }}var {{ printf "err%d" .Serial }} error{{ end }}
 {{- end -}}
 
 {{- define "taskResultList" -}}
 {{- range $i, $t := .Outputs -}}
 	{{ if gt $i 0 }},{{ end }}v{{ typeHash $t }}
-{{- end }}{{ if .HasError }}, {{ printf "err%d" .Serial }}{{ end }}
+{{- end }}{{ if .HasError }}{{ if len .Outputs }}, {{ end }}{{ printf "err%d" .Serial }}{{ end }}
 {{- end -}}
 
 {{- define "callTask" -}}

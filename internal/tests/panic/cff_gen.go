@@ -39,7 +39,9 @@ func (p *panicker) FlowPanicsParallel() error {
 		)
 
 		wg0.Add(2)
+
 		var v1 string
+
 		go func() {
 			defer wg0.Done()
 			tags := map[string]string{"name": "T1"}
@@ -66,7 +68,9 @@ func (p *panicker) FlowPanicsParallel() error {
 			}()
 
 		}()
+
 		var v2 int64
+
 		go func() {
 			defer wg0.Done()
 
@@ -111,7 +115,9 @@ func (p *panicker) FlowPanicsParallel() error {
 		)
 
 		wg1.Add(1)
+
 		var v3 bool
+
 		go func() {
 			defer wg1.Done()
 
@@ -182,7 +188,9 @@ func (p *panicker) FlowPanicsSerial() error {
 		)
 
 		wg0.Add(1)
+
 		var v1 string
+
 		go func() {
 			defer wg0.Done()
 			tags := map[string]string{"name": "T1"}

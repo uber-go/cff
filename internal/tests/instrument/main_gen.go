@@ -62,6 +62,7 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 		)
 
 		wg0.Add(1)
+
 		var v2 int
 		var err0 error
 		go func() {
@@ -126,6 +127,7 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 		)
 
 		wg1.Add(1)
+
 		var v3 uint8
 		var err1 error
 		go func() {
@@ -217,6 +219,7 @@ func (h *h) do(ctx context.Context, req string) (res int, err error) {
 		)
 
 		wg0.Add(1)
+
 		var v2 int
 		var err2 error
 		go func() {
@@ -297,6 +300,7 @@ func (h *h) work(ctx context.Context, req string) (res int, err error) {
 		)
 
 		wg0.Add(1)
+
 		var v2 int
 		var err3 error
 		go func() {

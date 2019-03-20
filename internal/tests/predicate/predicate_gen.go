@@ -22,7 +22,9 @@ func Simple(f func(), pred bool) error {
 		)
 
 		wg0.Add(1)
+
 		var v1 string
+
 		go func() {
 			defer wg0.Done()
 
@@ -80,7 +82,9 @@ func SimpleWithContextTask() error {
 		)
 
 		wg0.Add(1)
+
 		var v1 string
+
 		go func() {
 			defer wg0.Done()
 
@@ -139,7 +143,9 @@ func SimpleWithContextPredicate() error {
 		)
 
 		wg0.Add(1)
+
 		var v1 string
+
 		go func() {
 			defer wg0.Done()
 
@@ -198,7 +204,9 @@ func SimpleWithContextTaskAndPredicate() error {
 		)
 
 		wg0.Add(1)
+
 		var v1 string
+
 		go func() {
 			defer wg0.Done()
 
@@ -261,7 +269,9 @@ func ExtraDependencies() error {
 		)
 
 		wg0.Add(2)
+
 		var v4 t1
+
 		go func() {
 			defer wg0.Done()
 
@@ -279,7 +289,9 @@ func ExtraDependencies() error {
 			v4 = func(int) t1 { return t1{} }(v3)
 
 		}()
+
 		var v5 t2
+
 		go func() {
 			defer wg0.Done()
 
@@ -320,7 +332,9 @@ func ExtraDependencies() error {
 		)
 
 		wg1.Add(2)
+
 		var v1 string
+
 		go func() {
 			defer wg1.Done()
 
@@ -338,7 +352,9 @@ func ExtraDependencies() error {
 			v1 = func(int) string { return "foo" }(v3)
 
 		}()
+
 		var v6 t3
+
 		go func() {
 			defer wg1.Done()
 

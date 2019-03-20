@@ -22,6 +22,7 @@ func Serial(e error, r string) (string, error) {
 		)
 
 		wg0.Add(1)
+
 		var v1 string
 		var err0 error
 		go func() {

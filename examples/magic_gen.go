@@ -59,10 +59,10 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		)
 
 		wg0.Add(1)
-		var (
-			v2 *GetManagerRequest
-			v3 *ListUsersRequest
-		)
+
+		var v2 *GetManagerRequest
+		var v3 *ListUsersRequest
+
 		go func() {
 			defer wg0.Done()
 
@@ -124,6 +124,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		)
 
 		wg1.Add(2)
+
 		var v4 *GetManagerResponse
 		var err1 error
 		go func() {
@@ -149,6 +150,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 
 		}()
+
 		var v5 *ListUsersResponse
 		var err4 error
 		go func() {
@@ -218,7 +220,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		)
 
 		wg2.Add(1)
+
 		var v6 []*SendEmailRequest
+
 		go func() {
 			defer wg2.Done()
 			tags := map[string]string{"name": "FormSendEmailRequest"}
@@ -278,6 +282,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		)
 
 		wg3.Add(1)
+
 		var v7 []*SendEmailResponse
 		var err2 error
 		go func() {
@@ -327,7 +332,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		)
 
 		wg4.Add(1)
+
 		var v8 *Response
+
 		go func() {
 			defer wg4.Done()
 

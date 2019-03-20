@@ -20,7 +20,9 @@ func run(ctx newctx.Context) error {
 		)
 
 		wg0.Add(1)
+
 		var v2 struct{}
+
 		go func() {
 			defer wg0.Done()
 
