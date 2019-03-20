@@ -27,7 +27,7 @@ to use this.
         imply that the function also catches panics, which is explicitly not
         going to be true.
 
-[ ] Panic Handling. We need to capture panics for tasks executed inside new
+[x] Panic Handling. We need to capture panics for tasks executed inside new
     goroutines and propagate them back to the flow's goroutine (the original
     goroutine). We SHOULD NOT capture top-level panics in the flow because
     that's the caller's choice, and therefore their responsibility.

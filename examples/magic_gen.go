@@ -4,6 +4,7 @@ package example
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"sync"
 
@@ -65,6 +66,17 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		go func() {
 			defer wg0.Done()
 
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
+
 			v2, v3 = func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
 				return &GetManagerRequest{
 						LDAPGroup: req.LDAPGroup,
@@ -117,6 +129,17 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		go func() {
 			defer wg1.Done()
 
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once1.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
+
 			v4, err1 = h.mgr.Get(v2)
 			if err1 != nil {
 
@@ -133,6 +156,20 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			tags := map[string]string{"name": "FormSendEmailRequest"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once1.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+						scope.Tagged(map[string]string{"name": "FormSendEmailRequest"}).Counter("task.panic").Inc(1)
+						logger.Error("task panic",
+							zap.String("name", "FormSendEmailRequest"),
+							zap.Stack("stack"),
+							zap.Error(recoveredErr))
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v5, err4 = h.users.List(v3)
 			if err4 != nil {
@@ -187,6 +224,20 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			tags := map[string]string{"name": "FormSendEmailRequest"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once2.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+						scope.Tagged(map[string]string{"name": "FormSendEmailRequest"}).Counter("task.panic").Inc(1)
+						logger.Error("task panic",
+							zap.String("name", "FormSendEmailRequest"),
+							zap.Stack("stack"),
+							zap.Error(recoveredErr))
+						err = recoveredErr
+					})
+				}
+			}()
 
 			if func(req *GetManagerRequest) bool {
 				return req.LDAPGroup != "everyone"
@@ -232,6 +283,17 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		go func() {
 			defer wg3.Done()
 
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once3.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
+
 			v7, err2 = h.ses.BatchSendEmail(v6)
 			if err2 != nil {
 
@@ -268,6 +330,17 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var v8 *Response
 		go func() {
 			defer wg4.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once4.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v8 = func(responses []*SendEmailResponse) *Response {
 				var r Response

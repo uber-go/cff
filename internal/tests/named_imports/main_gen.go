@@ -4,6 +4,7 @@ package foo
 
 import (
 	newctx "context"
+	"fmt"
 	"sync"
 )
 
@@ -22,6 +23,17 @@ func run(ctx newctx.Context) error {
 		var v2 struct{}
 		go func() {
 			defer wg0.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v2 = func(string) struct{} {
 				panic("don't call me")

@@ -4,6 +4,7 @@ package fallbackwith
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -25,6 +26,17 @@ func Serial(e error, r string) (string, error) {
 		var err0 error
 		go func() {
 			defer wg0.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v1, err0 = func() (string, error) {
 				return "foo", e

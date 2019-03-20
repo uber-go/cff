@@ -226,6 +226,7 @@ type flowTemplateData struct {
 
 const _tmpl = `
 {{- $context := import "context" -}}
+{{- $fmt := import "fmt" -}}
 {{- $schedule := .Flow.Schedule -}}
 {{- $flow := .Flow -}}
 {{- with .Flow -}}
@@ -284,6 +285,22 @@ logger *{{ $zap }}.Logger,
 					timer := scope.Tagged(tags).Timer("task.timing").Start()
 					defer timer.Stop()
 				{{- end }}
+				defer func() {
+					recovered := recover()
+					if recovered != nil {
+						{{ $once }}.Do(func() {
+							recoveredErr := {{ $fmt }}.Errorf("task panic: %v", recovered)
+							{{ if .Instrument -}}
+							scope.Tagged(map[string]string{"name": {{ expr .Instrument.Name }}}).Counter("task.panic").Inc(1)
+							logger.Error("task panic", 
+								zap.String("name", {{ expr .Instrument.Name }}),
+								zap.Stack("stack"),
+								zap.Error(recoveredErr))
+							{{- end }}
+							err = recoveredErr
+						})
+					}
+				}()
 
 				{{ if .Predicate }}
 					if {{ template "callTask" .Predicate }} {

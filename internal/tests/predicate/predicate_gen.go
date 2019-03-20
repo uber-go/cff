@@ -4,6 +4,7 @@ package predicate
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -24,6 +25,17 @@ func Simple(f func(), pred bool) error {
 		var v1 string
 		go func() {
 			defer wg0.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			if func() bool { return pred }() {
 
@@ -71,6 +83,17 @@ func SimpleWithContextTask() error {
 		var v1 string
 		go func() {
 			defer wg0.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			if func(int64) bool {
 				return false
@@ -120,6 +143,17 @@ func SimpleWithContextPredicate() error {
 		go func() {
 			defer wg0.Done()
 
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
+
 			if func(context.Context, int64) bool {
 				return false
 			}(ctx, v2) {
@@ -167,6 +201,17 @@ func SimpleWithContextTaskAndPredicate() error {
 		var v1 string
 		go func() {
 			defer wg0.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			if func(context.Context, int64) bool {
 				return false
@@ -220,12 +265,34 @@ func ExtraDependencies() error {
 		go func() {
 			defer wg0.Done()
 
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
+
 			v4 = func(int) t1 { return t1{} }(v3)
 
 		}()
 		var v5 t2
 		go func() {
 			defer wg0.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v5 = func() t2 { return t2{} }()
 
@@ -257,12 +324,34 @@ func ExtraDependencies() error {
 		go func() {
 			defer wg1.Done()
 
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once1.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
+
 			v1 = func(int) string { return "foo" }(v3)
 
 		}()
 		var v6 t3
 		go func() {
 			defer wg1.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once1.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			if func(int, t1) bool {
 				return true

@@ -5,6 +5,7 @@ package basic
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"sync"
 )
@@ -28,6 +29,17 @@ func SimpleFlow() (string, error) {
 		var v2 int64
 		go func() {
 			defer wg0.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v2 = func(i int) int64 {
 				return int64(i)
@@ -61,6 +73,17 @@ func SimpleFlow() (string, error) {
 		go func() {
 			defer wg1.Done()
 
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once1.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
+
 			v3, err1 = func(i int) (*foo, error) {
 				return &foo{i}, nil
 			}(v1)
@@ -76,6 +99,17 @@ func SimpleFlow() (string, error) {
 		var err2 error
 		go func() {
 			defer wg1.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once1.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v4, err2 = func(i int64) (*bar, error) {
 				return &bar{i}, nil
@@ -115,6 +149,17 @@ func SimpleFlow() (string, error) {
 		var err3 error
 		go func() {
 			defer wg2.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once2.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v5, err3 = func(*foo, *bar) (string, error) {
 				return "hello world", nil
@@ -164,6 +209,17 @@ func SimpleFlowNested() (string, error) {
 		go func() {
 			defer wg0.Done()
 
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
+
 			v2 = func() int64 {
 				return int64(1)
 			}()
@@ -194,6 +250,17 @@ func SimpleFlowNested() (string, error) {
 		var v5 string
 		go func() {
 			defer wg1.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once1.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v5 = func(int64, int) string {
 				return "foo"
@@ -237,6 +304,17 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 		go func() {
 			defer wg0.Done()
 
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
+
 			v6 = func() *bytes.Buffer {
 				return bytes.NewBufferString("hello world")
 			}()
@@ -267,6 +345,17 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 		var v7 io.Reader
 		go func() {
 			defer wg1.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once1.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v7 = func(b *bytes.Buffer) io.Reader { return b }(v6)
 
@@ -314,6 +403,17 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 		go func() {
 			defer wg0.Done()
 
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
+
 			v8, err8 = func() (t1, error) {
 				return t1{}, f1()
 			}()
@@ -352,6 +452,17 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 		go func() {
 			defer wg1.Done()
 
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once1.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
+
 			v9, err9 = func(t1) (t2, error) {
 				return t2{}, f2()
 			}(v8)
@@ -388,6 +499,17 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 		var v10 t3
 		go func() {
 			defer wg2.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once2.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v10 = func(t2) t3 {
 				return t3{}
@@ -446,6 +568,17 @@ func ProduceMultiple() error {
 		go func() {
 			defer wg0.Done()
 
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
+
 			v12, v13 = func(t1) (t2, t3) {
 				return t2{}, t3{}
 			}(v11)
@@ -477,6 +610,17 @@ func ProduceMultiple() error {
 		var v14 t4
 		go func() {
 			defer wg1.Done()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once1.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v14 = func(t2, t3) t4 {
 				return t4{}

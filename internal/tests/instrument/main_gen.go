@@ -69,6 +69,20 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 			tags := map[string]string{"name": "Atoi"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+						scope.Tagged(map[string]string{"name": "Atoi"}).Counter("task.panic").Inc(1)
+						logger.Error("task panic",
+							zap.String("name", "Atoi"),
+							zap.Stack("stack"),
+							zap.Error(recoveredErr))
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v2, err0 = strconv.Atoi(v1)
 			if err0 != nil {
@@ -119,6 +133,20 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 			tags := map[string]string{"name": "uint8"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once1.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+						scope.Tagged(map[string]string{"name": "uint8"}).Counter("task.panic").Inc(1)
+						logger.Error("task panic",
+							zap.String("name", "uint8"),
+							zap.Stack("stack"),
+							zap.Error(recoveredErr))
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v3, err1 = func(i int) (uint8, error) {
 				if i > -1 && i < 256 {
@@ -196,6 +224,20 @@ func (h *h) do(ctx context.Context, req string) (res int, err error) {
 			tags := map[string]string{"name": "Atoi"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+						scope.Tagged(map[string]string{"name": "Atoi"}).Counter("task.panic").Inc(1)
+						logger.Error("task panic",
+							zap.String("name", "Atoi"),
+							zap.Stack("stack"),
+							zap.Error(recoveredErr))
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v2, err2 = strconv.Atoi(v1)
 			if err2 != nil {
@@ -262,6 +304,20 @@ func (h *h) work(ctx context.Context, req string) (res int, err error) {
 			tags := map[string]string{"name": "Atoi"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					once0.Do(func() {
+						recoveredErr := fmt.Errorf("task panic: %v", recovered)
+						scope.Tagged(map[string]string{"name": "Atoi"}).Counter("task.panic").Inc(1)
+						logger.Error("task panic",
+							zap.String("name", "Atoi"),
+							zap.Stack("stack"),
+							zap.Error(recoveredErr))
+						err = recoveredErr
+					})
+				}
+			}()
 
 			v2, err3 = strconv.Atoi(v1)
 			if err3 != nil {
