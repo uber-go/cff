@@ -357,7 +357,8 @@ func (c *compiler) scheduleFlow(f *flow) {
 			var deps []int
 			for _, typ := range f.Tasks[taskIdx].Dependencies {
 				if i, ok := f.providers.At(typ).(int); ok {
-					// TODO: Handle non-ok
+					// For non-ok case, if we do not find a dependency amongst providers, then it
+					// was passed in from Params annotation.
 					deps = append(deps, i)
 				}
 			}
@@ -559,7 +560,7 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 }
 
 type predicate struct {
-	WantCtx bool // TODO(abg): support this
+	WantCtx bool
 
 	Node   ast.Expr
 	Inputs []types.Type

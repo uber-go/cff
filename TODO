@@ -10,9 +10,9 @@ The following MUST be done (in no particular order) before others are allowed
 to use this.
 
 [ ] Tests
-    [ ] Cycle detection
-        [ ] Normal cycles
-        [ ] Cycles caused by predicates
+    [x] Cycle detection
+        [x] Normal cycles
+        [x] Cycles caused by predicates
     [ ] Task errors for concurrent tasks
     [ ] Recovery in concurrent tasks
 
