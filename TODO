@@ -69,12 +69,12 @@ handled.
     skip the portion of observability that isn't configured. So if a tracer
     was not provided, the tracing code isn't generated.
 
-# Future Plans
+[ ] Add special-case for n=1 case back so that new goroutines aren't forked
+    when only a single task must be run. Based on prior discussion, the defers
+    can be scoped to a single call by declaring and calling an anyomous
+    function in-place.
 
-[ ] Small fixes
-    [ ] Pointer indirection. If a task returns int and another task accepts *int,
-        we should indirect the pointer for them, and vice versa if it provides a *int
-        and another task needs an int.
+# Future Plans
 
 [ ] Runtime component. Currently, CFF eliminates itself from the generated
     code, removing the dependency on CFF itself from actual compiled binary.
