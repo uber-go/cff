@@ -18,8 +18,8 @@ import (
 var generateFlag = flag.Bool("generate", false, "Update generated code rather than verifying")
 
 const (
-	testdata       = "tests" // internal/tests
-	testdataImport = "go.uber.org/cff/internal/tests"
+	goldenTestDir            = "tests" // internal/tests
+	goldenTestImportInternal = "go.uber.org/cff/internal"
 )
 
 type testCase struct {
@@ -40,7 +40,7 @@ func discoverTestCases(t *testing.T, dir string) []*testCase {
 
 		tests = append(tests, &testCase{
 			Name:       info.Name(),
-			ImportPath: filepath.Join(testdataImport, info.Name()),
+			ImportPath: filepath.Join(goldenTestImportInternal, goldenTestDir, info.Name()),
 		})
 	}
 
@@ -54,12 +54,14 @@ func TestCodeIsUpToDate(t *testing.T) {
 		}
 	}()
 
-	tests := discoverTestCases(t, testdata)
+	tests := discoverTestCases(t, goldenTestDir)
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			tempDir, err := ioutil.TempDir("", "cff-test")
 			require.NoError(t, err)
-			defer os.RemoveAll(tempDir)
+			defer func() {
+				assert.NoError(t, os.RemoveAll(tempDir))
+			}()
 
 			fset := token.NewFileSet()
 			pkgs, err := packages.Load(&packages.Config{
@@ -90,7 +92,7 @@ func TestCodeIsUpToDate(t *testing.T) {
 
 					// Copy the file over before checking its contents.
 					if *generateFlag {
-						if !assert.NoErrorf(t, copyFile(gotFile, wantFile), "could not copy generated %q for %q", info.Name(), pkg.PkgPath) {
+						if !assert.NoErrorf(t, copyFile(t, gotFile, wantFile), "could not copy generated %q for %q", info.Name(), pkg.PkgPath) {
 							continue
 						}
 					}
@@ -111,18 +113,22 @@ func TestCodeIsUpToDate(t *testing.T) {
 	}
 }
 
-func copyFile(src, dst string) error {
+func copyFile(t *testing.T, src, dst string) error {
 	srcF, err := os.Open(src)
 	if err != nil {
 		return fmt.Errorf("could not open %q", src)
 	}
-	defer srcF.Close()
+	defer func() {
+		assert.NoError(t, srcF.Close())
+	}()
 
 	dstF, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("could not open %q", dst)
 	}
-	defer dstF.Close()
+	defer func() {
+		assert.NoError(t, dstF.Close())
+	}()
 
 	if _, err := io.Copy(dstF, srcF); err != nil {
 		return fmt.Errorf("could not copy %q to %q", src, dst)

@@ -329,7 +329,7 @@ func (c *compiler) validateTasks(f *flow) {
 			continue
 		}
 
-		c.errf("no provider found for %v", c.nodePosition(t.Node), t)
+		c.errf("no provider found for %v", c.nodePosition(t.Node), t.Type)
 	}
 
 	if flowInputs.Len() > 0 {
