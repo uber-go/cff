@@ -38,6 +38,7 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 	err = func(ctx context.Context, scope tally.Scope,
 		logger *zap.Logger, v1 string) (err error) {
 		flowTags := map[string]string{"name": "AtoiRun"}
+		flowTagsMutex := new(sync.Mutex)
 		if ctx.Err() != nil {
 			s0t0Tags := map[string]string{"name": "Atoi"}
 			scope.Tagged(s0t0Tags).Counter("task.skipped").Inc(1)
@@ -87,6 +88,9 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 
 			v2, err0 = strconv.Atoi(v1)
 			if err0 != nil {
+				flowTagsMutex.Lock()
+				flowTags["failedTask"] = "Atoi"
+				flowTagsMutex.Unlock()
 				scope.Tagged(tags).Counter("task.error").Inc(1)
 				once0.Do(func() {
 					err = err0
@@ -106,6 +110,8 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 
 		// Prevent variable unused errors.
 		var (
+			_ = flowTagsMutex
+
 			_ = &once0
 			_ = &v2
 		)
@@ -157,6 +163,9 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 				return 0, errors.New("int can not fit into 8 bits")
 			}(v2)
 			if err1 != nil {
+				flowTagsMutex.Lock()
+				flowTags["failedTask"] = "uint8"
+				flowTagsMutex.Unlock()
 				scope.Tagged(tags).Counter("task.error").Inc(1)
 				scope.Tagged(tags).Counter("task.recovered").Inc(1)
 				logger.Error("task error recovered",
@@ -180,6 +189,8 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 
 		// Prevent variable unused errors.
 		var (
+			_ = flowTagsMutex
+
 			_ = &once1
 			_ = &v3
 		)
@@ -202,6 +213,7 @@ func (h *h) do(ctx context.Context, req string) (res int, err error) {
 	err = func(ctx context.Context, scope tally.Scope,
 		logger *zap.Logger, v1 string) (err error) {
 		flowTags := map[string]string{"name": "AtoiDo"}
+		flowTagsMutex := new(sync.Mutex)
 		if ctx.Err() != nil {
 			s0t0Tags := map[string]string{"name": "Atoi"}
 			scope.Tagged(s0t0Tags).Counter("task.skipped").Inc(1)
@@ -244,6 +256,9 @@ func (h *h) do(ctx context.Context, req string) (res int, err error) {
 
 			v2, err2 = strconv.Atoi(v1)
 			if err2 != nil {
+				flowTagsMutex.Lock()
+				flowTags["failedTask"] = "Atoi"
+				flowTagsMutex.Unlock()
 				scope.Tagged(tags).Counter("task.error").Inc(1)
 				once0.Do(func() {
 					err = err2
@@ -263,6 +278,8 @@ func (h *h) do(ctx context.Context, req string) (res int, err error) {
 
 		// Prevent variable unused errors.
 		var (
+			_ = flowTagsMutex
+
 			_ = &once0
 			_ = &v2
 		)
@@ -325,6 +342,7 @@ func (h *h) work(ctx context.Context, req string) (res int, err error) {
 
 			v2, err3 = strconv.Atoi(v1)
 			if err3 != nil {
+
 				scope.Tagged(tags).Counter("task.error").Inc(1)
 				once0.Do(func() {
 					err = err3

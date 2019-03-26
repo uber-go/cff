@@ -35,6 +35,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 	err := func(ctx context.Context, scope tally.Scope,
 		logger *zap.Logger, v1 *Request) (err error) {
 		flowTags := map[string]string{"name": "HandleFoo"}
+		flowTagsMutex := new(sync.Mutex)
 		if ctx.Err() != nil {
 			s1t1Tags := map[string]string{"name": "FormSendEmailRequest"}
 			scope.Tagged(s1t1Tags).Counter("task.skipped").Inc(1)
@@ -95,6 +96,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		// Prevent variable unused errors.
 		var (
+			_ = flowTagsMutex
+
 			_ = &once0
 			_ = &v2
 			_ = &v3
@@ -175,6 +178,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			v5, err4 = h.users.List(v3)
 			if err4 != nil {
+				flowTagsMutex.Lock()
+				flowTags["failedTask"] = "FormSendEmailRequest"
+				flowTagsMutex.Unlock()
 				scope.Tagged(tags).Counter("task.error").Inc(1)
 				scope.Tagged(tags).Counter("task.recovered").Inc(1)
 				logger.Error("task error recovered",
@@ -198,6 +204,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		// Prevent variable unused errors.
 		var (
+			_ = flowTagsMutex
+
 			_ = &once1
 			_ = &v4
 			_ = &v5
@@ -267,6 +275,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		// Prevent variable unused errors.
 		var (
+			_ = flowTagsMutex
+
 			_ = &once2
 			_ = &v6
 		)
@@ -317,6 +327,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		// Prevent variable unused errors.
 		var (
+			_ = flowTagsMutex
+
 			_ = &once3
 			_ = &v7
 		)
@@ -367,6 +379,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		// Prevent variable unused errors.
 		var (
+			_ = flowTagsMutex
+
 			_ = &once4
 			_ = &v8
 		)

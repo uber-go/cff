@@ -22,6 +22,7 @@ func (p *panicker) FlowPanicsParallel() error {
 	err := func(ctx context.Context, scope tally.Scope,
 		logger *zap.Logger) (err error) {
 		flowTags := map[string]string{"name": "PanicParallel"}
+		flowTagsMutex := new(sync.Mutex)
 		if ctx.Err() != nil {
 			s0t0Tags := map[string]string{"name": "T1"}
 			scope.Tagged(s0t0Tags).Counter("task.skipped").Inc(1)
@@ -99,6 +100,8 @@ func (p *panicker) FlowPanicsParallel() error {
 
 		// Prevent variable unused errors.
 		var (
+			_ = flowTagsMutex
+
 			_ = &once0
 			_ = &v1
 			_ = &v2
@@ -146,6 +149,8 @@ func (p *panicker) FlowPanicsParallel() error {
 
 		// Prevent variable unused errors.
 		var (
+			_ = flowTagsMutex
+
 			_ = &once1
 			_ = &v3
 		)
@@ -171,6 +176,7 @@ func (p *panicker) FlowPanicsSerial() error {
 	err := func(ctx context.Context, scope tally.Scope,
 		logger *zap.Logger) (err error) {
 		flowTags := map[string]string{"name": "FlowPanicsSerial"}
+		flowTagsMutex := new(sync.Mutex)
 		if ctx.Err() != nil {
 			s0t0Tags := map[string]string{"name": "T1"}
 			scope.Tagged(s0t0Tags).Counter("task.skipped").Inc(1)
@@ -226,6 +232,8 @@ func (p *panicker) FlowPanicsSerial() error {
 
 		// Prevent variable unused errors.
 		var (
+			_ = flowTagsMutex
+
 			_ = &once0
 			_ = &v1
 		)

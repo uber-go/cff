@@ -242,6 +242,7 @@ logger *{{ $zap }}.Logger,
 {{- end }}) (err error) {
 	{{- if $flow.Instrument -}}
 	flowTags := map[string]string{"name": {{ expr $flow.Instrument.Name }}}
+	flowTagsMutex := new(sync.Mutex)
 	{{- end -}}
 	{{ range $schedIdx, $sched := $schedule }}
 		if ctx.Err() != nil {
@@ -310,6 +311,11 @@ logger *{{ $zap }}.Logger,
 					if {{ $serr }} != nil {
 						{{ if .FallbackWith -}}
 							{{ if .Instrument -}}
+								{{ if $flow.Instrument -}}
+								flowTagsMutex.Lock()
+								flowTags["failedTask"] = {{ expr .Instrument.Name }}
+								flowTagsMutex.Unlock()
+								{{- end }}
 								scope.Tagged(tags).Counter("task.error").Inc(1)
 								scope.Tagged(tags).Counter("task.recovered").Inc(1)
 								logger.Error("task error recovered",
@@ -323,6 +329,11 @@ logger *{{ $zap }}.Logger,
 							{{- end }}, nil
 						{{- else -}}
 							{{ if .Instrument -}}
+								{{ if $flow.Instrument -}}
+								flowTagsMutex.Lock()
+								flowTags["failedTask"] = {{ expr .Instrument.Name }}
+								flowTagsMutex.Unlock()
+								{{- end }}
 								scope.Tagged(tags).Counter("task.error").Inc(1)
 							{{- end }}
 							{{ $once }}.Do(func() {
@@ -349,6 +360,9 @@ logger *{{ $zap }}.Logger,
 
 		// Prevent variable unused errors.
 		var (
+			{{- if $flow.Instrument -}}
+			_ = flowTagsMutex
+			{{ end }}
 			_ = &{{ $once }}
 			{{ range . -}}
 				{{ range .Outputs -}}

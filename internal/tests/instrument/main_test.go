@@ -63,7 +63,7 @@ func TestInstrumentError(t *testing.T) {
 		t.Logf("got counter with key %q", k)
 	}
 	assert.Equal(t, int64(1), counters["task.error+name=Atoi"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.error+name=AtoiRun"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.error+failedTask=Atoi,name=AtoiRun"].Value())
 
 	// logs
 	logEntries := observedLogs.All()
@@ -126,7 +126,7 @@ func TestInstrumentRecover(t *testing.T) {
 	assert.Equal(t, int64(1), counters["task.success+name=Atoi"].Value())
 	assert.Equal(t, int64(1), counters["task.error+name=uint8"].Value())
 	assert.Equal(t, int64(1), counters["task.recovered+name=uint8"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.success+name=AtoiRun"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.success+failedTask=uint8,name=AtoiRun"].Value())
 
 	// logs
 	expected := []struct {
