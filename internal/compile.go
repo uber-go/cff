@@ -194,18 +194,12 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 	}
 	for _, arg := range call.Args[1:] {
 		arg := astutil.Unparen(arg)
-		ce, ok := arg.(*ast.CallExpr)
-		if !ok {
-			c.errf("expected a function call, got %v",
-				c.nodePosition(arg), astutil.NodeDescription(arg))
-			continue
-		}
+
+		// This must succeed because every argument implements the private cff.FlowOption interface,
+		// and all flow options are function calls.
+		ce, _ := arg.(*ast.CallExpr)
 
 		f := typeutil.StaticCallee(c.info, ce)
-		if f == nil || !isPackagePathEquivalent(f.Pkg(), cffImportPath) {
-			c.errf("expected cff call but got %v", c.nodePosition(arg), typeutil.Callee(c.info, ce))
-			continue
-		}
 
 		switch f.Name() {
 		case "Params":
@@ -229,15 +223,9 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 				}
 			}
 		case "Task":
-			if len(ce.Args) == 0 {
-				c.errf("cff.Task requires at least one argument", c.nodePosition(ce))
-				continue
-			}
 			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
 				flow.Tasks = append(flow.Tasks, task)
 			}
-		default:
-			c.errf("undefined cff function %q", c.nodePosition(ce), f.Name())
 		}
 	}
 	c.validateInstrument(&flow)
@@ -422,11 +410,7 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 	if typ.String() == flowOption {
 		var nestedExpr = expr.(*ast.CallExpr)
 		f := typeutil.StaticCallee(c.info, nestedExpr)
-		if f == nil || !isPackagePathEquivalent(f.Pkg(), cffImportPath) {
-			c.errf("expected cff call but got %v", c.nodePosition(nestedExpr),
-				typeutil.Callee(c.info, nestedExpr))
-			return nil
-		}
+
 		if f.Name() != "Task" {
 			c.errf("expected cff.Task, got cff.%v; only cff.Task is allowed to be nested"+
 				" under cff.Tasks", c.nodePosition(nestedExpr), f.Name())
@@ -553,8 +537,6 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 			t.Predicate = c.compilePredicate(t, call)
 		case "Instrument":
 			t.Instrument = c.compileInstrument(flow, call)
-		default:
-			c.errf("unknown task option %q", c.nodePosition(opt), fn.Name())
 		}
 	}
 }
@@ -567,11 +549,6 @@ type predicate struct {
 }
 
 func (c *compiler) compilePredicate(t *task, call *ast.CallExpr) *predicate {
-	if len(call.Args) != 1 {
-		c.errf("cff.Predicate accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
-		return nil
-	}
-
 	fn := call.Args[0]
 	fnType := c.info.TypeOf(fn)
 
@@ -627,12 +604,6 @@ type instrument struct {
 }
 
 func (c *compiler) compileInstrument(flow *flow, call *ast.CallExpr) *instrument {
-	// TODO(jacobg): Accept additional tags
-	if len(call.Args) != 1 {
-		c.errf("cff.Instrument accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
-		return nil
-	}
-
 	flow.ObservabilityEnabled = true
 
 	name := call.Args[0]
@@ -684,20 +655,10 @@ func (c *compiler) compileOutput(o ast.Expr) *output {
 }
 
 func (c *compiler) compileMetrics(flow *flow, call *ast.CallExpr) ast.Expr {
-	if len(call.Args) != 1 {
-		c.errf("cff.Metrics accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
-		return nil
-	}
-
 	return call.Args[0]
 }
 
 func (c *compiler) compileLogger(flow *flow, call *ast.CallExpr) ast.Expr {
-	if len(call.Args) != 1 {
-		c.errf("cff.Logger accepts exactly one argument: received %v", c.nodePosition(call), len(call.Args))
-		return nil
-	}
-
 	return call.Args[0]
 }
 
