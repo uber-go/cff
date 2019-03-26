@@ -44,16 +44,72 @@ func unwrapMultierror(err error) []error {
 func TestCodeGenerateFails(t *testing.T) {
 	// map [directory name] -> list of test cases
 	errorCasesByDirectory := map[string][]errorCase{
-		"basic": {
+		"bad-inputs": {
 			{
-				File:         "basic.go",
+				File:         "missing-provider.go",
 				ErrorMatches: "no provider found for float64",
+			},
+			{
+				File:         "top-level-flow.go",
+				ErrorMatches: "unknown top-level cff function \"Predicate\".*",
+			},
+			{
+				File:         "cff-flow-arguments.go",
+				ErrorMatches: "cff.Flow expects at least one function",
+			},
+			{
+				File:         "cff-task-functype.go",
+				ErrorMatches: "expected function, got bool",
+			},
+			{
+				File:         "already-provided.go",
+				ErrorMatches: "type string already provided at .*",
+			},
+			{
+				File:         "unused-inputs.go",
+				ErrorMatches: "unused input type string",
+			},
+			{
+				File:         "variadic.go",
+				ErrorMatches: "variadic functions are not yet supported",
+			},
+			{
+				File:         "predicate.go",
+				ErrorMatches: "the function must return a single boolean result",
+			},
+			{
+				File:         "context-task.go",
+				ErrorMatches: "only the first argument may be context.Context",
+			},
+			{
+				File:         "context-predicate.go",
+				ErrorMatches: "only the first argument may be context.Context",
+			},
+			{
+				File:         "error-task.go",
+				ErrorMatches: "only the last result may be an error",
+			},
+			{
+				File:         "fallback-with.go",
+				ErrorMatches: "cff.FallbackWith result at position 1 of type string cannot be used as bool",
+			},
+			{
+				File:         "fallback-with.go",
+				ErrorMatches: "cff.FallbackWith result at position 2 of type bool cannot be used as string",
+			},
+			{
+				File:         "fallback-with.go",
+				ErrorMatches: "cff.FallbackWith must produce the same number of results as the task: expected 2, got 1",
+			},
+			{
+				File:         "fallback-with.go",
+				ErrorMatches: "Task must return an error for FallbackWith to be used",
 			},
 		},
 	}
 
 	for testDirectoryName, errCases := range errorCasesByDirectory {
-		t.Run(fmt.Sprintf("test cases for directory %q", testDirectoryName), func(t *testing.T) {
+		t.Run(fmt.Sprintf("test cases for directory %s", testDirectoryName), func(t *testing.T) {
 			tempDir, err := ioutil.TempDir("", "cff-test")
 			require.NoError(t, err)
 			defer func() {

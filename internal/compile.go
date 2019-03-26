@@ -182,8 +182,8 @@ func (f *flow) addNoOutput() *noOutput {
 }
 
 func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
-	if len(call.Args) == 0 {
-		c.errf("ctf.Flow expects at least one argument", c.nodePosition(call))
+	if len(call.Args) == 1 {
+		c.errf("cff.Flow expects at least one function", c.nodePosition(call))
 		return nil
 	}
 
@@ -325,7 +325,7 @@ func (c *compiler) validateTasks(f *flow) {
 		for _, inputType := range inputs {
 			inputUntyped := flowInputs.At(inputType)
 			input := inputUntyped.(*input)
-			c.errf("unused input type %v", c.nodePosition(input.Node), input)
+			c.errf("unused input type %v", c.nodePosition(input.Node), input.Type)
 		}
 	}
 }
