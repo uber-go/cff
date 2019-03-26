@@ -9,12 +9,12 @@ import (
 
 // Process processes the provided Go package with cff.
 func Process(fset *token.FileSet, pkg *packages.Package, outputDir string) error {
-	var err error
+	var errors error
 	for _, e := range pkg.Errors {
-		err = multierr.Append(err, e)
+		errors = multierr.Append(errors, e)
 	}
-	if err != nil {
-		return err
+	if errors != nil {
+		return errors
 	}
 
 	c := newCompiler(fset, pkg.TypesInfo, pkg.Types)
@@ -23,7 +23,8 @@ func Process(fset *token.FileSet, pkg *packages.Package, outputDir string) error
 	for _, file := range pkg.Syntax {
 		f, err := c.CompileFile(file)
 		if err != nil {
-			return err
+			errors = multierr.Append(errors, err)
+			continue
 		}
 		files = append(files, f)
 	}
@@ -31,10 +32,9 @@ func Process(fset *token.FileSet, pkg *packages.Package, outputDir string) error
 	g := newGenerator(fset, outputDir)
 	for _, f := range files {
 		if err := g.GenerateFile(f); err != nil {
-			return err
+			errors = multierr.Append(errors, err)
 		}
-
 	}
 
-	return nil
+	return errors
 }
