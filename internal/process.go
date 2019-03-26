@@ -23,10 +23,13 @@ func Process(fset *token.FileSet, pkg *packages.Package, outputDir string) error
 	for _, file := range pkg.Syntax {
 		f, err := c.CompileFile(file)
 		if err != nil {
-			errors = multierr.Append(errors, err)
 			continue
 		}
 		files = append(files, f)
+	}
+
+	for _, err := range c.errors {
+		errors = multierr.Append(errors, err)
 	}
 
 	g := newGenerator(fset, outputDir)
