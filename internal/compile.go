@@ -208,7 +208,9 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			}
 		case "Results":
 			for _, o := range ce.Args {
-				flow.Outputs = append(flow.Outputs, c.compileOutput(o))
+				if output := c.compileOutput(o); output != nil {
+					flow.Outputs = append(flow.Outputs, output)
+				}
 			}
 		case "Metrics":
 			flow.Metrics = c.compileMetrics(&flow, ce)

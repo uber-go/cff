@@ -105,6 +105,10 @@ func TestCodeGenerateFails(t *testing.T) {
 				File:         "fallback-with.go",
 				ErrorMatches: "Task must return an error for FallbackWith to be used",
 			},
+			{
+				File:         "nonpointer-result.go",
+				ErrorMatches: "invalid parameter to cff.Results: expected pointer, got bool",
+			},
 		},
 	}
 
