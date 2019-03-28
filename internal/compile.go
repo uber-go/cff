@@ -258,7 +258,6 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 		// TODO(abg): This is ugly. Fix.
 	}
 
-	// FIXME(abg): Re-enable after fixing.
 	if err := validateFlowCycles(&flow); err != nil {
 		c.errors = append(c.errors, err)
 		return nil
@@ -510,7 +509,6 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 				continue
 			}
 			// Verify that Task returns an error for FallbackWith to be used.
-			// TODO: Test this condition once we create true negative tests.
 			var hasError = false
 			results := t.Sig.Results()
 			for i := 0; i < results.Len(); i++ {
@@ -585,7 +583,6 @@ func (c *compiler) compilePredicate(t *task, call *ast.CallExpr) *predicate {
 			inputs = append(inputs, ptype)
 			continue
 		}
-		// TODO: Test this condition once true negative tests are ready.
 		if i != 0 {
 			c.errf("only the first argument may be context.Context", c.position(param.Pos()))
 			return nil

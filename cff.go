@@ -77,7 +77,7 @@ func Logger(logger *zap.Logger) FlowOption {
 //  func(I1, I2, ...) (R1, R2, ...)
 //
 // Before this function is executed, all the tasks providing the inputs it
-// depends on will have finished executing. Similarly, no task that dependds
+// depends on will have finished executing. Similarly, no task that depends
 // on a result of this function will be executed until this function finishes
 // executing.
 //
@@ -101,7 +101,6 @@ func Task(fn interface{}, opts ...TaskOption) FlowOption {
 // them have any TaskOptions associated with them. See the documentation of
 // Task for more information.
 func Tasks(tasks ...interface{}) FlowOption {
-	// TODO(abg): We want to support Task(...) calls inside Tasks(...).
 	panic("code not generated; run cff")
 }
 
@@ -163,7 +162,7 @@ func FallbackWith(results ...interface{}) TaskOption {
 // added here becomes a dependency of the Task if it is not already. This
 // means that the Task will not be executed until these types are available.
 //
-// When specified, the correspending Task will be executed only if this
+// When specified, the corresponding Task will be executed only if this
 // function returns true.
 func Predicate(fn interface{}) TaskOption {
 	panic("code not generated; run cff")
