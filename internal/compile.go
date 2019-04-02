@@ -204,11 +204,18 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 	for _, arg := range call.Args[1:] {
 		arg := astutil.Unparen(arg)
 
-		// This must succeed because every argument implements the private cff.FlowOption interface,
-		// and all flow options are function calls.
-		ce, _ := arg.(*ast.CallExpr)
+		ce, ok := arg.(*ast.CallExpr)
+		if !ok {
+			c.errf("expected a function call, got %v",
+				c.nodePosition(arg), astutil.NodeDescription(arg))
+			continue
+		}
 
 		f := typeutil.StaticCallee(c.info, ce)
+		if f == nil || !isPackagePathEquivalent(f.Pkg(), cffImportPath) {
+			c.errf("expected cff call but got %v", c.nodePosition(arg), typeutil.Callee(c.info, ce))
+			continue
+		}
 
 		switch f.Name() {
 		case "Params":
@@ -259,9 +266,8 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 
 	c.validateTasks(&flow)
 	if len(c.errors) > 0 {
-		// Can't proceed with the remaining checks if there was an error.
+		// Can't validate flow cycles if there were missing providers for certain types.
 		return nil
-		// TODO(abg): This is ugly. Fix.
 	}
 
 	if err := validateFlowCycles(&flow); err != nil {
@@ -612,11 +618,6 @@ func (c *compiler) compileInstrument(flow *flow, call *ast.CallExpr) *instrument
 	flow.ObservabilityEnabled = true
 
 	name := call.Args[0]
-	nameType := c.info.TypeOf(name)
-	if nt, ok := nameType.(*types.Basic); !ok || nt.Kind() != types.String {
-		c.errf("cff.Instrument accepts a single string argument, got %v", c.nodePosition(name), nameType)
-		return nil
-	}
 
 	return &instrument{Name: name}
 }

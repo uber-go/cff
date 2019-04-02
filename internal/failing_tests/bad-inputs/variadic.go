@@ -7,7 +7,7 @@ import (
 	"context"
 )
 
-// Variadic is a flow that has a task that is variadic
+// Variadic is a flow that has a task that is variadic.
 func Variadic() {
 	cff.Flow(context.Background(),
 		cff.Task(func(s ...string) bool {
@@ -16,7 +16,7 @@ func Variadic() {
 	)
 }
 
-// VariadicPredicate is a flow that has a task whose predicate is variadic
+// VariadicPredicate is a flow that has a task whose predicate is variadic.
 func VariadicPredicate() {
 	cff.Flow(context.Background(),
 		cff.Task(

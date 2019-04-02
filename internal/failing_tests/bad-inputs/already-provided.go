@@ -7,7 +7,7 @@ import (
 	"context"
 )
 
-// AlreadyProvided is a function that provides a string type twice
+// AlreadyProvided is a function that provides a string type twice.
 func AlreadyProvided() {
 	cff.Flow(context.Background(),
 		cff.Tasks(

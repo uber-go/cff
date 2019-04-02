@@ -7,7 +7,7 @@ import (
 	"context"
 )
 
-// PredicateReturnsNonbool is a function with a predicate that doesn't return a boolean, instead returns a string
+// PredicateReturnsNonbool is a function with a predicate that doesn't return a boolean, instead returns a string.
 func PredicateReturnsNonbool() {
 	cff.Flow(context.Background(),
 		cff.Task(
@@ -21,7 +21,7 @@ func PredicateReturnsNonbool() {
 	)
 }
 
-// PredicateReturnsMultipleValues is a function with a predicate that returns too many values
+// PredicateReturnsMultipleValues is a function with a predicate that returns too many values.
 func PredicateReturnsMultipleValues() {
 	cff.Flow(context.Background(),
 		cff.Task(

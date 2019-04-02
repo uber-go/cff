@@ -46,43 +46,59 @@ func TestCodeGenerateFails(t *testing.T) {
 	errorCasesByDirectory := map[string][]errorCase{
 		"bad-inputs": {
 			{
-				File:         "missing-provider.go",
-				ErrorMatches: "no provider found for float64",
-			},
-			{
-				File:         "top-level-flow.go",
-				ErrorMatches: "unknown top-level cff function \"Predicate\".*",
+				File:         "already-provided.go",
+				ErrorMatches: "type string already provided at",
 			},
 			{
 				File:         "cff-flow-arguments.go",
 				ErrorMatches: "cff.Flow expects at least one function",
 			},
 			{
-				File:         "cff-task-functype.go",
+				File:         "cff-flow-arguments.go",
+				ErrorMatches: "expected cff call but got <nil>",
+			},
+			{
+				File:         "cff-flow-arguments.go",
+				ErrorMatches: "expected cff call but got field ProvidesBad func\\(\\) go.uber.org/cff.FlowOption",
+			},
+			{
+				File:         "cff-flow-arguments.go",
+				ErrorMatches: "expected a function call, got identifier",
+			},
+			{
+				File:         "cff-task-arguments.go",
 				ErrorMatches: "expected function, got bool",
 			},
 			{
-				File:         "already-provided.go",
-				ErrorMatches: "type string already provided at .*",
+				File:         "cff-task-arguments.go",
+				ErrorMatches: "expected a function call, got identifier",
 			},
 			{
-				File:         "unused-inputs.go",
-				ErrorMatches: "unused input type string",
+				File:         "cff-task-arguments.go",
+				ErrorMatches: "only cff functions may be passed as task options",
 			},
 			{
-				File:         "variadic.go",
-				ErrorMatches: "variadic functions are not yet supported",
+				File:         "cff-task-arguments.go",
+				ErrorMatches: "only cff functions may be passed as task options: found package \"go.uber.org/cff/internal/failing_tests/bad-inputs\"",
 			},
 			{
-				File:         "predicate.go",
-				ErrorMatches: "the function must return a single boolean result",
+				File:         "cff-task-arguments.go",
+				ErrorMatches: "expected cff.Task, got cff.Params; only cff.Task is allowed to be nested under cff.Tasks",
 			},
 			{
-				File:         "context-task.go",
-				ErrorMatches: "only the first argument may be context.Context",
+				File:         "cff-task-arguments.go",
+				ErrorMatches: "expected function, got bool",
+			},
+			{
+				File:         "cff-task-arguments.go",
+				ErrorMatches: "expected function, got untyped nil",
 			},
 			{
 				File:         "context-predicate.go",
+				ErrorMatches: "only the first argument may be context.Context",
+			},
+			{
+				File:         "context-task.go",
 				ErrorMatches: "only the first argument may be context.Context",
 			},
 			{
@@ -106,8 +122,36 @@ func TestCodeGenerateFails(t *testing.T) {
 				ErrorMatches: "Task must return an error for FallbackWith to be used",
 			},
 			{
+				File:         "instrument-flowscope.go",
+				ErrorMatches: "cff.Instrument requires a tally.Scope and \\*zap.Logger to be provided: use cff.Metrics and cff.Logger",
+			},
+			{
+				File:         "missing-provider.go",
+				ErrorMatches: "no provider found for float64",
+			},
+			{
 				File:         "nonpointer-result.go",
 				ErrorMatches: "invalid parameter to cff.Results: expected pointer, got bool",
+			},
+			{
+				File:         "predicate.go",
+				ErrorMatches: "the function must return a single boolean result",
+			},
+			{
+				File:         "predicate-params.go",
+				ErrorMatches: "cff.Predicate expected a function but received",
+			},
+			{
+				File:         "top-level-flow.go",
+				ErrorMatches: "unknown top-level cff function \"Predicate\"",
+			},
+			{
+				File:         "unused-inputs.go",
+				ErrorMatches: "unused input type string",
+			},
+			{
+				File:         "variadic.go",
+				ErrorMatches: "variadic functions are not yet supported",
 			},
 		},
 	}

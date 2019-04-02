@@ -7,7 +7,7 @@ import (
 	"context"
 )
 
-// ResultsNonPointer is a flow where we pass a variable that is not a pointer to cff.Results
+// ResultsNonPointer is a flow where we pass a variable that is not a pointer to cff.Results.
 func ResultsNonPointer() {
 	var v bool
 	cff.Flow(context.Background(),

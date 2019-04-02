@@ -7,7 +7,7 @@ import (
 	"context"
 )
 
-// MissingProvider is a flow that doesn't have a provider for a type
+// MissingProvider is a flow that doesn't have a provider for a type.
 func MissingProvider() {
 	var s string
 	cff.Flow(context.Background(),

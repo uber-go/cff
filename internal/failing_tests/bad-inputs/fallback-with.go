@@ -7,7 +7,7 @@ import (
 	"context"
 )
 
-// FallbackWithNoError is a function that uses FallbackWith, but the function does not return an error
+// FallbackWithNoError is a function that uses FallbackWith, but the function does not return an error.
 func FallbackWithNoError() {
 	cff.Flow(context.Background(),
 		cff.Task(
@@ -19,7 +19,7 @@ func FallbackWithNoError() {
 	)
 }
 
-// FallbackWithBadPositionalArguments is a function with too few positional arguments in the fallback literals
+// FallbackWithBadPositionalArguments is a function with too few positional arguments in the fallback literals.
 func FallbackWithBadPositionalArguments() {
 	cff.Flow(context.Background(),
 		cff.Task(
