@@ -181,6 +181,15 @@ func (f *flow) addNoOutput() *noOutput {
 	return no
 }
 
+// mustSetNoOutputProvider sets the provider for the no-output, panicking if the no-output sentinel type was already
+// present.
+func (f *flow) mustSetNoOutputProvider(key *task, value int) {
+	prev := f.providers.Set(key.noOutput, value)
+	if prev != nil {
+		panic(fmt.Sprintf("cff assertion error: noOutput sentinel types should be unique, found %T for %dth task (defined at %v), expected to be nil", prev, value, key.Node))
+	}
+}
+
 func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 	if len(call.Args) == 1 {
 		c.errf("cff.Flow expects at least one function", c.nodePosition(call))
@@ -244,10 +253,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			}
 		}
 		if t.noOutput != nil {
-			prev := flow.providers.Set(t.noOutput, i)
-			if prev != nil {
-				panic(fmt.Sprintf("cff assertion error: noOutput sentinel types should be unique, found %T for %dth task (defined at %v), expected to be nil", prev, i, t.Node))
-			}
+			flow.mustSetNoOutputProvider(t, i)
 		}
 	}
 
