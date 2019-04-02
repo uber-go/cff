@@ -1,4 +1,5 @@
 // +build !cff
+// @generated
 
 package foo
 
