@@ -7,7 +7,6 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -96,13 +95,8 @@ func (c *compiler) compileFile(astFile *ast.File) *file {
 				// implicit name.
 				obj := c.info.Implicits[n]
 
-				if p, ok := obj.(*types.PkgName); ok {
-					importName = p.Name()
-				} else {
-					// This will usually not happen if the code compiles but
-					// we can fall back to the base name.
-					importName = filepath.Base(importPath)
-				}
+				p := obj.(*types.PkgName)
+				importName = p.Name()
 			}
 			file.Imports[importPath] = append(file.Imports[importPath], importName)
 			file.UnnamedImports[importPath] = struct{}{}
