@@ -41,6 +41,11 @@ func unwrapMultierror(err error) []error {
 	return unwrappedErrors
 }
 
+// This works by trying to transpile all of the files in the directory/package,
+// accumulating all of the errors, and then checking if in a file there is an
+// instance of the error we are looking for.
+// Note: error accumulation is per-package so at the moment state is kept
+// when running transpiler across many flows expected to fail.
 func TestCodeGenerateFails(t *testing.T) {
 	// map [directory name] -> list of test cases
 	errorCasesByDirectory := map[string][]errorCase{
@@ -154,6 +159,12 @@ func TestCodeGenerateFails(t *testing.T) {
 				ErrorMatches: "variadic functions are not yet supported",
 			},
 		},
+		"cycles": {
+			{
+				File:         "cycle.go",
+				ErrorMatches: "cycle detected",
+			},
+		},
 	}
 
 	for testDirectoryName, errCases := range errorCasesByDirectory {
@@ -185,7 +196,7 @@ func TestCodeGenerateFails(t *testing.T) {
 				for _, errCase := range errCases {
 					found := false
 					regexpError := regexp.MustCompile(fmt.Sprintf("%s.*%s", errCase.File, errCase.ErrorMatches))
-
+					// TODO: verify exactly how many times we match the error in a file.
 					for _, err := range errorsThisPackage {
 						if ok := regexpError.MatchString(err.Error()); ok {
 							found = true

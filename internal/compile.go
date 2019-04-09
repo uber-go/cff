@@ -264,7 +264,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 		return nil
 	}
 
-	if err := validateFlowCycles(&flow); err != nil {
+	if err := validateFlowCycles(&flow, c.fset); err != nil {
 		c.errors = append(c.errors, err)
 		return nil
 	}
