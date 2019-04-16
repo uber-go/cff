@@ -32,9 +32,13 @@ func prettyPrintTaskCycle(path []taskCyclePathEntry) string {
 }
 
 func findFlowCycles(f *flow, visited *typeutil.Map, fset *token.FileSet) error {
-	for _, output := range f.Outputs {
-		if err := findFlowCyclesForType(f, nil /* path */, output.Type, visited, fset); err != nil {
-			return err
+	// If a flow has no Results eg a heatpipe flow, we need to do a DFS across all tasks. We are not
+	// concerned with performance as this only happens once during compilation phase.
+	for _, t := range f.Tasks {
+		for _, dep := range t.Dependencies {
+			if err := findFlowCyclesForType(f, nil /* path */, dep, visited, fset); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -44,9 +48,9 @@ func findFlowCyclesForType(f *flow, path []taskCyclePathEntry, t types.Type, vis
 	fset *token.FileSet) error {
 	taskIdx, ok := f.providers.At(t).(int)
 	if !ok {
-		// We've already verified that all types have providers. Only
-		// cff.Params don't have providers, but they also can't introduce
-		// cycles.
+		// This can happen if either cff.Params provides the type, but it can't introduce a cycle,
+		// or we failed task validation and a provider is missing, so then we can't detect a cycle
+		// until provider for this task exists again.
 		return nil
 	}
 
@@ -59,7 +63,7 @@ func findFlowCyclesForType(f *flow, path []taskCyclePathEntry, t types.Type, vis
 			if types.Identical(p.Type, t) {
 				return fmt.Errorf(
 					"%v: cycle detected: %v",
-					fset.Position(f.Tasks[0].Node.Pos()),
+					fset.Position(task.Node.Pos()),
 					prettyPrintTaskCycle(append(path, entry)))
 			}
 		}

@@ -259,16 +259,14 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 	}
 
 	c.validateTasks(&flow)
-	if len(c.errors) > 0 {
-		// Can't validate flow cycles if there were missing providers for certain types.
-		return nil
-	}
-
+	// At this point we may have already found some errors in c.errors.
 	if err := validateFlowCycles(&flow, c.fset); err != nil {
 		c.errors = append(c.errors, err)
 		return nil
 	}
-
+	if len(c.errors) > 0 {
+		return nil
+	}
 	c.scheduleFlow(&flow)
 	return &flow
 }

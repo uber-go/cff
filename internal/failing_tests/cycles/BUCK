@@ -3,6 +3,7 @@ load("//.macros:go_linter.bzl", "go_linter")
 
 go_library(
     name = "lib",
+    deps = ["//src/go.uber.org/cff:lib"],
     package_name = "go.uber.org/cff/internal/failing_tests/cycles",
     srcs = glob(
         include = ["*.go"],

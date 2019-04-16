@@ -161,8 +161,12 @@ func TestCodeGenerateFails(t *testing.T) {
 		},
 		"cycles": {
 			{
-				File:         "cycle.go",
-				ErrorMatches: "cycle detected",
+				File:         "easy-cycle.go",
+				ErrorMatches: "cycle detected: need to run \\[func\\(int64\\) string\\] to provide string",
+			},
+			{
+				File:         "no-output.go",
+				ErrorMatches: "cycle detected: need to run \\[func\\(int32\\) string\\] to provide string",
 			},
 		},
 	}
