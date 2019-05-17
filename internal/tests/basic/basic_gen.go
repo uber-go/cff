@@ -22,16 +22,12 @@ func SimpleFlow() (string, error) {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v2 int64
 
-		go func() {
-			defer wg0.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -50,7 +46,6 @@ func SimpleFlow() (string, error) {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 
 			return err
@@ -66,7 +61,8 @@ func SimpleFlow() (string, error) {
 			return ctx.Err()
 		}
 		var (
-			wg1   sync.WaitGroup
+			wg1 sync.WaitGroup
+
 			once1 sync.Once
 		)
 
@@ -145,16 +141,12 @@ func SimpleFlow() (string, error) {
 			return ctx.Err()
 		}
 		var (
-			wg2   sync.WaitGroup
 			once2 sync.Once
 		)
 
-		wg2.Add(1)
-
 		var v5 string
 		var err3 error
-		go func() {
-			defer wg2.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -179,7 +171,6 @@ func SimpleFlow() (string, error) {
 
 		}()
 
-		wg2.Wait()
 		if err != nil {
 
 			return err
@@ -206,16 +197,12 @@ func SimpleFlowNested() (string, error) {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v2 int64
 
-		go func() {
-			defer wg0.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -234,7 +221,6 @@ func SimpleFlowNested() (string, error) {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 
 			return err
@@ -250,16 +236,12 @@ func SimpleFlowNested() (string, error) {
 			return ctx.Err()
 		}
 		var (
-			wg1   sync.WaitGroup
 			once1 sync.Once
 		)
 
-		wg1.Add(1)
-
 		var v5 string
 
-		go func() {
-			defer wg1.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -278,7 +260,6 @@ func SimpleFlowNested() (string, error) {
 
 		}()
 
-		wg1.Wait()
 		if err != nil {
 
 			return err
@@ -305,16 +286,12 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v6 *bytes.Buffer
 
-		go func() {
-			defer wg0.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -333,7 +310,6 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 
 			return err
@@ -349,16 +325,12 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 			return ctx.Err()
 		}
 		var (
-			wg1   sync.WaitGroup
 			once1 sync.Once
 		)
 
-		wg1.Add(1)
-
 		var v7 io.Reader
 
-		go func() {
-			defer wg1.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -375,7 +347,6 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 
 		}()
 
-		wg1.Wait()
 		if err != nil {
 
 			return err
@@ -407,16 +378,12 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v8 t1
 		var err8 error
-		go func() {
-			defer wg0.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -441,7 +408,6 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 
 			return err
@@ -457,16 +423,12 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 			return ctx.Err()
 		}
 		var (
-			wg1   sync.WaitGroup
 			once1 sync.Once
 		)
 
-		wg1.Add(1)
-
 		var v9 t2
 		var err9 error
-		go func() {
-			defer wg1.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -491,7 +453,6 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 
 		}()
 
-		wg1.Wait()
 		if err != nil {
 
 			return err
@@ -507,16 +468,12 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 			return ctx.Err()
 		}
 		var (
-			wg2   sync.WaitGroup
 			once2 sync.Once
 		)
 
-		wg2.Add(1)
-
 		var v10 t3
 
-		go func() {
-			defer wg2.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -535,7 +492,6 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 
 		}()
 
-		wg2.Wait()
 		if err != nil {
 
 			return err
@@ -574,17 +530,13 @@ func ProduceMultiple() error {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
-
-		wg0.Add(1)
 
 		var v12 t2
 		var v13 t3
 
-		go func() {
-			defer wg0.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -603,7 +555,6 @@ func ProduceMultiple() error {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 
 			return err
@@ -620,16 +571,12 @@ func ProduceMultiple() error {
 			return ctx.Err()
 		}
 		var (
-			wg1   sync.WaitGroup
 			once1 sync.Once
 		)
 
-		wg1.Add(1)
-
 		var v14 t4
 
-		go func() {
-			defer wg1.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -648,7 +595,6 @@ func ProduceMultiple() error {
 
 		}()
 
-		wg1.Wait()
 		if err != nil {
 
 			return err

@@ -16,16 +16,12 @@ func run(ctx newctx.Context) error {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v2 struct{}
 
-		go func() {
-			defer wg0.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -44,7 +40,6 @@ func run(ctx newctx.Context) error {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 
 			return err

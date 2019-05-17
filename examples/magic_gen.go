@@ -56,17 +56,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
-
-		wg0.Add(1)
 
 		var v2 *GetManagerRequest
 		var v3 *ListUsersRequest
 
-		go func() {
-			defer wg0.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -89,7 +85,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 			return err
@@ -123,7 +118,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return ctx.Err()
 		}
 		var (
-			wg1   sync.WaitGroup
+			wg1 sync.WaitGroup
+
 			once1 sync.Once
 		)
 
@@ -224,16 +220,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return ctx.Err()
 		}
 		var (
-			wg2   sync.WaitGroup
 			once2 sync.Once
 		)
 
-		wg2.Add(1)
-
 		var v6 []*SendEmailRequest
 
-		go func() {
-			defer wg2.Done()
+		func() {
 			tags := map[string]string{"name": "FormSendEmailRequest"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
@@ -268,7 +260,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		}()
 
-		wg2.Wait()
 		if err != nil {
 			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 			return err
@@ -288,16 +279,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return ctx.Err()
 		}
 		var (
-			wg3   sync.WaitGroup
 			once3 sync.Once
 		)
 
-		wg3.Add(1)
-
 		var v7 []*SendEmailResponse
 		var err2 error
-		go func() {
-			defer wg3.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -320,7 +307,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		}()
 
-		wg3.Wait()
 		if err != nil {
 			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 			return err
@@ -340,16 +326,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return ctx.Err()
 		}
 		var (
-			wg4   sync.WaitGroup
 			once4 sync.Once
 		)
 
-		wg4.Add(1)
-
 		var v8 *Response
 
-		go func() {
-			defer wg4.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -372,7 +354,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		}()
 
-		wg4.Wait()
 		if err != nil {
 			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 			return err

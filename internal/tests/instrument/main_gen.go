@@ -59,16 +59,12 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v2 int
 		var err0 error
-		go func() {
-			defer wg0.Done()
+		func() {
 			tags := map[string]string{"name": "Atoi"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
@@ -103,7 +99,6 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 			return err
@@ -129,16 +124,12 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 			return ctx.Err()
 		}
 		var (
-			wg1   sync.WaitGroup
 			once1 sync.Once
 		)
 
-		wg1.Add(1)
-
 		var v3 uint8
 		var err1 error
-		go func() {
-			defer wg1.Done()
+		func() {
 			tags := map[string]string{"name": "uint8"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
@@ -182,7 +173,6 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 
 		}()
 
-		wg1.Wait()
 		if err != nil {
 			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 			return err
@@ -227,16 +217,12 @@ func (h *h) do(ctx context.Context, req string) (res int, err error) {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v2 int
 		var err2 error
-		go func() {
-			defer wg0.Done()
+		func() {
 			tags := map[string]string{"name": "Atoi"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
@@ -271,7 +257,6 @@ func (h *h) do(ctx context.Context, req string) (res int, err error) {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 			return err
@@ -313,16 +298,12 @@ func (h *h) work(ctx context.Context, req string) (res int, err error) {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v2 int
 		var err3 error
-		go func() {
-			defer wg0.Done()
+		func() {
 			tags := map[string]string{"name": "Atoi"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
@@ -355,7 +336,6 @@ func (h *h) work(ctx context.Context, req string) (res int, err error) {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 
 			return err

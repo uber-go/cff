@@ -36,7 +36,8 @@ func (p *panicker) FlowPanicsParallel() error {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
+			wg0 sync.WaitGroup
+
 			once0 sync.Once
 		)
 
@@ -114,16 +115,12 @@ func (p *panicker) FlowPanicsParallel() error {
 			return ctx.Err()
 		}
 		var (
-			wg1   sync.WaitGroup
 			once1 sync.Once
 		)
 
-		wg1.Add(1)
-
 		var v3 bool
 
-		go func() {
-			defer wg1.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -142,7 +139,6 @@ func (p *panicker) FlowPanicsParallel() error {
 
 		}()
 
-		wg1.Wait()
 		if err != nil {
 			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 			return err
@@ -190,16 +186,12 @@ func (p *panicker) FlowPanicsSerial() error {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v1 string
 
-		go func() {
-			defer wg0.Done()
+		func() {
 			tags := map[string]string{"name": "T1"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
@@ -225,7 +217,6 @@ func (p *panicker) FlowPanicsSerial() error {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 			return err

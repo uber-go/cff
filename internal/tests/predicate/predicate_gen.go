@@ -18,16 +18,12 @@ func Simple(f func(), pred bool) error {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v1 string
 
-		go func() {
-			defer wg0.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -51,7 +47,6 @@ func Simple(f func(), pred bool) error {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 
 			return err
@@ -78,16 +73,12 @@ func SimpleWithContextTask() error {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v1 string
 
-		go func() {
-			defer wg0.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -112,7 +103,6 @@ func SimpleWithContextTask() error {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 
 			return err
@@ -139,16 +129,12 @@ func SimpleWithContextPredicate() error {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v1 string
 
-		go func() {
-			defer wg0.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -173,7 +159,6 @@ func SimpleWithContextPredicate() error {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 
 			return err
@@ -200,16 +185,12 @@ func SimpleWithContextTaskAndPredicate() error {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v1 string
 
-		go func() {
-			defer wg0.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -234,7 +215,6 @@ func SimpleWithContextTaskAndPredicate() error {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 
 			return err
@@ -265,7 +245,8 @@ func ExtraDependencies() error {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
+			wg0 sync.WaitGroup
+
 			once0 sync.Once
 		)
 
@@ -328,7 +309,8 @@ func ExtraDependencies() error {
 			return ctx.Err()
 		}
 		var (
-			wg1   sync.WaitGroup
+			wg1 sync.WaitGroup
+
 			once1 sync.Once
 		)
 

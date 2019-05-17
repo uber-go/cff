@@ -277,18 +277,29 @@ logger *{{ $zap }}.Logger,
 
 		{{- $once := printf "once%v" $schedIdx -}}
 		{{- $wg := printf "wg%v" $schedIdx -}}
-		{{- $sync := import "sync" }}
+		{{- $sync := import "sync" -}}
+		{{- $hasMultipleTasks := ne 1 (len $sched) }}
 		var (
+			{{ if $hasMultipleTasks }}
 			{{ $wg }} {{ $sync }}.WaitGroup
+			{{ end }}
 			{{ $once }} {{ $sync }}.Once
 		)
 
+		{{ if $hasMultipleTasks }}
 		{{ $wg }}.Add({{ len . }})
+		{{ end }}
+		
 		{{ range . }}
 			{{- $serr := printf "err%v" .Serial -}}
 			{{ template "taskResultVarDecl" . }}
+			{{ if $hasMultipleTasks -}}
 			go func() {
 				defer {{ $wg }}.Done()
+			{{ else -}}
+			func() {
+			{{ end -}}
+
 				{{ if .Instrument -}}
 					tags := map[string]string{"name": {{ expr .Instrument.Name }}}
 					timer := scope.Tagged(tags).Timer("task.timing").Start()
@@ -358,7 +369,10 @@ logger *{{ $zap }}.Logger,
 				{{ end }}
 			}()
 		{{ end }}
-		{{ $wg }}.Wait()
+
+		{{ if $hasMultipleTasks }}
+			{{ $wg }}.Wait()
+		{{ end -}}
 		if err != nil {
 			{{ if $flow.Instrument -}}
 				scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)

@@ -18,16 +18,12 @@ func Serial(e error, r string) (string, error) {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v1 string
 		var err0 error
-		go func() {
-			defer wg0.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -50,7 +46,6 @@ func Serial(e error, r string) (string, error) {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 
 			return err

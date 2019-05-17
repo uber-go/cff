@@ -30,7 +30,8 @@ func (h *h) swallow(ctx context.Context, req string) (err error) {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
+			wg0 sync.WaitGroup
+
 			once0 sync.Once
 		)
 
@@ -106,7 +107,8 @@ func (h *h) tripleSwallow(ctx context.Context, req string) (err error) {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
+			wg0 sync.WaitGroup
+
 			once0 sync.Once
 		)
 

@@ -17,16 +17,12 @@ func Itoa(ctx context.Context, i int) (s string, err error) {
 			return ctx.Err()
 		}
 		var (
-			wg0   sync.WaitGroup
 			once0 sync.Once
 		)
 
-		wg0.Add(1)
-
 		var v2 string
 
-		go func() {
-			defer wg0.Done()
+		func() {
 
 			defer func() {
 				recovered := recover()
@@ -45,7 +41,6 @@ func Itoa(ctx context.Context, i int) (s string, err error) {
 
 		}()
 
-		wg0.Wait()
 		if err != nil {
 
 			return err
