@@ -4,5 +4,4 @@ test:
 
 .PHONY: generate
 generate:
-	go run ./cmd/cff ./internal/tests/...
-	go run ./cmd/cff ./examples/magic.go
+	go run ./cmd/cff --input ./examples/magic.go --output /tmp/magic_gen.go

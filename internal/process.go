@@ -8,7 +8,7 @@ import (
 )
 
 // Process processes the provided Go package with cff.
-func Process(fset *token.FileSet, pkg *packages.Package, outputDir string) error {
+func Process(fset *token.FileSet, pkg *packages.Package, outputPath string) error {
 	var errors error
 	for _, e := range pkg.Errors {
 		errors = multierr.Append(errors, e)
@@ -32,7 +32,7 @@ func Process(fset *token.FileSet, pkg *packages.Package, outputDir string) error
 		errors = multierr.Append(errors, err)
 	}
 
-	g := newGenerator(fset, outputDir)
+	g := newGenerator(fset, outputPath)
 	for _, f := range files {
 		if err := g.GenerateFile(f); err != nil {
 			errors = multierr.Append(errors, err)

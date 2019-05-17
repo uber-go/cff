@@ -1,6 +1,6 @@
 // +build cff
 
-package main
+package noresults
 
 import (
 	"context"

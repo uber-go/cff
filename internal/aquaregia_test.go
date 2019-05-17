@@ -3,7 +3,6 @@ package internal
 import (
 	"fmt"
 	"go/token"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -13,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/multierr"
 	"golang.org/x/tools/go/packages"
+	"golang.org/x/tools/go/packages/packagestest"
 )
 
 const (
@@ -127,10 +127,6 @@ func TestCodeGenerateFails(t *testing.T) {
 				ErrorMatches: "Task must return an error for FallbackWith to be used",
 			},
 			{
-				File:         "instrument-flowscope.go",
-				ErrorMatches: "cff.Instrument requires a tally.Scope and \\*zap.Logger to be provided: use cff.Metrics and cff.Logger",
-			},
-			{
 				File:         "missing-provider.go",
 				ErrorMatches: "no provider found for float64",
 			},
@@ -171,26 +167,46 @@ func TestCodeGenerateFails(t *testing.T) {
 		},
 	}
 
+	_ = os.Setenv("PATH", os.ExpandEnv("$TEST_SRCDIR/__main__/external/go_sdk/bin:$PATH"))
+	// See if we are in Bazel environment as `go test` doesn't need GOCACHE to be set manually.
+	if file, err := os.Stat(os.Getenv("TEST_TMPDIR")); err == nil {
+		if file.IsDir() {
+			// Go executable requires a GOCACHE to be set after go1.12.
+			_ = os.Setenv("GOCACHE", filepath.Join(os.Getenv("TEST_TMPDIR"), "/cache"))
+		}
+	}
+
+	// Including entire project including tests as a module. This is different from golden_test as
+	// we dont need to include generated files as all of these tests are expected to fail.
+	cffModule := packagestest.Module{
+		Name:  "go.uber.org/cff",
+		Files: packagestest.MustCopyFileTree("./.."),
+	}
+
 	for testDirectoryName, errCases := range errorCasesByDirectory {
 		t.Run(fmt.Sprintf("test cases for directory %s", testDirectoryName), func(t *testing.T) {
-			tempDir, err := ioutil.TempDir("", "cff-test")
-			require.NoError(t, err)
-			defer func() {
-				assert.NoError(t, os.RemoveAll(tempDir))
-			}()
-
+			exp := packagestest.Export(t, packagestest.Modules, []packagestest.Module{cffModule})
 			fset := token.NewFileSet()
-			pkgs, err := packages.Load(&packages.Config{
-				Mode:       packages.LoadSyntax,
-				Fset:       fset,
-				BuildFlags: []string{"-tags=cff"},
-			}, filepath.Join(goldenTestImportInternal, aquaregiaTestDir, testDirectoryName, "..."))
+
+			cfg := exp.Config
+			cfg.Mode = packages.LoadSyntax
+			cfg.BuildFlags = []string{"-tags=cff"}
+			cfg.Fset = fset
+
+			defer exp.Cleanup()
+
+			// Using pattern for go test not to run _test unit tests which test generated code.
+			pkgs, err := packages.Load(
+				exp.Config,
+				"pattern="+filepath.Join(goldenTestImportInternal, aquaregiaTestDir, testDirectoryName, "..."))
 
 			require.NoError(t, err, "could not load packages")
 			require.NotEmpty(t, pkgs, "didn't find any packages")
 
 			for _, pkg := range pkgs {
-				errUntyped := Process(fset, pkg, tempDir)
+				// Output path can be empty so code gets generated next to source in case of failed
+				// tests.
+				errUntyped := Process(fset, pkg, "")
 
 				errorsThisPackage := unwrapMultierror(errUntyped)
 				for _, err := range errorsThisPackage {

@@ -26,17 +26,16 @@ type generator struct {
 	typeIDs    *typeutil.Map // map[types.Type]int
 	nextTypeID int
 
-	// Directory to which generated code is written instead of the package
-	// directory.
-	outputDir string
+	// File path to which generated code is written.
+	outputPath string
 }
 
-func newGenerator(fset *token.FileSet, outputDir string) *generator {
+func newGenerator(fset *token.FileSet, outputPath string) *generator {
 	return &generator{
 		fset:       fset,
 		typeIDs:    new(typeutil.Map),
 		nextTypeID: 1,
-		outputDir:  outputDir,
+		outputPath: outputPath,
 	}
 }
 
@@ -141,13 +140,7 @@ func (g *generator) GenerateFile(f *file) error {
 	buff.Reset()
 	err = format.Node(&buff, fset, file)
 
-	// TODO(abg): Configurable output file name/template
-	outputDir := g.outputDir
-	if outputDir == "" {
-		outputDir = filepath.Dir(f.Filepath)
-	}
-	newName := strings.TrimSuffix(filepath.Base(f.Filepath), ".go") + "_gen.go"
-	return ioutil.WriteFile(filepath.Join(outputDir, newName), buff.Bytes(), 0644)
+	return ioutil.WriteFile(g.outputPath, buff.Bytes(), 0644)
 }
 
 func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string) error {

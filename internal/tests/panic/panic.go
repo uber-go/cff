@@ -62,7 +62,7 @@ func (p *panicker) FlowPanicsSerial() error {
 				panic("panic")
 				return ""
 			},
-			cff.Instrument("T1"),
+			cff.Instrument("T2"),
 		),
 	)
 

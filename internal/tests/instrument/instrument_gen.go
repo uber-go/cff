@@ -1,7 +1,7 @@
 // +build !cff
 // @generated
 
-package main
+package instrument
 
 import (
 	"context"

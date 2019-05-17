@@ -49,10 +49,10 @@ being built by the Go compiler.
 package userservice
 ```
 
-Finally, run the `cff` command on a range of packages.
+Finally, run the `cff` command on a specific package and specify the output.
 
 ```shell
-$ cff ./...
+$ go run ./cmd/cff --input ./examples/magic.go --output /tmp/magic_gen.go
 ```
 
 This will generate copies of the original files without the `cff` tag, and the
