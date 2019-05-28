@@ -1,4 +1,4 @@
-package instrument
+package instrument_test
 
 import (
 	"context"
@@ -9,15 +9,17 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
+
+	instrument_gen "go.uber.org/cff/internal/tests/instrument_gen"
 )
 
 func TestInstrument(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &h{scope: scope, logger: logger}
+	h := &instrument_gen.H{Scope: scope, Logger: logger}
 	ctx := context.Background()
-	v, err := h.run(ctx, "1")
+	v, err := h.Run(ctx, "1")
 
 	assert.NoError(t, err)
 	assert.Equal(t, uint8(1), v)
@@ -51,9 +53,9 @@ func TestInstrumentError(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &h{scope: scope, logger: logger}
+	h := &instrument_gen.H{Scope: scope, Logger: logger}
 	ctx := context.Background()
-	_, err := h.run(ctx, "NaN")
+	_, err := h.Run(ctx, "NaN")
 
 	assert.Error(t, err)
 
@@ -78,8 +80,8 @@ func TestInstrumentCancelledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(ctx)
 	cancel()
 
-	h := &h{scope: scope, logger: logger}
-	_, err := h.run(ctx, "1")
+	h := &instrument_gen.H{Scope: scope, Logger: logger}
+	_, err := h.Run(ctx, "1")
 	assert.Error(t, err)
 
 	// metrics
@@ -111,9 +113,9 @@ func TestInstrumentRecover(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &h{scope: scope, logger: logger}
+	h := &instrument_gen.H{Scope: scope, Logger: logger}
 	ctx := context.Background()
-	v, err := h.run(ctx, "300")
+	v, err := h.Run(ctx, "300")
 
 	assert.NoError(t, err)
 	assert.Equal(t, uint8(0), v)
@@ -159,9 +161,9 @@ func TestInstrumentAnnotationOrder(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &h{scope: scope, logger: logger}
+	h := &instrument_gen.H{Scope: scope, Logger: logger}
 	ctx := context.Background()
-	v, err := h.do(ctx, "1")
+	v, err := h.Do(ctx, "1")
 
 	assert.NoError(t, err)
 	assert.Equal(t, 1, v)
@@ -193,9 +195,9 @@ func TestInstrumentTaskButNotFlow(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &h{scope: scope, logger: logger}
+	h := &instrument_gen.H{Scope: scope, Logger: logger}
 	ctx := context.Background()
-	v, err := h.work(ctx, "1")
+	v, err := h.Work(ctx, "1")
 
 	assert.NoError(t, err)
 	assert.Equal(t, 1, v)

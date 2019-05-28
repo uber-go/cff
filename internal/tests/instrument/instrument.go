@@ -17,29 +17,31 @@ import (
 func main() {
 	scope := tally.NoopScope
 	logger := zap.NewNop()
-	h := &h{
-		scope:  scope,
-		logger: logger,
+	h := &H{
+		Scope:  scope,
+		Logger: logger,
 	}
 	ctx := context.Background()
-	res, err := h.run(ctx, os.Args[1])
+	res, err := h.Run(ctx, os.Args[1])
 	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("%d\n", res)
 }
 
-type h struct {
-	scope  tally.Scope
-	logger *zap.Logger
+// H is used by other tests.
+type H struct {
+	Scope  tally.Scope
+	Logger *zap.Logger
 }
 
-func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
+// Run executes a flow to test instrumentation.
+func (h *H) Run(ctx context.Context, req string) (res uint8, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
-		cff.Metrics(h.scope),
-		cff.Logger(h.logger),
+		cff.Metrics(h.Scope),
+		cff.Logger(h.Logger),
 		cff.InstrumentFlow("AtoiRun"),
 
 		cff.Task(
@@ -61,13 +63,14 @@ func (h *h) run(ctx context.Context, req string) (res uint8, err error) {
 	return
 }
 
-func (h *h) do(ctx context.Context, req string) (res int, err error) {
+// Do executes a flow to test instrumentation.
+func (h *H) Do(ctx context.Context, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
 		cff.InstrumentFlow("AtoiDo"),
-		cff.Metrics(h.scope),
-		cff.Logger(h.logger),
+		cff.Metrics(h.Scope),
+		cff.Logger(h.Logger),
 		cff.Task(
 			strconv.Atoi,
 			cff.Instrument("Atoi"),
@@ -76,12 +79,13 @@ func (h *h) do(ctx context.Context, req string) (res int, err error) {
 	return
 }
 
-func (h *h) work(ctx context.Context, req string) (res int, err error) {
+// Work executes a flow to test instrumentation.
+func (h *H) Work(ctx context.Context, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
-		cff.Metrics(h.scope),
-		cff.Logger(h.logger),
+		cff.Metrics(h.Scope),
+		cff.Logger(h.Logger),
 		cff.Task(
 			strconv.Atoi,
 			cff.Instrument("Atoi"),

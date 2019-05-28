@@ -17,6 +17,7 @@ import (
 
 const (
 	aquaregiaTestDir = "failing_tests"
+	internalTests    = "go.uber.org/cff/internal"
 )
 
 type errorCase struct {
@@ -196,9 +197,10 @@ func TestCodeGenerateFails(t *testing.T) {
 			defer exp.Cleanup()
 
 			// Using pattern for go test not to run _test unit tests which test generated code.
+
 			pkgs, err := packages.Load(
 				exp.Config,
-				"pattern="+filepath.Join(goldenTestImportInternal, aquaregiaTestDir, testDirectoryName, "..."))
+				"pattern="+filepath.Join(internalTests, aquaregiaTestDir, testDirectoryName, "..."))
 
 			require.NoError(t, err, "could not load packages")
 			require.NotEmpty(t, pkgs, "didn't find any packages")

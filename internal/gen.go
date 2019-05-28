@@ -123,15 +123,8 @@ func (g *generator) GenerateFile(f *file) error {
 		// Replace +build cff with +build !cff.
 		for _, c := range cg.List {
 			if strings.TrimSpace(strings.TrimPrefix(c.Text, "//")) == "+build cff" {
-				c.Text = "// +build !cff"
-				// Commenting that this code was generated.
-				pos := cg.Pos()
-				comment := &ast.Comment{
-					// Tricking Phab not to consider this file to be generated.
-					Text:  "// @g" + "enerated",
-					Slash: pos + 1,
-				}
-				cg.List = append(cg.List, comment)
+				// Tricking Phab not to consider this file to be generated.
+				c.Text = "// @g" + "enerated by CFF"
 				break
 			}
 		}

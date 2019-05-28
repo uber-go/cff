@@ -10,18 +10,20 @@ import (
 	"github.com/uber-go/tally"
 )
 
-type panicker struct {
-	scope  tally.Scope
-	logger *zap.Logger
+// Panicker is exported to be used by tests.
+type Panicker struct {
+	Scope  tally.Scope
+	Logger *zap.Logger
 }
 
-func (p *panicker) FlowPanicsParallel() error {
+// FlowPanicsParallel runs tasks in parallel.
+func (p *Panicker) FlowPanicsParallel() error {
 	var b bool
 
 	err := cff.Flow(
 		context.Background(),
-		cff.Metrics(p.scope),
-		cff.Logger(p.logger),
+		cff.Metrics(p.Scope),
+		cff.Logger(p.Logger),
 		cff.InstrumentFlow("PanicParallel"),
 		cff.Results(&b),
 		cff.Task(
@@ -48,14 +50,15 @@ func (p *panicker) FlowPanicsParallel() error {
 	return err
 }
 
-func (p *panicker) FlowPanicsSerial() error {
+// FlowPanicsSerial runs a single flow.
+func (p *Panicker) FlowPanicsSerial() error {
 	var r string
 
 	err := cff.Flow(
 		context.Background(),
 		cff.Results(&r),
-		cff.Metrics(p.scope),
-		cff.Logger(p.logger),
+		cff.Metrics(p.Scope),
+		cff.Logger(p.Logger),
 		cff.InstrumentFlow("FlowPanicsSerial"),
 		cff.Task(
 			func() string {

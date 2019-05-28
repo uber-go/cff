@@ -12,9 +12,9 @@ import (
 )
 
 func main() {
-	h := &h{}
+	h := &H{}
 	ctx := context.Background()
-	err := h.swallow(ctx, os.Args[1])
+	err := h.Swallow(ctx, os.Args[1])
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -22,15 +22,17 @@ func main() {
 	fmt.Println(os.Args, "is swallowed")
 }
 
-type h struct{}
+// H is exported for tests.
+type H struct{}
 
-func (h *h) swallow(ctx context.Context, req string) (err error) {
+// Swallow tests that error is not swallowed..
+func (h *H) Swallow(ctx context.Context, req string) (err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Task(
 			func(s string) error {
 				if s == "tide pods" {
-					return errors.New("can not swallow")
+					return errors.New("can not Swallow")
 				}
 				return nil
 			},
@@ -40,7 +42,8 @@ func (h *h) swallow(ctx context.Context, req string) (err error) {
 	return
 }
 
-func (h *h) tripleSwallow(ctx context.Context, req string) (err error) {
+// TripleSwallow tests that no error is returned and flow runs.
+func (h *H) TripleSwallow(ctx context.Context, req string) (err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Tasks(
