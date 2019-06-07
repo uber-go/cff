@@ -1,4 +1,4 @@
-CFF = bazel run //src/go.uber.org/cff/cmd/cff --
+CFF = bazel run --run_under="cd $(shell pwd) &&" //src/go.uber.org/cff/cmd/cff --
 
 .PHONY: test
 test:
@@ -6,4 +6,4 @@ test:
 
 .PHONY: generate
 generate:
-	 $(CFF) --input ./examples/magic.go --output /tmp/magic_gen.go
+	 $(CFF) --input examples/magic.go --output examples/magic_gen.go
