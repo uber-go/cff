@@ -10,7 +10,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/multierr"
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/packages/packagestest"
 )
@@ -23,23 +22,6 @@ const (
 type errorCase struct {
 	File         string
 	ErrorMatches string
-}
-
-// Unwrap a single multierr.Error value, possibly nested, into a list of underlying errors
-func unwrapMultierror(err error) []error {
-	errs := multierr.Errors(err)
-
-	if len(errs) == 1 && errs[0] == err {
-		// If the underlying type is not a multierr, the multierr package will return it as-is
-		return errs
-	}
-
-	var unwrappedErrors []error
-	for _, err := range errs {
-		unwrappedErrors = append(unwrappedErrors, unwrapMultierror(err)...)
-	}
-
-	return unwrappedErrors
 }
 
 // This works by trying to transpile all of the files in the directory/package,
@@ -208,18 +190,20 @@ func TestCodeGenerateFails(t *testing.T) {
 			for _, pkg := range pkgs {
 				// Output path can be empty so code gets generated next to source in case of failed
 				// tests.
-				errUntyped := Process(fset, pkg, "")
-
-				errorsThisPackage := unwrapMultierror(errUntyped)
-				for _, err := range errorsThisPackage {
+				var errors []error
+				for i := range pkg.CompiledGoFiles {
+					if err := Process(fset, pkg, pkg.Syntax[i], ""); err != nil {
+						errors = append(errors, err)
+					}
+				}
+				for _, err := range errors {
 					t.Logf("found error %q", err.Error())
 				}
-
 				for _, errCase := range errCases {
 					found := false
 					regexpError := regexp.MustCompile(fmt.Sprintf("%s.*%s", errCase.File, errCase.ErrorMatches))
 					// TODO: verify exactly how many times we match the error in a file.
-					for _, err := range errorsThisPackage {
+					for _, err := range errors {
 						if ok := regexpError.MatchString(err.Error()); ok {
 							found = true
 							break

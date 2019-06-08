@@ -1,4 +1,4 @@
-package panic_test
+package panic
 
 import (
 	"testing"
@@ -8,14 +8,12 @@ import (
 	"github.com/uber-go/tally"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest/observer"
-
-	panic_gen "go.uber.org/cff/internal/tests/panic_gen"
 )
 
 func TestCatchesPanicParallel(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	logger, err := zap.NewDevelopment()
-	p := &panic_gen.Panicker{
+	p := &Panicker{
 		Scope:  scope,
 		Logger: logger,
 	}
@@ -28,7 +26,7 @@ func TestCatchesPanicSerial(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.NewAtomicLevel())
 	logger := zap.New(core)
-	p := &panic_gen.Panicker{
+	p := &Panicker{
 		Scope:  scope,
 		Logger: logger,
 	}

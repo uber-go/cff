@@ -1,4 +1,4 @@
-package instrument_test
+package instrument
 
 import (
 	"context"
@@ -9,15 +9,13 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
-
-	instrument_gen "go.uber.org/cff/internal/tests/instrument_gen"
 )
 
 func TestInstrument(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &instrument_gen.H{Scope: scope, Logger: logger}
+	h := &H{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	v, err := h.Run(ctx, "1")
 
@@ -53,7 +51,7 @@ func TestInstrumentError(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &instrument_gen.H{Scope: scope, Logger: logger}
+	h := &H{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	_, err := h.Run(ctx, "NaN")
 
@@ -80,7 +78,7 @@ func TestInstrumentCancelledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(ctx)
 	cancel()
 
-	h := &instrument_gen.H{Scope: scope, Logger: logger}
+	h := &H{Scope: scope, Logger: logger}
 	_, err := h.Run(ctx, "1")
 	assert.Error(t, err)
 
@@ -113,7 +111,7 @@ func TestInstrumentRecover(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &instrument_gen.H{Scope: scope, Logger: logger}
+	h := &H{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	v, err := h.Run(ctx, "300")
 
@@ -161,7 +159,7 @@ func TestInstrumentAnnotationOrder(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &instrument_gen.H{Scope: scope, Logger: logger}
+	h := &H{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	v, err := h.Do(ctx, "1")
 
@@ -195,7 +193,7 @@ func TestInstrumentTaskButNotFlow(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &instrument_gen.H{Scope: scope, Logger: logger}
+	h := &H{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	v, err := h.Work(ctx, "1")
 

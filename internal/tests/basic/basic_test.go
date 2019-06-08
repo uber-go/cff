@@ -1,4 +1,4 @@
-package basic_test
+package basic
 
 import (
 	"context"
@@ -6,25 +6,24 @@ import (
 	"io/ioutil"
 	"testing"
 
-	basic_gen "go.uber.org/cff/internal/tests/basic_gen"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSimpleFlow(t *testing.T) {
-	msg, err := basic_gen.SimpleFlow()
+	msg, err := SimpleFlow()
 	assert.NoError(t, err)
 	assert.Equal(t, "hello world", msg)
 }
 
 func TestSimpleNestedFlow(t *testing.T) {
-	msg, err := basic_gen.SimpleFlowNested()
+	msg, err := SimpleFlowNested()
 	assert.NoError(t, err)
 	assert.Equal(t, "foo", msg)
 }
 
 func TestFlowWithoutParameters(t *testing.T) {
-	r, err := basic_gen.NoParamsFlow(context.Background())
+	r, err := NoParamsFlow(context.Background())
 	require.NoError(t, err)
 
 	body, err := ioutil.ReadAll(r)
@@ -35,7 +34,7 @@ func TestFlowWithoutParameters(t *testing.T) {
 
 func TestSerialFailures(t *testing.T) {
 	t.Run("first function fails", func(t *testing.T) {
-		err := basic_gen.SerialFailableFlow(
+		err := SerialFailableFlow(
 			context.Background(),
 			func() error {
 				return errors.New("great sadness")
@@ -49,7 +48,7 @@ func TestSerialFailures(t *testing.T) {
 	})
 
 	t.Run("second function fails", func(t *testing.T) {
-		err := basic_gen.SerialFailableFlow(
+		err := SerialFailableFlow(
 			context.Background(),
 			func() error { return nil },
 			func() error {
@@ -61,7 +60,7 @@ func TestSerialFailures(t *testing.T) {
 }
 
 func TestProduceMultiple(t *testing.T) {
-	require.NoError(t, basic_gen.ProduceMultiple())
+	require.NoError(t, ProduceMultiple())
 }
 
 func TestContextCancelation(t *testing.T) {
@@ -76,7 +75,7 @@ func TestContextCancelation(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 
 		cancel()
-		err := basic_gen.SerialFailableFlow(ctx, dontCallMe(t), dontCallMe(t))
+		err := SerialFailableFlow(ctx, dontCallMe(t), dontCallMe(t))
 		require.Error(t, err)
 		assert.Equal(t, ctx.Err(), err)
 	})
@@ -84,7 +83,7 @@ func TestContextCancelation(t *testing.T) {
 	t.Run("cancel before second", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 
-		err := basic_gen.SerialFailableFlow(ctx,
+		err := SerialFailableFlow(ctx,
 			func() error {
 				require.NoError(t, ctx.Err(), "context can't be done yet")
 				cancel()
@@ -99,7 +98,7 @@ func TestContextCancelation(t *testing.T) {
 	t.Run("cancel before third", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 
-		err := basic_gen.SerialFailableFlow(ctx,
+		err := SerialFailableFlow(ctx,
 			func() error {
 				require.NoError(t, ctx.Err(), "context can't be done yet")
 				return nil

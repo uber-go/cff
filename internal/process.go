@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"go/ast"
 	"go/token"
 
 	"go.uber.org/multierr"
@@ -8,36 +9,26 @@ import (
 )
 
 // Process processes the provided Go package with cff.
-func Process(fset *token.FileSet, pkg *packages.Package, outputPath string) error {
-	var errors error
+func Process(fset *token.FileSet, pkg *packages.Package, file *ast.File, outputPath string) error {
+	var err error
 	for _, e := range pkg.Errors {
-		errors = multierr.Append(errors, e)
+		err = multierr.Append(err, e)
 	}
-	if errors != nil {
-		return errors
+	if err != nil {
+		return err
 	}
 
 	c := newCompiler(fset, pkg.TypesInfo, pkg.Types)
 
-	var files []*file
-	for _, file := range pkg.Syntax {
-		f, err := c.CompileFile(file)
-		if err != nil {
-			continue
-		}
-		files = append(files, f)
-	}
-
-	for _, err := range c.errors {
-		errors = multierr.Append(errors, err)
+	f, err := c.CompileFile(file)
+	if err != nil {
+		return err
 	}
 
 	g := newGenerator(fset, outputPath)
-	for _, f := range files {
-		if err := g.GenerateFile(f); err != nil {
-			errors = multierr.Append(errors, err)
-		}
+	if err := g.GenerateFile(f); err != nil {
+		return err
 	}
 
-	return errors
+	return nil
 }

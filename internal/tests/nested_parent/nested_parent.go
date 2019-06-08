@@ -9,7 +9,7 @@ import (
 
 	// When built under +cff build tag, this refers to the raw flow. After code
 	// generation, this refers to the generated code.
-	nested_child_gen "go.uber.org/cff/internal/tests/nested_child_gen"
+	"go.uber.org/cff/internal/tests/nested_child"
 )
 
 // Parent is a CFF flow that uses a nested CFF flow.
@@ -18,7 +18,7 @@ func Parent(ctx context.Context, i int) (s string, err error) {
 		cff.Params(i),
 		cff.Results(&s),
 
-		cff.Task(nested_child_gen.Itoa),
+		cff.Task(nestedchild.Itoa),
 	)
 
 	return
