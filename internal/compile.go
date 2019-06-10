@@ -666,5 +666,5 @@ func (c *compiler) compileLogger(flow *flow, call *ast.CallExpr) ast.Expr {
 // import path; when used in package a it will be a/vendor/b, it may even be a/vendor/b/vendor/c
 // See https://github.com/golang/go/issues/12739
 func isPackagePathEquivalent(pkg *types.Package, path string) bool {
-	return pkg.Path() == path || strings.HasSuffix(pkg.Path(), "/vendor/"+path)
+	return pkg.Path() == path || strings.HasSuffix(pkg.Path(), "/vendor/"+path) || pkg.Path() == "vendor/"+path
 }

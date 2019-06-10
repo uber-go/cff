@@ -170,12 +170,14 @@ func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports ma
 	return tmpl.Execute(w, flowTemplateData{Flow: f})
 }
 
+// typePrinter returns the qualifier for the type to form an identifier using that type
 func (g *generator) typePrinter(f *ast.File) func(types.Type) string {
 	return func(t types.Type) string {
 		return types.TypeString(t, func(pkg *types.Package) string {
 			for _, imp := range f.Imports {
 				ip, _ := strconv.Unquote(imp.Path.Value)
-				if ip != pkg.Path() {
+
+				if !isPackagePathEquivalent(pkg, ip) {
 					continue
 				}
 
@@ -188,6 +190,7 @@ func (g *generator) typePrinter(f *ast.File) func(types.Type) string {
 				return pkg.Name()
 			}
 
+			// Assume that the type is defined in the same package
 			return ""
 		})
 	}
