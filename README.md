@@ -52,7 +52,7 @@ package userservice
 Finally, run the `cff` command on a specific package and specify the output.
 
 ```shell
-$ go run ./cmd/cff --input ./examples/magic.go --output /tmp/magic_gen.go
+$ bazel run //src/go.uber.org/cff/cmd/cff -- go.uber.org/cff/internal/tests/basic --file=basic.go=/tmp/basic_gen.go
 ```
 
 This will generate copies of the original files without the `cff` tag, and the

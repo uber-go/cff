@@ -6,4 +6,4 @@ test:
 
 .PHONY: generate
 generate:
-	 $(CFF) --input examples/magic.go --output examples/magic_gen.go
+	 $(CFF) go.uber.org/cff/internal/tests/basic --file=basic.go=/tmp/basic_gen.go
