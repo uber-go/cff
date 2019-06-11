@@ -49,7 +49,100 @@ being built by the Go compiler.
 package userservice
 ```
 
-Finally, run the `cff` command on a specific package and specify the output.
+## Bazel Rule
+
+Create cff Bazel target for your package. 
+
+A full example: 
+```
+load("//rules:cff.bzl", "cff")
+
+cff(
+    name = "cff",
+    srcs = [
+        "//src/go.uber.org/cff/internal/tests/sandwich:afunc.go",
+    ],
+    cff_srcs = ["aflow.go", "bflow.go"],
+    importpath = "go.uber.org/cff/internal/tests/sandwich",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//src/go.uber.org/cff:go_default_library",
+    ],
+)
+```
+
+
+so let's break down each argument.
+
+In your `BUILD.bazel` file, add import to cff rule:
+```
+load("//rules:cff.bzl", "cff")
+```
+
+This is your only CFF target for the package, so name something relevant to CFF. 
+This name will be used by `go_library` to export your package containing CFF flow:  
+```
+name = "cff"
+```
+
+Internal functions that are dependencies of your CFF flows. They are declared to
+be added onto $GOPATH when compiling your CFF flow. In this case, `aflow.go` uses
+`afunc.go` within the flow:
+````
+srcs = [
+        "//src/go.uber.org/cff/internal/tests/sandwich:afunc.go",
+    ],
+````
+
+CFF sources containing `+build cff` tag. You can refer to sources by the full label including the package 
+or just the file name. In this case, `aflow.go` and `bflow.go` are within the same
+package.
+````
+cff_srcs = ["aflow.go", "bflow.go"],
+````
+
+Import path leading to package containing CFF source code:
+````
+importpath = "go.uber.org/cff/internal/tests/sandwich",
+````
+
+Dependencies of the CFF flows. Must contain at least the interface to supported CFF 
+options.
+````
+deps = [
+        "//src/go.uber.org/cff:go_default_library",
+    ],
+````
+
+CFF Bazel rule outputs all generated files with current convention of `_gen.go` 
+appended to the source file. You can view the generated code by adding a 
+`--output_groups=debug_files ` argument when building your target: 
+```
+bazel build --output_groups=debug_files //src/go.uber.org/cff/internal/tests/nested_parent:cff
+```
+
+### Using CFF Rule ###
+
+After creating the cff target, you can build a library out of the generated files via
+```
+go_library(
+    name = "flowcaller",
+    srcs = [
+        "afunc.go",
+        "flowcaller.go",
+        ":cff",  # keep
+    ],
+    importpath = "go.uber.org/cff/internal/tests/sandwich",
+    visibility = ["//visibility:public"],
+)
+```
+where `:cff` is the target we created above. 
+
+Note that until gazelle rules are in place, `#keep` signals to gazelle not to 
+delete this source.  
+
+### CLI ###
+Alternatively, to experiment with CFF you can run the `cff` command on a specific package and specify the output.
 
 ```shell
 $ bazel run //src/go.uber.org/cff/cmd/cff -- go.uber.org/cff/internal/tests/basic --file=basic.go=/tmp/basic_gen.go
