@@ -243,7 +243,7 @@ logger *{{ $zap }}.Logger,
 	v{{ typeHash .Type }} {{ type .Type }},
 {{- end }}) (err error) {
 	{{- if $flow.Instrument -}}
-	flowTags := map[string]string{"name": {{ expr $flow.Instrument.Name }}}
+	flowTags := map[string]string{"flow": {{ expr $flow.Instrument.Name }}}
 	flowTagsMutex := new(sync.Mutex)
 	{{- end -}}
 	{{ range $schedIdx, $sched := $schedule }}
@@ -253,10 +253,10 @@ logger *{{ $zap }}.Logger,
 					{{- if (and ($task.Instrument) (ge $thisSchedIdx $schedIdx)) -}}
 						{{- $taskName := expr $task.Instrument.Name }}
 						{{- $tagsVar := print "s" $thisSchedIdx "t" $idx "Tags" }}
-						{{ $tagsVar }} := map[string]string{"name": {{ $taskName }}}
+						{{ $tagsVar }} := map[string]string{"task": {{ $taskName }}}
 						scope.Tagged({{ $tagsVar }}).Counter("task.skipped").Inc(1)
 						logger.Debug("task skipped",
-									 zap.String("name", {{ $taskName }}),
+									 zap.String("task", {{ $taskName }}),
 								     zap.Error(ctx.Err()),
 									)
 					{{ end -}}
@@ -264,7 +264,7 @@ logger *{{ $zap }}.Logger,
 			{{- end -}}
 			{{ if $flow.Instrument -}}
 				scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
-				logger.Debug("taskflow skipped", zap.String("name", {{ expr $flow.Instrument.Name }}))
+				logger.Debug("taskflow skipped", zap.String("flow", {{ expr $flow.Instrument.Name }}))
 			{{- end }}
 			return ctx.Err()
 		}
@@ -295,7 +295,7 @@ logger *{{ $zap }}.Logger,
 			{{ end -}}
 
 				{{ if .Instrument -}}
-					tags := map[string]string{"name": {{ expr .Instrument.Name }}}
+					tags := map[string]string{"task": {{ expr .Instrument.Name }}}
 					timer := scope.Tagged(tags).Timer("task.timing").Start()
 					defer timer.Stop()
 				{{- end }}
@@ -305,9 +305,9 @@ logger *{{ $zap }}.Logger,
 						{{ $once }}.Do(func() {
 							recoveredErr := {{ $fmt }}.Errorf("task panic: %v", recovered)
 							{{ if .Instrument -}}
-							scope.Tagged(map[string]string{"name": {{ expr .Instrument.Name }}}).Counter("task.panic").Inc(1)
+							scope.Tagged(map[string]string{"task": {{ expr .Instrument.Name }}}).Counter("task.panic").Inc(1)
 							logger.Error("task panic", 
-								zap.String("name", {{ expr .Instrument.Name }}),
+								zap.String("task", {{ expr .Instrument.Name }}),
 								zap.Stack("stack"),
 								zap.Error(recoveredErr))
 							{{- end }}
@@ -326,13 +326,13 @@ logger *{{ $zap }}.Logger,
 							{{ if .Instrument -}}
 								{{ if $flow.Instrument -}}
 								flowTagsMutex.Lock()
-								flowTags["failedTask"] = {{ expr .Instrument.Name }}
+								flowTags["failedtask"] = {{ expr .Instrument.Name }}
 								flowTagsMutex.Unlock()
 								{{- end }}
 								scope.Tagged(tags).Counter("task.error").Inc(1)
 								scope.Tagged(tags).Counter("task.recovered").Inc(1)
 								logger.Error("task error recovered",
-											 zap.String("name", {{ expr .Instrument.Name }}),
+											 zap.String("task", {{ expr .Instrument.Name }}),
 											 zap.Error({{ $serr }}),
 											)
 							{{- end }}
@@ -344,7 +344,7 @@ logger *{{ $zap }}.Logger,
 							{{ if .Instrument -}}
 								{{ if $flow.Instrument -}}
 								flowTagsMutex.Lock()
-								flowTags["failedTask"] = {{ expr .Instrument.Name }}
+								flowTags["failedtask"] = {{ expr .Instrument.Name }}
 								flowTagsMutex.Unlock()
 								{{- end }}
 								scope.Tagged(tags).Counter("task.error").Inc(1)
@@ -355,7 +355,7 @@ logger *{{ $zap }}.Logger,
 						{{- end }}
 					} {{ if .Instrument }} else {
 						scope.Tagged(tags).Counter("task.success").Inc(1)
-						logger.Debug("task succeeded", zap.String("name", {{ expr .Instrument.Name }}))
+						logger.Debug("task succeeded", zap.String("task", {{ expr .Instrument.Name }}))
 					} {{ end }}
 				{{ end }}
 				{{ if .Predicate }}
@@ -397,7 +397,7 @@ logger *{{ $zap }}.Logger,
 		scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 	} else {
 		scope.Tagged(flowTags).Counter("taskflow.success").Inc(1)
-		logger.Debug("taskflow succeeded", zap.String("name", {{ expr $flow.Instrument.Name }}))
+		logger.Debug("taskflow succeeded", zap.String("flow", {{ expr $flow.Instrument.Name }}))
 	}
 
 	{{- end }}

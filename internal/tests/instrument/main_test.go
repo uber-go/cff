@@ -27,9 +27,9 @@ func TestInstrument(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.success+name=Atoi"].Value())
-	assert.Equal(t, int64(1), counters["task.success+name=uint8"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.success+name=AtoiRun"].Value())
+	assert.Equal(t, int64(1), counters["task.success+task=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["task.success+task=uint8"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.success+flow=AtoiRun"].Value())
 
 	// logs
 	expectedLevel := zap.DebugLevel
@@ -62,8 +62,8 @@ func TestInstrumentError(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.error+name=Atoi"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.error+failedTask=Atoi,name=AtoiRun"].Value())
+	assert.Equal(t, int64(1), counters["task.error+task=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.error+failedtask=Atoi,flow=AtoiRun"].Value())
 
 	// logs
 	logEntries := observedLogs.All()
@@ -87,9 +87,9 @@ func TestInstrumentCancelledContext(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.skipped+name=Atoi"].Value())
-	assert.Equal(t, int64(1), counters["task.skipped+name=uint8"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.skipped+name=AtoiRun"].Value())
+	assert.Equal(t, int64(1), counters["task.skipped+task=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["task.skipped+task=uint8"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.skipped+flow=AtoiRun"].Value())
 
 	// logs
 	expectedLevel := zap.DebugLevel
@@ -123,10 +123,10 @@ func TestInstrumentRecover(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.success+name=Atoi"].Value())
-	assert.Equal(t, int64(1), counters["task.error+name=uint8"].Value())
-	assert.Equal(t, int64(1), counters["task.recovered+name=uint8"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.success+failedTask=uint8,name=AtoiRun"].Value())
+	assert.Equal(t, int64(1), counters["task.success+task=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["task.error+task=uint8"].Value())
+	assert.Equal(t, int64(1), counters["task.recovered+task=uint8"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.success+failedtask=uint8,flow=AtoiRun"].Value())
 
 	// logs
 	expected := []struct {
@@ -171,8 +171,8 @@ func TestInstrumentAnnotationOrder(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.success+name=Atoi"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.success+name=AtoiDo"].Value())
+	assert.Equal(t, int64(1), counters["task.success+task=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.success+flow=AtoiDo"].Value())
 
 	// logs
 	expectedLevel := zap.DebugLevel
@@ -205,7 +205,7 @@ func TestInstrumentTaskButNotFlow(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.success+name=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["task.success+task=Atoi"].Value())
 
 	// logs
 	expectedLevel := zap.DebugLevel
