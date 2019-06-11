@@ -29,7 +29,6 @@ func (p *Panicker) FlowPanicsParallel() error {
 		cff.Task(
 			func() string {
 				panic("panic")
-				return ""
 			},
 			cff.Instrument("T1"),
 		),
@@ -63,7 +62,6 @@ func (p *Panicker) FlowPanicsSerial() error {
 		cff.Task(
 			func() string {
 				panic("panic")
-				return ""
 			},
 			cff.Instrument("T2"),
 		),
