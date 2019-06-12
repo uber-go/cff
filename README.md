@@ -150,3 +150,33 @@ $ bazel run //src/go.uber.org/cff/cmd/cff -- go.uber.org/cff/internal/tests/basi
 
 This will generate copies of the original files without the `cff` tag, and the
 relevant sections in the code replaced with generated code.
+
+### Developing on CFF ###
+
+`internal/compile.go` and `internal/gen.go` contain the code for the static analysis and Go code generation respectively. 
+
+#### Tests ####
+
+"Golden" tests are under the `internal/tests` folder, which is written as one folder per test, and a single CFF 
+source file matching the directory name (e.g. `internal/tests/basic/basic.go`). These have CFF sources that we want 
+to assert (1) the CFF compiler works on them correctly, and (2) that the behavior of the generated code is as we
+expect. (1) is enforced by the bazel rule in each directory, and (2) is enforced by `*_test.go` files in each directory. 
+
+Failing test cases are in `internal/failing_tests` and are processed by `aquaregia_test.go` which does **not** use the 
+bazel rule for CFF, because we want to assert (1) that the source code fails the CFF compiler, and (2) assert on the
+error that was returned for the compiler. 
+
+##### Benchmarks #####
+
+Benchmarks are a special case of golden tests. They can be invoked using bazel test as follows:
+
+```shell
+$ bazel run //src/go.uber.org/cff/internal/tests/benchmark:go_default_test -- --test.v --test.bench=. --test.benchmem
+Executing tests from //src/go.uber.org/cff/internal/tests/benchmark:go_default_test
+-----------------------------------------------------------------------------
+goos: darwin
+goarch: amd64
+BenchmarkSimple-8         	  500000	      2162 ns/op	      80 B/op	       6 allocs/op
+BenchmarkSimpleNative-8   	 1000000	      1567 ns/op	      32 B/op	       3 allocs/op
+BenchmarkMetrics-8        	  200000	     10817 ns/op	    3128 B/op	      35 allocs/op
+```
