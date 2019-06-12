@@ -245,6 +245,10 @@ logger *{{ $zap }}.Logger,
 	{{- if $flow.Instrument -}}
 	flowTags := map[string]string{"flow": {{ expr $flow.Instrument.Name }}}
 	flowTagsMutex := new(sync.Mutex)
+
+	flowTimer := scope.Tagged(flowTags).Timer("taskflow.timing").Start()
+	defer flowTimer.Stop()
+
 	{{- end -}}
 	{{ range $schedIdx, $sched := $schedule }}
 		if ctx.Err() != nil {

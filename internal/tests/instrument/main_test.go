@@ -22,14 +22,19 @@ func TestInstrument(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, uint8(1), v)
 
+	metrics := scope.Snapshot()
 	// metrics
-	counters := scope.Snapshot().Counters()
+	counters := metrics.Counters()
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
 	assert.Equal(t, int64(1), counters["task.success+task=Atoi"].Value())
 	assert.Equal(t, int64(1), counters["task.success+task=uint8"].Value())
 	assert.Equal(t, int64(1), counters["taskflow.success+flow=AtoiRun"].Value())
+
+	timers := metrics.Timers()
+	assert.NotNil(t, timers["task.timing+task=Atoi"])
+	assert.NotNil(t, timers["taskflow.timing+flow=AtoiRun"])
 
 	// logs
 	expectedLevel := zap.DebugLevel
