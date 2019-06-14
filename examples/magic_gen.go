@@ -34,24 +34,75 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 	var res *Response
 	err := func(ctx context.Context, scope tally.Scope,
 		logger *zap.Logger, v1 *Request) (err error) {
-		flowTags := map[string]string{"name": "HandleFoo"}
+		flowTags := map[string]string{"flow": "HandleFoo"}
 		flowTagsMutex := new(sync.Mutex)
-		if ctx.Err() != nil {
-			s1t1Tags := map[string]string{"name": "FormSendEmailRequest"}
-			scope.Tagged(s1t1Tags).Counter("task.skipped").Inc(1)
-			logger.Debug("task skipped",
-				zap.String("name", "FormSendEmailRequest"),
-				zap.Error(ctx.Err()),
-			)
 
-			s2t0Tags := map[string]string{"name": "FormSendEmailRequest"}
-			scope.Tagged(s2t0Tags).Counter("task.skipped").Inc(1)
-			logger.Debug("task skipped",
-				zap.String("name", "FormSendEmailRequest"),
-				zap.Error(ctx.Err()),
-			)
+		flowTimer := scope.Tagged(flowTags).Timer("taskflow.timing").Start()
+		defer flowTimer.Stop()
+		type task struct {
+			name string
+			ran  bool
+			tags map[string]string
+		}
+
+		tasks := [][]*task{
+			{
+				{
+
+					ran: false,
+				},
+			},
+			{
+				{
+
+					ran: false,
+				},
+				{
+					name: "FormSendEmailRequest",
+					tags: map[string]string{"task": "FormSendEmailRequest"},
+					ran:  false,
+				},
+			},
+			{
+				{
+					name: "FormSendEmailRequest",
+					tags: map[string]string{"task": "FormSendEmailRequest"},
+					ran:  false,
+				},
+			},
+			{
+				{
+
+					ran: false,
+				},
+			},
+			{
+				{
+
+					ran: false,
+				},
+			},
+		}
+
+		defer func() {
+			if err == nil {
+				return
+			}
+			for _, sched := range tasks {
+				for _, task := range sched {
+					if task.name == "" || task.ran {
+						continue
+					}
+					scope.Tagged(task.tags).Counter("task.skipped").Inc(1)
+					logger.Debug("task skipped", zap.String("task", task.name), zap.Error(err))
+				}
+			}
 			scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
-			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
+			logger.Debug("taskflow skipped", zap.String("flow", "HandleFoo"))
+
+		}()
+
+		if ctx.Err() != nil {
 			return ctx.Err()
 		}
 		var (
@@ -99,21 +150,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		)
 
 		if ctx.Err() != nil {
-			s1t1Tags := map[string]string{"name": "FormSendEmailRequest"}
-			scope.Tagged(s1t1Tags).Counter("task.skipped").Inc(1)
-			logger.Debug("task skipped",
-				zap.String("name", "FormSendEmailRequest"),
-				zap.Error(ctx.Err()),
-			)
-
-			s2t0Tags := map[string]string{"name": "FormSendEmailRequest"}
-			scope.Tagged(s2t0Tags).Counter("task.skipped").Inc(1)
-			logger.Debug("task skipped",
-				zap.String("name", "FormSendEmailRequest"),
-				zap.Error(ctx.Err()),
-			)
-			scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
-			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
 			return ctx.Err()
 		}
 		var (
@@ -154,7 +190,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var err4 error
 		go func() {
 			defer wg1.Done()
-			tags := map[string]string{"name": "FormSendEmailRequest"}
+			tags := map[string]string{"task": "FormSendEmailRequest"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
 			defer func() {
@@ -162,9 +198,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				if recovered != nil {
 					once1.Do(func() {
 						recoveredErr := fmt.Errorf("task panic: %v", recovered)
-						scope.Tagged(map[string]string{"name": "FormSendEmailRequest"}).Counter("task.panic").Inc(1)
+						scope.Tagged(tags).Counter("task.panic").Inc(1)
 						logger.Error("task panic",
-							zap.String("name", "FormSendEmailRequest"),
+							zap.String("task", "FormSendEmailRequest"),
 							zap.Stack("stack"),
 							zap.Error(recoveredErr))
 						err = recoveredErr
@@ -175,19 +211,20 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			v5, err4 = h.users.List(v3)
 			if err4 != nil {
 				flowTagsMutex.Lock()
-				flowTags["failedTask"] = "FormSendEmailRequest"
+				flowTags["failedtask"] = "FormSendEmailRequest"
 				flowTagsMutex.Unlock()
 				scope.Tagged(tags).Counter("task.error").Inc(1)
 				scope.Tagged(tags).Counter("task.recovered").Inc(1)
 				logger.Error("task error recovered",
-					zap.String("name", "FormSendEmailRequest"),
+					zap.String("task", "FormSendEmailRequest"),
 					zap.Error(err4),
 				)
 
 				v5, err4 = &ListUsersResponse{}, nil
 			} else {
+				tasks[1][1].ran = true
 				scope.Tagged(tags).Counter("task.success").Inc(1)
-				logger.Debug("task succeeded", zap.String("name", "FormSendEmailRequest"))
+				logger.Debug("task succeeded", zap.String("task", "FormSendEmailRequest"))
 			}
 
 		}()
@@ -208,14 +245,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		)
 
 		if ctx.Err() != nil {
-			s2t0Tags := map[string]string{"name": "FormSendEmailRequest"}
-			scope.Tagged(s2t0Tags).Counter("task.skipped").Inc(1)
-			logger.Debug("task skipped",
-				zap.String("name", "FormSendEmailRequest"),
-				zap.Error(ctx.Err()),
-			)
-			scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
-			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
 			return ctx.Err()
 		}
 		var (
@@ -225,7 +254,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var v6 []*SendEmailRequest
 
 		func() {
-			tags := map[string]string{"name": "FormSendEmailRequest"}
+			tags := map[string]string{"task": "FormSendEmailRequest"}
 			timer := scope.Tagged(tags).Timer("task.timing").Start()
 			defer timer.Stop()
 			defer func() {
@@ -233,9 +262,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				if recovered != nil {
 					once2.Do(func() {
 						recoveredErr := fmt.Errorf("task panic: %v", recovered)
-						scope.Tagged(map[string]string{"name": "FormSendEmailRequest"}).Counter("task.panic").Inc(1)
+						scope.Tagged(tags).Counter("task.panic").Inc(1)
 						logger.Error("task panic",
-							zap.String("name", "FormSendEmailRequest"),
+							zap.String("task", "FormSendEmailRequest"),
 							zap.Stack("stack"),
 							zap.Error(recoveredErr))
 						err = recoveredErr
@@ -273,8 +302,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		)
 
 		if ctx.Err() != nil {
-			scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
-			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
 			return ctx.Err()
 		}
 		var (
@@ -320,8 +347,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		)
 
 		if ctx.Err() != nil {
-			scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
-			logger.Debug("taskflow skipped", zap.String("name", "HandleFoo"))
 			return ctx.Err()
 		}
 		var (
@@ -372,7 +397,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
 		} else {
 			scope.Tagged(flowTags).Counter("taskflow.success").Inc(1)
-			logger.Debug("taskflow succeeded", zap.String("name", "HandleFoo"))
+			logger.Debug("taskflow succeeded", zap.String("flow", "HandleFoo"))
 		}
 
 		return err

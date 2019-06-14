@@ -249,27 +249,48 @@ logger *{{ $zap }}.Logger,
 	flowTimer := scope.Tagged(flowTags).Timer("taskflow.timing").Start()
 	defer flowTimer.Stop()
 
-	{{- end -}}
+	{{- end }}
+	{{- if $flow.ObservabilityEnabled }}
+	type task struct {
+		name string
+		ran bool
+		tags map[string]string
+	}
+
+	tasks := [][]*task{
+		{{ range $schedule -}}
+		{
+			{{ range . -}}
+			{
+				{{ with .Instrument -}}
+				name: {{ expr .Name }},
+				tags: map[string]string{"task": {{ expr .Name }}},
+				{{- end }}
+				ran: false,
+			},
+			{{ end }}
+		},
+		{{ end }}
+	}
+
+	defer func() {
+		if err == nil { return }
+		for _, sched := range tasks {
+			for _, task := range sched {
+				if task.name == "" || task.ran { continue }
+				scope.Tagged(task.tags).Counter("task.skipped").Inc(1)
+				logger.Debug("task skipped", zap.String("task", task.name), zap.Error(err))
+			}
+		}
+		{{- if $flow.Instrument }}
+		scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
+		logger.Debug("taskflow skipped", zap.String("flow", {{ expr $flow.Instrument.Name }}))
+		{{ end }}
+	}()
+	{{ end }}
+
 	{{ range $schedIdx, $sched := $schedule }}
 		if ctx.Err() != nil {
-			{{- range $thisSchedIdx, $sched := $schedule -}}
-				{{- range $idx, $task := $sched -}}
-					{{- if (and ($task.Instrument) (ge $thisSchedIdx $schedIdx)) -}}
-						{{- $taskName := expr $task.Instrument.Name }}
-						{{- $tagsVar := print "s" $thisSchedIdx "t" $idx "Tags" }}
-						{{ $tagsVar }} := map[string]string{"task": {{ $taskName }}}
-						scope.Tagged({{ $tagsVar }}).Counter("task.skipped").Inc(1)
-						logger.Debug("task skipped",
-									 zap.String("task", {{ $taskName }}),
-								     zap.Error(ctx.Err()),
-									)
-					{{ end -}}
-				{{- end -}}
-			{{- end -}}
-			{{ if $flow.Instrument -}}
-				scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
-				logger.Debug("taskflow skipped", zap.String("flow", {{ expr $flow.Instrument.Name }}))
-			{{- end }}
 			return ctx.Err()
 		}
 
@@ -288,7 +309,7 @@ logger *{{ $zap }}.Logger,
 		{{ $wg }}.Add({{ len . }})
 		{{ end }}
 		
-		{{ range . }}
+		{{ range $taskIdx, $task := $sched }}
 			{{- $serr := printf "err%v" .Serial -}}
 			{{ template "taskResultVarDecl" . }}
 			{{ if $hasMultipleTasks -}}
@@ -309,7 +330,7 @@ logger *{{ $zap }}.Logger,
 						{{ $once }}.Do(func() {
 							recoveredErr := {{ $fmt }}.Errorf("task panic: %v", recovered)
 							{{ if .Instrument -}}
-							scope.Tagged(map[string]string{"task": {{ expr .Instrument.Name }}}).Counter("task.panic").Inc(1)
+							scope.Tagged(tags).Counter("task.panic").Inc(1)
 							logger.Error("task panic", 
 								zap.String("task", {{ expr .Instrument.Name }}),
 								zap.Stack("stack"),
@@ -358,6 +379,7 @@ logger *{{ $zap }}.Logger,
 							})
 						{{- end }}
 					} {{ if .Instrument }} else {
+						tasks[{{ $schedIdx }}][{{ $taskIdx }}].ran = true
 						scope.Tagged(tags).Counter("task.success").Inc(1)
 						logger.Debug("task succeeded", zap.String("task", {{ expr .Instrument.Name }}))
 					} {{ end }}

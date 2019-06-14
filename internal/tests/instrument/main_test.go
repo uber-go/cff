@@ -64,15 +64,38 @@ func TestInstrumentError(t *testing.T) {
 
 	// metrics
 	counters := scope.Snapshot().Counters()
-	for k := range counters {
-		t.Logf("got counter with key %q", k)
+	for k, v := range counters {
+		t.Logf("got counter with key %q val %v", k, v.Value())
 	}
 	assert.Equal(t, int64(1), counters["task.error+task=Atoi"].Value())
 	assert.Equal(t, int64(1), counters["taskflow.error+failedtask=Atoi,flow=AtoiRun"].Value())
 
+	expected := []struct {
+		level   zapcore.Level
+		message string
+	}{
+		{
+			zap.DebugLevel,
+			"task skipped",
+		},
+		{
+			zap.DebugLevel,
+			"task skipped",
+		},
+		{
+			zap.DebugLevel,
+			"taskflow skipped",
+		},
+	}
+
 	// logs
 	logEntries := observedLogs.All()
-	assert.Equal(t, 0, len(logEntries))
+	assert.Equal(t, len(expected), len(logEntries))
+	for i, entry := range logEntries {
+		assert.Equal(t, expected[i].level, entry.Level)
+		assert.Equal(t, expected[i].message, entry.Message)
+		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
+	}
 }
 
 func TestInstrumentCancelledContext(t *testing.T) {
