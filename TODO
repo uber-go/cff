@@ -49,7 +49,7 @@ to use this.
         scope but we don't include the task name or flow name (passed in with
         the Instrument call) in the emitted metrics.
 
-[ ] Figure out monorepo integration. The tool currently writes files next to
+[x] Figure out monorepo integration. The tool currently writes files next to
     the original source files for all tagged Go files in a package. This may
     have to be altered to operate on individual files. Talk to your local
     monorepo expert.
