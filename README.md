@@ -116,9 +116,9 @@ deps = [
 
 CFF Bazel rule outputs all generated files with current convention of `_gen.go` 
 appended to the source file. You can view the generated code by adding a 
-`--output_groups=debug_files ` argument when building your target: 
+`--output_groups=go_generated_srcs ` argument when building your target:
 ```
-bazel build --output_groups=debug_files //src/go.uber.org/cff/internal/tests/nested_parent:cff
+bazel build --output_groups=go_generated_srcs //src/go.uber.org/cff/internal/tests/nested_parent:cff
 ```
 
 ### Using CFF Rule ###
