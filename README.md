@@ -1,11 +1,3 @@
-**DO NOT USE CFF UNTIL THIS NOTICE GOES AWAY.**
-
-This is not ready for use by anyone. It does not work in the monorepo at this
-time. Please reach out to the owners (see METADATA) to ask about using this
-project.
-
----
-
 CFF is intended to be a system which facilitates orchestrating large numbers
 of interrelated functions with as much concurrent execution as possible.
 
