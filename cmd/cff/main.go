@@ -86,6 +86,13 @@ func main() {
 }
 
 func run(args []string) error {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("You've encountered a CFFv2 bug! Please report this http://t.uber.com/cff-bug")
+			panic(err)
+		}
+	}()
+
 	parser, f := newCLIParser()
 	if _, err := parser.ParseArgs(args); err != nil {
 		return err
