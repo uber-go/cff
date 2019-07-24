@@ -103,7 +103,7 @@ func (c *compiler) compileFile(astFile *ast.File) *file {
 			return false
 		case *ast.CallExpr:
 			// We're looking for a call in the form "ctf.Flow". It will be a
-			// SelectorExpr where the "X" is a reference to the "ctf" package.
+			// SelectorExpr where the "X" is a reference to the "cff" package.
 			sel, ok := n.Fun.(*ast.SelectorExpr)
 			if !ok {
 				return true // keep looking
@@ -666,5 +666,18 @@ func (c *compiler) compileLogger(flow *flow, call *ast.CallExpr) ast.Expr {
 // import path; when used in package a it will be a/vendor/b, it may even be a/vendor/b/vendor/c
 // See https://github.com/golang/go/issues/12739
 func isPackagePathEquivalent(pkg *types.Package, path string) bool {
-	return pkg.Path() == path || strings.HasSuffix(pkg.Path(), "/vendor/"+path) || pkg.Path() == "vendor/"+path
+	if pkg == nil {
+		// pkg will be nil when the package is part of the language builtins
+		return false
+	}
+
+	if pkg.Path() == path {
+		return true
+	}
+
+	if strings.HasSuffix(pkg.Path(), "/vendor/"+path) {
+		return true
+	}
+
+	return pkg.Path() == "vendor/"+path
 }
