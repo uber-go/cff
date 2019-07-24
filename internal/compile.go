@@ -102,16 +102,19 @@ func (c *compiler) compileFile(astFile *ast.File) *file {
 			file.UnnamedImports[importPath] = struct{}{}
 			return false
 		case *ast.CallExpr:
-			// We're looking for a call in the form "ctf.Flow". It will be a
+			// We're looking for a call in the form "cff.Flow". It will be a
 			// SelectorExpr where the "X" is a reference to the "cff" package.
 			sel, ok := n.Fun.(*ast.SelectorExpr)
 			if !ok {
 				return true // keep looking
 			}
 
-			fn := c.info.Uses[sel.Sel]
+			fn, ok := c.info.Uses[sel.Sel]
+			if !ok {
+				return true // invalid code b/c identifier doesn't exist. keep looking
+			}
 
-			if fn == nil || !isPackagePathEquivalent(fn.Pkg(), cffImportPath) {
+			if !isPackagePathEquivalent(fn.Pkg(), cffImportPath) {
 				return true // keep looking
 			}
 
@@ -497,8 +500,13 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 			continue
 		}
 
-		fn := c.info.Uses[sel.Sel]
-		if fn == nil || !isPackagePathEquivalent(fn.Pkg(), cffImportPath) {
+		fn, ok := c.info.Uses[sel.Sel]
+		if !ok {
+			c.errf("unresolvable reference in call: %v", c.nodePosition(opt), sel.Sel.String())
+			continue
+		}
+
+		if !isPackagePathEquivalent(fn.Pkg(), cffImportPath) {
 			c.errf("only cff functions may be passed as task options: "+
 				"found package %q", c.nodePosition(opt), fn.Pkg().Path())
 			continue
