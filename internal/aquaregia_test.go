@@ -53,34 +53,47 @@ func TestCodeGenerateFails(t *testing.T) {
 				File:         "cff-flow-arguments.go",
 				ErrorMatches: "expected a function call, got identifier",
 			},
+			// ExpectsFunctionCallExpression
 			{
 				File:         "cff-task-arguments.go",
 				ErrorMatches: "expected function, got bool",
 			},
-			{
-				File:         "cff-task-arguments.go",
-				ErrorMatches: "expected a function call, got identifier",
-			},
+			// ExpectedFlowArgumentsSelectorExpression.
 			{
 				File:         "cff-task-arguments.go",
 				ErrorMatches: "only cff functions may be passed as task options",
 			},
+			// ExpectedFlowArgumentsCallExpressions
+			{
+				File:         "cff-task-arguments.go",
+				ErrorMatches: "expected a function call, got identifier",
+			},
+			// ExpectedFlowArgumentsCallExpressions
+			{
+				File:         "cff-task-arguments.go",
+				ErrorMatches: "unknown top-level cff function \"Instrument\": only cff.Flow may be called at the top-level",
+			},
+			// ExpectedFlowArgumentsNotCFF
 			{
 				File:         "cff-task-arguments.go",
 				ErrorMatches: "only cff functions may be passed as task options: found package \"go.uber.org/cff/internal/failing_tests/bad-inputs\"",
 			},
-			{
-				File:         "cff-task-arguments.go",
-				ErrorMatches: "expected cff.Task, got cff.Params; only cff.Task is allowed to be nested under cff.Tasks",
-			},
-			{
-				File:         "cff-task-arguments.go",
-				ErrorMatches: "expected function, got bool",
-			},
+			// ExpectedTasksBad
 			{
 				File:         "cff-task-arguments.go",
 				ErrorMatches: "expected function, got untyped nil",
 			},
+			// ExpectedTasksBadCallExpr
+			{
+				File:         "cff-task-arguments.go",
+				ErrorMatches: "expected cff.Task, got cff.Params; only cff.Task is allowed to be nested under cff.Tasks",
+			},
+			// ExpectedTasksBadCallExprNotCFF
+			{
+				File:         "cff-task-arguments.go",
+				ErrorMatches: "expected function, got int",
+			},
+
 			{
 				File:         "context-predicate.go",
 				ErrorMatches: "only the first argument may be context.Context",
