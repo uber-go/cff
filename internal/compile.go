@@ -15,9 +15,13 @@ import (
 	"golang.org/x/tools/go/types/typeutil"
 )
 
+// taskIndex marks cff.Results outputs.
+type taskIndex int
+
 const (
-	cffImportPath = "go.uber.org/cff"
-	flowOption    = "go.uber.org/cff.FlowOption"
+	cffImportPath   = "go.uber.org/cff"
+	flowOption      = "go.uber.org/cff.FlowOption"
+	taskIndexRESULT = taskIndex(-1)
 )
 
 type compiler struct {
@@ -158,6 +162,7 @@ type flow struct {
 	ObservabilityEnabled bool
 
 	providers *typeutil.Map // map[types.Type]int (index in Tasks)
+	receivers *typeutil.Map // map[types.Type][]taskIndex tracks types needed to detect unused inputs
 
 	noOutputCounter int       // input for unique noOutput name
 	noOutputs       []*output // tracks tasks of no non-error results
@@ -185,6 +190,14 @@ func (f *flow) mustSetNoOutputProvider(key *task, value int) {
 	if prev != nil {
 		panic(fmt.Sprintf("cff assertion error: noOutput sentinel types should be unique, found %T for %dth task (defined at %v), expected to be nil", prev, value, key.Node))
 	}
+
+	if typ, ok := f.receivers.At(key.noOutput).([]taskIndex); ok {
+		typ := append(typ, taskIndex(value))
+		f.receivers.Set(key.noOutput, typ)
+	} else {
+		f.receivers.Set(key.noOutput, []taskIndex{taskIndex(value)})
+	}
+
 }
 
 func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
@@ -197,6 +210,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 		Node:      call,
 		Ctx:       call.Args[0],
 		providers: new(typeutil.Map),
+		receivers: new(typeutil.Map),
 	}
 	for _, arg := range call.Args[1:] {
 		arg := astutil.Unparen(arg)
@@ -223,6 +237,10 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			for _, o := range ce.Args {
 				if output := c.compileOutput(o); output != nil {
 					flow.Outputs = append(flow.Outputs, output)
+					// receivers is used to look up Task for compilation checks. Since we have
+					// Results, we dont need to find an associated task.
+					// We don't care about other values, cff.Results should be the only receiver.
+					flow.receivers.Set(output.Type, []taskIndex{taskIndexRESULT})
 				}
 			}
 		case "Metrics":
@@ -246,6 +264,14 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 	c.validateInstrument(&flow)
 
 	for i, t := range flow.Tasks {
+		for _, in := range t.Inputs {
+			if typ, ok := flow.receivers.At(in).([]taskIndex); ok {
+				typ := append(typ, taskIndex(i))
+				flow.receivers.Set(in, typ)
+			} else {
+				flow.receivers.Set(in, []taskIndex{taskIndex(i)})
+			}
+		}
 		for _, o := range t.Outputs {
 			prev := flow.providers.Set(o, i)
 			if prev != nil {
@@ -282,12 +308,15 @@ type validateVisitedType struct {
 }
 
 // validateTasks walks the graph from the bottom of the graph (the outputs) to validate that
-// all outputs are provided by some function.
+// all outputs are provided by some function. we also walk up the graph in case cff.Results
+// is not the root, and check if there are any tasks with output past cff.Results.
 func (c *compiler) validateTasks(f *flow) {
 	var (
-		queue      = list.New() // []validateVisitedType
-		visited    typeutil.Map // map[types.Type]struct{}
-		flowInputs typeutil.Map // map[types.Type]*input
+		queue          = list.New() // []validateVisitedType
+		forwardQueue   = list.New()
+		visited        typeutil.Map // map[types.Type]struct{}
+		flowInputs     typeutil.Map // map[types.Type]*input
+		forwardVisited typeutil.Map // map[types.Type]struct{}
 	)
 
 	for _, i := range f.Inputs {
@@ -296,9 +325,40 @@ func (c *compiler) validateTasks(f *flow) {
 
 	for _, o := range f.Outputs {
 		queue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
+		forwardQueue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
 	}
 	for _, o := range f.noOutputs {
 		queue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
+		forwardQueue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
+	}
+	// Check for unused values walking forward from root (output) towards dependencies.
+	for forwardQueue.Len() > 0 {
+		t := forwardQueue.Remove(forwardQueue.Front()).(validateVisitedType)
+		if forwardVisited.At(t.Type) != nil {
+			continue
+		}
+
+		forwardVisited.Set(t.Type, struct{}{})
+		if taskIdxs, ok := f.receivers.At(t.Type).([]taskIndex); ok {
+			for _, i := range taskIdxs {
+				// Looking at cff.Results which won't link to another task.
+				if i == taskIndexRESULT {
+					continue
+				}
+				task := f.Tasks[int(i)]
+				for _, o := range task.Outputs {
+					// Do not requeue if u are the same type.
+					if o != t.Type {
+						forwardQueue.PushBack(validateVisitedType{Type: o, Node: task.Node})
+					}
+				}
+			}
+
+			continue
+		} else {
+			// type is not input into anything past cff.Results.
+			c.errf("unused output type %v", c.nodePosition(t.Node), t.Type)
+		}
 	}
 
 	for queue.Len() > 0 {

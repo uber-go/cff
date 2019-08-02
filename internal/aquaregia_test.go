@@ -90,6 +90,26 @@ func TestCodeGenerateFails(t *testing.T) {
 				ErrorMatches: "only the first argument may be context.Context",
 			},
 			{
+				File:         "earlyresult.go",
+				ErrorMatches: "unused output type string",
+			},
+			{
+				File:         "earlyresult.go",
+				ErrorMatches: "unused output type int32",
+			},
+			{
+				File:         "earlyresult.go",
+				ErrorMatches: "unused output type \\*go.uber.org/cff/internal/failing_tests/bad-inputs.quuz",
+			},
+			{
+				File:         "earlyresult.go",
+				ErrorMatches: "unused output type \\*go.uber.org/cff/internal/failing_tests/bad-inputs.corge",
+			},
+			{
+				File:         "earlyresult.go",
+				ErrorMatches: "unused output type \\*go.uber.org/cff/internal/failing_tests/bad-inputs.grault",
+			},
+			{
 				File:         "error-task.go",
 				ErrorMatches: "only the last result may be an error",
 			},
