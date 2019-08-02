@@ -30,6 +30,7 @@ type errorCase struct {
 // Note: error accumulation is per-package so at the moment state is kept
 // when running transpiler across many flows expected to fail.
 func TestCodeGenerateFails(t *testing.T) {
+	t.Skip("Flaky test: T3593709")
 	// map [directory name] -> list of test cases
 	errorCasesByDirectory := map[string][]errorCase{
 		"bad-inputs": {
