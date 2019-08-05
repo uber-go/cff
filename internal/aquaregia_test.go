@@ -86,7 +86,7 @@ func TestCodeGenerateFails(t *testing.T) {
 			// ExpectedTasksBadCallExpr
 			{
 				File:         "cff-task-arguments.go",
-				ErrorMatches: "expected cff.Task, got cff.Params; only cff.Task is allowed to be nested under cff.Tasks",
+				ErrorMatches: "expected function, got go.uber.org/cff.FlowOption",
 			},
 			// ExpectedTasksBadCallExprNotCFF
 			{

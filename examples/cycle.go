@@ -3,8 +3,9 @@
 package example
 
 import (
-	"go.uber.org/cff"
 	"context"
+
+	"go.uber.org/cff"
 )
 
 type cycle struct{}
@@ -17,16 +18,19 @@ type moo struct{} // d
 func (c *cycle) Cycle(ctx context.Context) (res *moo, err error) {
 	cff.Flow(ctx,
 		cff.Results(&res),
-
-		cff.Tasks(
+		cff.Task(
 			// b -> a
 			func(b *bar) *foo {
 				return &foo{}
 			},
+		),
+		cff.Task(
 			// a -> (c, b)
 			func(a *foo) (*baz, *bar) {
 				return &baz{}, &bar{}
 			},
+		),
+		cff.Task(
 			// c -> d*
 			func(c *baz) *moo {
 				return &moo{}

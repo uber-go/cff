@@ -19,39 +19,23 @@ func SimpleFlow() (string, error) {
 	err := cff.Flow(context.Background(),
 		cff.Params(1),
 		cff.Results(&message),
-		cff.Tasks(
+		cff.Task(
 			func(i int) int64 {
 				return int64(i)
 			},
+		),
+		cff.Task(
 			func(i int) (*foo, error) {
 				return &foo{i}, nil
-			},
+			}),
+		cff.Task(
 			func(i int64) (*bar, error) {
 				return &bar{i}, nil
-			},
+			}),
+		cff.Task(
 			func(*foo, *bar) (string, error) {
 				return "hello world", nil
-			},
-		),
-	)
-	return message, err
-}
-
-// SimpleFlowNested has a cff.Task task within cff.Tasks.
-func SimpleFlowNested() (string, error) {
-	var message string
-	err := cff.Flow(
-		context.Background(),
-		cff.Params(1),
-		cff.Results(&message),
-		cff.Tasks(
-			func() int64 {
-				return int64(1)
-			},
-			cff.Task(func(int64, int) string {
-				return "foo"
 			}),
-		),
 	)
 	return message, err
 }
@@ -61,10 +45,11 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 	var r io.Reader
 	err := cff.Flow(ctx,
 		cff.Results(&r),
-		cff.Tasks(
+		cff.Task(
 			func() *bytes.Buffer {
 				return bytes.NewBufferString("hello world")
-			},
+			}),
+		cff.Task(
 			func(b *bytes.Buffer) io.Reader { return b },
 		),
 	)
@@ -82,13 +67,15 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 	return cff.Flow(
 		ctx,
 		cff.Results(&out),
-		cff.Tasks(
+		cff.Task(
 			func() (t1, error) {
 				return t1{}, f1()
-			},
+			}),
+		cff.Task(
 			func(t1) (t2, error) {
 				return t2{}, f2()
-			},
+			}),
+		cff.Task(
 			func(t2) t3 {
 				return t3{}
 			},
@@ -116,10 +103,11 @@ func ProduceMultiple() error {
 		context.Background(),
 		cff.Params(t1{}),
 		cff.Results(&out),
-		cff.Tasks(
+		cff.Task(
 			func(t1) (t2, t3) {
 				return t2{}, t3{}
-			},
+			}),
+		cff.Task(
 			func(t2, t3) t4 {
 				return t4{}
 			},

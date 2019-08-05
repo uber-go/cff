@@ -31,7 +31,7 @@ func Params(args ...interface{}) FlowOption {
 //  var result *Response
 //  err := cff.Flow(ctx,
 //    cff.Results(&result),
-//    cff.Tasks(...),
+//    cff.Task(...),
 //  )
 func Results(results ...interface{}) FlowOption {
 	panic("code not generated; run cff")
@@ -57,17 +57,6 @@ func Logger(logger *zap.Logger) FlowOption {
 //    cff.Task(h.client.GetUser),
 //    cff.Task(bindUser),
 //    cff.Task(h.processRequest),
-//  )
-//
-// Multiple tasks may be specified together with the cff.Tasks API.
-//
-//  cff.Flow(ctx,
-//    ...
-//    cff.Tasks(
-//      h.client.GetUser,
-//      bindUser,
-//      h.processRequest,
-//    ),
 //  )
 //
 // Each Task has zero or more inputs, specified by the arguments of the
@@ -97,13 +86,6 @@ func Task(fn interface{}, opts ...TaskOption) FlowOption {
 	panic("code not generated; run cff")
 }
 
-// Tasks allows specifying multiple tasks in one batch, provided that none of
-// them have any TaskOptions associated with them. See the documentation of
-// Task for more information.
-func Tasks(tasks ...interface{}) FlowOption {
-	panic("code not generated; run cff")
-}
-
 // InstrumentFlow specifies that this Flow should be instrumented for
 // observability. The provided name will be used in emitted metrics, logs, and
 // spans, if any.
@@ -119,7 +101,7 @@ func InstrumentFlow(name string) FlowOption {
 //
 //  cff.Flow(ctx,
 //    cff.Results(&result),
-//    cff.Tasks(
+//    cff.Task(
 //      ...
 //    ),
 //  )

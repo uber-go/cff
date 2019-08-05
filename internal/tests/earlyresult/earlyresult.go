@@ -68,10 +68,11 @@ func ConsumesResult() error {
 	return cff.Flow(context.Background(),
 		cff.Results(&v1),
 		cff.Params(request),
-		cff.Tasks(
+		cff.Task(
 			// bindRequestToGetStatusValidatorRequest
 			func(*t1) *t2 { return &t2{} },
-
+		),
+		cff.Task(
 			// bindRequestToGetStatusNodeContext
 			func(*t4) *t5 { return &t5{} },
 		),

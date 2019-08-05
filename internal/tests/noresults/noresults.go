@@ -46,9 +46,12 @@ func (h *H) Swallow(ctx context.Context, req string) (err error) {
 func (h *H) TripleSwallow(ctx context.Context, req string) (err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
-		cff.Tasks(
+		cff.Task(
 			func(string) {},
-			func(string) {},
+		),
+		cff.Task(
+			func(string) {}),
+		cff.Task(
 			func(string) {},
 		),
 	)

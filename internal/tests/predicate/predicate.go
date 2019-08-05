@@ -97,11 +97,13 @@ func ExtraDependencies() error {
 		context.Background(),
 		cff.Params(int(42)),
 		cff.Results(&out),
-		cff.Tasks(
+		cff.Task(
 			func(int) string { return "foo" },
-			func(int) t1 { return t1{} },
-			func() t2 { return t2{} },
 		),
+		cff.Task(
+			func(int) t1 { return t1{} }),
+		cff.Task(
+			func() t2 { return t2{} }),
 		cff.Task(
 			func(t2) t3 { return t3{} },
 			cff.Predicate(

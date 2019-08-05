@@ -38,18 +38,18 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		cff.Logger(h.logger),
 		cff.InstrumentFlow("HandleFoo"),
 
-		cff.Tasks(
+		cff.Task(
 			func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
 				return &GetManagerRequest{
 						LDAPGroup: req.LDAPGroup,
 					}, &ListUsersRequest{
 						LDAPGroup: req.LDAPGroup,
 					}
-			},
-
-			h.mgr.Get,
-			h.ses.BatchSendEmail,
-
+			}),
+		cff.Task(
+			h.mgr.Get),
+		cff.Task(h.ses.BatchSendEmail),
+		cff.Task(
 			func(responses []*SendEmailResponse) *Response {
 				var r Response
 				for _, res := range responses {

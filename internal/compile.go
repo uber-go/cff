@@ -249,12 +249,6 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			flow.Logger = c.compileLogger(&flow, ce)
 		case "InstrumentFlow":
 			flow.Instrument = c.compileInstrument(&flow, ce)
-		case "Tasks":
-			for _, f := range ce.Args {
-				if task := c.compileTask(&flow, f, nil /* options */); task != nil {
-					flow.Tasks = append(flow.Tasks, task)
-				}
-			}
 		case "Task":
 			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
 				flow.Tasks = append(flow.Tasks, task)
@@ -474,21 +468,6 @@ type noOutput = types.Struct
 func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task {
 	typ := c.info.TypeOf(expr)
 
-	// Support nested cff.Task annotation.
-	if typ.String() == flowOption {
-		var nestedExpr = expr.(*ast.CallExpr)
-		f := typeutil.StaticCallee(c.info, nestedExpr)
-
-		if f.Name() != "Task" {
-			c.errf("expected cff.Task, got cff.%v; only cff.Task is allowed to be nested"+
-				" under cff.Tasks", c.nodePosition(nestedExpr), f.Name())
-			return nil
-		}
-		// Shifting arguments to get to function call within cff.Task.
-		expr = nestedExpr.Args[0]
-		opts = nestedExpr.Args[1:]
-		typ = c.info.TypeOf(expr)
-	}
 	sig, ok := typ.(*types.Signature)
 
 	if !ok {

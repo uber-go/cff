@@ -13,10 +13,12 @@ func EasyCycle() {
 	cff.Flow(
 		context.Background(),
 		cff.Results(&out),
-		cff.Tasks(
+		cff.Task(
 			func(string) int64 {
 				return int64(0)
 			},
+		),
+		cff.Task(
 			func(int64) string {
 				return ""
 			},

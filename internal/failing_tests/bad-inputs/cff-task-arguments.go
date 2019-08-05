@@ -58,7 +58,7 @@ func ExpectedFlowArgumentsNotCFF() {
 func ExpectedTasksBad() {
 	cff.Flow(
 		context.Background(),
-		cff.Tasks(
+		cff.Task(
 			nil,
 		),
 	)
@@ -68,7 +68,7 @@ func ExpectedTasksBad() {
 func ExpectedTasksBadCallExpr() {
 	cff.Flow(
 		context.Background(),
-		cff.Tasks(
+		cff.Task(
 			cff.Params(),
 		),
 	)
@@ -79,7 +79,7 @@ func ExpectedTasksBadCallExprNotCFF() {
 	badFn := struct{ Task func() int }{func() int { return 0 }}
 	cff.Flow(
 		context.Background(),
-		cff.Tasks(
+		cff.Task(
 			badFn.Task(),
 		),
 	)

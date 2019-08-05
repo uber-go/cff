@@ -22,13 +22,13 @@ var result Response
 err := cff.Flow(
     cff.Params(request),
     cff.Results(&response),
-    cff.Tasks(
-        client.GetUser,
+    cff.Task(
+        client.GetUser),
+    cff.Task(
         func(*GetUserResponse) *FooResults {
             ...
-        },
-        mapper.FormatResponse,
-    ),
+        }),
+    cff.Task( mapper.FormatResponse),
 )
 ```
 

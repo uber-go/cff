@@ -30,11 +30,9 @@ func Simple() float64 {
 	cff.Flow(
 		context.Background(),
 		cff.Results(&res),
-		cff.Tasks(
-			a,
-			b,
-			c,
-		),
+		cff.Task(a),
+		cff.Task(b),
+		cff.Task(c),
 	)
 	return res
 }

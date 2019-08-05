@@ -13,7 +13,7 @@ func run(ctx newctx.Context) error {
 	return cffv2.Flow(ctx,
 		cffv2.Params("foo"),
 		cffv2.Results(&result),
-		cffv2.Tasks(
+		cffv2.Task(
 			func(string) struct{} {
 				panic("don't call me")
 			},

@@ -12,7 +12,7 @@ func MissingProvider() {
 	var s string
 	cff.Flow(context.Background(),
 		cff.Results(&s),
-		cff.Tasks(
+		cff.Task(
 			func(float64) string {
 				return ""
 			},

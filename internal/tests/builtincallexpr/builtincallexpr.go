@@ -17,7 +17,7 @@ func Flow(s string, buf io.Writer) {
 	err := cff.Flow(context.Background(),
 		cff.Params(s),
 		cff.Results(&i),
-		cff.Tasks(func(s string) (int, error) { return strconv.Atoi(s) }))
+		cff.Task(func(s string) (int, error) { return strconv.Atoi(s) }))
 
 	if err != nil {
 		buf.Write([]byte(fmt.Sprintf("error: %s", err.Error())))

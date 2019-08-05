@@ -3,17 +3,19 @@
 package badinputs
 
 import (
-	"go.uber.org/cff"
 	"context"
+
+	"go.uber.org/cff"
 )
 
 // AlreadyProvided is a function that provides a string type twice.
 func AlreadyProvided() {
 	cff.Flow(context.Background(),
-		cff.Tasks(
+		cff.Task(
 			func() string {
 				return "a"
-			},
+			}),
+		cff.Task(
 			func() string {
 				return "b"
 			},

@@ -16,12 +16,6 @@ func TestSimpleFlow(t *testing.T) {
 	assert.Equal(t, "hello world", msg)
 }
 
-func TestSimpleNestedFlow(t *testing.T) {
-	msg, err := SimpleFlowNested()
-	assert.NoError(t, err)
-	assert.Equal(t, "foo", msg)
-}
-
 func TestFlowWithoutParameters(t *testing.T) {
 	r, err := NoParamsFlow(context.Background())
 	require.NoError(t, err)

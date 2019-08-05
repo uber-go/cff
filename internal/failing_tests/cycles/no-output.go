@@ -11,10 +11,12 @@ import (
 func EasyCycleNoOut() {
 	cff.Flow(
 		context.Background(),
-		cff.Tasks(
+		cff.Task(
 			func(string) int32 {
 				return int32(0)
 			},
+		),
+		cff.Task(
 			func(int32) string {
 				return ""
 			},
@@ -27,7 +29,7 @@ type moo struct{}
 func EasyCycleSingleNode() {
 	cff.Flow(
 		context.Background(),
-		cff.Tasks(
+		cff.Task(
 			func(*moo) *moo {
 				return &moo{}
 			},
