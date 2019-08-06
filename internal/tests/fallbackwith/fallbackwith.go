@@ -4,6 +4,7 @@ package fallbackwith
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/cff"
 )
@@ -20,4 +21,19 @@ func Serial(e error, r string) (string, error) {
 		}, cff.FallbackWith(r)),
 	)
 	return s, err
+}
+
+// NoOutput is a flow that uses a no-output task (task of no return values) but uses FallbackWith.
+func NoOutput() error {
+	err := cff.Flow(
+		context.Background(),
+		cff.Task(
+			func() error {
+				return errors.New("always errors")
+			},
+			cff.FallbackWith(),
+		),
+	)
+
+	return err
 }

@@ -362,9 +362,9 @@ logger *{{ $zap }}.Logger,
 											)
 							{{- end }}
 
-							{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWith -}}
+							{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
 								{{ if gt $i 0 }},{{ end }}{{ expr $v }}
-							{{- end }}, nil
+							{{- end }}{{ if gt (len .FallbackWithResults) 0 }},{{ end }} nil
 						{{- else -}}
 							{{ if .Instrument -}}
 								{{ if $flow.Instrument -}}

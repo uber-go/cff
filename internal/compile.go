@@ -454,9 +454,11 @@ type task struct {
 	Inputs  []types.Type // non ctx params
 	Outputs []types.Type // non error results
 
-	Predicate    *predicate  // non-nil if Predicate was provided
-	Instrument   *instrument // non-nil if Scope and Logger were provided
-	FallbackWith []ast.Expr
+	Predicate  *predicate  // non-nil if Predicate was provided
+	Instrument *instrument // non-nil if Scope and Logger were provided
+
+	FallbackWith        bool       // whether we should ignore errors from this function
+	FallbackWithResults []ast.Expr // expressions that return a value for each return type of this function
 
 	noOutput *noOutput // non-nil if there are no non-error results
 }
@@ -583,7 +585,8 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 				}
 			}
 
-			t.FallbackWith = call.Args
+			t.FallbackWith = true
+			t.FallbackWithResults = call.Args
 		case "Predicate":
 			t.Predicate = c.compilePredicate(t, call)
 		case "Instrument":

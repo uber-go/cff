@@ -20,3 +20,8 @@ func TestSerialRecovery(t *testing.T) {
 		assert.Equal(t, "bar", s)
 	})
 }
+
+func TestNoOutputRecovery(t *testing.T) {
+	err := NoOutput()
+	assert.NoError(t, err)
+}
