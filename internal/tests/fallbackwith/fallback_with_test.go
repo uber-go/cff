@@ -25,3 +25,9 @@ func TestNoOutputRecovery(t *testing.T) {
 	err := NoOutput()
 	assert.NoError(t, err)
 }
+
+func TestPanic(t *testing.T) {
+	s, err := Panic()
+	assert.NoError(t, err)
+	assert.Equal(t, "fallback", s)
+}

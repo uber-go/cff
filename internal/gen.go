@@ -228,7 +228,6 @@ type flowTemplateData struct {
 
 const _tmpl = `
 {{- $context := import "context" -}}
-{{- $fmt := import "fmt" -}}
 {{- $schedule := .Flow.Schedule -}}
 {{- $flow := .Flow -}}
 {{- with .Flow -}}
@@ -327,17 +326,41 @@ logger *{{ $zap }}.Logger,
 				defer func() {
 					recovered := recover()
 					if recovered != nil {
-						{{ $once }}.Do(func() {
-							recoveredErr := {{ $fmt }}.Errorf("task panic: %v", recovered)
+						{{ if .FallbackWith }}
 							{{ if .Instrument -}}
-							scope.Tagged(tags).Counter("task.panic").Inc(1)
-							logger.Error("task panic", 
-								zap.String("task", {{ expr .Instrument.Name }}),
-								zap.Stack("stack"),
-								zap.Error(recoveredErr))
-							{{- end }}
-							err = recoveredErr
-						})
+								scope.Tagged(tags).Counter("task.panic").Inc(1)
+								scope.Tagged(tags).Counter("task.recovered").Inc(1)
+
+								recoveredErr, ok := recovered.(error)
+								if ok {
+									logger.Error("task panic recovered",
+												 zap.String("task", {{ expr .Instrument.Name }}),
+												 zap.Stack("stack"),
+												 zap.Error(recoveredErr))
+								} else {
+									logger.Error("task panic recovered",
+												 zap.String("task", {{ expr .Instrument.Name }}),
+												 zap.Stack("stack"),
+												 zap.Any("recoveredValue", recovered))
+								}
+							{{ end -}}
+							{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
+								{{ if gt $i 0 }},{{ end }}{{ expr $v }}
+							{{- end }}{{ if gt (len .FallbackWithResults) 0 }}, {{ end }} nil
+						{{ else }}
+							{{ $fmt := import "fmt" }}
+							{{ $once }}.Do(func() {
+								recoveredErr := {{ $fmt }}.Errorf("task panic: %v", recovered)
+								{{ if .Instrument -}}
+								scope.Tagged(tags).Counter("task.panic").Inc(1)
+								logger.Error("task panic",
+									zap.String("task", {{ expr .Instrument.Name }}),
+									zap.Stack("stack"),
+									zap.Error(recoveredErr))
+								{{- end }}
+								err = recoveredErr
+							})
+						{{ end }}
 					}
 				}()
 
@@ -364,7 +387,7 @@ logger *{{ $zap }}.Logger,
 
 							{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
 								{{ if gt $i 0 }},{{ end }}{{ expr $v }}
-							{{- end }}{{ if gt (len .FallbackWithResults) 0 }},{{ end }} nil
+							{{- end }}{{ if gt (len .FallbackWithResults) 0 }}, {{ end }} nil
 						{{- else -}}
 							{{ if .Instrument -}}
 								{{ if $flow.Instrument -}}

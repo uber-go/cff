@@ -37,3 +37,16 @@ func NoOutput() error {
 
 	return err
 }
+
+// Panic executes a flow that will panic but recovers with FallbackWith
+func Panic() (string, error) {
+	var rv string
+	err := cff.Flow(
+		context.Background(),
+		cff.Results(&rv),
+		cff.Task(func() (string, error) {
+			panic("always panics")
+		}, cff.FallbackWith("fallback")),
+	)
+	return rv, err
+}
