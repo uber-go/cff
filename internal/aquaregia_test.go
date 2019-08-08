@@ -192,34 +192,49 @@ func TestCodeGenerateFails(t *testing.T) {
 		}
 	}
 
-	// Including entire project including tests as a module. This is different from golden_test as
-	// we dont need to include generated files as all of these tests are expected to fail.
+	// packages.Load expects to find the import when parsing files.
 	cffModule := packagestest.Module{
 		Name:  "go.uber.org/cff",
 		Files: packagestest.MustCopyFileTree("./.."),
 	}
+	// Adding fake tally and zap packages to cause `go list` not to error and swallow useful output.
+	tallyModule := packagestest.Module{
+		Name: "github.com/uber-go/tally",
+		Files: map[string]interface{}{
+			// This needs to be a valid Go file.
+			"tally.go": "package tally",
+		},
+		Overlay: nil,
+	}
+	zapModule := packagestest.Module{
+		Name: "go.uber.org/zap",
+		Files: map[string]interface{}{
+			// This needs to be a valid Go file.
+			"zap.go": "package zap",
+		},
+		Overlay: nil,
+	}
 
 	for testDirectoryName, errCases := range errorCasesByDirectory {
 		t.Run(fmt.Sprintf("test cases for directory %s", testDirectoryName), func(t *testing.T) {
-			exp := packagestest.Export(t, packagestest.Modules, []packagestest.Module{cffModule})
+			exp := packagestest.Export(t, packagestest.Modules,
+				[]packagestest.Module{cffModule, tallyModule, zapModule})
 			fset := token.NewFileSet()
 
 			cfg := exp.Config
-			cfg.Mode = packages.LoadSyntax
 			cfg.BuildFlags = []string{"-tags=cff"}
 			cfg.Fset = fset
-
+			cfg.Tests = false
+			// TODO: after upgrading x/tools, replace by all packages.Need* constants except for
+			// NeedExportsFile.
+			cfg.Mode = packages.LoadSyntax
 			defer exp.Cleanup()
-
-			// Using pattern for go test not to run _test unit tests which test generated code.
-
+			pattern := "pattern=" + filepath.Join(internalTests, aquaregiaTestDir, testDirectoryName, "...")
 			pkgs, err := packages.Load(
 				exp.Config,
-				"pattern="+filepath.Join(internalTests, aquaregiaTestDir, testDirectoryName, "..."))
-
+				pattern)
 			require.NoError(t, err, "could not load packages")
 			require.NotEmpty(t, pkgs, "didn't find any packages")
-
 			for _, pkg := range pkgs {
 				// Output path can be empty so code gets generated next to source in case of failed
 				// tests.
