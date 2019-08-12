@@ -26,6 +26,24 @@ decisions.
 - No new syntax may be introduced. Both, the input and output files must be
   valid Go code that passes type checking.
 
+To support the possibility of online analysis in the future (vs static
+analysis) we want using CFF to feel like using a regular Go library. Users
+should find it conceivable, based on the APIs and their behavior, that the
+functionality of CFF is completely runtime. The presence of code generation
+should be considered an implementation detail by users; it should be hidden
+away until absolutely needed. To satisfy this,
+
+- The code generator must only make use of information that could be present
+  at runtime. This means that type information may be used, but not variable
+  names. Exceptions may be made here for better UX as long as they don't have
+  meaningful behavioral impact. For example variable names may be used to
+  affect telemetry, but not graph resolution.
+- There must be no shared information between Flows unless provided by a
+  shared object explicitly. For example, Flows cannot share a global task
+  scheduler; instead one must be injected at the `cff.Flow` call site.
+  Similarly, there must be no shared global configuration between Flows, but
+  configuration may be injected at the call site.
+
 # Testing
 
 For integration testing, test data is placed inside the internal/tests folder.
