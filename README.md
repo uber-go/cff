@@ -134,14 +134,17 @@ Note that until gazelle rules are in place, `#keep` signals to gazelle not to
 delete this source.  
 
 ### CLI ###
-Alternatively, to experiment with CFF you can run the `cff` command on a specific package and specify the output.
+Alternatively, to experiment with CFF you can run the `cff` command on a specific package and specify the output. 
+The script lives under monorepo root in `bin/cff` eg `$GOPATH/bin/cff` and if `$PATH` contains it, can be called via 
+for example, 
 
 ```shell
-$ bazel run //src/go.uber.org/cff/cmd/cff -- go.uber.org/cff/internal/tests/basic --file=basic.go=/tmp/basic_gen.go
+$ cff go.uber.org/cff/internal/tests/basic --file=basic.go=/tmp/basic_gen.go
 ```
 
-This will generate copies of the original files without the `cff` tag, and the
-relevant sections in the code replaced with generated code.
+This will generate `basic.go` inside `go.uber.org/cff/internal/tests/basic` to 
+`/tmp/basic_gen.go`, and the relevant sections eg `cff.Flow` in the code will be replaced 
+with generated code.
 
 ### Developing on CFF ###
 
