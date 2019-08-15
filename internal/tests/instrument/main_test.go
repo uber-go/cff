@@ -2,6 +2,7 @@ package instrument
 
 import (
 	"context"
+	"go.uber.org/zap/zaptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -154,7 +155,7 @@ func TestInstrumentRecover(t *testing.T) {
 	assert.Equal(t, int64(1), counters["task.success+task=Atoi"].Value())
 	assert.Equal(t, int64(1), counters["task.error+task=uint8"].Value())
 	assert.Equal(t, int64(1), counters["task.recovered+task=uint8"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.success+failedtask=uint8,flow=AtoiRun"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.success+flow=AtoiRun"].Value())
 
 	// logs
 	expected := []struct {
@@ -247,4 +248,30 @@ func TestInstrumentTaskButNotFlow(t *testing.T) {
 		assert.Equal(t, expectedMessages[i], entry.Message)
 		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
 	}
+}
+
+// TestT3630161 tests against regression for T3630161
+func TestT3630161(t *testing.T) {
+	scope := tally.NewTestScope("", nil)
+	logger := zaptest.NewLogger(t)
+	h := &H{Scope: scope, Logger: logger}
+	ctx := context.Background()
+	h.T3630161(ctx)
+
+	// metrics
+	counters := scope.Snapshot().Counters()
+	countersByName := make(map[string][]tally.CounterSnapshot)
+	for k := range counters {
+		name := counters[k].Name()
+		countersByName[name] = append(countersByName[name], counters[k])
+	}
+
+	assert.Equal(t, 1, len(countersByName["task.success"]))
+	assert.Equal(t, map[string]string{"task": "End"}, countersByName["task.success"][0].Tags())
+	assert.Equal(t, 1, len(countersByName["task.error"]))
+	assert.Equal(t, map[string]string{"task": "Err"}, countersByName["task.error"][0].Tags())
+	assert.Equal(t, 1, len(countersByName["task.recovered"]))
+	assert.Equal(t, map[string]string{"task": "Err"}, countersByName["task.recovered"][0].Tags())
+	assert.Equal(t, 1, len(countersByName["task.recovered"]))
+	assert.Equal(t, map[string]string{"flow": "T3630161"}, countersByName["taskflow.success"][0].Tags())
 }

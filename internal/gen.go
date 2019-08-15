@@ -372,11 +372,6 @@ logger *{{ $zap }}.Logger,
 					if {{ $serr }} != nil {
 						{{ if .FallbackWith -}}
 							{{ if .Instrument -}}
-								{{ if $flow.Instrument -}}
-								flowTagsMutex.Lock()
-								flowTags["failedtask"] = {{ expr .Instrument.Name }}
-								flowTagsMutex.Unlock()
-								{{- end }}
 								scope.Tagged(tags).Counter("task.error").Inc(1)
 								scope.Tagged(tags).Counter("task.recovered").Inc(1)
 								logger.Error("task error recovered",

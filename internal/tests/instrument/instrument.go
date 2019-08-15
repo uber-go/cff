@@ -93,3 +93,30 @@ func (h *H) Work(ctx context.Context, req string) (res int, err error) {
 	)
 	return
 }
+
+// T3630161 reproduces T3630161 by executing a flow that runs a task that failed, recovers, and then runs another task.
+func (h *H) T3630161(ctx context.Context) {
+	var s string
+	_ = cff.Flow(ctx,
+		cff.Results(&s),
+		cff.Metrics(h.Scope),
+		cff.Logger(h.Logger),
+		cff.InstrumentFlow("T3630161"),
+
+		cff.Task(
+			func() (string, error) {
+				return "", errors.New("always errors")
+			},
+			cff.Instrument("Err"),
+			cff.FallbackWith("fallback value"),
+		),
+
+		cff.Task(
+			func(s string) error {
+				return nil
+			},
+			cff.Instrument("End"),
+		),
+	)
+	return
+}
