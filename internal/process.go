@@ -9,7 +9,7 @@ import (
 )
 
 // Process processes the provided Go package with cff.
-func Process(fset *token.FileSet, pkg *packages.Package, file *ast.File, outputPath string) error {
+func Process(fset *token.FileSet, pkg *packages.Package, file *ast.File, outputPath string, compilerOpts CompilerOpts) error {
 	var err error
 	for _, e := range pkg.Errors {
 		err = multierr.Append(err, e)
@@ -18,7 +18,7 @@ func Process(fset *token.FileSet, pkg *packages.Package, file *ast.File, outputP
 		return err
 	}
 
-	c := newCompiler(fset, pkg.TypesInfo, pkg.Types)
+	c := newCompiler(fset, pkg.TypesInfo, pkg.Types, compilerOpts)
 
 	f, err := c.CompileFile(file)
 	if err != nil {

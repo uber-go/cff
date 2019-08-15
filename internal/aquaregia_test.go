@@ -240,7 +240,7 @@ func TestCodeGenerateFails(t *testing.T) {
 				// tests.
 				var errors []error
 				for i := range pkg.CompiledGoFiles {
-					if err := Process(fset, pkg, pkg.Syntax[i], ""); err != nil {
+					if err := Process(fset, pkg, pkg.Syntax[i], "", CompilerOpts{}); err != nil {
 						errors = append(errors, err)
 					}
 				}

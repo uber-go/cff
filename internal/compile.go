@@ -7,6 +7,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -25,19 +26,26 @@ const (
 )
 
 type compiler struct {
-	pkg        *types.Package
-	fset       *token.FileSet
-	info       *types.Info
-	taskSerial int
-	errors     []error
+	pkg          *types.Package
+	fset         *token.FileSet
+	info         *types.Info
+	compilerOpts CompilerOpts
+	taskSerial   int
+	errors       []error
 }
 
-func newCompiler(fset *token.FileSet, info *types.Info, pkg *types.Package) *compiler {
+func newCompiler(fset *token.FileSet, info *types.Info, pkg *types.Package, compilerOpts CompilerOpts) *compiler {
 	return &compiler{
-		fset: fset,
-		info: info,
-		pkg:  pkg,
+		fset:         fset,
+		info:         info,
+		pkg:          pkg,
+		compilerOpts: compilerOpts,
 	}
+}
+
+// CompilerOpts is a set of options to pass to the compiler that control the output of the generated code.
+type CompilerOpts struct {
+	InstrumentAllTasks bool
 }
 
 func (c *compiler) errf(msg string, pos token.Position, args ...interface{}) {
@@ -183,6 +191,11 @@ func (f *flow) addNoOutput() *noOutput {
 	return no
 }
 
+func (f *flow) addInstrument(name ast.Expr) {
+	f.ObservabilityEnabled = true
+	f.Instrument = &instrument{Name: name}
+}
+
 // mustSetNoOutputProvider sets the provider for the no-output, panicking if the no-output sentinel type was already
 // present.
 func (f *flow) mustSetNoOutputProvider(key *task, value int) {
@@ -248,7 +261,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 		case "Logger":
 			flow.Logger = c.compileLogger(&flow, ce)
 		case "InstrumentFlow":
-			flow.Instrument = c.compileInstrument(&flow, ce)
+			flow.addInstrument(ce.Args[0])
 		case "Task":
 			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
 				flow.Tasks = append(flow.Tasks, task)
@@ -523,6 +536,18 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 	}
 
 	c.interpretTaskOptions(flow, &t, opts)
+
+	// Create an implied Instrument(...) annotation.
+	if flow.ObservabilityEnabled && c.compilerOpts.InstrumentAllTasks && t.Instrument == nil {
+		taskPos := c.nodePosition(t)
+		literalImpliedName := fmt.Sprintf("%s.%d", filepath.Base(taskPos.Filename), taskPos.Line)
+		impliedNameQuoted := strconv.Quote(literalImpliedName)
+		t.Instrument = &instrument{Name: &ast.BasicLit{
+			Kind:  token.STRING,
+			Value: impliedNameQuoted,
+		}}
+	}
+
 	return &t
 }
 
@@ -657,9 +682,10 @@ type instrument struct {
 }
 
 func (c *compiler) compileInstrument(flow *flow, call *ast.CallExpr) *instrument {
-	flow.ObservabilityEnabled = true
-
 	name := call.Args[0]
+
+	// It's possible to enable observability for a single task without enabling it for the flow.
+	flow.ObservabilityEnabled = true
 
 	return &instrument{Name: name}
 }

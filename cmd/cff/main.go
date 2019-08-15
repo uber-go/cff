@@ -16,8 +16,9 @@ import (
 )
 
 type options struct {
-	Files []file `long:"file" value-name:"FILE[=OUTPUT]"`
-	Args  struct {
+	Files              []file `long:"file" value-name:"FILE[=OUTPUT]"`
+	InstrumentAllTasks bool   `long:"instrument-all-tasks"`
+	Args               struct {
 		ImportPath string `positional-arg-name:"importPath"`
 	} `positional-args:"yes" required:"yes"`
 }
@@ -73,6 +74,10 @@ func newCLIParser() (*flags.Parser, *options) {
 			"code for FILE will be written. By default, this defaults to adding a " +
 			"_gen suffix to the file name."
 
+	parser.FindOptionByLongName("instrument-all-tasks").Description =
+		"Infer a name for tasks that do not specify cff.Instrument and opt-in " +
+			"to instrumentation by default."
+
 	parser.Args()[0].Description = "Import path of a package containing CFF flows."
 
 	return parser, &opts
@@ -123,6 +128,10 @@ func run(args []string) error {
 		return errors.New("no packages found")
 	}
 
+	compilerOpts := internal.CompilerOpts{
+		InstrumentAllTasks: f.InstrumentAllTasks,
+	}
+
 	// If --file was provided, only the requested files will be processed.
 	// Otherwise all files will be processed.
 	hadFiles := len(f.Files) > 0
@@ -153,7 +162,7 @@ func run(args []string) error {
 			}
 
 			processed++
-			if perr := internal.Process(fset, pkg, pkg.Syntax[i], output); perr != nil {
+			if perr := internal.Process(fset, pkg, pkg.Syntax[i], output, compilerOpts); perr != nil {
 				errored++
 				err = multierr.Append(err, perr)
 			}
