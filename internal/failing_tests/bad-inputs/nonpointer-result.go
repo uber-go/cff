@@ -3,8 +3,9 @@
 package badinputs
 
 import (
-	"go.uber.org/cff"
 	"context"
+
+	"go.uber.org/cff"
 )
 
 // ResultsNonPointer is a flow where we pass a variable that is not a pointer to cff.Results.

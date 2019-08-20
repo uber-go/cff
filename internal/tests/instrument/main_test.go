@@ -2,8 +2,9 @@ package instrument
 
 import (
 	"context"
-	"go.uber.org/zap/zaptest"
 	"testing"
+
+	"go.uber.org/zap/zaptest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/uber-go/tally"

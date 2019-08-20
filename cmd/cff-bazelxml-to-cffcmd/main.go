@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"github.com/jessevdk/go-flags"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/jessevdk/go-flags"
 
 	"go.uber.org/multierr"
 )

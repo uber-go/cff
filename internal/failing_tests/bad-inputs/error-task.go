@@ -3,8 +3,9 @@
 package badinputs
 
 import (
-	"go.uber.org/cff"
 	"context"
+
+	"go.uber.org/cff"
 )
 
 // TaskReturnsError is a flow whose error return value is not the last positional argument.

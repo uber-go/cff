@@ -3,8 +3,9 @@
 package badinputs
 
 import (
-	"go.uber.org/cff"
 	"context"
+
+	"go.uber.org/cff"
 )
 
 // MissingProvider is a flow that doesn't have a provider for a type.

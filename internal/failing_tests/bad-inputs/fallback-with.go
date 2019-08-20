@@ -3,8 +3,9 @@
 package badinputs
 
 import (
-	"go.uber.org/cff"
 	"context"
+
+	"go.uber.org/cff"
 )
 
 // FallbackWithNoError is a function that uses FallbackWith, but the function does not return an error.

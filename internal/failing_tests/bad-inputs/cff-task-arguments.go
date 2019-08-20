@@ -3,8 +3,9 @@
 package badinputs
 
 import (
-	"go.uber.org/cff"
 	"context"
+
+	"go.uber.org/cff"
 )
 
 // ExpectsFunctionCallExpression is a flow that doesn't provide a function to cff.Task.

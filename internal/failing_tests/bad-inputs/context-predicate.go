@@ -3,8 +3,9 @@
 package badinputs
 
 import (
-	"go.uber.org/cff"
 	"context"
+
+	"go.uber.org/cff"
 )
 
 // ContextPredicate is a flow that has a predicate whose context argument is not the first positional argument.

@@ -1,9 +1,10 @@
 package benchmark
 
 import (
+	"testing"
+
 	"github.com/uber-go/tally"
 	"go.uber.org/zap"
-	"testing"
 )
 
 // BenchmarkSimple is a flow that has two concurrent tasks that do almost nothing, that is designed to try to measure

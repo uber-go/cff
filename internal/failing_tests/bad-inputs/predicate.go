@@ -3,8 +3,9 @@
 package badinputs
 
 import (
-	"go.uber.org/cff"
 	"context"
+
+	"go.uber.org/cff"
 )
 
 // PredicateReturnsNonbool is a function with a predicate that doesn't return a boolean, instead returns a string.

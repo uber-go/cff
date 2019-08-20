@@ -3,8 +3,9 @@
 package badinputs
 
 import (
-	"go.uber.org/cff"
 	"context"
+
+	"go.uber.org/cff"
 )
 
 // ExpectsAtLeastOneArgument is a function that doesn't have enough arguments to cff.Flow.

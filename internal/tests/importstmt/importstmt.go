@@ -3,8 +3,9 @@ package importstmt
 import "strconv"
 
 import (
-	"go.uber.org/cff"
 	"context"
+
+	"go.uber.org/cff"
 )
 
 // Flow tests a flow where there is a non-grouped import before "go.uber.org/cff"

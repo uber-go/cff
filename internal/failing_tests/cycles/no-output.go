@@ -3,8 +3,9 @@
 package cycles
 
 import (
-	"go.uber.org/cff"
 	"context"
+
+	"go.uber.org/cff"
 )
 
 // EasyCycleNoOut is a flow that has a simple cycle with no result.
