@@ -114,8 +114,17 @@ func run(args []string) error {
 	}
 
 	fset := token.NewFileSet()
+	mode := packages.NeedName |
+		packages.NeedFiles |
+		packages.NeedCompiledGoFiles |
+		packages.NeedImports |
+		packages.NeedDeps |
+		packages.NeedTypes |
+		packages.NeedSyntax |
+		packages.NeedTypesInfo |
+		packages.NeedTypesSizes
 	pkgs, err := packages.Load(&packages.Config{
-		Mode:       packages.LoadSyntax,
+		Mode:       mode,
 		Fset:       fset,
 		BuildFlags: []string{"-tags=cff"},
 	}, f.Args.ImportPath)

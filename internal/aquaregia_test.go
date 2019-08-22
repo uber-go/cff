@@ -225,9 +225,15 @@ func TestCodeGenerateFails(t *testing.T) {
 			cfg.BuildFlags = []string{"-tags=cff"}
 			cfg.Fset = fset
 			cfg.Tests = false
-			// TODO: after upgrading x/tools, replace by all packages.Need* constants except for
-			// NeedExportsFile.
-			cfg.Mode = packages.LoadSyntax
+			cfg.Mode = packages.NeedName |
+				packages.NeedFiles |
+				packages.NeedCompiledGoFiles |
+				packages.NeedImports |
+				packages.NeedDeps |
+				packages.NeedTypes |
+				packages.NeedSyntax |
+				packages.NeedTypesInfo |
+				packages.NeedTypesSizes
 			defer exp.Cleanup()
 			pattern := "pattern=" + filepath.Join(internalTests, aquaregiaTestDir, testDirectoryName, "...")
 			pkgs, err := packages.Load(
