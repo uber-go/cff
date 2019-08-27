@@ -156,3 +156,12 @@ func Predicate(fn interface{}) TaskOption {
 func Instrument(name string) TaskOption {
 	panic("code not generated; run cff")
 }
+
+// Invoke specifies that task must always be executed, even if none of other
+// tasks consume its output.
+//
+// Only tasks marked with Invoke are allowed to have zero non-error or
+// single error returns.
+func Invoke(enable bool) TaskOption {
+	panic("code not generated; run cff")
+}

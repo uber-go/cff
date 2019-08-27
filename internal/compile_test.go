@@ -20,9 +20,9 @@ func TestNoOutputTypes(t *testing.T) {
 	}
 	noOutput := f.addNoOutput()
 	task := &task{
-		noOutput: noOutput,
+		invokeType: noOutput,
 	}
 	f.mustSetNoOutputProvider(task, 0)
 	f.mustSetNoOutputProvider(task, 0)
-	assert.Equal(t, task.noOutput, f.providers.At(task.noOutput))
+	assert.Equal(t, task.invokeType, f.providers.At(task.invokeType))
 }

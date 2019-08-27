@@ -24,3 +24,7 @@ func TestTripleSwallow(t *testing.T) {
 	err := h.TripleSwallow(context.TODO(), "tide pods")
 	assert.NoError(t, err)
 }
+
+func TestUnusedInputInvoke(t *testing.T) {
+	assert.NoError(t, UnusedInputInvoke())
+}

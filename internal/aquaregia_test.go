@@ -110,14 +110,17 @@ func TestCodeGenerateFails(t *testing.T) {
 				File:         "earlyresult.go",
 				ErrorMatches: "unused output type int32",
 			},
+			// EarlyResultMultipleFlows
 			{
 				File:         "earlyresult.go",
 				ErrorMatches: "unused output type \\*go.uber.org/cff/internal/failing_tests/bad-inputs.quuz",
 			},
+			// EarlyResultMultipleFlows
 			{
 				File:         "earlyresult.go",
 				ErrorMatches: "unused output type \\*go.uber.org/cff/internal/failing_tests/bad-inputs.corge",
 			},
+			// EarlyResultMultipleFlows
 			{
 				File:         "earlyresult.go",
 				ErrorMatches: "unused output type \\*go.uber.org/cff/internal/failing_tests/bad-inputs.grault",
@@ -165,6 +168,21 @@ func TestCodeGenerateFails(t *testing.T) {
 			{
 				File:         "unused-inputs.go",
 				ErrorMatches: "unused input type string",
+			},
+			// UnsupportedInvoke
+			{
+				File:         "unused-task.go",
+				ErrorMatches: "cff\\.Invoke cannot be provided on a Task that produces values besides errors",
+			},
+			// NoInvokeNoResults
+			{
+				File:         "unused-task.go",
+				ErrorMatches: "task must return at least one non-error value but currently produces zero.",
+			},
+			// NoInvokeWithError
+			{
+				File:         "unused-task-error.go",
+				ErrorMatches: "task must return at least one non-error value but currently produces zero.",
 			},
 			{
 				File:         "variadic.go",

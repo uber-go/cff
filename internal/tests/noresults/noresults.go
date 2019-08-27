@@ -36,8 +36,12 @@ func (h *H) Swallow(ctx context.Context, req string) (err error) {
 				}
 				return nil
 			},
+			cff.Invoke(true),
 		),
-		cff.Task(func(string) {}),
+		cff.Task(
+			func(s string) {},
+			cff.Invoke(true),
+		),
 	)
 	return
 }
@@ -48,12 +52,39 @@ func (h *H) TripleSwallow(ctx context.Context, req string) (err error) {
 		cff.Params(req),
 		cff.Task(
 			func(string) {},
+			cff.Invoke(true),
 		),
 		cff.Task(
-			func(string) {}),
+			func(string) {},
+			cff.Invoke(true),
+		),
 		cff.Task(
 			func(string) {},
+			cff.Invoke(true),
 		),
 	)
 	return
+}
+
+// UnusedInputInvoke that has a task returning an error and no results via cff.Invoke(true).
+func UnusedInputInvoke() error {
+	var input string
+	var out int8
+	return cff.Flow(context.Background(),
+		cff.Params(input),
+		cff.Results(&out),
+		cff.Task(func(int8) error {
+			return nil
+		},
+			cff.Invoke(true),
+		),
+		cff.Task(func(int8) {
+			return
+		},
+			cff.Invoke(true),
+		),
+		cff.Task(func(string) int8 {
+			return int8(0)
+		}),
+	)
 }

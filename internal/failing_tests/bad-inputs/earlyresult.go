@@ -69,11 +69,12 @@ func EarlyResultDiamond(ctx context.Context) error {
 		cff.Task(
 			func(int64) error {
 				return nil
-			}),
+			},
+			cff.Invoke(true)),
 	)
 }
 
-// EarlyResultMultipleFlows fails because task with string for return value is unused.
+// EarlyResultMultipleFlows fails because tasks with quuz, corge, grault return values are unused.
 func EarlyResultMultipleFlows(ctx context.Context) error {
 	var out *foo
 	return cff.Flow(
@@ -114,6 +115,7 @@ func EarlyResultMultipleFlows(ctx context.Context) error {
 		cff.Task(
 			func(*quux) error {
 				return nil
-			}),
+			},
+			cff.Invoke(true)),
 	)
 }

@@ -32,6 +32,7 @@ func NoOutput() error {
 				return errors.New("always errors")
 			},
 			cff.FallbackWith(),
+			cff.Invoke(true),
 		),
 	)
 

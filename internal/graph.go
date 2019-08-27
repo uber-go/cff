@@ -42,8 +42,9 @@ func scheduleGraph(g graph) [][]int {
 		// put them into the schedule in the reverse order so that sched[0] is
 		// the set of tasks with no dependencies (maximum distance from root).
 		s := len(sched) - 1 - d
-		sched[s] = append(sched[s], i)
+		if s > -1 {
+			sched[s] = append(sched[s], i)
+		}
 	}
-
 	return sched
 }

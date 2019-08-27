@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
+	"go/constant"
 	"go/token"
 	"go/types"
 	"path/filepath"
@@ -21,7 +22,6 @@ type taskIndex int
 
 const (
 	cffImportPath   = "go.uber.org/cff"
-	flowOption      = "go.uber.org/cff.FlowOption"
 	taskIndexRESULT = taskIndex(-1)
 )
 
@@ -172,22 +172,22 @@ type flow struct {
 	providers *typeutil.Map // map[types.Type]int (index in Tasks)
 	receivers *typeutil.Map // map[types.Type][]taskIndex tracks types needed to detect unused inputs
 
-	noOutputCounter int       // input for unique noOutput name
-	noOutputs       []*output // tracks tasks of no non-error results
+	invokeTypeCnt int       // input to make unique invokeType sentinels
+	invokeTypes   []*output // tracks tasks of with either no results or a single error
 }
 
-// addNoOutput adds a unique noOutput sentinel type to the noOutputs list.
+// addNoOutput adds a unique invokeType sentinel type to the invokeTypes list.
 // The breadth-first searching algorithm visits based on result types, but
 // functions with no return values would not be visited since no function can
 // depend on its outputs and therefore would not be visited or included in the graph.
 // addNoOutput creates a unique sentinel type so that we can pretend that this
 // function is needed to provide the sentinel type for scheduling purposes.
 func (f *flow) addNoOutput() *noOutput {
-	f.noOutputCounter++
-	name := strconv.Itoa(f.noOutputCounter)
+	f.invokeTypeCnt++
+	name := strconv.Itoa(f.invokeTypeCnt)
 	field := types.NewVar(0, nil, name, &types.Struct{})
 	no := types.NewStruct([]*types.Var{field}, nil)
-	f.noOutputs = append(f.noOutputs, &output{Type: no})
+	f.invokeTypes = append(f.invokeTypes, &output{Type: no})
 	return no
 }
 
@@ -199,16 +199,16 @@ func (f *flow) addInstrument(name ast.Expr) {
 // mustSetNoOutputProvider sets the provider for the no-output, panicking if the no-output sentinel type was already
 // present.
 func (f *flow) mustSetNoOutputProvider(key *task, value int) {
-	prev := f.providers.Set(key.noOutput, value)
+	prev := f.providers.Set(key.invokeType, value)
 	if prev != nil {
-		panic(fmt.Sprintf("cff assertion error: noOutput sentinel types should be unique, found %T for %dth task (defined at %v), expected to be nil", prev, value, key.Node))
+		panic(fmt.Sprintf("cff assertion error: invokeType sentinel types should be unique, found %T for %dth task (defined at %v), expected to be nil", prev, value, key.Node))
 	}
 
-	if typ, ok := f.receivers.At(key.noOutput).([]taskIndex); ok {
+	if typ, ok := f.receivers.At(key.invokeType).([]taskIndex); ok {
 		typ := append(typ, taskIndex(value))
-		f.receivers.Set(key.noOutput, typ)
+		f.receivers.Set(key.invokeType, typ)
 	} else {
-		f.receivers.Set(key.noOutput, []taskIndex{taskIndex(value)})
+		f.receivers.Set(key.invokeType, []taskIndex{taskIndex(value)})
 	}
 
 }
@@ -268,6 +268,8 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			}
 		}
 	}
+	// At this point, c.errors may be non-empty but we are continuing with more checks to catch all
+	// possible errors prior to scheduling attempt and return them at once.
 	c.validateInstrument(&flow)
 
 	for i, t := range flow.Tasks {
@@ -289,7 +291,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 				continue
 			}
 		}
-		if t.noOutput != nil {
+		if t.invokeType != nil {
 			flow.mustSetNoOutputProvider(t, i)
 		}
 	}
@@ -334,9 +336,11 @@ func (c *compiler) validateTasks(f *flow) {
 		queue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
 		forwardQueue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
 	}
-	for _, o := range f.noOutputs {
+	for _, o := range f.invokeTypes {
+		// We do not need to walk forward for invokeType tasks since they aren't expected to return
+		// non-error results. The case when they don't return anything and don't use cff.Invoke will
+		// be handled after interpreting task options.
 		queue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
-		forwardQueue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
 	}
 	// Check for unused values walking forward from root (output) towards dependencies.
 	for forwardQueue.Len() > 0 {
@@ -346,6 +350,7 @@ func (c *compiler) validateTasks(f *flow) {
 		}
 
 		forwardVisited.Set(t.Type, struct{}{})
+		// Here t.Type may be our output, so we need to find the type of the task for our input.
 		if taskIdxs, ok := f.receivers.At(t.Type).([]taskIndex); ok {
 			for _, i := range taskIdxs {
 				// Looking at cff.Results which won't link to another task.
@@ -353,6 +358,9 @@ func (c *compiler) validateTasks(f *flow) {
 					continue
 				}
 				task := f.Tasks[int(i)]
+				if task.invokeType != nil {
+					continue
+				}
 				for _, o := range task.Outputs {
 					// Do not requeue if u are the same type.
 					if o != t.Type {
@@ -432,7 +440,7 @@ func (c *compiler) scheduleFlow(f *flow) {
 	for _, o := range f.Outputs {
 		g.Roots = append(g.Roots, f.providers.At(o.Type).(int))
 	}
-	for _, o := range f.noOutputs {
+	for _, o := range f.invokeTypes {
 		g.Roots = append(g.Roots, f.providers.At(o.Type).(int))
 	}
 
@@ -473,10 +481,10 @@ type task struct {
 	FallbackWith        bool       // whether we should ignore errors from this function
 	FallbackWithResults []ast.Expr // expressions that return a value for each return type of this function
 
-	noOutput *noOutput // non-nil if there are no non-error results
+	invokeType *noOutput // non-nil if there are no non-error results
 }
 
-// noOutput is a sentinel return type for tasks that have no non-error results.
+// invokeType is a sentinel return type for tasks that have no non-error results.
 // It can not be custom defined type, otherwise it won't work with typeutil.Map.
 type noOutput = types.Struct
 
@@ -523,7 +531,7 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 			t.Outputs = append(t.Outputs, rtype)
 			continue
 		}
-
+		// Error case.
 		if i != results.Len()-1 {
 			c.errf("only the last result may be an error", c.position(result.Pos()))
 			return nil
@@ -531,12 +539,17 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 		t.HasError = true
 	}
 
-	if results.Len() == 0 || (results.Len() == 1 && t.HasError) {
-		t.noOutput = flow.addNoOutput()
-	}
-
 	c.interpretTaskOptions(flow, &t, opts)
 
+	// Check if we return nothing and we don't have an Invoke call.
+	if len(t.Outputs) == 0 && t.invokeType == nil {
+		c.errf("task must return at least one non-error value but currently produces zero."+
+			"Did you intend to use cff.Invoke(true)?", c.nodePosition(expr))
+	}
+	if len(t.Outputs) > 0 && t.invokeType != nil {
+		c.errf("cff.Invoke cannot be provided on a Task that produces values besides errors",
+			c.nodePosition(expr))
+	}
 	// Create an implied Instrument(...) annotation.
 	if flow.ObservabilityEnabled && c.compilerOpts.InstrumentAllTasks && t.Instrument == nil {
 		taskPos := c.nodePosition(t)
@@ -616,6 +629,8 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 			t.Predicate = c.compilePredicate(t, call)
 		case "Instrument":
 			t.Instrument = c.compileInstrument(flow, call)
+		case "Invoke":
+			t.invokeType = c.compileInvoke(flow, call)
 		}
 	}
 }
@@ -688,6 +703,23 @@ func (c *compiler) compileInstrument(flow *flow, call *ast.CallExpr) *instrument
 	flow.ObservabilityEnabled = true
 
 	return &instrument{Name: name}
+}
+
+func (c *compiler) compileInvoke(flow *flow, o *ast.CallExpr) *noOutput {
+	// Bool type checking is satisfied by cff.Invoke interface.
+	if len(o.Args) != 1 {
+		c.errf("invoke expects exactly one argument", c.nodePosition(o.Fun))
+	}
+	val, ok := c.info.Types[o.Args[0]]
+	if !ok {
+		c.errf("expected to find a bool, found %v instead",
+			c.nodePosition(o), astutil.NodeDescription(o.Args[0]))
+		return nil
+	}
+	if constant.BoolVal(val.Value) {
+		return flow.addNoOutput()
+	}
+	return nil
 }
 
 type input struct {

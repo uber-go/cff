@@ -116,6 +116,7 @@ func (h *H) T3630161(ctx context.Context) {
 				return nil
 			},
 			cff.Instrument("End"),
+			cff.Invoke(true),
 		),
 	)
 	return

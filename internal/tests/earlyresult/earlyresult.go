@@ -41,7 +41,9 @@ func EarlyResult(ctx context.Context) error {
 		cff.Task(
 			func(*qux) error {
 				return nil
-			}),
+			},
+			cff.Invoke(true),
+		),
 	)
 }
 
@@ -97,6 +99,7 @@ func ConsumesResult() error {
 		cff.Task(
 			func(*t7) error {
 				return nil
-			}),
+			},
+			cff.Invoke(true)),
 	)
 }
