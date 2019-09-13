@@ -273,17 +273,22 @@ logger *{{ $zap }}.Logger,
 	}
 
 	defer func() {
-		if err == nil { return }
 		for _, sched := range tasks {
 			for _, task := range sched {
 				if task.name == "" || task.ran { continue }
 				scope.Tagged(task.tags).Counter("task.skipped").Inc(1)
-				logger.Debug("task skipped", zap.String("task", task.name), zap.Error(err))
+				if err == nil {
+					logger.Debug("task skipped", zap.String("task", task.name))
+				} else {
+					logger.Debug("task skipped", zap.String("task", task.name), zap.Error(err))
+				}
 			}
 		}
 		{{- if $flow.Instrument }}
-		scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
-		logger.Debug("taskflow skipped", zap.String("flow", {{ expr $flow.Instrument.Name }}))
+		if err != nil {
+			scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
+			logger.Debug("taskflow skipped", zap.String("flow", {{ expr $flow.Instrument.Name }}), zap.Error(err))
+		}
 		{{ end }}
 	}()
 	{{ end }}
@@ -368,6 +373,10 @@ logger *{{ $zap }}.Logger,
 					if {{ template "callTask" .Predicate }} {
 				{{ end }}
 				{{ template "taskResultList" . }}{{ if or .HasError (len .Outputs) }} = {{ end }}{{ template "callTask" . }}
+
+				{{- if $flow.ObservabilityEnabled }}
+				tasks[{{ $schedIdx }}][{{ $taskIdx }}].ran = true
+				{{- end }}
 				{{ if .HasError -}}
 					if {{ $serr }} != nil {
 						{{ if .FallbackWith -}}
@@ -397,10 +406,14 @@ logger *{{ $zap }}.Logger,
 							})
 						{{- end }}
 					} {{ if .Instrument }} else {
-						tasks[{{ $schedIdx }}][{{ $taskIdx }}].ran = true
 						scope.Tagged(tags).Counter("task.success").Inc(1)
 						logger.Debug("task succeeded", zap.String("task", {{ expr .Instrument.Name }}))
 					} {{ end }}
+				{{ else }} {{/* cannot return error */}}
+					{{ if .Instrument -}}
+					scope.Tagged(tags).Counter("task.success").Inc(1)
+					logger.Debug("task succeeded", zap.String("task", {{ expr .Instrument.Name }}))
+					{{- end }}
 				{{ end }}
 				{{ if .Predicate }}
 					}

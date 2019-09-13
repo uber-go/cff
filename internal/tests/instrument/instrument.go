@@ -121,3 +121,34 @@ func (h *H) T3630161(ctx context.Context) {
 	)
 	return
 }
+
+// T3795761 reproduces T3795761 where a task that returns no error should only emit skipped metric if it was not run
+func (h *H) T3795761(ctx context.Context, shouldRun bool, shouldError bool) string {
+	var s string
+	_ = cff.Flow(ctx,
+		cff.Results(&s),
+		cff.Metrics(h.Scope),
+		cff.Logger(h.Logger),
+		cff.InstrumentFlow("T3795761"),
+
+		cff.Task(
+			func() int {
+				return 0
+			},
+			cff.Instrument("ProvidesInt"),
+		),
+
+		cff.Task(
+			func(s int) (string, error) {
+				if shouldError {
+					return "", errors.New("err")
+				}
+
+				return "ok", nil
+			},
+			cff.Predicate(func() bool { return shouldRun }),
+			cff.Instrument("NeedsInt"),
+		),
+	)
+	return s
+}

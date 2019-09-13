@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"go.uber.org/zap/zaptest"
 
 	"github.com/stretchr/testify/assert"
@@ -47,10 +49,12 @@ func TestInstrument(t *testing.T) {
 	}
 	logEntries := observedLogs.All()
 	assert.Equal(t, len(expectedMessages), len(logEntries))
+	for _, entry := range logEntries {
+		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.ContextMap())
+	}
 	for i, entry := range logEntries {
 		assert.Equal(t, expectedLevel, entry.Level)
 		assert.Equal(t, expectedMessages[i], entry.Message)
-		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
 	}
 }
 
@@ -75,28 +79,34 @@ func TestInstrumentError(t *testing.T) {
 	expected := []struct {
 		level   zapcore.Level
 		message string
+		fields  map[string]interface{}
 	}{
 		{
 			zap.DebugLevel,
 			"task skipped",
-		},
-		{
-			zap.DebugLevel,
-			"task skipped",
+			map[string]interface{}{"task": "uint8"},
 		},
 		{
 			zap.DebugLevel,
 			"taskflow skipped",
+			nil,
 		},
 	}
 
 	// logs
 	logEntries := observedLogs.All()
+	for _, entry := range logEntries {
+		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.ContextMap())
+	}
 	assert.Equal(t, len(expected), len(logEntries))
 	for i, entry := range logEntries {
 		assert.Equal(t, expected[i].level, entry.Level)
 		assert.Equal(t, expected[i].message, entry.Message)
-		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
+		for k, v := range expected[i].fields {
+			actualValue, ok := entry.ContextMap()[k]
+			assert.True(t, ok)
+			assert.Equal(t, v, actualValue)
+		}
 	}
 }
 
@@ -275,4 +285,77 @@ func TestT3630161(t *testing.T) {
 	assert.Equal(t, map[string]string{"task": "Err"}, countersByName["task.recovered"][0].Tags())
 	assert.Equal(t, 1, len(countersByName["task.recovered"]))
 	assert.Equal(t, map[string]string{"flow": "T3630161"}, countersByName["taskflow.success"][0].Tags())
+}
+
+// TestT3795761 tests against regression for T3795761 where a task that returns no error is not reported as
+// skipped when an earlier task that it depends on returns an error.
+func TestT3795761(t *testing.T) {
+	scope := tally.NewTestScope("", nil)
+	core, observedLogs := observer.New(zap.DebugLevel)
+	logger := zap.New(core)
+	h := &H{
+		Scope:  scope,
+		Logger: logger,
+	}
+	ctx := context.Background()
+
+	expectedLevel := zap.DebugLevel
+
+	t.Run("should run error", func(t *testing.T) {
+		h.T3795761(ctx, true, true)
+
+		// logs
+		expectedMessages := []string{
+			"task succeeded",
+			"taskflow skipped",
+		}
+		logEntries := observedLogs.TakeAll()
+		for _, entry := range logEntries {
+			t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.ContextMap())
+		}
+		require.Equal(t, len(expectedMessages), len(logEntries))
+		for i, entry := range logEntries {
+			assert.Equal(t, expectedLevel, entry.Level)
+			assert.Equal(t, expectedMessages[i], entry.Message)
+		}
+	})
+
+	t.Run("should run no error", func(t *testing.T) {
+		h.T3795761(ctx, true, false)
+
+		expectedMessages := []string{
+			"task succeeded",
+			"task succeeded",
+			"taskflow succeeded",
+		}
+		logEntries := observedLogs.TakeAll()
+		for _, entry := range logEntries {
+			t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.ContextMap())
+		}
+		require.Equal(t, len(expectedMessages), len(logEntries))
+		for i, entry := range logEntries {
+			assert.Equal(t, expectedLevel, entry.Level)
+			assert.Equal(t, expectedMessages[i], entry.Message)
+		}
+	})
+
+	t.Run("should not run", func(t *testing.T) {
+		// false, false is equivalent
+		h.T3795761(ctx, false, true)
+
+		expectedMessages := []string{
+			"task succeeded",
+			"taskflow succeeded",
+			"task skipped",
+		}
+		logEntries := observedLogs.TakeAll()
+		for _, entry := range logEntries {
+			t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.ContextMap())
+		}
+		require.Equal(t, len(expectedMessages), len(logEntries))
+		for i, entry := range logEntries {
+			assert.Equal(t, expectedLevel, entry.Level)
+			assert.Equal(t, expectedMessages[i], entry.Message)
+		}
+	})
 }
