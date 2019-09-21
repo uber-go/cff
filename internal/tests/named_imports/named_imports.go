@@ -1,6 +1,6 @@
 // +build cff
 
-package foo
+package namedimports
 
 import (
 	newctx "context"
