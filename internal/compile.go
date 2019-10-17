@@ -273,7 +273,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 	c.validateInstrument(&flow)
 
 	for i, t := range flow.Tasks {
-		for _, in := range t.Inputs {
+		for _, in := range t.Dependencies {
 			if typ, ok := flow.receivers.At(in).([]taskIndex); ok {
 				typ := append(typ, taskIndex(i))
 				flow.receivers.Set(in, typ)
@@ -281,6 +281,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 				flow.receivers.Set(in, []taskIndex{taskIndex(i)})
 			}
 		}
+
 		for _, o := range t.Outputs {
 			prev := flow.providers.Set(o, i)
 			if prev != nil {
@@ -291,11 +292,13 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 				continue
 			}
 		}
+
 		if t.invokeType != nil {
 			flow.mustSetNoOutputProvider(t, i)
 		}
 	}
 
+	c.validateNoUnusedOutputTypes(&flow)
 	c.validateTasks(&flow)
 	// At this point we may have already found some errors in c.errors.
 	if err := validateFlowCycles(&flow, c.fset); err != nil {
@@ -316,16 +319,26 @@ type validateVisitedType struct {
 	Node ast.Node
 }
 
+// validateNoUnusedOutputTypes ensures that every output type is consumed by either a cff.Results or another task
+// or a predicate of another task.
+func (c *compiler) validateNoUnusedOutputTypes(f *flow) {
+	for _, t := range f.Tasks {
+		for _, o := range t.Outputs {
+			if f.receivers.At(o) == nil {
+				c.errf("unused output type %v", c.nodePosition(t.Node), o)
+			}
+		}
+	}
+}
+
 // validateTasks walks the graph from the bottom of the graph (the outputs) to validate that
 // all outputs are provided by some function. we also walk up the graph in case cff.Results
 // is not the root, and check if there are any tasks with output past cff.Results.
 func (c *compiler) validateTasks(f *flow) {
 	var (
-		queue          = list.New() // []validateVisitedType
-		forwardQueue   = list.New()
-		visited        typeutil.Map // map[types.Type]struct{}
-		flowInputs     typeutil.Map // map[types.Type]*input
-		forwardVisited typeutil.Map // map[types.Type]struct{}
+		queue      = list.New() // []validateVisitedType
+		visited    typeutil.Map // map[types.Type]struct{}
+		flowInputs typeutil.Map // map[types.Type]*input
 	)
 
 	for _, i := range f.Inputs {
@@ -334,46 +347,12 @@ func (c *compiler) validateTasks(f *flow) {
 
 	for _, o := range f.Outputs {
 		queue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
-		forwardQueue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
 	}
 	for _, o := range f.invokeTypes {
 		// We do not need to walk forward for invokeType tasks since they aren't expected to return
 		// non-error results. The case when they don't return anything and don't use cff.Invoke will
 		// be handled after interpreting task options.
 		queue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
-	}
-	// Check for unused values walking forward from root (output) towards dependencies.
-	for forwardQueue.Len() > 0 {
-		t := forwardQueue.Remove(forwardQueue.Front()).(validateVisitedType)
-		if forwardVisited.At(t.Type) != nil {
-			continue
-		}
-
-		forwardVisited.Set(t.Type, struct{}{})
-		// Here t.Type may be our output, so we need to find the type of the task for our input.
-		if taskIdxs, ok := f.receivers.At(t.Type).([]taskIndex); ok {
-			for _, i := range taskIdxs {
-				// Looking at cff.Results which won't link to another task.
-				if i == taskIndexRESULT {
-					continue
-				}
-				task := f.Tasks[int(i)]
-				if task.invokeType != nil {
-					continue
-				}
-				for _, o := range task.Outputs {
-					// Do not requeue if u are the same type.
-					if o != t.Type {
-						forwardQueue.PushBack(validateVisitedType{Type: o, Node: task.Node})
-					}
-				}
-			}
-
-			continue
-		} else {
-			// type is not input into anything past cff.Results.
-			c.errf("unused output type %v", c.nodePosition(t.Node), t.Type)
-		}
 	}
 
 	for queue.Len() > 0 {

@@ -98,9 +98,6 @@ func ExtraDependencies() error {
 		cff.Params(int(42)),
 		cff.Results(&out),
 		cff.Task(
-			func(int) string { return "foo" },
-		),
-		cff.Task(
 			func(int) t1 { return t1{} }),
 		cff.Task(
 			func() t2 { return t2{} }),

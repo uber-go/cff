@@ -162,6 +162,14 @@ func TestCodeGenerateFails(t *testing.T) {
 				ErrorMatches: "cff.Predicate expected a function but received",
 			},
 			{
+				File:         "unused-outputs.go",
+				ErrorMatches: "unused output type bool",
+			},
+			{
+				File:         "unused-outputs.go",
+				ErrorMatches: "unused output type uint32",
+			},
+			{
 				File:         "top-level-flow.go",
 				ErrorMatches: "unknown top-level cff function \"Predicate\"",
 			},
