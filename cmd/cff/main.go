@@ -114,27 +114,12 @@ func run(args []string) error {
 	}
 
 	fset := token.NewFileSet()
-	mode := packages.NeedName |
-		packages.NeedFiles |
-		packages.NeedCompiledGoFiles |
-		packages.NeedImports |
-		packages.NeedDeps |
-		packages.NeedTypes |
-		packages.NeedSyntax |
-		packages.NeedTypesInfo |
-		packages.NeedTypesSizes
-	pkgs, err := packages.Load(&packages.Config{
-		Mode:       mode,
+	pkgs, err := loadPackages(internal.LoadParams{
 		Fset:       fset,
-		BuildFlags: []string{"-tags=cff"},
-	}, f.Args.ImportPath)
-
+		ImportPath: f.Args.ImportPath,
+	})
 	if err != nil {
-		return fmt.Errorf("could not load packages: %v", err)
-	}
-
-	if len(pkgs) == 0 {
-		return errors.New("no packages found")
+		return err
 	}
 
 	compilerOpts := internal.CompilerOpts{
@@ -180,4 +165,31 @@ func run(args []string) error {
 
 	log.Printf("Processed %d files with %d errors", processed, errored)
 	return err
+}
+
+func loadPackages(p internal.LoadParams) ([]*packages.Package, error) {
+	mode := packages.NeedName |
+		packages.NeedFiles |
+		packages.NeedCompiledGoFiles |
+		packages.NeedImports |
+		packages.NeedDeps |
+		packages.NeedTypes |
+		packages.NeedSyntax |
+		packages.NeedTypesInfo |
+		packages.NeedTypesSizes
+	pkgs, err := packages.Load(&packages.Config{
+		Mode:       mode,
+		Fset:       p.Fset,
+		BuildFlags: []string{"-tags=cff"},
+	}, p.ImportPath)
+
+	if err != nil {
+		return nil, fmt.Errorf("could not load packages: %v", err)
+	}
+
+	if len(pkgs) == 0 {
+		return nil, errors.New("no packages found")
+	}
+
+	return pkgs, nil
 }
