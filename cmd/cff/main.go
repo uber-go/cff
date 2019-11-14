@@ -16,8 +16,11 @@ import (
 )
 
 type options struct {
-	Files              []file `long:"file" value-name:"FILE[=OUTPUT]"`
-	InstrumentAllTasks bool   `long:"instrument-all-tasks"`
+	Archives           []string `long:"archive" value-name:"IMPORTPATHS=IMPORTMAP=FILE=EXPORT"`
+	Files              []file   `long:"file" value-name:"FILE[=OUTPUT]"`
+	InstrumentAllTasks bool     `long:"instrument-all-tasks"`
+	Sources            []string `long:"source"`
+	StdlibRoot         string   `long:"stdlibroot"`
 	Args               struct {
 		ImportPath string `positional-arg-name:"importPath"`
 	} `positional-args:"yes" required:"yes"`
@@ -67,16 +70,29 @@ func newCLIParser() (*flags.Parser, *options) {
 
 	// This is more readable than embedding the descriptions in the options
 	// above.
+	parser.FindOptionByLongName("archive").Description =
+		"Use the given archive FILE for import path IMPORTMAP when parsing the " +
+			"source files. IMPORTPATHS is a colon-separated list of import paths; " +
+			"IMPORTMAP is the actual import path of the library this archive " +
+			"holds; FILE is the path to the archive file; EXPORT is the path to " +
+			"the corresponding export file. Currently, IMPORTPATHS and EXPORT " +
+			"arguments are ignored."
 	parser.FindOptionByLongName("file").Description =
 		"Process only the file named NAME inside the package. All other files " +
 			"will be ignored. NAME must be the name of the file, not the full path. " +
 			"Optionally, OUTPUT may be provided as the path to which the generated " +
 			"code for FILE will be written. By default, this defaults to adding a " +
 			"_gen suffix to the file name."
-
 	parser.FindOptionByLongName("instrument-all-tasks").Description =
 		"Infer a name for tasks that do not specify cff.Instrument and opt-in " +
 			"to instrumentation by default."
+	parser.FindOptionByLongName("source").Description =
+		"When using archives to parse the source code, specifies the filepaths to " +
+			"all Go code in the package, so that CFF can parse the entire " +
+			"package."
+	parser.FindOptionByLongName("stdlibroot").Description =
+		"When using archives to parse the source code, specifies the path containing " +
+		    "archive files for the Go standard library."
 
 	parser.Args()[0].Description = "Import path of a package containing CFF flows."
 
@@ -113,10 +129,22 @@ func run(args []string) error {
 		outputs[file.Name] = file.OutputPath
 	}
 
+	archives := make([]internal.Archive, len(f.Archives))
+	for i, archive := range f.Archives {
+		a, err := parseArchive(archive)
+		if err != nil {
+			return fmt.Errorf("invalid argument --archive=%q: %v", archive, err)
+		}
+		archives[i] = a
+	}
+
 	fset := token.NewFileSet()
 	pkgs, err := loadPackages(internal.LoadParams{
 		Fset:       fset,
 		ImportPath: f.Args.ImportPath,
+		Srcs:       f.Sources,
+		StdlibRoot: f.StdlibRoot,
+		Archives:   archives,
 	})
 	if err != nil {
 		return err
@@ -131,13 +159,6 @@ func run(args []string) error {
 	hadFiles := len(f.Files) > 0
 	var processed, errored int
 	for _, pkg := range pkgs {
-		for _, e := range pkg.Errors {
-			err = multierr.Append(err, e)
-		}
-		if err != nil {
-			return err
-		}
-
 		for i, path := range pkg.CompiledGoFiles {
 			name := filepath.Base(path)
 			output, ok := outputs[name]
@@ -167,7 +188,11 @@ func run(args []string) error {
 	return err
 }
 
-func loadPackages(p internal.LoadParams) ([]*packages.Package, error) {
+func loadPackages(p internal.LoadParams) ([]*internal.Package, error) {
+	if len(p.Archives) > 0 {
+		return internal.PackagesArchive(p)
+	}
+
 	mode := packages.NeedName |
 		packages.NeedFiles |
 		packages.NeedCompiledGoFiles |
@@ -191,5 +216,41 @@ func loadPackages(p internal.LoadParams) ([]*packages.Package, error) {
 		return nil, errors.New("no packages found")
 	}
 
-	return pkgs, nil
+	ipkgs := make([]*internal.Package, 0, len(pkgs))
+	for _, pkg := range pkgs {
+		for _, e := range pkg.Errors {
+			err = multierr.Append(err, e)
+		}
+		if err != nil {
+			return nil, err
+		}
+		ipkgs = append(ipkgs, internal.NewPackage(pkg))
+	}
+	return ipkgs, nil
+}
+
+// parseArchive parses the archive string to the internal.Archive type.
+//
+// The following is the flag format:
+//
+//  --archive=IMPORTPATHS=IMPORTMAP=FILE=EXPORT
+//
+// For example,
+//
+//  --archive=github.com/foo/bar:github.com/foo/baz=github.com/foo/bar=bar.go=bar_export.go
+//
+// The flag is structured in this format to closely follow https://github.com/bazelbuild/rules_go/blob/8ea79bbd5e6ea09dc611c245d1dc09ef7ab7118a/go/private/actions/compile.bzl#L20;
+// however, the IMPORTPATHS and EXPORT elements are ignored. There may be future
+// work involved in resolving import aliases, using IMPORTPATHS.
+func parseArchive(archive string) (internal.Archive, error) {
+	args := strings.Split(archive, "=")
+	if len(args) != 4 {
+		return internal.Archive{}, fmt.Errorf("expected 4 elements, got %d", len(args))
+	}
+
+	// Currently, we ignore the IMPORTPATHS and EXPORT elements.
+	return internal.Archive{
+		ImportMap: args[1],
+		File:      args[2],
+	}, nil
 }

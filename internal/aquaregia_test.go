@@ -267,7 +267,8 @@ func TestCodeGenerateFails(t *testing.T) {
 				pattern)
 			require.NoError(t, err, "could not load packages")
 			require.NotEmpty(t, pkgs, "didn't find any packages")
-			for _, pkg := range pkgs {
+			for _, gopkg := range pkgs {
+				pkg := NewPackage(gopkg)
 				// Output path can be empty so code gets generated next to source in case of failed
 				// tests.
 				var errors []error
