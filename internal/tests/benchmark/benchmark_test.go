@@ -23,16 +23,37 @@ func BenchmarkSimpleNative(b *testing.B) {
 	}
 }
 
+type metricsTestFn func(*zap.Logger, tally.Scope) float64
+
 // BenchmarkMetrics is the same flow as Simple but with instrumentation added.
 func BenchmarkMetrics(b *testing.B) {
 	logger := zap.NewNop()
 	scope := tally.NoopScope
 
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		Metrics(logger, scope)
+	metricsCases := []struct {
+		name string
+		fn   metricsTestFn
+	}{
+		{
+			"Metrics", Metrics,
+		},
+		{
+			"Metrics100", Metrics100,
+		},
+		{
+			"Metrics500", Metrics500,
+		},
+		{
+			"Metrics1000", Metrics1000,
+		},
 	}
 
-	b.StopTimer()
+	for _, metricsCase := range metricsCases {
+		metricsCaseClosure := metricsCase
+		b.Run(metricsCase.name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				metricsCaseClosure.fn(logger, scope)
+			}
+		})
+	}
 }

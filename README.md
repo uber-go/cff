@@ -171,7 +171,10 @@ Executing tests from //src/go.uber.org/cff/internal/tests/benchmark:go_default_t
 -----------------------------------------------------------------------------
 goos: darwin
 goarch: amd64
-BenchmarkSimple-8         	  500000	      2162 ns/op	      80 B/op	       6 allocs/op
-BenchmarkSimpleNative-8   	 1000000	      1567 ns/op	      32 B/op	       3 allocs/op
-BenchmarkMetrics-8        	  200000	     10817 ns/op	    3128 B/op	      35 allocs/op
+BenchmarkSimple-8              1000000          1830 ns/op          80 B/op           6 allocs/op
+BenchmarkSimpleNative-8        1000000          1320 ns/op          32 B/op           3 allocs/op
+BenchmarkMetrics-8              100000         20779 ns/op        6136 B/op          70 allocs/op
+BenchmarkMetrics100-8            10000        261341 ns/op      162279 B/op        1637 allocs/op
+BenchmarkMetrics500-8             2000       1351223 ns/op      799228 B/op        8039 allocs/op
+BenchmarkMetrics1000-8            1000       2376714 ns/op     1594208 B/op       16029 allocs/op
 ```
