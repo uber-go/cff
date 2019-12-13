@@ -141,9 +141,11 @@ func (g *generator) GenerateFile(f *file) error {
 	return ioutil.WriteFile(g.outputPath, buff.Bytes(), 0644)
 }
 
+// generateFlow runs the CFF template for the given flow and writes it to w, modifying addImports if the template
+// requires additional imports to be added.
 func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string) error {
 	tmpl, err := template.New("cff").Funcs(template.FuncMap{
-		"type":     g.typePrinter(file.AST),
+		"type":     g.typePrinter(file, addImports),
 		"typeHash": g.printTypeHash,
 		"expr":     g.printExpr,
 		"import": func(importPath string) string {
@@ -175,11 +177,12 @@ func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports ma
 	return tmpl.Execute(w, flowTemplateData{Flow: f})
 }
 
-// typePrinter returns the qualifier for the type to form an identifier using that type
-func (g *generator) typePrinter(f *ast.File) func(types.Type) string {
+// typePrinter returns the qualifier for the type to form an identifier using that type, modifying addImports if the
+// type refers to a package that is not already imported
+func (g *generator) typePrinter(f *file, addImports map[string]string) func(types.Type) string {
 	return func(t types.Type) string {
 		return types.TypeString(t, func(pkg *types.Package) string {
-			for _, imp := range f.Imports {
+			for _, imp := range f.AST.Imports {
 				ip, _ := strconv.Unquote(imp.Path.Value)
 
 				if !isPackagePathEquivalent(pkg, ip) {
@@ -195,7 +198,14 @@ func (g *generator) typePrinter(f *ast.File) func(types.Type) string {
 				return pkg.Name()
 			}
 
-			// Assume that the type is defined in the same package
+			// The generated code needs a package (pkg) to be imported to form the qualifier, but it wasn't imported
+			// by the user already and it isn't in this package (f.Package)
+			if !isPackagePathEquivalent(pkg, f.Package.Types.Path()) {
+				addImports[pkg.Path()] = pkg.Name()
+				return pkg.Name()
+			}
+
+			// The type is defined in the same package
 			return ""
 		})
 	}

@@ -63,7 +63,8 @@ func (c *compiler) nodePosition(n ast.Node) token.Position {
 }
 
 type file struct {
-	AST *ast.File
+	AST     *ast.File
+	Package *Package
 
 	// Map from import path to local names of the import. If the import is
 	// unnamed, it will be recorded as the package name.
@@ -78,14 +79,15 @@ type file struct {
 	Flows    []*flow
 }
 
-func (c *compiler) CompileFile(file *ast.File) (*file, error) {
-	f := c.compileFile(file)
+func (c *compiler) CompileFile(file *ast.File, pkg *Package) (*file, error) {
+	f := c.compileFile(file, pkg)
 	return f, multierr.Combine(c.errors...)
 }
 
-func (c *compiler) compileFile(astFile *ast.File) *file {
+func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 	file := file{
 		AST:            astFile,
+		Package:        pkg,
 		Filepath:       c.fset.File(astFile.Pos()).Name(),
 		Imports:        make(map[string][]string),
 		UnnamedImports: make(map[string]struct{}),
