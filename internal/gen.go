@@ -18,7 +18,11 @@ import (
 
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/types/typeutil"
+
+	tmpls "bindata/src/go.uber.org/cff/internal/templates"
 )
+
+const _genTemplate = "gen.tmpl"
 
 type generator struct {
 	fset *token.FileSet
@@ -144,7 +148,8 @@ func (g *generator) GenerateFile(f *file) error {
 // generateFlow runs the CFF template for the given flow and writes it to w, modifying addImports if the template
 // requires additional imports to be added.
 func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string) error {
-	tmpl, err := template.New("cff").Funcs(template.FuncMap{
+	t := tmpls.MustAssetString(_genTemplate)
+	tmpl := template.Must(template.New("cff").Funcs(template.FuncMap{
 		"type":     g.typePrinter(file, addImports),
 		"typeHash": g.printTypeHash,
 		"expr":     g.printExpr,
@@ -169,10 +174,7 @@ func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports ma
 
 			return name
 		},
-	}).Parse(_tmpl)
-	if err != nil {
-		return err
-	}
+	}).Parse(t))
 
 	return tmpl.Execute(w, flowTemplateData{Flow: f})
 }
@@ -235,258 +237,3 @@ func (g *generator) typeID(t types.Type) int {
 type flowTemplateData struct {
 	Flow *flow
 }
-
-const _tmpl = `
-{{- $context := import "context" -}}
-{{- $schedule := .Flow.Schedule -}}
-{{- $flow := .Flow -}}
-{{- with .Flow -}}
-func(ctx {{ $context }}.Context,
-{{- if $flow.ObservabilityEnabled -}}
-{{- $tally := import "github.com/uber-go/tally" -}}
-{{- $zap := import "go.uber.org/zap" -}}
-scope {{ $tally }}.Scope,
-logger *{{ $zap }}.Logger,
-{{- end -}}
-{{- range .Inputs -}}
-	v{{ typeHash .Type }} {{ type .Type }},
-{{- end }}) (err error) {
-	{{- if $flow.Instrument -}}
-	flowTags := map[string]string{"flow": {{ expr $flow.Instrument.Name }}}
-	flowTagsMutex := new(sync.Mutex)
-
-	flowTimer := scope.Tagged(flowTags).Timer("taskflow.timing").Start()
-	defer flowTimer.Stop()
-
-	{{- end }}
-	{{- if $flow.ObservabilityEnabled }}
-	type task struct {
-		name string
-		ran bool
-		tags map[string]string
-	}
-
-	tasks := [][]*task{
-		{{ range $schedule -}}
-		{
-			{{ range . -}}
-			{
-				{{ with .Instrument -}}
-				name: {{ expr .Name }},
-				tags: map[string]string{"task": {{ expr .Name }}},
-				{{- end }}
-				ran: false,
-			},
-			{{ end }}
-		},
-		{{ end }}
-	}
-
-	defer func() {
-		for _, sched := range tasks {
-			for _, task := range sched {
-				if task.name == "" || task.ran { continue }
-				scope.Tagged(task.tags).Counter("task.skipped").Inc(1)
-				if err == nil {
-					logger.Debug("task skipped", zap.String("task", task.name))
-				} else {
-					logger.Debug("task skipped", zap.String("task", task.name), zap.Error(err))
-				}
-			}
-		}
-		{{- if $flow.Instrument }}
-		if err != nil {
-			scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
-			logger.Debug("taskflow skipped", zap.String("flow", {{ expr $flow.Instrument.Name }}), zap.Error(err))
-		}
-		{{ end }}
-	}()
-	{{ end }}
-
-	{{ range $schedIdx, $sched := $schedule }}
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-
-		{{- $once := printf "once%v" $schedIdx -}}
-		{{- $wg := printf "wg%v" $schedIdx -}}
-		{{- $sync := import "sync" -}}
-		{{- $hasMultipleTasks := ne 1 (len $sched) }}
-		var (
-			{{ if $hasMultipleTasks }}
-			{{ $wg }} {{ $sync }}.WaitGroup
-			{{ end }}
-			{{ $once }} {{ $sync }}.Once
-		)
-
-		{{ if $hasMultipleTasks }}
-		{{ $wg }}.Add({{ len . }})
-		{{ end }}
-		
-		{{ range $taskIdx, $task := $sched }}
-			{{- $serr := printf "err%v" .Serial -}}
-			{{ template "taskResultVarDecl" . }}
-			{{ if $hasMultipleTasks -}}
-			go func() {
-				defer {{ $wg }}.Done()
-			{{ else -}}
-			func() {
-			{{ end -}}
-
-				{{ if .Instrument -}}
-					tags := map[string]string{"task": {{ expr .Instrument.Name }}}
-					timer := scope.Tagged(tags).Timer("task.timing").Start()
-					defer timer.Stop()
-				{{- end }}
-				defer func() {
-					recovered := recover()
-					if recovered != nil {
-						{{ if .FallbackWith }}
-							{{ if .Instrument -}}
-								scope.Tagged(tags).Counter("task.panic").Inc(1)
-								scope.Tagged(tags).Counter("task.recovered").Inc(1)
-
-								recoveredErr, ok := recovered.(error)
-								if ok {
-									logger.Error("task panic recovered",
-												 zap.String("task", {{ expr .Instrument.Name }}),
-												 zap.Stack("stack"),
-												 zap.Error(recoveredErr))
-								} else {
-									logger.Error("task panic recovered",
-												 zap.String("task", {{ expr .Instrument.Name }}),
-												 zap.Stack("stack"),
-												 zap.Any("recoveredValue", recovered))
-								}
-							{{ end -}}
-							{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
-								{{ if gt $i 0 }},{{ end }}{{ expr $v }}
-							{{- end }}{{ if gt (len .FallbackWithResults) 0 }}, {{ end }} nil
-						{{ else }}
-							{{ $fmt := import "fmt" }}
-							{{ $once }}.Do(func() {
-								recoveredErr := {{ $fmt }}.Errorf("task panic: %v", recovered)
-								{{ if .Instrument -}}
-								scope.Tagged(tags).Counter("task.panic").Inc(1)
-								logger.Error("task panic",
-									zap.String("task", {{ expr .Instrument.Name }}),
-									zap.Stack("stack"),
-									zap.Error(recoveredErr))
-								{{- end }}
-								err = recoveredErr
-							})
-						{{ end }}
-					}
-				}()
-
-				{{ if .Predicate }}
-					if {{ template "callTask" .Predicate }} {
-				{{ end }}
-				{{ template "taskResultList" . }}{{ if or .HasError (len .Outputs) }} = {{ end }}{{ template "callTask" . }}
-
-				{{- if $flow.ObservabilityEnabled }}
-				tasks[{{ $schedIdx }}][{{ $taskIdx }}].ran = true
-				{{- end }}
-				{{ if .HasError -}}
-					if {{ $serr }} != nil {
-						{{ if .FallbackWith -}}
-							{{ if .Instrument -}}
-								scope.Tagged(tags).Counter("task.error").Inc(1)
-								scope.Tagged(tags).Counter("task.recovered").Inc(1)
-								logger.Error("task error recovered",
-											 zap.String("task", {{ expr .Instrument.Name }}),
-											 zap.Error({{ $serr }}),
-											)
-							{{- end }}
-
-							{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
-								{{ if gt $i 0 }},{{ end }}{{ expr $v }}
-							{{- end }}{{ if gt (len .FallbackWithResults) 0 }}, {{ end }} nil
-						{{- else -}}
-							{{ if .Instrument -}}
-								{{ if $flow.Instrument -}}
-								flowTagsMutex.Lock()
-								flowTags["failedtask"] = {{ expr .Instrument.Name }}
-								flowTagsMutex.Unlock()
-								{{- end }}
-								scope.Tagged(tags).Counter("task.error").Inc(1)
-							{{- end }}
-							{{ $once }}.Do(func() {
-								err = {{ $serr }}
-							})
-						{{- end }}
-					} {{ if .Instrument }} else {
-						scope.Tagged(tags).Counter("task.success").Inc(1)
-						logger.Debug("task succeeded", zap.String("task", {{ expr .Instrument.Name }}))
-					} {{ end }}
-				{{ else }} {{/* cannot return error */}}
-					{{ if .Instrument -}}
-					scope.Tagged(tags).Counter("task.success").Inc(1)
-					logger.Debug("task succeeded", zap.String("task", {{ expr .Instrument.Name }}))
-					{{- end }}
-				{{ end }}
-				{{ if .Predicate }}
-					}
-				{{ end }}
-			}()
-		{{ end }}
-
-		{{ if $hasMultipleTasks }}
-			{{ $wg }}.Wait()
-		{{ end -}}
-		if err != nil {
-			{{ if $flow.Instrument -}}
-				scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
-			{{- end }}
-			return err
-		}
-
-		// Prevent variable unused errors.
-		var (
-			{{- if $flow.Instrument -}}
-			_ = flowTagsMutex
-			{{ end }}
-			_ = &{{ $once }}
-			{{ range . -}}
-				{{ range .Outputs -}}
-					_ = &v{{ typeHash .}}
-				{{ end -}}
-			{{ end }}
-		)
-	{{ end }}
-
-	{{ range .Outputs }}
-	*({{ expr .Node }}) = v{{ typeHash .Type }}
-	{{- end }}
-
-	{{ if $flow.Instrument -}}
-	if err != nil {
-		scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
-	} else {
-		scope.Tagged(flowTags).Counter("taskflow.success").Inc(1)
-		logger.Debug("taskflow succeeded", zap.String("flow", {{ expr $flow.Instrument.Name }}))
-	}
-
-	{{- end }}
-
-	return err
-}({{ expr .Ctx }}{{ if $flow.ObservabilityEnabled }}, {{ expr $flow.Metrics }}, {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
-{{- end -}}
-
-{{- define "taskResultVarDecl" -}}
-{{ range .Outputs }}
-var v{{ typeHash . }} {{ type . }}
-{{- end }}
-{{ if .HasError }}var {{ printf "err%d" .Serial }} error{{ end }}
-{{- end -}}
-
-{{- define "taskResultList" -}}
-{{- range $i, $t := .Outputs -}}
-	{{ if gt $i 0 }},{{ end }}v{{ typeHash $t }}
-{{- end }}{{ if .HasError }}{{ if len .Outputs }}, {{ end }}{{ printf "err%d" .Serial }}{{ end }}
-{{- end -}}
-
-{{- define "callTask" -}}
-	{{- expr .Node }}({{- if .WantCtx }}ctx,{{ end }} {{- range .Inputs }}v{{ typeHash . }}, {{- end }})
-{{- end -}}
-`
