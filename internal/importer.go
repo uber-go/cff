@@ -5,7 +5,6 @@ import (
 	"go/token"
 	"go/types"
 	"os"
-	"strings"
 
 	"go.uber.org/multierr"
 	"golang.org/x/tools/go/gcexportdata"
@@ -68,40 +67,4 @@ func (i *cffImporter) readArchive(archiveFile, importPath string) (_ *types.Pack
 		return nil, fmt.Errorf("error reading archive file: %v", err)
 	}
 	return pkg, nil
-}
-
-// By Go standards from v1.13, the import prefix before the first "/" includes a
-// "." if it is an external import. However, there are some import paths in the
-// monorepo that breaks this. We check against these to determine that they are
-// not part of the Go standard library.
-var knownImportPrefixes = map[string]struct{}{
-	"glue":      {},
-	"gogoproto": {},
-	"mock":      {},
-	"thriftrw":  {},
-}
-
-func isStdlibImport(path string) bool {
-	if i := strings.IndexByte(path, '/'); i >= 0 {
-		path = path[:i]
-	}
-
-	// If the prefix of the import path contains a ".", it should be considered
-	// to be a external package (not part of Go standard lib).
-	if strings.Contains(path, ".") {
-		return false
-	}
-
-	// TODO: before moving to go1.13, we have import paths for some generated
-	// code in the monorepo that don't have a "." in them, i.e. thriftrw/code.uber.internal/foo/bar,
-	// because Bazel is able to resolve arbitrary import paths. Starting from
-	// go1.13, there is a hard requirement for the prefix of the import path to
-	// include a "." (Issue tracked: T4289809)
-	// For now, filter the known import prefixes in the monorepo to be recognized
-	// as an imported dependency / not part of the Go standard lib.
-	if _, ok := knownImportPrefixes[path]; ok {
-		return false
-	}
-
-	return true
 }
