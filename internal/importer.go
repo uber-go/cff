@@ -6,6 +6,7 @@ import (
 	"go/types"
 	"os"
 
+	"github.com/bazelbuild/bazel-gazelle/language/go"
 	"go.uber.org/multierr"
 	"golang.org/x/tools/go/gcexportdata"
 )
@@ -36,7 +37,7 @@ func newImporter(fset *token.FileSet, archives []Archive, root string) (types.Im
 func (i *cffImporter) Import(path string) (*types.Package, error) {
 	// if the import is part of GoStdLib, it should read the archive file for it
 	// to load the package.
-	if isStdlibImport(path) {
+	if golang.IsStandard(path) {
 		archiveFile := fmt.Sprintf("%v/%v.a", i.stdlibRoot, path)
 		return i.readArchive(archiveFile, path)
 	}
