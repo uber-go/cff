@@ -85,20 +85,23 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		}
 
 		defer func() {
-			if err == nil {
-				return
-			}
 			for _, sched := range tasks {
 				for _, task := range sched {
 					if task.name == "" || task.ran {
 						continue
 					}
 					scope.Tagged(task.tags).Counter("task.skipped").Inc(1)
-					logger.Debug("task skipped", zap.String("task", task.name), zap.Error(err))
+					if err == nil {
+						logger.Debug("task skipped", zap.String("task", task.name))
+					} else {
+						logger.Debug("task skipped", zap.String("task", task.name), zap.Error(err))
+					}
 				}
 			}
-			scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
-			logger.Debug("taskflow skipped", zap.String("flow", "HandleFoo"))
+			if err != nil {
+				scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
+				logger.Debug("taskflow skipped", zap.String("flow", "HandleFoo"), zap.Error(err))
+			}
 
 		}()
 
@@ -117,11 +120,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			defer func() {
 				recovered := recover()
 				if recovered != nil {
+
 					once0.Do(func() {
 						recoveredErr := fmt.Errorf("task panic: %v", recovered)
 
 						err = recoveredErr
 					})
+
 				}
 			}()
 
@@ -132,6 +137,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 						LDAPGroup: req.LDAPGroup,
 					}
 			}(v1)
+			tasks[0][0].ran = true
 
 		}()
 
@@ -168,15 +174,18 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			defer func() {
 				recovered := recover()
 				if recovered != nil {
+
 					once1.Do(func() {
 						recoveredErr := fmt.Errorf("task panic: %v", recovered)
 
 						err = recoveredErr
 					})
+
 				}
 			}()
 
 			v4, err1 = h.mgr.Get(v2)
+			tasks[1][0].ran = true
 			if err1 != nil {
 
 				once1.Do(func() {
@@ -196,23 +205,30 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			defer func() {
 				recovered := recover()
 				if recovered != nil {
-					once1.Do(func() {
-						recoveredErr := fmt.Errorf("task panic: %v", recovered)
-						scope.Tagged(tags).Counter("task.panic").Inc(1)
-						logger.Error("task panic",
+
+					scope.Tagged(tags).Counter("task.panic").Inc(1)
+					scope.Tagged(tags).Counter("task.recovered").Inc(1)
+
+					recoveredErr, ok := recovered.(error)
+					if ok {
+						logger.Error("task panic recovered",
 							zap.String("task", "FormSendEmailRequest"),
 							zap.Stack("stack"),
 							zap.Error(recoveredErr))
-						err = recoveredErr
-					})
+					} else {
+						logger.Error("task panic recovered",
+							zap.String("task", "FormSendEmailRequest"),
+							zap.Stack("stack"),
+							zap.Any("recoveredValue", recovered))
+					}
+					v5, err4 = &ListUsersResponse{}, nil
+
 				}
 			}()
 
 			v5, err4 = h.users.List(v3)
+			tasks[1][1].ran = true
 			if err4 != nil {
-				flowTagsMutex.Lock()
-				flowTags["failedtask"] = "FormSendEmailRequest"
-				flowTagsMutex.Unlock()
 				scope.Tagged(tags).Counter("task.error").Inc(1)
 				scope.Tagged(tags).Counter("task.recovered").Inc(1)
 				logger.Error("task error recovered",
@@ -222,7 +238,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 				v5, err4 = &ListUsersResponse{}, nil
 			} else {
-				tasks[1][1].ran = true
 				scope.Tagged(tags).Counter("task.success").Inc(1)
 				logger.Debug("task succeeded", zap.String("task", "FormSendEmailRequest"))
 			}
@@ -260,6 +275,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			defer func() {
 				recovered := recover()
 				if recovered != nil {
+
 					once2.Do(func() {
 						recoveredErr := fmt.Errorf("task panic: %v", recovered)
 						scope.Tagged(tags).Counter("task.panic").Inc(1)
@@ -269,6 +285,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 							zap.Error(recoveredErr))
 						err = recoveredErr
 					})
+
 				}
 			}()
 
@@ -283,6 +300,10 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 					}
 					return reqs
 				}(v4, v5)
+				tasks[2][0].ran = true
+
+				scope.Tagged(tags).Counter("task.success").Inc(1)
+				logger.Debug("task succeeded", zap.String("task", "FormSendEmailRequest"))
 
 			}
 
@@ -315,15 +336,18 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			defer func() {
 				recovered := recover()
 				if recovered != nil {
+
 					once3.Do(func() {
 						recoveredErr := fmt.Errorf("task panic: %v", recovered)
 
 						err = recoveredErr
 					})
+
 				}
 			}()
 
 			v7, err2 = h.ses.BatchSendEmail(v6)
+			tasks[3][0].ran = true
 			if err2 != nil {
 
 				once3.Do(func() {
@@ -360,11 +384,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			defer func() {
 				recovered := recover()
 				if recovered != nil {
+
 					once4.Do(func() {
 						recoveredErr := fmt.Errorf("task panic: %v", recovered)
 
 						err = recoveredErr
 					})
+
 				}
 			}()
 
@@ -375,6 +401,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 				return &r
 			}(v7)
+			tasks[4][0].ran = true
 
 		}()
 
