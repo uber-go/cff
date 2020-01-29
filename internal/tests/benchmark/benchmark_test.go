@@ -46,6 +46,9 @@ func BenchmarkMetrics(b *testing.B) {
 		{
 			"Metrics1000", Metrics1000,
 		},
+		{
+			"Metrics1000Failed", Metrics1000Failed,
+		},
 	}
 
 	for _, metricsCase := range metricsCases {
