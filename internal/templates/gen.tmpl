@@ -4,27 +4,38 @@
 {{- with .Flow -}}
     func(ctx {{ $context }}.Context,
     {{- if $flow.ObservabilityEnabled -}}
-        {{- $tally := import "github.com/uber-go/tally" -}}
         {{- $zap := import "go.uber.org/zap" -}}
+        {{- if not $flow.MetricsEmitter -}}
+        {{- $tally := import "github.com/uber-go/tally" -}}
         scope {{ $tally }}.Scope,
+        {{ end }}
         logger *{{ $zap }}.Logger,
     {{- end -}}
+    {{- $cff := import "go.uber.org/cff" -}}
     {{- range .Inputs -}}
         v{{ typeHash .Type }} {{ type .Type }},
     {{- end }}) (err error) {
-    {{- if $flow.Instrument -}}
-        flowTags := map[string]string{"flow": {{ expr $flow.Instrument.Name }}}
-        flowTagsMutex := new(sync.Mutex)
-
-        flowTimer := scope.Tagged(flowTags).Timer("taskflow.timing").Start()
-        defer flowTimer.Stop()
-
+    var _ = ({{ $cff }}.FlowOption)(nil)
+    {{ if $flow.ObservabilityEnabled }}
+        var metricsEmitter {{ $cff }}.MetricsEmitter
+        {{ if $flow.MetricsEmitter }}
+        metricsEmitter = {{ expr $flow.MetricsEmitter }}
+        {{ else }}
+        metricsEmitter = {{ $cff }}.DefaultMetricsEmitter(scope)
+        {{ end }}
+    {{ end }}
+    {{ if $flow.Instrument }}
+        var flowEmitterReplace sync.Once
+        var _ = &flowEmitterReplace
+        flowEmitter := metricsEmitter.FlowInit({{ expr $flow.Instrument.Name }})
+        startTime := {{ import "time" }}.Now()
+        defer func() { flowEmitter.FlowDone(time.Since(startTime)) }()
     {{- end }}
     {{- if $flow.ObservabilityEnabled }}
         type task struct {
         name string
+        taskEmitter {{ $cff }}.TaskEmitter
         ran bool
-        tags map[string]string
         }
 
         tasks := [][]*task{
@@ -34,7 +45,7 @@
                 {
                 {{ with .Instrument -}}
                     name: {{ expr .Name }},
-                    tags: map[string]string{"task": {{ expr .Name }}},
+                    taskEmitter: metricsEmitter.TaskInit({{ expr .Name }}),
                 {{- end }}
                 ran: false,
                 },
@@ -42,12 +53,11 @@
             },
         {{ end }}
         }
-
         defer func() {
         for _, sched := range tasks {
         for _, task := range sched {
         if task.name == "" || task.ran { continue }
-        scope.Tagged(task.tags).Counter("task.skipped").Inc(1)
+        task.taskEmitter.TaskSkipped()
         if err == nil {
         logger.Debug("task skipped", zap.String("task", task.name))
         } else {
@@ -57,7 +67,7 @@
         }
         {{- if $flow.Instrument }}
             if err != nil {
-            scope.Tagged(flowTags).Counter("taskflow.skipped").Inc(1)
+            flowEmitter.FlowSkipped()
             logger.Debug("taskflow skipped", zap.String("flow", {{ expr $flow.Instrument.Name }}), zap.Error(err))
             }
         {{ end }}
@@ -95,18 +105,17 @@
             {{ end -}}
 
             {{ if .Instrument -}}
-                tags := map[string]string{"task": {{ expr .Instrument.Name }}}
-                timer := scope.Tagged(tags).Timer("task.timing").Start()
-                defer timer.Stop()
+            taskEmitter := tasks[{{ $schedIdx }}][{{ $taskIdx }}].taskEmitter
+            startTime := {{ import "time" }}.Now()
+            defer func() { taskEmitter.TaskDone(time.Since(startTime)) }()
             {{- end }}
             defer func() {
             recovered := recover()
             if recovered != nil {
             {{ if .FallbackWith }}
                 {{ if .Instrument -}}
-                    scope.Tagged(tags).Counter("task.panic").Inc(1)
-                    scope.Tagged(tags).Counter("task.recovered").Inc(1)
-
+                    taskEmitter.TaskPanic()
+                    taskEmitter.TaskRecovered()
                     recoveredErr, ok := recovered.(error)
                     if ok {
                     logger.Error("task panic recovered",
@@ -128,7 +137,7 @@
                 {{ $once }}.Do(func() {
                 recoveredErr := {{ $fmt }}.Errorf("task panic: %v", recovered)
                 {{ if .Instrument -}}
-                    scope.Tagged(tags).Counter("task.panic").Inc(1)
+                    taskEmitter.TaskPanic()
                     logger.Error("task panic",
                     zap.String("task", {{ expr .Instrument.Name }}),
                     zap.Stack("stack"),
@@ -152,8 +161,8 @@
                 if {{ $serr }} != nil {
                 {{ if .FallbackWith -}}
                     {{ if .Instrument -}}
-                        scope.Tagged(tags).Counter("task.error").Inc(1)
-                        scope.Tagged(tags).Counter("task.recovered").Inc(1)
+                        taskEmitter.TaskError()
+                        taskEmitter.TaskRecovered()
                         logger.Error("task error recovered",
                         zap.String("task", {{ expr .Instrument.Name }}),
                         zap.Error({{ $serr }}),
@@ -166,23 +175,23 @@
                 {{- else -}}
                     {{ if .Instrument -}}
                         {{ if $flow.Instrument -}}
-                            flowTagsMutex.Lock()
-                            flowTags["failedtask"] = {{ expr .Instrument.Name }}
-                            flowTagsMutex.Unlock()
+                            flowEmitterReplace.Do(func() {
+                                flowEmitter = flowEmitter.FlowFailedTask({{ expr .Instrument.Name }})
+                            })
                         {{- end }}
-                        scope.Tagged(tags).Counter("task.error").Inc(1)
+                        taskEmitter.TaskError()
                     {{- end }}
                     {{ $once }}.Do(func() {
                     err = {{ $serr }}
                     })
                 {{- end }}
                 } {{ if .Instrument }} else {
-                scope.Tagged(tags).Counter("task.success").Inc(1)
+                taskEmitter.TaskSuccess()
                 logger.Debug("task succeeded", zap.String("task", {{ expr .Instrument.Name }}))
                 } {{ end }}
             {{ else }} {{/* cannot return error */}}
             {{ if .Instrument -}}
-                scope.Tagged(tags).Counter("task.success").Inc(1)
+                taskEmitter.TaskSuccess()
                 logger.Debug("task succeeded", zap.String("task", {{ expr .Instrument.Name }}))
             {{- end }}
             {{ end }}
@@ -197,16 +206,13 @@
         {{ end -}}
         if err != nil {
         {{ if $flow.Instrument -}}
-            scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
+                flowEmitter.FlowError()
         {{- end }}
         return err
         }
 
         // Prevent variable unused errors.
         var (
-        {{- if $flow.Instrument -}}
-            _ = flowTagsMutex
-        {{ end }}
         _ = &{{ $once }}
         {{ range . -}}
             {{ range .Outputs -}}
@@ -222,16 +228,15 @@
 
     {{ if $flow.Instrument -}}
         if err != nil {
-        scope.Tagged(flowTags).Counter("taskflow.error").Inc(1)
+            flowEmitter.FlowError()
         } else {
-        scope.Tagged(flowTags).Counter("taskflow.success").Inc(1)
-        logger.Debug("taskflow succeeded", zap.String("flow", {{ expr $flow.Instrument.Name }}))
+                flowEmitter.FlowSuccess()
+            logger.Debug("taskflow succeeded", zap.String("flow", {{ expr $flow.Instrument.Name }}))
         }
-
     {{- end }}
 
     return err
-    }({{ expr .Ctx }}{{ if $flow.ObservabilityEnabled }}, {{ expr $flow.Metrics }}, {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
+    }({{ expr .Ctx }}{{ if $flow.ObservabilityEnabled }}, {{ if not $flow.MetricsEmitter }}{{ expr $flow.Metrics }}, {{end }} {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
 {{- end -}}
 
 {{- define "taskResultVarDecl" -}}

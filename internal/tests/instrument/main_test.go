@@ -4,14 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"go.uber.org/zap/zaptest"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/uber-go/tally"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"go.uber.org/zap/zaptest"
 	"go.uber.org/zap/zaptest/observer"
 )
 
@@ -19,7 +17,7 @@ func TestInstrument(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &H{Scope: scope, Logger: logger}
+	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	v, err := h.Run(ctx, "1")
 
@@ -62,7 +60,7 @@ func TestInstrumentError(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &H{Scope: scope, Logger: logger}
+	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	_, err := h.Run(ctx, "NaN")
 
@@ -118,7 +116,7 @@ func TestInstrumentCancelledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(ctx)
 	cancel()
 
-	h := &H{Scope: scope, Logger: logger}
+	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
 	_, err := h.Run(ctx, "1")
 	assert.Error(t, err)
 
@@ -151,7 +149,7 @@ func TestInstrumentRecover(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &H{Scope: scope, Logger: logger}
+	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	v, err := h.Run(ctx, "300")
 
@@ -199,7 +197,7 @@ func TestInstrumentAnnotationOrder(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &H{Scope: scope, Logger: logger}
+	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	v, err := h.Do(ctx, "1")
 
@@ -233,7 +231,7 @@ func TestInstrumentTaskButNotFlow(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &H{Scope: scope, Logger: logger}
+	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	v, err := h.Work(ctx, "1")
 
@@ -265,7 +263,7 @@ func TestInstrumentTaskButNotFlow(t *testing.T) {
 func TestT3630161(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	logger := zaptest.NewLogger(t)
-	h := &H{Scope: scope, Logger: logger}
+	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	h.T3630161(ctx)
 
@@ -287,13 +285,14 @@ func TestT3630161(t *testing.T) {
 	assert.Equal(t, map[string]string{"flow": "T3630161"}, countersByName["taskflow.success"][0].Tags())
 }
 
-// TestT3795761 tests against regression for T3795761 where a task that returns no error is not reported as
-// skipped when an earlier task that it depends on returns an error.
+// TestT3795761 tests against regression for T3795761 where a task that
+// returns no error is not reported as skipped when an earlier task that it
+// depends on returns an error.
 func TestT3795761(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &H{
+	h := &DefaultMetricsEmitter{
 		Scope:  scope,
 		Logger: logger,
 	}

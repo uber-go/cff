@@ -3,23 +3,25 @@ package benchmark
 import (
 	"testing"
 
+	"go.uber.org/cff"
 	"github.com/uber-go/tally"
 	"go.uber.org/zap"
 )
 
-// BenchmarkSimple is a flow that has two concurrent tasks that do almost nothing, that is designed to try to measure
+// BenchmarkBaseline is a flow that has two concurrent tasks that do almost nothing, that is designed to try to measure
 // the overhead incurred by cff.Flow
-func BenchmarkSimple(b *testing.B) {
+func BenchmarkBaseline(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		Simple()
+		Baseline()
 	}
 }
 
-// BenchmarkSimpleNative is a re-implementation of the Simple flow that makes the most optimal use of Go synchronization primitives
+// BenchmarkBaselineNative is a re-implementation of the Simple flow that makes the most optimal use of Go synchronization primitives
 // while still running the two tasks in parallel. It should serve as a baseline as comparison to the Simple function.
-func BenchmarkSimpleNative(b *testing.B) {
+func BenchmarkBaselineNative(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		SimpleNative()
+		BaselineNative()
+
 	}
 }
 
@@ -29,6 +31,14 @@ type metricsTestFn func(*zap.Logger, tally.Scope) float64
 func BenchmarkMetrics(b *testing.B) {
 	logger := zap.NewNop()
 	scope := tally.NoopScope
+	builder := cff.DefaultMetricsEmitter(scope)
+
+	metricsMemoized := func(logger *zap.Logger, scope tally.Scope) float64 {
+		return MetricsMemoized1000(logger, scope, builder)
+	}
+	metricsFailedMemoized := func(logger *zap.Logger, scope tally.Scope) float64 {
+		return Metrics1000FailedMemoized(logger, scope, builder)
+	}
 
 	metricsCases := []struct {
 		name string
@@ -48,6 +58,12 @@ func BenchmarkMetrics(b *testing.B) {
 		},
 		{
 			"Metrics1000Failed", Metrics1000Failed,
+		},
+		{
+			"MetricsMemoized1000", metricsMemoized,
+		},
+		{
+			"Metrics1000FailedMemoized", metricsFailedMemoized,
 		},
 	}
 

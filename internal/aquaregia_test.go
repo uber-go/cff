@@ -145,6 +145,22 @@ func TestCodeGenerateFails(t *testing.T) {
 				File:         "fallback-with.go",
 				ErrorMatches: "Task must return an error for FallbackWith to be used",
 			},
+			// MissingCFFMetrics
+			{
+				File:         "instrument.go",
+				ErrorMatches: "cff.Instrument requires a \\*tally.Scope via cff\\.Metrics or cff\\.MetricsEmitter to be provided",
+			},
+			// MissingCFFLogger and MissingCFFLoggerME
+			{
+				File:         "instrument.go",
+				ErrorMatches: "cff.Instrument requires a \\*zap.Logger to be provided: use cff\\.Logger",
+			},
+			// MissingCFFLoggerAndMetrics
+			{
+				File:         "instrument.go",
+				ErrorMatches: "cff.Instrument requires a \\*tally.Scope via cff\\.Metrics or cff\\.MetricsEmitter to be provided",
+			},
+
 			{
 				File:         "missing-provider.go",
 				ErrorMatches: "no provider found for float64",

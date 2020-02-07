@@ -24,8 +24,6 @@ func TestGoldenMagic(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, string(expected), string(actual), "magic_gen.go is out of date, try running these commands:\n"+
-		os.ExpandEnv("cd $GOPATH/src/code.uber.interna/marketplace/cff/examples\n")+
-		"bazel build //src/go.uber.org/cff/cmd/cff:cff\n"+
-		"rm magic_gen.go\n"+
-		"$GOPATH/bazel-bin/src/go.uber.org/cff/cmd/cff/darwin_amd64_stripped/cff --file=magic.go=magic_gen.go go.uber.org/cff/examples")
+		os.ExpandEnv("cd $GOPATH/src/go.uber.org/cff/examples\n")+
+		"rm magic_gen.go &&  $GOPATH/bin/cff --file=magic.go go.uber.org/cff/examples")
 }

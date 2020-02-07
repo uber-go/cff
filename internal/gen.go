@@ -98,20 +98,6 @@ func (g *generator) GenerateFile(f *file) error {
 		return err
 	}
 
-	// Removing imports before adding "fmt", "context", and maybe "sync" since we
-	// would cause a panic within astutil when removing cffImportPath as
-	// AddNamedImport won't have an associated token.Pos.
-	// See T3136343 for moar details.
-
-	// The user code will have imports to cffImportPath but we should remove
-	// them because it will be unused.
-	if _, ok := f.UnnamedImports[cffImportPath]; ok {
-		astutil.DeleteImport(fset, file, cffImportPath)
-	}
-	for _, name := range f.Imports[cffImportPath] {
-		astutil.DeleteNamedImport(fset, file, name, cffImportPath)
-	}
-
 	newImports := make([]string, 0, len(addImports))
 	for imp := range addImports {
 		newImports = append(newImports, imp)

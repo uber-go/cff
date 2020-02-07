@@ -161,6 +161,12 @@ Failing test cases are in `internal/failing_tests` and are processed by `aquareg
 bazel rule for CFF, because we want to assert (1) that the source code fails the CFF compiler, and (2) assert on the
 error that was returned for the compiler. 
 
+##### Test speedup #####
+
+Currently, benchmark files after transpilation add up to over 120,000 LOC, and even though we dont run benchmarks via
+`bazel test //src/go.uber.org/cff/...`, those files are still compiled. To speed up your unit tests,
+you can run with a tag that excludes the slow target: `bazel test --test_tag_filters="-cff_slow_compile" --build_tag_filters="-cff_slow_compile" //src/go.uber.org/cff/...`
+
 ##### Benchmarks #####
 
 Benchmarks are a special case of golden tests. They can be invoked using bazel test as follows:

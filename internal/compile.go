@@ -132,6 +132,9 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 				return true // keep looking
 			}
 
+			if fn.Name() == "DefaultMetricsEmitter" {
+				return true
+			}
 			if fn.Name() != "Flow" {
 				c.errf("unknown top-level cff function %q: "+
 					"only cff.Flow may be called at the top-level", c.nodePosition(n), fn.Name())
@@ -150,9 +153,10 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 type flow struct {
 	ast.Node
 
-	Ctx     ast.Expr // the expression that is a local variable of type context.Context
-	Metrics ast.Expr // the expression that is a local variable of type tally.Scope
-	Logger  ast.Expr // the expression that is a local variable of type *zap.Logger
+	Ctx            ast.Expr // the expression that is a local variable of type context.Context
+	Metrics        ast.Expr // the expression that is a local variable of type tally.Scope
+	Logger         ast.Expr // the expression that is a local variable of type *zap.Logger
+	MetricsEmitter ast.Expr
 
 	Inputs  []*input
 	Outputs []*output
@@ -196,6 +200,10 @@ func (f *flow) addNoOutput() *noOutput {
 func (f *flow) addInstrument(name ast.Expr) {
 	f.ObservabilityEnabled = true
 	f.Instrument = &instrument{Name: name}
+}
+
+func (f *flow) addMetricsEmitter(expr ast.Expr) {
+	f.MetricsEmitter = expr
 }
 
 // mustSetNoOutputProvider sets the provider for the no-output, panicking if the no-output sentinel type was already
@@ -264,6 +272,8 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			flow.Logger = c.compileLogger(&flow, ce)
 		case "InstrumentFlow":
 			flow.addInstrument(ce.Args[0])
+		case "WithMetricsEmitter":
+			flow.addMetricsEmitter(ce.Args[0])
 		case "Task":
 			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
 				flow.Tasks = append(flow.Tasks, task)
@@ -396,8 +406,12 @@ func (c *compiler) validateTasks(f *flow) {
 
 func (c *compiler) validateInstrument(f *flow) {
 	if f.ObservabilityEnabled {
-		if f.Metrics == nil || f.Logger == nil {
-			c.errf("cff.Instrument requires a tally.Scope and *zap.Logger to be provided: use cff.Metrics and cff.Logger", c.nodePosition(f.Node))
+		if f.Logger == nil {
+			c.errf("cff.Instrument requires a *zap.Logger to be provided: use cff.Logger", c.nodePosition(f.Node))
+		}
+		if f.MetricsEmitter == nil && f.Metrics == nil {
+			c.errf("cff.Instrument requires a *tally.Scope via cff.Metrics or cff.MetricsEmitter to be provided",
+				c.nodePosition(f.Node))
 		}
 	}
 }
@@ -525,7 +539,7 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 	// Check if we return nothing and we don't have an Invoke call.
 	if len(t.Outputs) == 0 && t.invokeType == nil {
 		c.errf("task must return at least one non-error value but currently produces zero."+
-			"Did you intend to use cff.Invoke(true)?", c.nodePosition(expr))
+			" Did you intend to use cff.Invoke(true)?", c.nodePosition(expr))
 	}
 	if len(t.Outputs) > 0 && t.invokeType != nil {
 		c.errf("cff.Invoke cannot be provided on a Task that produces values besides errors",
