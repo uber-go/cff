@@ -41,12 +41,13 @@ type DefaultMetricsEmitter struct {
 }
 
 // Run executes a flow to test instrumentation.
-func (h *DefaultMetricsEmitter) Run(ctx context.Context, req string) (res uint8, err error) {
+func (h *DefaultMetricsEmitter) Run(ctx context.Context, req string, fields ...zap.Field) (res uint8, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
 		cff.Metrics(h.Scope),
 		cff.Logger(h.Logger),
+		cff.WithLogFields(fields...),
 		cff.InstrumentFlow("AtoiRun"),
 
 		cff.Task(
@@ -63,6 +64,23 @@ func (h *DefaultMetricsEmitter) Run(ctx context.Context, req string) (res uint8,
 			},
 			cff.FallbackWith(uint8(0)),
 			cff.Instrument("uint8"),
+		),
+	)
+	return
+}
+
+// ExplicitListOfFields is a flow with an explicit list of log fields.
+func (h *DefaultMetricsEmitter) ExplicitListOfFields(ctx context.Context, req string) (res int, err error) {
+	err = cff.Flow(ctx,
+		cff.Params(req),
+		cff.Results(&res),
+		cff.InstrumentFlow("ExplicitListOfFields"),
+		cff.Metrics(h.Scope),
+		cff.Logger(h.Logger),
+		cff.WithLogFields(zap.String("foo", "bar"), zap.Int("baz", 42)),
+		cff.Task(
+			strconv.Atoi,
+			cff.Instrument("Atoi"),
 		),
 	)
 	return

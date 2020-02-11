@@ -157,6 +157,7 @@ type flow struct {
 	Metrics        ast.Expr // the expression that is a local variable of type tally.Scope
 	Logger         ast.Expr // the expression that is a local variable of type *zap.Logger
 	MetricsEmitter ast.Expr
+	LogFields      *logFields
 
 	Inputs  []*input
 	Outputs []*output
@@ -204,6 +205,20 @@ func (f *flow) addInstrument(name ast.Expr) {
 
 func (f *flow) addMetricsEmitter(expr ast.Expr) {
 	f.MetricsEmitter = expr
+}
+
+type logFields struct {
+	Args     []ast.Expr
+	Ellipsis bool // true if the user did foo(bar...)
+}
+
+func (f *flow) addLogFields(args []ast.Expr, ellipsis bool) {
+	if len(args) > 0 {
+		f.LogFields = &logFields{
+			Args:     args,
+			Ellipsis: ellipsis,
+		}
+	}
 }
 
 // mustSetNoOutputProvider sets the provider for the no-output, panicking if the no-output sentinel type was already
@@ -272,6 +287,8 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			flow.Logger = c.compileLogger(&flow, ce)
 		case "InstrumentFlow":
 			flow.addInstrument(ce.Args[0])
+		case "WithLogFields":
+			flow.addLogFields(ce.Args, ce.Ellipsis.IsValid())
 		case "WithMetricsEmitter":
 			flow.addMetricsEmitter(ce.Args[0])
 		case "Task":
