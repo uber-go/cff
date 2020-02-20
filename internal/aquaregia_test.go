@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"testing"
 
+	"code.uber.internal/devexp/bazel/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/tools/go/packages"
@@ -312,4 +313,10 @@ func TestCodeGenerateFails(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Tests requiring Go SDK in runtime need testutil.RunWithGoSDK due to
+// https://github.com/bazelbuild/rules_go/issues/2370.
+func TestMain(m *testing.M) {
+	testutil.RunWithGoSDK(m)
 }

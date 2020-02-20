@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"code.uber.internal/base/testing/envtest"
+	"code.uber.internal/devexp/bazel/testutil"
 	"go.uber.org/cff"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -173,4 +174,10 @@ func TestMatchCFF2Location(t *testing.T) {
 	out := runtime.FuncForPC(reflect.ValueOf(cff.Flow).Pointer()).Name()
 	currentImport := strings.TrimSuffix(out, ".Flow") // this should match _cff2Pkg.
 	assert.True(t, isCFF2Import(currentImport))
+}
+
+// Tests requiring Go SDK in runtime need testutil.RunWithGoSDK due to
+// https://github.com/bazelbuild/rules_go/issues/2370.
+func TestMain(m *testing.M) {
+	testutil.RunWithGoSDK(m)
 }
