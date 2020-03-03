@@ -56,8 +56,6 @@ type MetricsEmitter interface {
 	TaskInit(task string) TaskEmitter
 	// FlowInit returns a FlowEmitter which could be memoized based on flow name.
 	FlowInit(flow string) FlowEmitter
-	// unexported makes this interface private.
-	unexported()
 }
 
 type flowEmitter struct {
@@ -152,8 +150,6 @@ func (e *emitter) FlowInit(flow string) FlowEmitter {
 
 	return fe
 }
-
-func (e *emitter) unexported() {}
 
 func (e *flowEmitter) FlowDone(d time.Duration) {
 	e.scope.Timer("taskflow.timing").Record(d)

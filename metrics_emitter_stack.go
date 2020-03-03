@@ -30,8 +30,6 @@ func (s metricsEmitterStack) TaskInit(task string) TaskEmitter {
 	}
 }
 
-func (s metricsEmitterStack) unexported() {}
-
 // TaskSuccess is called when a task runs successfully.
 func (s *metricsEmitterStackTask) TaskSuccess() {
 	for _, e := range s.stack {
