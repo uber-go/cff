@@ -135,6 +135,11 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 			if fn.Name() == "DefaultMetricsEmitter" {
 				return true
 			}
+
+			if fn.Name() == "MetricsEmitterStack" {
+				return true
+			}
+
 			if fn.Name() != "Flow" {
 				c.errf("unknown top-level cff function %q: "+
 					"only cff.Flow may be called at the top-level", c.nodePosition(n), fn.Name())
