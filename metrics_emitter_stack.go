@@ -1,6 +1,7 @@
 package cff
 
 import (
+	"context"
 	"time"
 )
 
@@ -31,46 +32,46 @@ func (s metricsEmitterStack) TaskInit(task string) TaskEmitter {
 }
 
 // TaskSuccess is called when a task runs successfully.
-func (s *metricsEmitterStackTask) TaskSuccess() {
+func (s *metricsEmitterStackTask) TaskSuccess(ctx context.Context) {
 	for _, e := range s.stack {
-		e.TaskSuccess()
+		e.TaskSuccess(ctx)
 	}
 }
 
 // TaskError is called when a task fails due to a task error.
-func (s *metricsEmitterStackTask) TaskError() {
+func (s *metricsEmitterStackTask) TaskError(ctx context.Context, err error) {
 	for _, e := range s.stack {
-		e.TaskError()
+		e.TaskError(ctx, err)
 	}
 }
 
 // TaskSkipped is called when a task is skipped due to predicate or an
 // earlier task error.
-func (s *metricsEmitterStackTask) TaskSkipped() {
+func (s *metricsEmitterStackTask) TaskSkipped(ctx context.Context, err error) {
 	for _, e := range s.stack {
-		e.TaskSkipped()
+		e.TaskSkipped(ctx, err)
 	}
 }
 
 // TaskPanic is called when a task panics.
-func (s *metricsEmitterStackTask) TaskPanic() {
+func (s *metricsEmitterStackTask) TaskPanic(ctx context.Context, pv interface{}) {
 	for _, e := range s.stack {
-		e.TaskPanic()
+		e.TaskPanic(ctx, pv)
 	}
 }
 
 // TaskRecovered is called when a task errors but it was recovered by a
 // RecoverWith annotation.
-func (s *metricsEmitterStackTask) TaskRecovered() {
+func (s *metricsEmitterStackTask) TaskRecovered(ctx context.Context, pv interface{}) {
 	for _, e := range s.stack {
-		e.TaskRecovered()
+		e.TaskRecovered(ctx, pv)
 	}
 }
 
 // TaskDone is called when a task finishes.
-func (s *metricsEmitterStackTask) TaskDone(d time.Duration) {
+func (s *metricsEmitterStackTask) TaskDone(ctx context.Context, d time.Duration) {
 	for _, e := range s.stack {
-		e.TaskDone(d)
+		e.TaskDone(ctx, d)
 	}
 }
 
@@ -93,42 +94,42 @@ func (s metricsEmitterStack) FlowInit(flow string) FlowEmitter {
 }
 
 // FlowSuccess is called when a flow runs successfully.
-func (s *metricsEmitterStackFlow) FlowSuccess() {
+func (s *metricsEmitterStackFlow) FlowSuccess(ctx context.Context) {
 	for _, e := range s.stack {
-		e.FlowSuccess()
+		e.FlowSuccess(ctx)
 	}
 }
 
 // FlowError is called when a flow fails due to a task error.
-func (s *metricsEmitterStackFlow) FlowError() {
+func (s *metricsEmitterStackFlow) FlowError(ctx context.Context, err error) {
 	for _, e := range s.stack {
-		e.FlowError()
+		e.FlowError(ctx, err)
 	}
 }
 
 // FlowSkipped is called when a flow fails due to a task error. Currently,
 // only adding to be backwards compatible. There is discussion in ERD to
 // remove this metric.
-func (s *metricsEmitterStackFlow) FlowSkipped() {
+func (s *metricsEmitterStackFlow) FlowSkipped(ctx context.Context, err error) {
 	for _, e := range s.stack {
-		e.FlowSkipped()
+		e.FlowSkipped(ctx, err)
 	}
 }
 
 // FlowDone is called when a flow finishes.
-func (s *metricsEmitterStackFlow) FlowDone(d time.Duration) {
+func (s *metricsEmitterStackFlow) FlowDone(ctx context.Context, d time.Duration) {
 	for _, e := range s.stack {
-		e.FlowDone(d)
+		e.FlowDone(ctx, d)
 	}
 }
 
 // FlowFailedTask is called when a flow fails due to a task error and
 // returns a shallow copy of current FlowEmitter with updated tags.
-func (s *metricsEmitterStackFlow) FlowFailedTask(task string) FlowEmitter {
+func (s *metricsEmitterStackFlow) FlowFailedTask(ctx context.Context, task string, err error) FlowEmitter {
 	emitters := make([]FlowEmitter, 0, len(s.stack))
 
 	for _, e := range s.stack {
-		emitters = append(emitters, e.FlowFailedTask(task))
+		emitters = append(emitters, e.FlowFailedTask(ctx, task, err))
 	}
 
 	return &metricsEmitterStackFlow{

@@ -1,6 +1,8 @@
 package cff_test
 
 import (
+	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -48,50 +50,57 @@ func TestMetricsEmitterStack(t *testing.T) {
 		})
 
 		t.Run("FlowSuccess", func(t *testing.T) {
+			ctx := context.Background()
 			m := mocks(t)
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().FlowInit("foo").Return(m.flow1)
 			m.emitter2.EXPECT().FlowInit("foo").Return(m.flow2)
 
-			m.flow1.EXPECT().FlowSuccess()
-			m.flow2.EXPECT().FlowSuccess()
-			m.stack.FlowInit("foo").FlowSuccess()
+			m.flow1.EXPECT().FlowSuccess(ctx)
+			m.flow2.EXPECT().FlowSuccess(ctx)
+			m.stack.FlowInit("foo").FlowSuccess(ctx)
 		})
 		t.Run("FlowError", func(t *testing.T) {
+			ctx := context.Background()
 			m := mocks(t)
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().FlowInit("foo").Return(m.flow1)
 			m.emitter2.EXPECT().FlowInit("foo").Return(m.flow2)
 
-			m.flow1.EXPECT().FlowError()
-			m.flow2.EXPECT().FlowError()
-			m.stack.FlowInit("foo").FlowError()
+			err := errors.New("foobar")
+			m.flow1.EXPECT().FlowError(ctx, err)
+			m.flow2.EXPECT().FlowError(ctx, err)
+			m.stack.FlowInit("foo").FlowError(ctx, err)
 		})
 		t.Run("FlowSkipped", func(t *testing.T) {
+			ctx := context.Background()
 			m := mocks(t)
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().FlowInit("foo").Return(m.flow1)
 			m.emitter2.EXPECT().FlowInit("foo").Return(m.flow2)
 
-			m.flow1.EXPECT().FlowSkipped()
-			m.flow2.EXPECT().FlowSkipped()
-			m.stack.FlowInit("foo").FlowSkipped()
+			err := errors.New("foobar")
+			m.flow1.EXPECT().FlowSkipped(ctx, err)
+			m.flow2.EXPECT().FlowSkipped(ctx, err)
+			m.stack.FlowInit("foo").FlowSkipped(ctx, err)
 		})
 		t.Run("FlowDone", func(t *testing.T) {
+			ctx := context.Background()
 			m := mocks(t)
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().FlowInit("foo").Return(m.flow1)
 			m.emitter2.EXPECT().FlowInit("foo").Return(m.flow2)
 
-			m.flow1.EXPECT().FlowDone(time.Duration(1))
-			m.flow2.EXPECT().FlowDone(time.Duration(1))
-			m.stack.FlowInit("foo").FlowDone(time.Duration(1))
+			m.flow1.EXPECT().FlowDone(ctx, time.Duration(1))
+			m.flow2.EXPECT().FlowDone(ctx, time.Duration(1))
+			m.stack.FlowInit("foo").FlowDone(ctx, time.Duration(1))
 		})
 		t.Run("FlowFailedTask", func(t *testing.T) {
+			ctx := context.Background()
 			m := mocks(t)
 			defer m.ctrl.Finish()
 
@@ -101,17 +110,19 @@ func TestMetricsEmitterStack(t *testing.T) {
 			newFlow1 := cff.NewMockFlowEmitter(m.ctrl)
 			newFlow2 := cff.NewMockFlowEmitter(m.ctrl)
 
-			m.flow1.EXPECT().FlowFailedTask("foobar").Return(newFlow1)
-			m.flow2.EXPECT().FlowFailedTask("foobar").Return(newFlow2)
+			err := errors.New("foobar")
 
-			newEmitter := m.stack.FlowInit("foo").FlowFailedTask("foobar")
+			m.flow1.EXPECT().FlowFailedTask(ctx, "foobar", err).Return(newFlow1)
+			m.flow2.EXPECT().FlowFailedTask(ctx, "foobar", err).Return(newFlow2)
+
+			newEmitter := m.stack.FlowInit("foo").FlowFailedTask(ctx, "foobar", err)
 
 			// Asserts that the subsequent requests should go to the return-value from FlowFailedTask, not m.flow1, m.flow2
 
-			newFlow1.EXPECT().FlowSuccess()
-			newFlow2.EXPECT().FlowSuccess()
+			newFlow1.EXPECT().FlowSuccess(ctx)
+			newFlow2.EXPECT().FlowSuccess(ctx)
 
-			newEmitter.FlowSuccess()
+			newEmitter.FlowSuccess(ctx)
 		})
 	})
 
@@ -126,70 +137,84 @@ func TestMetricsEmitterStack(t *testing.T) {
 		})
 
 		t.Run("TaskSuccess", func(t *testing.T) {
+			ctx := context.Background()
 			m := mocks(t)
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().TaskInit("foo").Return(m.task1)
 			m.emitter2.EXPECT().TaskInit("foo").Return(m.task2)
 
-			m.task1.EXPECT().TaskSuccess()
-			m.task2.EXPECT().TaskSuccess()
-			m.stack.TaskInit("foo").TaskSuccess()
+			m.task1.EXPECT().TaskSuccess(ctx)
+			m.task2.EXPECT().TaskSuccess(ctx)
+			m.stack.TaskInit("foo").TaskSuccess(ctx)
 		})
 		t.Run("TaskError", func(t *testing.T) {
+			ctx := context.Background()
 			m := mocks(t)
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().TaskInit("foo").Return(m.task1)
 			m.emitter2.EXPECT().TaskInit("foo").Return(m.task2)
 
-			m.task1.EXPECT().TaskError()
-			m.task2.EXPECT().TaskError()
-			m.stack.TaskInit("foo").TaskError()
+			err := errors.New("foobar")
+
+			m.task1.EXPECT().TaskError(ctx, err)
+			m.task2.EXPECT().TaskError(ctx, err)
+			m.stack.TaskInit("foo").TaskError(ctx, err)
 		})
 		t.Run("TaskSkipped", func(t *testing.T) {
+			ctx := context.Background()
 			m := mocks(t)
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().TaskInit("foo").Return(m.task1)
 			m.emitter2.EXPECT().TaskInit("foo").Return(m.task2)
 
-			m.task1.EXPECT().TaskSkipped()
-			m.task2.EXPECT().TaskSkipped()
-			m.stack.TaskInit("foo").TaskSkipped()
+			err := errors.New("foobar")
+
+			m.task1.EXPECT().TaskSkipped(ctx, err)
+			m.task2.EXPECT().TaskSkipped(ctx, err)
+			m.stack.TaskInit("foo").TaskSkipped(ctx, err)
 		})
 		t.Run("TaskPanic", func(t *testing.T) {
+			ctx := context.Background()
 			m := mocks(t)
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().TaskInit("foo").Return(m.task1)
 			m.emitter2.EXPECT().TaskInit("foo").Return(m.task2)
 
-			m.task1.EXPECT().TaskPanic()
-			m.task2.EXPECT().TaskPanic()
-			m.stack.TaskInit("foo").TaskPanic()
+			pv := int(1)
+
+			m.task1.EXPECT().TaskPanic(ctx, pv)
+			m.task2.EXPECT().TaskPanic(ctx, pv)
+			m.stack.TaskInit("foo").TaskPanic(ctx, pv)
 		})
 		t.Run("TaskRecovered", func(t *testing.T) {
+			ctx := context.Background()
 			m := mocks(t)
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().TaskInit("foo").Return(m.task1)
 			m.emitter2.EXPECT().TaskInit("foo").Return(m.task2)
 
-			m.task1.EXPECT().TaskRecovered()
-			m.task2.EXPECT().TaskRecovered()
-			m.stack.TaskInit("foo").TaskRecovered()
+			pv := int(1)
+
+			m.task1.EXPECT().TaskRecovered(ctx, pv)
+			m.task2.EXPECT().TaskRecovered(ctx, pv)
+			m.stack.TaskInit("foo").TaskRecovered(ctx, pv)
 		})
 		t.Run("TaskDone", func(t *testing.T) {
+			ctx := context.Background()
 			m := mocks(t)
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().TaskInit("foo").Return(m.task1)
 			m.emitter2.EXPECT().TaskInit("foo").Return(m.task2)
 
-			m.task1.EXPECT().TaskDone(time.Duration(1))
-			m.task2.EXPECT().TaskDone(time.Duration(1))
-			m.stack.TaskInit("foo").TaskDone(time.Duration(1))
+			m.task1.EXPECT().TaskDone(ctx, time.Duration(1))
+			m.task2.EXPECT().TaskDone(ctx, time.Duration(1))
+			m.stack.TaskInit("foo").TaskDone(ctx, time.Duration(1))
 		})
 	})
 }

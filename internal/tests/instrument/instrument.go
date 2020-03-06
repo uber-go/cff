@@ -311,8 +311,8 @@ func (h *CustomMetricsEmitter) T3795761(ctx context.Context, shouldRun bool,
 }
 
 // FlowAlwaysPanics is a flow that tests Metrics Emitter
-func (h *CustomMetricsEmitter) FlowAlwaysPanics() error {
-	return cff.Flow(context.Background(),
+func (h *CustomMetricsEmitter) FlowAlwaysPanics(ctx context.Context) error {
+	return cff.Flow(ctx,
 		cff.Logger(h.Logger),
 		cff.WithMetricsEmitter(h.MetricsEmitter),
 		cff.Task(func() {

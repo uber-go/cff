@@ -1,6 +1,7 @@
 package cff
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -13,18 +14,18 @@ import (
 // WARNING: This interface is not stable and may change in the future.
 type FlowEmitter interface {
 	// FlowSuccess is called when a flow runs successfully.
-	FlowSuccess()
+	FlowSuccess(context.Context)
 	// FlowError is called when a flow fails due to a task error.
-	FlowError()
+	FlowError(context.Context, error)
 	// FlowSkipped is called when a flow fails due to a task error. Currently,
 	// only adding to be backwards compatible. There is discussion in ERD to
 	// remove this metric.
-	FlowSkipped()
+	FlowSkipped(context.Context, error)
 	// FlowDone is called when a flow finishes.
-	FlowDone(time.Duration)
+	FlowDone(context.Context, time.Duration)
 	// FlowFailedTask is called when a flow fails due to a task error and
 	// returns a shallow copy of current FlowEmitter with updated tags.
-	FlowFailedTask(task string) FlowEmitter
+	FlowFailedTask(ctx context.Context, task string, err error) FlowEmitter
 }
 
 // TaskEmitter receives events for when task events occur, for the purpose of
@@ -33,19 +34,19 @@ type FlowEmitter interface {
 // WARNING: This interface is not stable and may change in the future.
 type TaskEmitter interface {
 	// TaskSuccess is called when a task runs successfully.
-	TaskSuccess()
+	TaskSuccess(context.Context)
 	// TaskError is called when a task fails due to a task error.
-	TaskError()
+	TaskError(context.Context, error)
 	// TaskSkipped is called when a task is skipped due to predicate or an
 	// earlier task error.
-	TaskSkipped()
+	TaskSkipped(context.Context, error)
 	// TaskPanic is called when a task panics.
-	TaskPanic()
+	TaskPanic(context.Context, interface{})
 	// TaskRecovered is called when a task errors but it was recovered by a
 	// RecoverWith annotation.
-	TaskRecovered()
+	TaskRecovered(context.Context, interface{})
 	// TaskDone is called when a task finishes.
-	TaskDone(time.Duration)
+	TaskDone(context.Context, time.Duration)
 }
 
 // MetricsEmitter initializes Task and Flow metrics emitters.
@@ -75,49 +76,53 @@ type emitter struct {
 
 // Task Emitter implementation.
 //
-func (e *taskEmitter) TaskError() {
+func (e *taskEmitter) TaskError(context.Context, error) {
 	e.scope.Counter("task.error").Inc(1)
 }
 
-func (e *taskEmitter) TaskPanic() {
+func (e *taskEmitter) TaskPanic(context.Context, interface{}) {
 	e.scope.Counter("task.panic").Inc(1)
 }
 
-func (e *taskEmitter) TaskRecovered() {
+func (e *taskEmitter) TaskRecovered(context.Context, interface{}) {
 	e.scope.Counter("task.recovered").Inc(1)
 }
 
-func (e *taskEmitter) TaskSkipped() {
+func (e *taskEmitter) TaskSkipped(context.Context, error) {
 	e.scope.Counter("task.skipped").Inc(1)
 }
 
-func (e *taskEmitter) TaskSuccess() {
+func (e *taskEmitter) TaskSuccess(context.Context) {
 	e.scope.Counter("task.success").Inc(1)
 }
 
-func (e *taskEmitter) TaskDone(d time.Duration) {
+func (e *taskEmitter) TaskDone(_ context.Context, d time.Duration) {
 	e.scope.Timer("task.timing").Record(d)
 }
 
 // FlowEmitter implementation.
 //
-func (e *flowEmitter) FlowError() {
+func (e *flowEmitter) FlowError(context.Context, error) {
 	e.scope.Counter("taskflow.error").Inc(1)
 }
 
-func (e *flowEmitter) FlowSkipped() {
+func (e *flowEmitter) FlowSkipped(context.Context, error) {
 	e.scope.Counter("taskflow.skipped").Inc(1)
 }
 
-func (e *flowEmitter) FlowSuccess() {
+func (e *flowEmitter) FlowSuccess(context.Context) {
 	e.scope.Counter("taskflow.success").Inc(1)
 }
 
-func (e *flowEmitter) FlowFailedTask(task string) FlowEmitter {
+func (e *flowEmitter) FlowFailedTask(_ context.Context, task string, _ error) FlowEmitter {
 	return &flowEmitter{
 		scope: e.scope.Tagged(map[string]string{
 			"failedtask": task,
 		})}
+}
+
+func (e *flowEmitter) FlowDone(_ context.Context, d time.Duration) {
+	e.scope.Timer("taskflow.timing").Record(d)
 }
 
 // MetricsEmitter implementation.
@@ -149,10 +154,6 @@ func (e *emitter) FlowInit(flow string) FlowEmitter {
 	e.flows.LoadOrStore(flow, fe)
 
 	return fe
-}
-
-func (e *flowEmitter) FlowDone(d time.Duration) {
-	e.scope.Timer("taskflow.timing").Record(d)
 }
 
 // DefaultMetricsEmitter sets up default implementation of metrics used in the

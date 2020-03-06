@@ -36,7 +36,7 @@
         var _ = &flowEmitterReplace
         flowEmitter := metricsEmitter.FlowInit({{ expr $flow.Instrument.Name }})
         startTime := {{ import "time" }}.Now()
-        defer func() { flowEmitter.FlowDone(time.Since(startTime)) }()
+        defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
     {{- end }}
     {{- if $flow.ObservabilityEnabled }}
         type task struct {
@@ -64,7 +64,7 @@
         for _, sched := range tasks {
         for _, task := range sched {
         if task.name == "" || task.ran { continue }
-        task.taskEmitter.TaskSkipped()
+        task.taskEmitter.TaskSkipped(ctx, err)
         if err == nil {
         logger.Debug("task skipped", zap.String("task", task.name))
         } else {
@@ -74,7 +74,7 @@
         }
         {{- if $flow.Instrument }}
             if err != nil {
-            flowEmitter.FlowSkipped()
+            flowEmitter.FlowSkipped(ctx, err)
             logger.Debug("taskflow skipped", zap.String("flow", {{ expr $flow.Instrument.Name }}), zap.Error(err))
             }
         {{ end }}
@@ -114,15 +114,15 @@
             {{ if .Instrument -}}
             taskEmitter := tasks[{{ $schedIdx }}][{{ $taskIdx }}].taskEmitter
             startTime := {{ import "time" }}.Now()
-            defer func() { taskEmitter.TaskDone(time.Since(startTime)) }()
+            defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
             {{- end }}
             defer func() {
             recovered := recover()
             if recovered != nil {
             {{ if .FallbackWith }}
                 {{ if .Instrument -}}
-                    taskEmitter.TaskPanic()
-                    taskEmitter.TaskRecovered()
+                    taskEmitter.TaskPanic(ctx, recovered)
+                    taskEmitter.TaskRecovered(ctx, recovered)
                     recoveredErr, ok := recovered.(error)
                     if ok {
                     logger.Error("task panic recovered",
@@ -144,7 +144,7 @@
                 {{ $once }}.Do(func() {
                 recoveredErr := {{ $fmt }}.Errorf("task panic: %v", recovered)
                 {{ if .Instrument -}}
-                    taskEmitter.TaskPanic()
+                    taskEmitter.TaskPanic(ctx, recovered)
                     logger.Error("task panic",
                     zap.String("task", {{ expr .Instrument.Name }}),
                     zap.Stack("stack"),
@@ -168,8 +168,8 @@
                 if {{ $serr }} != nil {
                 {{ if .FallbackWith -}}
                     {{ if .Instrument -}}
-                        taskEmitter.TaskError()
-                        taskEmitter.TaskRecovered()
+                        taskEmitter.TaskError(ctx, {{$serr}})
+                        taskEmitter.TaskRecovered(ctx, {{$serr}})
                         logger.Error("task error recovered",
                         zap.String("task", {{ expr .Instrument.Name }}),
                         zap.Error({{ $serr }}),
@@ -183,22 +183,22 @@
                     {{ if .Instrument -}}
                         {{ if $flow.Instrument -}}
                             flowEmitterReplace.Do(func() {
-                                flowEmitter = flowEmitter.FlowFailedTask({{ expr .Instrument.Name }})
+                                flowEmitter = flowEmitter.FlowFailedTask(ctx, {{ expr .Instrument.Name }}, {{$serr}})
                             })
                         {{- end }}
-                        taskEmitter.TaskError()
+                        taskEmitter.TaskError(ctx, {{$serr}})
                     {{- end }}
                     {{ $once }}.Do(func() {
                     err = {{ $serr }}
                     })
                 {{- end }}
                 } {{ if .Instrument }} else {
-                taskEmitter.TaskSuccess()
+                taskEmitter.TaskSuccess(ctx)
                 logger.Debug("task succeeded", zap.String("task", {{ expr .Instrument.Name }}))
                 } {{ end }}
             {{ else }} {{/* cannot return error */}}
             {{ if .Instrument -}}
-                taskEmitter.TaskSuccess()
+                taskEmitter.TaskSuccess(ctx)
                 logger.Debug("task succeeded", zap.String("task", {{ expr .Instrument.Name }}))
             {{- end }}
             {{ end }}
@@ -213,7 +213,7 @@
         {{ end -}}
         if err != nil {
         {{ if $flow.Instrument -}}
-                flowEmitter.FlowError()
+                flowEmitter.FlowError(ctx, err)
         {{- end }}
         return err
         }
@@ -235,9 +235,9 @@
 
     {{ if $flow.Instrument -}}
         if err != nil {
-            flowEmitter.FlowError()
+            flowEmitter.FlowError(ctx, err)
         } else {
-                flowEmitter.FlowSuccess()
+                flowEmitter.FlowSuccess(ctx)
             logger.Debug("taskflow succeeded", zap.String("flow", {{ expr $flow.Instrument.Name }}))
         }
     {{- end }}
