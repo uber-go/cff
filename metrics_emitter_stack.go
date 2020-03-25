@@ -19,14 +19,14 @@ type metricsEmitterStackTask struct {
 }
 
 // TaskInit returns a TaskEmitter which could be memoized based on task name.
-func (s metricsEmitterStack) TaskInit(task string) TaskEmitter {
+func (s metricsEmitterStack) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmitter {
 	emitters := make([]TaskEmitter, 0, len(s))
 	for _, e := range s {
-		emitters = append(emitters, e.TaskInit(task))
+		emitters = append(emitters, e.TaskInit(taskInfo, flowInfo))
 	}
 
 	return &metricsEmitterStackTask{
-		task:  task,
+		task:  taskInfo.Task,
 		stack: emitters,
 	}
 }
@@ -81,14 +81,14 @@ type metricsEmitterStackFlow struct {
 }
 
 // FlowInit returns a FlowEmitter which could be memoized based on flow name.
-func (s metricsEmitterStack) FlowInit(flow string) FlowEmitter {
+func (s metricsEmitterStack) FlowInit(info *FlowInfo) FlowEmitter {
 	emitters := make([]FlowEmitter, 0, len(s))
 	for _, e := range s {
-		emitters = append(emitters, e.FlowInit(flow))
+		emitters = append(emitters, e.FlowInit(info))
 	}
 
 	return &metricsEmitterStackFlow{
-		flow:  flow,
+		flow:  info.Flow,
 		stack: emitters,
 	}
 }

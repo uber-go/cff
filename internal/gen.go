@@ -139,6 +139,7 @@ func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports ma
 		"type":     g.typePrinter(file, addImports),
 		"typeHash": g.printTypeHash,
 		"expr":     g.printExpr,
+		"quote":    strconv.Quote,
 		"import": func(importPath string) string {
 			if names := file.Imports[importPath]; len(names) > 0 {
 				// already imported

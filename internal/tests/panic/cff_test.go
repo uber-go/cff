@@ -34,7 +34,7 @@ func TestCatchesPanicSerial(t *testing.T) {
 	require.Error(t, err)
 	snapshot := scope.Snapshot()
 	counters := snapshot.Counters()
-	assert.Equal(t, int64(1), counters["task.panic+"+tally.KeyForStringMap(map[string]string{"task": "T2"})].Value())
+	assert.Equal(t, int64(1), counters["task.panic+"+tally.KeyForStringMap(map[string]string{"flow": "FlowPanicsSerial", "task": "T2"})].Value())
 	assert.Equal(t, int64(1), counters["taskflow.error+"+tally.KeyForStringMap(map[string]string{"flow": "FlowPanicsSerial"})].Value())
 	logs := observedLogs.All()
 	assert.Equal(t, "task panic", logs[0].Message)

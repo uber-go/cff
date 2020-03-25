@@ -35,9 +35,9 @@ func TestInstrumentME(t *testing.T) {
 	taskEmitter.EXPECT().TaskSuccess(ctx).Times(2)
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
 
-	metricsEmitter.EXPECT().FlowInit("AtoiRun").Return(flowEmitter)
+	metricsEmitter.EXPECT().FlowInit(&cff.FlowInfo{"AtoiRun", "go.uber.org/cff/internal/tests/instrument/instrument.go", 191, 8}).Return(flowEmitter)
 	// 2 in the tasks for loop inside defer() and twice after.
-	metricsEmitter.EXPECT().TaskInit(gomock.Any()).Times(2).Return(taskEmitter)
+	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	// Logging
@@ -77,8 +77,8 @@ func TestInstrumentErrorME(t *testing.T) {
 	taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
 
-	metricsEmitter.EXPECT().FlowInit("AtoiRun").Return(flowEmitter)
-	metricsEmitter.EXPECT().TaskInit(gomock.Any()).Times(2).Return(taskEmitter)
+	metricsEmitter.EXPECT().FlowInit(gomock.Any()).Return(flowEmitter)
+	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
@@ -105,7 +105,7 @@ func TestInstrumentTaskButNotFlowME(t *testing.T) {
 
 	taskEmitter.EXPECT().TaskSuccess(ctx)
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
-	metricsEmitter.EXPECT().TaskInit(gomock.Any()).Return(taskEmitter)
+	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Return(taskEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
@@ -144,8 +144,8 @@ func TestInstrumentCancelledContextME(t *testing.T) {
 
 	taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any()).Times(2)
 
-	metricsEmitter.EXPECT().FlowInit("AtoiRun").Return(flowEmitter)
-	metricsEmitter.EXPECT().TaskInit(gomock.Any()).AnyTimes().Return(taskEmitter)
+	metricsEmitter.EXPECT().FlowInit(gomock.Any()).Return(flowEmitter)
+	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
 
 	g := &instrument.CustomMetricsEmitter{
 		Scope:          scope,
@@ -179,8 +179,8 @@ func TestInstrumentRecoverME(t *testing.T) {
 	taskEmitter.EXPECT().TaskRecovered(ctx, gomock.Any())
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
 
-	metricsEmitter.EXPECT().FlowInit("AtoiRun").Return(flowEmitter)
-	metricsEmitter.EXPECT().TaskInit(gomock.Any()).Times(2).Return(taskEmitter)
+	metricsEmitter.EXPECT().FlowInit(&cff.FlowInfo{"AtoiRun", "go.uber.org/cff/internal/tests/instrument/instrument.go", 191, 8}).Return(flowEmitter)
+	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
 
 	g := &instrument.CustomMetricsEmitter{
 		Scope:          scope,
@@ -205,7 +205,6 @@ func TestT3630161ME(t *testing.T) {
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
 
-	// flowsucc := flowEmitter.EXPECT().FlowSuccess()
 	flowEmitter.EXPECT().FlowSuccess(ctx)
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
 
@@ -215,8 +214,8 @@ func TestT3630161ME(t *testing.T) {
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
 	taskEmitter.EXPECT().TaskSuccess(ctx)
 
-	metricsEmitter.EXPECT().FlowInit("T3630161").Return(flowEmitter)
-	metricsEmitter.EXPECT().TaskInit(gomock.Any()).Times(2).Return(taskEmitter)
+	metricsEmitter.EXPECT().FlowInit(gomock.Any()).Return(flowEmitter)
+	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
@@ -258,7 +257,7 @@ func TestT3795761ME(t *testing.T) {
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).AnyTimes()
 
 	metricsEmitter.EXPECT().FlowInit(gomock.Any()).AnyTimes().Return(flowEmitter)
-	metricsEmitter.EXPECT().TaskInit(gomock.Any()).AnyTimes().Return(taskEmitter)
+	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
@@ -299,7 +298,19 @@ func TestPanic(t *testing.T) {
 
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).After(tpanic)
 
-	metricsEmitter.EXPECT().TaskInit("Atoi").Return(taskEmitter)
+	metricsEmitter.EXPECT().TaskInit(
+		&cff.TaskInfo{
+			Task:   "Atoi",
+			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
+			Line:   318,
+			Column: 12,
+		},
+		&cff.FlowInfo{
+			Flow:   "",
+			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
+			Line:   315,
+			Column: 9,
+		}).Return(taskEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)

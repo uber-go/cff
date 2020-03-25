@@ -49,8 +49,8 @@ type Archive struct {
 	// rules_go conventions.
 	//
 	// See https://github.com/bazelbuild/rules_go/blob/f7a8cb6b9158006e5dfc91074f9636820a446921/go/core.rst#go_library.
-	ImportMap   string
-	File        string
+	ImportMap string
+	File      string
 }
 
 // LoadParams is the arguments needed for loading the package for the CFF
@@ -80,7 +80,7 @@ func PackagesArchive(p LoadParams) ([]*Package, error) {
 	}
 
 	// Build an importer using the imports map built by reading dependency
-	// archives, and use it to build the *types.Package and *types.Info for the
+	// archives, and use it to build the *types.Package and *types.PosInfo for the
 	// source files.
 	imp, err := newImporter(p.Fset, p.Archives, p.StdlibRoot)
 	if err != nil {

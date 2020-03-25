@@ -34,7 +34,14 @@
     {{ if $flow.Instrument }}
         var flowEmitterReplace sync.Once
         var _ = &flowEmitterReplace
-        flowEmitter := metricsEmitter.FlowInit({{ expr $flow.Instrument.Name }})
+        flowEmitter := metricsEmitter.FlowInit(
+            &{{ $cff }}.FlowInfo{
+                Flow: {{ expr $flow.Instrument.Name }},
+                File: {{ quote $flow.PosInfo.File}},
+                Line: {{ $flow.PosInfo.Line }},
+                Column: {{ $flow.PosInfo.Column}},
+            },
+        )
         startTime := {{ import "time" }}.Now()
         defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
     {{- end }}
@@ -50,9 +57,26 @@
             {
             {{ range . -}}
                 {
-                {{ with .Instrument -}}
-                    name: {{ expr .Name }},
-                    taskEmitter: metricsEmitter.TaskInit({{ expr .Name }}),
+                {{ if .Instrument -}}
+                    name: {{ expr .Instrument.Name }},
+                    taskEmitter: metricsEmitter.TaskInit(
+                        &{{ $cff }}.TaskInfo{
+                            Task: {{ expr .Instrument.Name }},
+                            File: {{ quote .PosInfo.File}},
+                            Line: {{ .PosInfo.Line }},
+                            Column: {{ .PosInfo.Column}},
+                    },
+                    &{{ $cff }}.FlowInfo{
+                    {{- if $flow.Instrument }}
+                    Flow: {{ expr $flow.Instrument.Name }},
+                    {{ else }}
+                    Flow: "",
+                    {{- end }}
+                    File: {{ quote $flow.PosInfo.File}},
+                    Line: {{ $flow.PosInfo.Line }},
+                    Column: {{ $flow.PosInfo.Column}},
+                    },
+                    ),
                 {{- end }}
                 ran: false,
                 },

@@ -49,14 +49,28 @@ type TaskEmitter interface {
 	TaskDone(context.Context, time.Duration)
 }
 
+// FlowInfo provides information to uniquely identify a flow.
+type FlowInfo struct {
+	Flow         string
+	File         string
+	Line, Column int
+}
+
+// TaskInfo provides information to uniquely identify a task.
+type TaskInfo struct {
+	Task         string
+	File         string
+	Line, Column int
+}
+
 // MetricsEmitter initializes Task and Flow metrics emitters.
 //
 // WARNING: This interface is not stable and may change in the future.
 type MetricsEmitter interface {
 	// TaskInit returns a TaskEmitter which could be memoized based on task name.
-	TaskInit(task string) TaskEmitter
+	TaskInit(*TaskInfo, *FlowInfo) TaskEmitter
 	// FlowInit returns a FlowEmitter which could be memoized based on flow name.
-	FlowInit(flow string) FlowEmitter
+	FlowInit(*FlowInfo) FlowEmitter
 }
 
 type flowEmitter struct {
@@ -125,35 +139,67 @@ func (e *flowEmitter) FlowDone(_ context.Context, d time.Duration) {
 	e.scope.Timer("taskflow.timing").Record(d)
 }
 
+// cacheKey uniquely identifies a task or a flow based on the position information.
+type cacheKey struct {
+	TaskName             string // name of the task
+	TaskFile             string // file where task is defined
+	TaskLine, TaskColumn int    // line and column in the file where the task is defined
+	FlowName             string // name of the flow
+	FlowFile             string // file where flow is defined
+	FlowLine, FlowColumn int    // line and column in the file where the flow is defined
+}
+
 // MetricsEmitter implementation.
 //
-// TODO(T5108563): Improve lookup if scope tags are different in case there is
-// a collision between task instrumentation names with those tasks being in
-// different flows.
-func (e *emitter) TaskInit(task string) TaskEmitter {
-	if v, ok := e.tasks.Load(task); ok {
+func (e *emitter) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmitter {
+	cacheKey := cacheKey{
+		TaskName:   taskInfo.Task,
+		TaskFile:   taskInfo.File,
+		TaskLine:   taskInfo.Line,
+		TaskColumn: taskInfo.Column,
+		FlowName:   flowInfo.Flow,
+		FlowFile:   flowInfo.File,
+		FlowLine:   flowInfo.Line,
+		FlowColumn: flowInfo.Column,
+	}
+	// Note: this lookup is an optimization to avoid the expensive Tagged call.
+	if v, ok := e.tasks.Load(cacheKey); ok {
 		return v.(TaskEmitter)
 	}
-	scope := e.scope.Tagged(map[string]string{"task": task})
+	tags := map[string]string{
+		"task": taskInfo.Task,
+	}
+	if flowInfo.Flow != "" {
+		tags["flow"] = flowInfo.Flow
+	}
+
+	scope := e.scope.Tagged(tags)
 	te := &taskEmitter{
 		scope: scope,
 	}
-	e.tasks.LoadOrStore(task, te)
+	v, _ := e.tasks.LoadOrStore(cacheKey, te)
 
-	return te
+	return v.(TaskEmitter)
 }
 
-func (e *emitter) FlowInit(flow string) FlowEmitter {
-	if v, ok := e.tasks.Load(flow); ok {
+func (e *emitter) FlowInit(info *FlowInfo) FlowEmitter {
+	cacheKey := cacheKey{
+		FlowName:   info.Flow,
+		FlowFile:   info.File,
+		FlowLine:   info.Line,
+		FlowColumn: info.Column,
+	}
+	// Note: this lookup is an optimization to avoid the expensive Tagged call.
+	if v, ok := e.flows.Load(cacheKey); ok {
 		return v.(FlowEmitter)
 	}
-	scope := e.scope.Tagged(map[string]string{"flow": flow})
+	scope := e.scope.Tagged(map[string]string{"flow": info.Flow})
 	fe := &flowEmitter{
 		scope: scope,
 	}
-	e.flows.LoadOrStore(flow, fe)
+	v, _ := e.flows.LoadOrStore(cacheKey, fe)
 
-	return fe
+	return v.(FlowEmitter)
 }
 
 // DefaultMetricsEmitter sets up default implementation of metrics used in the

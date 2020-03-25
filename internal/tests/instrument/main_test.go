@@ -30,12 +30,12 @@ func TestInstrument(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.success+task=Atoi"].Value())
-	assert.Equal(t, int64(1), counters["task.success+task=uint8"].Value())
+	assert.Equal(t, int64(1), counters["task.success+flow=AtoiRun,task=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["task.success+flow=AtoiRun,task=uint8"].Value())
 	assert.Equal(t, int64(1), counters["taskflow.success+flow=AtoiRun"].Value())
 
 	timers := metrics.Timers()
-	assert.NotNil(t, timers["task.timing+task=Atoi"])
+	assert.NotNil(t, timers["task.timing+flow=AtoiRun,task=Atoi"])
 	assert.NotNil(t, timers["taskflow.timing+flow=AtoiRun"])
 
 	// logs
@@ -119,7 +119,7 @@ func TestInstrumentError(t *testing.T) {
 	for k, v := range counters {
 		t.Logf("got counter with key %q val %v", k, v.Value())
 	}
-	assert.Equal(t, int64(1), counters["task.error+task=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["task.error+flow=AtoiRun,task=Atoi"].Value())
 	assert.Equal(t, int64(1), counters["taskflow.error+failedtask=Atoi,flow=AtoiRun"].Value())
 
 	expected := []struct {
@@ -173,8 +173,8 @@ func TestInstrumentCancelledContext(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.skipped+task=Atoi"].Value())
-	assert.Equal(t, int64(1), counters["task.skipped+task=uint8"].Value())
+	assert.Equal(t, int64(1), counters["task.skipped+flow=AtoiRun,task=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["task.skipped+flow=AtoiRun,task=uint8"].Value())
 	assert.Equal(t, int64(1), counters["taskflow.skipped+flow=AtoiRun"].Value())
 
 	// logs
@@ -209,9 +209,9 @@ func TestInstrumentRecover(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.success+task=Atoi"].Value())
-	assert.Equal(t, int64(1), counters["task.error+task=uint8"].Value())
-	assert.Equal(t, int64(1), counters["task.recovered+task=uint8"].Value())
+	assert.Equal(t, int64(1), counters["task.success+flow=AtoiRun,task=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["task.error+flow=AtoiRun,task=uint8"].Value())
+	assert.Equal(t, int64(1), counters["task.recovered+flow=AtoiRun,task=uint8"].Value())
 	assert.Equal(t, int64(1), counters["taskflow.success+flow=AtoiRun"].Value())
 
 	// logs
@@ -257,7 +257,7 @@ func TestInstrumentAnnotationOrder(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.success+task=Atoi"].Value())
+	assert.Equal(t, int64(1), counters["task.success+flow=AtoiDo,task=Atoi"].Value())
 	assert.Equal(t, int64(1), counters["taskflow.success+flow=AtoiDo"].Value())
 
 	// logs
@@ -324,11 +324,11 @@ func TestT3630161(t *testing.T) {
 	}
 
 	assert.Equal(t, 1, len(countersByName["task.success"]))
-	assert.Equal(t, map[string]string{"task": "End"}, countersByName["task.success"][0].Tags())
+	assert.Equal(t, map[string]string{"flow": "T3630161", "task": "End"}, countersByName["task.success"][0].Tags())
 	assert.Equal(t, 1, len(countersByName["task.error"]))
-	assert.Equal(t, map[string]string{"task": "Err"}, countersByName["task.error"][0].Tags())
+	assert.Equal(t, map[string]string{"flow": "T3630161", "task": "Err"}, countersByName["task.error"][0].Tags())
 	assert.Equal(t, 1, len(countersByName["task.recovered"]))
-	assert.Equal(t, map[string]string{"task": "Err"}, countersByName["task.recovered"][0].Tags())
+	assert.Equal(t, map[string]string{"flow": "T3630161", "task": "Err"}, countersByName["task.recovered"][0].Tags())
 	assert.Equal(t, 1, len(countersByName["task.recovered"]))
 	assert.Equal(t, map[string]string{"flow": "T3630161"}, countersByName["taskflow.success"][0].Tags())
 }

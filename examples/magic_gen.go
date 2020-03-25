@@ -45,7 +45,14 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		var flowEmitterReplace sync.Once
 		var _ = &flowEmitterReplace
-		flowEmitter := metricsEmitter.FlowInit("HandleFoo")
+		flowEmitter := metricsEmitter.FlowInit(
+			&cff.FlowInfo{
+				Flow:   "HandleFoo",
+				File:   "go.uber.org/cff/examples/magic.go",
+				Line:   34,
+				Column: 9,
+			},
+		)
 		startTime := time.Now()
 		defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
 		type task struct {
@@ -67,16 +74,44 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 					ran: false,
 				},
 				{
-					name:        "FormSendEmailRequest",
-					taskEmitter: metricsEmitter.TaskInit("FormSendEmailRequest"),
-					ran:         false,
+					name: "FormSendEmailRequest",
+					taskEmitter: metricsEmitter.TaskInit(
+						&cff.TaskInfo{
+							Task:   "FormSendEmailRequest",
+							File:   "go.uber.org/cff/examples/magic.go",
+							Line:   62,
+							Column: 4,
+						},
+						&cff.FlowInfo{
+							Flow: "HandleFoo",
+
+							File:   "go.uber.org/cff/examples/magic.go",
+							Line:   34,
+							Column: 9,
+						},
+					),
+					ran: false,
 				},
 			},
 			{
 				{
-					name:        "FormSendEmailRequest",
-					taskEmitter: metricsEmitter.TaskInit("FormSendEmailRequest"),
-					ran:         false,
+					name: "FormSendEmailRequest",
+					taskEmitter: metricsEmitter.TaskInit(
+						&cff.TaskInfo{
+							Task:   "FormSendEmailRequest",
+							File:   "go.uber.org/cff/examples/magic.go",
+							Line:   67,
+							Column: 4,
+						},
+						&cff.FlowInfo{
+							Flow: "HandleFoo",
+
+							File:   "go.uber.org/cff/examples/magic.go",
+							Line:   34,
+							Column: 9,
+						},
+					),
+					ran: false,
 				},
 			},
 			{

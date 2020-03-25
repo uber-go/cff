@@ -25,8 +25,8 @@ func TestInstrumentImpliedName(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.success+task=instrument-implied.go.32"].Value())
-	assert.Equal(t, int64(1), counters["task.success+task=instrument-implied.go.36"].Value())
+	assert.Equal(t, int64(1), counters["task.success+flow=ImpliedName,task=instrument-implied.go.32"].Value())
+	assert.Equal(t, int64(1), counters["task.success+flow=ImpliedName,task=instrument-implied.go.36"].Value())
 
 	// logs
 	logEntries := observedLogs.All()

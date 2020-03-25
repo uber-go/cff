@@ -186,6 +186,8 @@ type flow struct {
 
 	invokeTypeCnt int       // input to make unique invokeType sentinels
 	invokeTypes   []*output // tracks tasks of with either no results or a single error
+
+	PosInfo *PosInfo // Used to pass information to uniquely identify a task.
 }
 
 // addNoOutput adds a unique invokeType sentinel type to the invokeTypes list.
@@ -250,8 +252,9 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 	}
 
 	flow := flow{
-		Node:      call,
 		Ctx:       call.Args[0],
+		Node:      call,
+		PosInfo:   c.getPosInfo(call),
 		providers: new(typeutil.Map),
 		receivers: new(typeutil.Map),
 	}
@@ -472,6 +475,13 @@ func (c *compiler) scheduleFlow(f *flow) {
 	f.Schedule = schedule
 }
 
+// PosInfo contains positional information about a Flow or Task. This may be
+// used to uniquely identify a flow or a task.
+type PosInfo struct {
+	File         string // the file in which it's defined
+	Line, Column int    // line and column in the file where the flow was defined
+}
+
 type task struct {
 	ast.Node
 
@@ -499,6 +509,8 @@ type task struct {
 	FallbackWithResults []ast.Expr // expressions that return a value for each return type of this function
 
 	invokeType *noOutput // non-nil if there are no non-error results
+
+	PosInfo *PosInfo // Used to pass information to uniquely identify a task.
 }
 
 // invokeType is a sentinel return type for tasks that have no non-error results.
@@ -520,7 +532,12 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 		return nil
 	}
 
-	t := task{Sig: sig, Node: expr, Serial: c.taskSerial}
+	t := task{
+		Node:    expr,
+		PosInfo: c.getPosInfo(expr),
+		Serial:  c.taskSerial,
+		Sig:     sig,
+	}
 	c.taskSerial++
 
 	params := sig.Params()
@@ -579,6 +596,17 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 	}
 
 	return &t
+}
+
+func (c *compiler) getPosInfo(n ast.Node) *PosInfo {
+	pos := c.nodePosition(n)
+	posInfo := &PosInfo{
+		File:   filepath.Join(c.pkg.Path(), filepath.Base(pos.Filename)),
+		Line:   pos.Line,
+		Column: pos.Column,
+	}
+
+	return posInfo
 }
 
 func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
