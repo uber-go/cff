@@ -14,14 +14,14 @@ import (
 // Metrics1000FailedMemoized is a flow with 999 dependent tasks, each of which
 // fail. This is used to test error case behavior.
 func Metrics1000FailedMemoized(logger *zap.Logger, scope tally.Scope,
-	metricsBuilder cff.MetricsEmitter) float64 {
+	metricsBuilder cff.Emitter) float64 {
 	var res float64
 	cff.Flow(
 		context.Background(),
 		cff.InstrumentFlow("Metrics1000Failed"),
 		cff.Metrics(scope),
 		cff.Logger(logger),
-		cff.WithMetricsEmitter(metricsBuilder),
+		cff.WithEmitter(metricsBuilder),
 		cff.Results(&res),
 		cff.Task(
 			func() float64 { return 0 },

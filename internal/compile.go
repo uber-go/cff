@@ -132,11 +132,11 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 				return true // keep looking
 			}
 
-			if fn.Name() == "DefaultMetricsEmitter" {
+			if fn.Name() == "DefaultEmitter" {
 				return true
 			}
 
-			if fn.Name() == "MetricsEmitterStack" {
+			if fn.Name() == "EmitterStack" {
 				return true
 			}
 
@@ -158,11 +158,11 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 type flow struct {
 	ast.Node
 
-	Ctx            ast.Expr // the expression that is a local variable of type context.Context
-	Metrics        ast.Expr // the expression that is a local variable of type tally.Scope
-	Logger         ast.Expr // the expression that is a local variable of type *zap.Logger
-	MetricsEmitter ast.Expr
-	LogFields      *logFields
+	Ctx       ast.Expr // the expression that is a local variable of type context.Context
+	Metrics   ast.Expr // the expression that is a local variable of type tally.Scope
+	Logger    ast.Expr // the expression that is a local variable of type *zap.Logger
+	Emitter   ast.Expr
+	LogFields *logFields
 
 	Inputs  []*input
 	Outputs []*output
@@ -210,8 +210,8 @@ func (f *flow) addInstrument(name ast.Expr) {
 	f.Instrument = &instrument{Name: name}
 }
 
-func (f *flow) addMetricsEmitter(expr ast.Expr) {
-	f.MetricsEmitter = expr
+func (f *flow) addEmitter(expr ast.Expr) {
+	f.Emitter = expr
 }
 
 type logFields struct {
@@ -297,8 +297,8 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			flow.addInstrument(ce.Args[0])
 		case "WithLogFields":
 			flow.addLogFields(ce.Args, ce.Ellipsis.IsValid())
-		case "WithMetricsEmitter":
-			flow.addMetricsEmitter(ce.Args[0])
+		case "WithEmitter":
+			flow.addEmitter(ce.Args[0])
 		case "Task":
 			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
 				flow.Tasks = append(flow.Tasks, task)
@@ -434,8 +434,8 @@ func (c *compiler) validateInstrument(f *flow) {
 		if f.Logger == nil {
 			c.errf("cff.Instrument requires a *zap.Logger to be provided: use cff.Logger", c.nodePosition(f.Node))
 		}
-		if f.MetricsEmitter == nil && f.Metrics == nil {
-			c.errf("cff.Instrument requires a *tally.Scope via cff.Metrics or cff.MetricsEmitter to be provided",
+		if f.Emitter == nil && f.Metrics == nil {
+			c.errf("cff.Instrument requires a *tally.Scope via cff.Metrics or cff.Emitter to be provided",
 				c.nodePosition(f.Node))
 		}
 	}

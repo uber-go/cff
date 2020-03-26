@@ -14,11 +14,11 @@ type testStructs struct {
 	ctrl     *gomock.Controller
 	task1    *cff.MockTaskEmitter
 	flow1    *cff.MockFlowEmitter
-	emitter1 *cff.MockMetricsEmitter
+	emitter1 *cff.MockEmitter
 	task2    *cff.MockTaskEmitter
 	flow2    *cff.MockFlowEmitter
-	emitter2 *cff.MockMetricsEmitter
-	stack    cff.MetricsEmitter
+	emitter2 *cff.MockEmitter
+	stack    cff.Emitter
 }
 
 func mocks(t *testing.T) testStructs {
@@ -26,11 +26,11 @@ func mocks(t *testing.T) testStructs {
 	m.ctrl = gomock.NewController(t)
 	m.task1 = cff.NewMockTaskEmitter(m.ctrl)
 	m.flow1 = cff.NewMockFlowEmitter(m.ctrl)
-	m.emitter1 = cff.NewMockMetricsEmitter(m.ctrl)
+	m.emitter1 = cff.NewMockEmitter(m.ctrl)
 	m.task2 = cff.NewMockTaskEmitter(m.ctrl)
 	m.flow2 = cff.NewMockFlowEmitter(m.ctrl)
-	m.emitter2 = cff.NewMockMetricsEmitter(m.ctrl)
-	m.stack = cff.MetricsEmitterStack([]cff.MetricsEmitter{
+	m.emitter2 = cff.NewMockEmitter(m.ctrl)
+	m.stack = cff.EmitterStack([]cff.Emitter{
 		m.emitter1,
 		m.emitter2,
 	})
@@ -38,7 +38,7 @@ func mocks(t *testing.T) testStructs {
 	return m
 }
 
-func TestMetricsEmitterStack(t *testing.T) {
+func TestEmitterStack(t *testing.T) {
 	t.Run("Flow", func(t *testing.T) {
 		t.Run("Init", func(t *testing.T) {
 			m := mocks(t)

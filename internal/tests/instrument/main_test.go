@@ -17,7 +17,7 @@ func TestInstrument(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
+	h := &DefaultEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	v, err := h.Run(ctx, "1")
 
@@ -60,7 +60,7 @@ func TestInstrumentWithLogFields(t *testing.T) {
 	t.Run("Ellipsis", func(t *testing.T) {
 		core, observedLogs := observer.New(zap.DebugLevel)
 		logger := zap.New(core)
-		h := &DefaultMetricsEmitter{Scope: tally.NoopScope, Logger: logger}
+		h := &DefaultEmitter{Scope: tally.NoopScope, Logger: logger}
 
 		_, err := h.Run(context.Background(), "1",
 			zap.String("foo", "bar"), zap.Int("baz", 42))
@@ -83,7 +83,7 @@ func TestInstrumentWithLogFields(t *testing.T) {
 	t.Run("Explicit", func(t *testing.T) {
 		core, observedLogs := observer.New(zap.DebugLevel)
 		logger := zap.New(core)
-		h := &DefaultMetricsEmitter{Scope: tally.NoopScope, Logger: logger}
+		h := &DefaultEmitter{Scope: tally.NoopScope, Logger: logger}
 
 		_, err := h.ExplicitListOfFields(context.Background(), "1")
 		require.NoError(t, err)
@@ -108,7 +108,7 @@ func TestInstrumentError(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
+	h := &DefaultEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	_, err := h.Run(ctx, "NaN")
 
@@ -164,7 +164,7 @@ func TestInstrumentCancelledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(ctx)
 	cancel()
 
-	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
+	h := &DefaultEmitter{Scope: scope, Logger: logger}
 	_, err := h.Run(ctx, "1")
 	assert.Error(t, err)
 
@@ -197,7 +197,7 @@ func TestInstrumentRecover(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
+	h := &DefaultEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	v, err := h.Run(ctx, "300")
 
@@ -245,7 +245,7 @@ func TestInstrumentAnnotationOrder(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
+	h := &DefaultEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	v, err := h.Do(ctx, "1")
 
@@ -279,7 +279,7 @@ func TestInstrumentTaskButNotFlow(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
+	h := &DefaultEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	v, err := h.Work(ctx, "1")
 
@@ -311,7 +311,7 @@ func TestInstrumentTaskButNotFlow(t *testing.T) {
 func TestT3630161(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	logger := zaptest.NewLogger(t)
-	h := &DefaultMetricsEmitter{Scope: scope, Logger: logger}
+	h := &DefaultEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
 	h.T3630161(ctx)
 
@@ -340,7 +340,7 @@ func TestT3795761(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	h := &DefaultMetricsEmitter{
+	h := &DefaultEmitter{
 		Scope:  scope,
 		Logger: logger,
 	}

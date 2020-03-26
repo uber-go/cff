@@ -14,7 +14,7 @@ import (
 func TestCacheFlow(t *testing.T) {
 	t.Run("same object", func(t *testing.T) {
 		scope := tally.NewTestScope("", nil)
-		e := DefaultMetricsEmitter(scope)
+		e := DefaultEmitter(scope)
 		fe := e.FlowInit(&FlowInfo{
 			Flow:   "flow",
 			File:   "location/flow.go",
@@ -31,7 +31,7 @@ func TestCacheFlow(t *testing.T) {
 	})
 	t.Run("mutate object and not get it back", func(t *testing.T) {
 		scope := tally.NewTestScope("", nil)
-		e := DefaultMetricsEmitter(scope)
+		e := DefaultEmitter(scope)
 		fe := e.FlowInit(&FlowInfo{
 			Flow:   "flow",
 			File:   "location/flow.go",
@@ -56,7 +56,7 @@ func TestCacheFlow(t *testing.T) {
 func TestCacheTask(t *testing.T) {
 	t.Run("same object", func(t *testing.T) {
 		scope := tally.NewTestScope("", nil)
-		e := DefaultMetricsEmitter(scope)
+		e := DefaultEmitter(scope)
 		te := e.TaskInit(
 			&TaskInfo{
 				Task:   "task",
@@ -107,7 +107,7 @@ func TestCacheTask(t *testing.T) {
 func TestCacheTaskReadRace(t *testing.T) {
 	const N = 1000
 	scope := tally.NewTestScope("", nil)
-	e := DefaultMetricsEmitter(scope)
+	e := DefaultEmitter(scope)
 	start := make(chan struct{})
 	results := make([]TaskEmitter, N)
 	var wg sync.WaitGroup
@@ -146,7 +146,7 @@ func TestCacheTaskReadRace(t *testing.T) {
 func TestCacheFlowReadRace(t *testing.T) {
 	const N = 1000
 	scope := tally.NewTestScope("", nil)
-	e := DefaultMetricsEmitter(scope)
+	e := DefaultEmitter(scope)
 	start := make(chan struct{})
 	results := make([]FlowEmitter, N)
 	mutatedResults := make([]FlowEmitter, N/2)

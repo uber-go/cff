@@ -16,14 +16,14 @@ import (
 	"go.uber.org/zap/zaptest/observer"
 )
 
-// TestMetricsEmitter verifies that new MetricsEmitter interface gets called
-// if it's passed in.
-func TestInstrumentME(t *testing.T) {
+// TestInstrumentEmitter verifies that new Emitter interface gets called if
+// it's passed in.
+func TestInstrumentEmitter(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx := context.Background()
 
-	metricsEmitter := cff.NewMockMetricsEmitter(mockCtrl)
+	emitter := cff.NewMockEmitter(mockCtrl)
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
@@ -35,20 +35,20 @@ func TestInstrumentME(t *testing.T) {
 	taskEmitter.EXPECT().TaskSuccess(ctx).Times(2)
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
 
-	metricsEmitter.EXPECT().FlowInit(&cff.FlowInfo{"AtoiRun", "go.uber.org/cff/internal/tests/instrument/instrument.go", 191, 8}).Return(flowEmitter)
+	emitter.EXPECT().FlowInit(&cff.FlowInfo{"AtoiRun", "go.uber.org/cff/internal/tests/instrument/instrument.go", 191, 8}).Return(flowEmitter)
 	// 2 in the tasks for loop inside defer() and twice after.
-	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
+	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	// Logging
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 
-	// CustomMetricsEmitter Unit
-	g := &instrument.CustomMetricsEmitter{
-		Logger:         logger,
-		Scope:          scope,
-		MetricsEmitter: metricsEmitter,
+	// CustomEmitter Unit
+	g := &instrument.CustomEmitter{
+		Logger:  logger,
+		Scope:   scope,
+		Emitter: emitter,
 	}
 	v, err := g.Run(ctx, "1")
 
@@ -61,7 +61,7 @@ func TestInstrumentErrorME(t *testing.T) {
 	defer mockCtrl.Finish()
 	ctx := context.Background()
 
-	metricsEmitter := cff.NewMockMetricsEmitter(mockCtrl)
+	emitter := cff.NewMockEmitter(mockCtrl)
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
@@ -77,17 +77,17 @@ func TestInstrumentErrorME(t *testing.T) {
 	taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
 
-	metricsEmitter.EXPECT().FlowInit(gomock.Any()).Return(flowEmitter)
-	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
+	emitter.EXPECT().FlowInit(gomock.Any()).Return(flowEmitter)
+	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 
-	h := &instrument.CustomMetricsEmitter{
-		Scope:          scope,
-		Logger:         logger,
-		MetricsEmitter: metricsEmitter,
+	h := &instrument.CustomEmitter{
+		Scope:   scope,
+		Logger:  logger,
+		Emitter: emitter,
 	}
 	_, err := h.Run(ctx, "NaN")
 
@@ -99,21 +99,21 @@ func TestInstrumentTaskButNotFlowME(t *testing.T) {
 	defer mockCtrl.Finish()
 	ctx := context.Background()
 
-	metricsEmitter := cff.NewMockMetricsEmitter(mockCtrl)
+	emitter := cff.NewMockEmitter(mockCtrl)
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 
 	taskEmitter.EXPECT().TaskSuccess(ctx)
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
-	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Return(taskEmitter)
+	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Return(taskEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	g := &instrument.CustomMetricsEmitter{
-		Scope:          scope,
-		Logger:         logger,
-		MetricsEmitter: metricsEmitter,
+	g := &instrument.CustomEmitter{
+		Scope:   scope,
+		Logger:  logger,
+		Emitter: emitter,
 	}
 	v, err := g.Work(ctx, "1")
 
@@ -134,7 +134,7 @@ func TestInstrumentCancelledContextME(t *testing.T) {
 
 	flowCancelledErr := ctx.Err()
 
-	metricsEmitter := cff.NewMockMetricsEmitter(mockCtrl)
+	emitter := cff.NewMockEmitter(mockCtrl)
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
@@ -144,13 +144,13 @@ func TestInstrumentCancelledContextME(t *testing.T) {
 
 	taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any()).Times(2)
 
-	metricsEmitter.EXPECT().FlowInit(gomock.Any()).Return(flowEmitter)
-	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
+	emitter.EXPECT().FlowInit(gomock.Any()).Return(flowEmitter)
+	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
 
-	g := &instrument.CustomMetricsEmitter{
-		Scope:          scope,
-		Logger:         logger,
-		MetricsEmitter: metricsEmitter,
+	g := &instrument.CustomEmitter{
+		Scope:   scope,
+		Logger:  logger,
+		Emitter: emitter,
 	}
 
 	_, err := g.Run(ctx, "1")
@@ -166,7 +166,7 @@ func TestInstrumentRecoverME(t *testing.T) {
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 
-	metricsEmitter := cff.NewMockMetricsEmitter(mockCtrl)
+	emitter := cff.NewMockEmitter(mockCtrl)
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
@@ -179,13 +179,13 @@ func TestInstrumentRecoverME(t *testing.T) {
 	taskEmitter.EXPECT().TaskRecovered(ctx, gomock.Any())
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
 
-	metricsEmitter.EXPECT().FlowInit(&cff.FlowInfo{"AtoiRun", "go.uber.org/cff/internal/tests/instrument/instrument.go", 191, 8}).Return(flowEmitter)
-	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
+	emitter.EXPECT().FlowInit(&cff.FlowInfo{"AtoiRun", "go.uber.org/cff/internal/tests/instrument/instrument.go", 191, 8}).Return(flowEmitter)
+	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
 
-	g := &instrument.CustomMetricsEmitter{
-		Scope:          scope,
-		Logger:         logger,
-		MetricsEmitter: metricsEmitter,
+	g := &instrument.CustomEmitter{
+		Scope:   scope,
+		Logger:  logger,
+		Emitter: emitter,
 	}
 
 	v, err := g.Run(ctx, "300")
@@ -200,7 +200,7 @@ func TestT3630161ME(t *testing.T) {
 	defer mockCtrl.Finish()
 	ctx := context.Background()
 
-	metricsEmitter := cff.NewMockMetricsEmitter(mockCtrl)
+	emitter := cff.NewMockEmitter(mockCtrl)
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
@@ -214,17 +214,17 @@ func TestT3630161ME(t *testing.T) {
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
 	taskEmitter.EXPECT().TaskSuccess(ctx)
 
-	metricsEmitter.EXPECT().FlowInit(gomock.Any()).Return(flowEmitter)
-	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
+	emitter.EXPECT().FlowInit(gomock.Any()).Return(flowEmitter)
+	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 
-	g := &instrument.CustomMetricsEmitter{
-		Scope:          scope,
-		Logger:         logger,
-		MetricsEmitter: metricsEmitter,
+	g := &instrument.CustomEmitter{
+		Scope:   scope,
+		Logger:  logger,
+		Emitter: emitter,
 	}
 
 	g.T3630161(ctx)
@@ -237,7 +237,7 @@ func TestT3795761ME(t *testing.T) {
 	defer mockCtrl.Finish()
 	ctx := context.Background()
 
-	metricsEmitter := cff.NewMockMetricsEmitter(mockCtrl)
+	emitter := cff.NewMockEmitter(mockCtrl)
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
@@ -256,17 +256,17 @@ func TestT3795761ME(t *testing.T) {
 	taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).AnyTimes()
 
-	metricsEmitter.EXPECT().FlowInit(gomock.Any()).AnyTimes().Return(flowEmitter)
-	metricsEmitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
+	emitter.EXPECT().FlowInit(gomock.Any()).AnyTimes().Return(flowEmitter)
+	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 
-	g := &instrument.CustomMetricsEmitter{
-		Scope:          scope,
-		Logger:         logger,
-		MetricsEmitter: metricsEmitter,
+	g := &instrument.CustomEmitter{
+		Scope:   scope,
+		Logger:  logger,
+		Emitter: emitter,
 	}
 
 	t.Run("should run error", func(t *testing.T) {
@@ -288,7 +288,7 @@ func TestPanic(t *testing.T) {
 	defer mockCtrl.Finish()
 	ctx := context.Background()
 
-	metricsEmitter := cff.NewMockMetricsEmitter(mockCtrl)
+	emitter := cff.NewMockEmitter(mockCtrl)
 
 	// No flow emitter as flow isn't instrumented.
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
@@ -298,7 +298,7 @@ func TestPanic(t *testing.T) {
 
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).After(tpanic)
 
-	metricsEmitter.EXPECT().TaskInit(
+	emitter.EXPECT().TaskInit(
 		&cff.TaskInfo{
 			Task:   "Atoi",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
@@ -316,22 +316,22 @@ func TestPanic(t *testing.T) {
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 
-	g := &instrument.CustomMetricsEmitter{
-		Scope:          scope,
-		Logger:         logger,
-		MetricsEmitter: metricsEmitter,
+	g := &instrument.CustomEmitter{
+		Scope:   scope,
+		Logger:  logger,
+		Emitter: emitter,
 	}
 	err := g.FlowAlwaysPanics(ctx)
 	require.Error(t, err)
 }
 
 // TestConcurrentFlow detects data races when multiple flows share the same
-// metrics emitter.
+// emitter.
 func TestConcurrentFlow(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	builder := cff.DefaultMetricsEmitter(scope)
+	builder := cff.DefaultEmitter(scope)
 
 	var wg sync.WaitGroup
 	for i := 0; i < 2; i++ {

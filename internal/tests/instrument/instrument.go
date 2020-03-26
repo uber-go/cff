@@ -1,10 +1,10 @@
 // +build cff
 
-// Package instrument verifies that default and custom MetricsEmitter
+// Package instrument verifies that default and custom Emitter
 // implementations trigger on events and emit specification in the CFF2 ERD.
-// DefaultMetricsEmitter tests default metrics emitter.
+// DefaultEmitter tests default emitter.
 // These tests will be removed in the future as an implementation detail.
-// CustomMetricsEmitter tests mocks for custom metrics emitter.
+// CustomEmitter tests mocks for custom emitter.
 package instrument
 
 import (
@@ -22,7 +22,7 @@ import (
 func main() {
 	scope := tally.NoopScope
 	logger := zap.NewNop()
-	h := &DefaultMetricsEmitter{
+	h := &DefaultEmitter{
 		Scope:  scope,
 		Logger: logger,
 	}
@@ -34,14 +34,14 @@ func main() {
 	fmt.Printf("%d\n", res)
 }
 
-// DefaultMetricsEmitter is used by other tests.
-type DefaultMetricsEmitter struct {
+// DefaultEmitter is used by other tests.
+type DefaultEmitter struct {
 	Scope  tally.Scope
 	Logger *zap.Logger
 }
 
 // Run executes a flow to test instrumentation.
-func (h *DefaultMetricsEmitter) Run(ctx context.Context, req string, fields ...zap.Field) (res uint8, err error) {
+func (h *DefaultEmitter) Run(ctx context.Context, req string, fields ...zap.Field) (res uint8, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
@@ -70,7 +70,7 @@ func (h *DefaultMetricsEmitter) Run(ctx context.Context, req string, fields ...z
 }
 
 // ExplicitListOfFields is a flow with an explicit list of log fields.
-func (h *DefaultMetricsEmitter) ExplicitListOfFields(ctx context.Context, req string) (res int, err error) {
+func (h *DefaultEmitter) ExplicitListOfFields(ctx context.Context, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
@@ -87,7 +87,7 @@ func (h *DefaultMetricsEmitter) ExplicitListOfFields(ctx context.Context, req st
 }
 
 // Do executes a flow to test instrumentation.
-func (h *DefaultMetricsEmitter) Do(ctx context.Context, req string) (res int, err error) {
+func (h *DefaultEmitter) Do(ctx context.Context, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
@@ -103,7 +103,7 @@ func (h *DefaultMetricsEmitter) Do(ctx context.Context, req string) (res int, er
 }
 
 // Work executes a flow to test instrumentation.
-func (h *DefaultMetricsEmitter) Work(ctx context.Context, req string) (res int, err error) {
+func (h *DefaultEmitter) Work(ctx context.Context, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
@@ -118,7 +118,7 @@ func (h *DefaultMetricsEmitter) Work(ctx context.Context, req string) (res int, 
 }
 
 // T3630161 reproduces T3630161 by executing a flow that runs a task that failed, recovers, and then runs another task.
-func (h *DefaultMetricsEmitter) T3630161(ctx context.Context) {
+func (h *DefaultEmitter) T3630161(ctx context.Context) {
 	var s string
 	_ = cff.Flow(ctx,
 		cff.Results(&s),
@@ -146,7 +146,7 @@ func (h *DefaultMetricsEmitter) T3630161(ctx context.Context) {
 }
 
 // T3795761 reproduces T3795761 where a task that returns no error should only emit skipped metric if it was not run
-func (h *DefaultMetricsEmitter) T3795761(ctx context.Context, shouldRun bool, shouldError bool) string {
+func (h *DefaultEmitter) T3795761(ctx context.Context, shouldRun bool, shouldError bool) string {
 	var s string
 	_ = cff.Flow(ctx,
 		cff.Results(&s),
@@ -177,24 +177,24 @@ func (h *DefaultMetricsEmitter) T3795761(ctx context.Context, shouldRun bool, sh
 }
 
 // These tests replicate the ones written for instrumentation to verify that
-// custom MetricsEmitter will trigger similarly to default implementation.
+// custom Emitter will trigger similarly to default implementation.
 
-// CustomMetricsEmitter is used by other tests.
-type CustomMetricsEmitter struct {
-	Scope          tally.Scope
-	Logger         *zap.Logger
-	MetricsEmitter cff.MetricsEmitter
+// CustomEmitter is used by other tests.
+type CustomEmitter struct {
+	Scope   tally.Scope
+	Logger  *zap.Logger
+	Emitter cff.Emitter
 }
 
 // Run executes a flow to test instrumentation.
-func (h *CustomMetricsEmitter) Run(ctx context.Context, req string) (res uint8, err error) {
+func (h *CustomEmitter) Run(ctx context.Context, req string) (res uint8, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
 		cff.Metrics(h.Scope),
 		cff.Logger(h.Logger),
 		cff.InstrumentFlow("AtoiRun"),
-		cff.WithMetricsEmitter(h.MetricsEmitter),
+		cff.WithEmitter(h.Emitter),
 		cff.Task(
 			strconv.Atoi,
 			cff.Instrument("Atoi"),
@@ -214,12 +214,12 @@ func (h *CustomMetricsEmitter) Run(ctx context.Context, req string) (res uint8, 
 }
 
 // Do executes a flow to test instrumentation.
-func (h *CustomMetricsEmitter) Do(ctx context.Context, req string) (res int, err error) {
+func (h *CustomEmitter) Do(ctx context.Context, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
 		cff.InstrumentFlow("AtoiDo"),
-		cff.WithMetricsEmitter(h.MetricsEmitter),
+		cff.WithEmitter(h.Emitter),
 		cff.Metrics(h.Scope),
 		cff.Logger(h.Logger),
 		cff.Task(
@@ -231,12 +231,12 @@ func (h *CustomMetricsEmitter) Do(ctx context.Context, req string) (res int, err
 }
 
 // Work executes a flow to test instrumentation.
-func (h *CustomMetricsEmitter) Work(ctx context.Context, req string) (res int, err error) {
+func (h *CustomEmitter) Work(ctx context.Context, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
 		cff.Metrics(h.Scope),
-		cff.WithMetricsEmitter(h.MetricsEmitter),
+		cff.WithEmitter(h.Emitter),
 		cff.Logger(h.Logger),
 		cff.Task(
 			strconv.Atoi,
@@ -248,12 +248,12 @@ func (h *CustomMetricsEmitter) Work(ctx context.Context, req string) (res int, e
 
 // T3630161 reproduces T3630161 by executing a flow that runs a task that failed,
 // recovers, and then runs another task.
-func (h *CustomMetricsEmitter) T3630161(ctx context.Context) {
+func (h *CustomEmitter) T3630161(ctx context.Context) {
 	var s string
 	_ = cff.Flow(ctx,
 		cff.Results(&s),
 		cff.Metrics(h.Scope),
-		cff.WithMetricsEmitter(h.MetricsEmitter),
+		cff.WithEmitter(h.Emitter),
 		cff.Logger(h.Logger),
 		cff.InstrumentFlow("T3630161"),
 
@@ -278,13 +278,13 @@ func (h *CustomMetricsEmitter) T3630161(ctx context.Context) {
 
 // T3795761 reproduces T3795761 where a task that returns no error should only
 // emit skipped metric if it was not run.
-func (h *CustomMetricsEmitter) T3795761(ctx context.Context, shouldRun bool,
+func (h *CustomEmitter) T3795761(ctx context.Context, shouldRun bool,
 	shouldError bool) string {
 	var s string
 	_ = cff.Flow(ctx,
 		cff.Results(&s),
 		cff.Metrics(h.Scope),
-		cff.WithMetricsEmitter(h.MetricsEmitter),
+		cff.WithEmitter(h.Emitter),
 		cff.Logger(h.Logger),
 		cff.InstrumentFlow("T3795761"),
 
@@ -311,10 +311,10 @@ func (h *CustomMetricsEmitter) T3795761(ctx context.Context, shouldRun bool,
 }
 
 // FlowAlwaysPanics is a flow that tests Metrics Emitter
-func (h *CustomMetricsEmitter) FlowAlwaysPanics(ctx context.Context) error {
+func (h *CustomEmitter) FlowAlwaysPanics(ctx context.Context) error {
 	return cff.Flow(ctx,
 		cff.Logger(h.Logger),
-		cff.WithMetricsEmitter(h.MetricsEmitter),
+		cff.WithEmitter(h.Emitter),
 		cff.Task(func() {
 			panic("always")
 		},

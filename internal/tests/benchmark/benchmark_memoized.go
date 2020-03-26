@@ -11,13 +11,13 @@ import (
 )
 
 // MetricsMemoized1000 is a flow with 999 dependent tasks
-func MetricsMemoized1000(logger *zap.Logger, scope tally.Scope, metricsBuilder cff.MetricsEmitter) float64 {
+func MetricsMemoized1000(logger *zap.Logger, scope tally.Scope, metricsBuilder cff.Emitter) float64 {
 	var res float64
 	cff.Flow(
 		context.Background(),
 		cff.InstrumentFlow("Metrics1000"),
 		cff.Metrics(scope),
-		cff.WithMetricsEmitter(metricsBuilder),
+		cff.WithEmitter(metricsBuilder),
 		cff.Logger(logger),
 		cff.Results(&res),
 		cff.Task(

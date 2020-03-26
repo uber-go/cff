@@ -5,7 +5,7 @@
     func(ctx {{ $context }}.Context,
     {{- if $flow.ObservabilityEnabled -}}
         {{- $zap := import "go.uber.org/zap" -}}
-        {{- if not $flow.MetricsEmitter -}}
+        {{- if not $flow.Emitter -}}
         {{- $tally := import "github.com/uber-go/tally" -}}
         scope {{ $tally }}.Scope,
         {{ end }}
@@ -17,11 +17,11 @@
     {{- end }}) (err error) {
     var _ = ({{ $cff }}.FlowOption)(nil)
     {{ if $flow.ObservabilityEnabled }}
-        var metricsEmitter {{ $cff }}.MetricsEmitter
-        {{ if $flow.MetricsEmitter }}
-        metricsEmitter = {{ expr $flow.MetricsEmitter }}
+        var emitter {{ $cff }}.Emitter
+        {{ if $flow.Emitter }}
+        emitter = {{ expr $flow.Emitter }}
         {{ else }}
-        metricsEmitter = {{ $cff }}.DefaultMetricsEmitter(scope)
+        emitter = {{ $cff }}.DefaultEmitter(scope)
         {{ end }}
 
         {{ with $flow.LogFields }}
@@ -34,7 +34,7 @@
     {{ if $flow.Instrument }}
         var flowEmitterReplace sync.Once
         var _ = &flowEmitterReplace
-        flowEmitter := metricsEmitter.FlowInit(
+        flowEmitter := emitter.FlowInit(
             &{{ $cff }}.FlowInfo{
                 Flow: {{ expr $flow.Instrument.Name }},
                 File: {{ quote $flow.PosInfo.File}},
@@ -59,7 +59,7 @@
                 {
                 {{ if .Instrument -}}
                     name: {{ expr .Instrument.Name }},
-                    taskEmitter: metricsEmitter.TaskInit(
+                    taskEmitter: emitter.TaskInit(
                         &{{ $cff }}.TaskInfo{
                             Task: {{ expr .Instrument.Name }},
                             File: {{ quote .PosInfo.File}},
@@ -267,7 +267,7 @@
     {{- end }}
 
     return err
-    }({{ expr .Ctx }}{{ if $flow.ObservabilityEnabled }}, {{ if not $flow.MetricsEmitter }}{{ expr $flow.Metrics }}, {{end }} {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
+    }({{ expr .Ctx }}{{ if $flow.ObservabilityEnabled }}, {{ if not $flow.Emitter }}{{ expr $flow.Metrics }}, {{end }} {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
 {{- end -}}
 
 {{- define "taskResultVarDecl" -}}

@@ -49,10 +49,10 @@ func Logger(logger *zap.Logger) FlowOption {
 	panic("code not generated; run cff")
 }
 
-// WithMetricsEmitter provides an optional observer for task metric events.
-// If provided, we will use the provided MetricsEmitter rather than the default
+// WithEmitter provides an optional observer for task metric events.
+// If provided, we will use the provided Emitter rather than the default
 // metrics implementation.
-func WithMetricsEmitter(MetricsEmitter) FlowOption {
+func WithEmitter(Emitter) FlowOption {
 	panic("code not generated; run cff")
 }
 

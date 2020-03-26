@@ -31,7 +31,7 @@ type metricsTestFn func(*zap.Logger, tally.Scope) float64
 func BenchmarkMetrics(b *testing.B) {
 	logger := zap.NewNop()
 	scope := tally.NoopScope
-	builder := cff.DefaultMetricsEmitter(scope)
+	builder := cff.DefaultEmitter(scope)
 
 	metricsMemoized := func(logger *zap.Logger, scope tally.Scope) float64 {
 		return MetricsMemoized1000(logger, scope, builder)

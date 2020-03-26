@@ -39,13 +39,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		logger *zap.Logger, v1 *Request) (err error) {
 		var _ = (cff.FlowOption)(nil)
 
-		var metricsEmitter cff.MetricsEmitter
+		var emitter cff.Emitter
 
-		metricsEmitter = cff.DefaultMetricsEmitter(scope)
+		emitter = cff.DefaultEmitter(scope)
 
 		var flowEmitterReplace sync.Once
 		var _ = &flowEmitterReplace
-		flowEmitter := metricsEmitter.FlowInit(
+		flowEmitter := emitter.FlowInit(
 			&cff.FlowInfo{
 				Flow:   "HandleFoo",
 				File:   "go.uber.org/cff/examples/magic.go",
@@ -75,7 +75,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				},
 				{
 					name: "FormSendEmailRequest",
-					taskEmitter: metricsEmitter.TaskInit(
+					taskEmitter: emitter.TaskInit(
 						&cff.TaskInfo{
 							Task:   "FormSendEmailRequest",
 							File:   "go.uber.org/cff/examples/magic.go",
@@ -96,7 +96,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			{
 				{
 					name: "FormSendEmailRequest",
-					taskEmitter: metricsEmitter.TaskInit(
+					taskEmitter: emitter.TaskInit(
 						&cff.TaskInfo{
 							Task:   "FormSendEmailRequest",
 							File:   "go.uber.org/cff/examples/magic.go",

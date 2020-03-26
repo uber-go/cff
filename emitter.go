@@ -63,10 +63,10 @@ type TaskInfo struct {
 	Line, Column int
 }
 
-// MetricsEmitter initializes Task and Flow metrics emitters.
+// Emitter initializes Task and Flow emitters.
 //
 // WARNING: This interface is not stable and may change in the future.
-type MetricsEmitter interface {
+type Emitter interface {
 	// TaskInit returns a TaskEmitter which could be memoized based on task name.
 	TaskInit(*TaskInfo, *FlowInfo) TaskEmitter
 	// FlowInit returns a FlowEmitter which could be memoized based on flow name.
@@ -149,7 +149,7 @@ type cacheKey struct {
 	FlowLine, FlowColumn int    // line and column in the file where the flow is defined
 }
 
-// MetricsEmitter implementation.
+// Emitter implementation.
 //
 func (e *emitter) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmitter {
 	cacheKey := cacheKey{
@@ -202,9 +202,9 @@ func (e *emitter) FlowInit(info *FlowInfo) FlowEmitter {
 	return v.(FlowEmitter)
 }
 
-// DefaultMetricsEmitter sets up default implementation of metrics used in the
+// DefaultEmitter sets up default implementation of metrics used in the
 // template with memoization of the scope.
-func DefaultMetricsEmitter(scope tally.Scope) MetricsEmitter {
+func DefaultEmitter(scope tally.Scope) Emitter {
 	return &emitter{
 		scope: scope,
 		flows: new(sync.Map),
