@@ -3,27 +3,17 @@
 {{- $flow := .Flow -}}
 {{- with .Flow -}}
     func(ctx {{ $context }}.Context,
+    {{- $cff := import "go.uber.org/cff" -}}
     {{- if $flow.ObservabilityEnabled -}}
         {{- $zap := import "go.uber.org/zap" -}}
-        {{- if not $flow.Emitter -}}
-        {{- $tally := import "github.com/uber-go/tally" -}}
-        scope {{ $tally }}.Scope,
-        {{ end }}
+        emitter {{ $cff }}.Emitter,
         logger *{{ $zap }}.Logger,
     {{- end -}}
-    {{- $cff := import "go.uber.org/cff" -}}
     {{- range .Inputs -}}
         v{{ typeHash .Type }} {{ type .Type }},
     {{- end }}) (err error) {
     var _ = ({{ $cff }}.FlowOption)(nil)
     {{ if $flow.ObservabilityEnabled }}
-        var emitter {{ $cff }}.Emitter
-        {{ if $flow.Emitter }}
-        emitter = {{ expr $flow.Emitter }}
-        {{ else }}
-        emitter = {{ $cff }}.DefaultEmitter(scope)
-        {{ end }}
-
         {{ with $flow.LogFields }}
         logger = logger.With(
             {{- range $i, $f := .Args }}
@@ -267,7 +257,17 @@
     {{- end }}
 
     return err
-    }({{ expr .Ctx }}{{ if $flow.ObservabilityEnabled }}, {{ if not $flow.Emitter }}{{ expr $flow.Metrics }}, {{end }} {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
+    }({{ expr .Ctx }}{{ if $flow.ObservabilityEnabled }}, {{ template "buildEmitter" $flow }}, {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
+{{- end -}}
+
+{{/* Builds a cff.Emitter for a flow. */}}
+{{- define "buildEmitter" -}}
+    {{- if .Emitter -}}
+        {{ expr .Emitter }}
+    {{- else -}}
+        {{- $cff := import "go.uber.org/cff" -}}
+        {{ $cff }}.DefaultEmitter({{ expr .Metrics }})
+    {{- end -}}
 {{- end -}}
 
 {{- define "taskResultVarDecl" -}}

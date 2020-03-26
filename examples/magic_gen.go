@@ -34,14 +34,9 @@ type fooHandler struct {
 
 func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
 	var res *Response
-	err := func(ctx context.Context, scope tally.Scope,
-
+	err := func(ctx context.Context, emitter cff.Emitter,
 		logger *zap.Logger, v1 *Request) (err error) {
 		var _ = (cff.FlowOption)(nil)
-
-		var emitter cff.Emitter
-
-		emitter = cff.DefaultEmitter(scope)
 
 		var flowEmitterReplace sync.Once
 		var _ = &flowEmitterReplace
@@ -460,7 +455,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		}
 
 		return err
-	}(ctx, h.scope, h.logger, req)
+	}(ctx, cff.DefaultEmitter(h.scope), h.logger, req)
 	return res, err
 }
 
