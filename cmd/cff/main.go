@@ -24,6 +24,7 @@ type options struct {
 	Args               struct {
 		ImportPath string `positional-arg-name:"importPath"`
 	} `positional-args:"yes" required:"yes"`
+	Quiet bool `long:"quiet"`
 }
 
 // file is the value of the --file option.
@@ -92,7 +93,7 @@ func newCLIParser() (*flags.Parser, *options) {
 			"package."
 	parser.FindOptionByLongName("stdlibroot").Description =
 		"When using archives to parse the source code, specifies the path containing " +
-		    "archive files for the Go standard library."
+			"archive files for the Go standard library."
 
 	parser.Args()[0].Description = "Import path of a package containing CFF flows."
 
@@ -184,7 +185,9 @@ func run(args []string) error {
 		}
 	}
 
-	log.Printf("Processed %d files with %d errors", processed, errored)
+	if !f.Quiet {
+		log.Printf("Processed %d files with %d errors", processed, errored)
+	}
 	return err
 }
 
