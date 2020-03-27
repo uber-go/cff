@@ -302,13 +302,13 @@ func TestPanic(t *testing.T) {
 		&cff.TaskInfo{
 			Task:   "Atoi",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   318,
+			Line:   313,
 			Column: 12,
 		},
 		&cff.FlowInfo{
 			Flow:   "",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   315,
+			Line:   310,
 			Column: 9,
 		}).Return(taskEmitter)
 
@@ -339,7 +339,7 @@ func TestConcurrentFlow(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			benchmark.MetricsMemoized1000(logger, scope, builder)
+			benchmark.MetricsMemoized1000(logger, builder)
 		}()
 	}
 	wg.Wait()

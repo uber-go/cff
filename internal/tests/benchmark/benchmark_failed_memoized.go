@@ -7,19 +7,16 @@ import (
 	"errors"
 
 	"go.uber.org/cff"
-	"github.com/uber-go/tally"
 	"go.uber.org/zap"
 )
 
 // Metrics1000FailedMemoized is a flow with 999 dependent tasks, each of which
 // fail. This is used to test error case behavior.
-func Metrics1000FailedMemoized(logger *zap.Logger, scope tally.Scope,
-	metricsBuilder cff.Emitter) float64 {
+func Metrics1000FailedMemoized(logger *zap.Logger, metricsBuilder cff.Emitter) float64 {
 	var res float64
 	cff.Flow(
 		context.Background(),
 		cff.InstrumentFlow("Metrics1000Failed"),
-		cff.Metrics(scope),
 		cff.Logger(logger),
 		cff.WithEmitter(metricsBuilder),
 		cff.Results(&res),

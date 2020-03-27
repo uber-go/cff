@@ -6,17 +6,15 @@ import (
 	"context"
 
 	"go.uber.org/cff"
-	"github.com/uber-go/tally"
 	"go.uber.org/zap"
 )
 
 // MetricsMemoized1000 is a flow with 999 dependent tasks
-func MetricsMemoized1000(logger *zap.Logger, scope tally.Scope, metricsBuilder cff.Emitter) float64 {
+func MetricsMemoized1000(logger *zap.Logger, metricsBuilder cff.Emitter) float64 {
 	var res float64
 	cff.Flow(
 		context.Background(),
 		cff.InstrumentFlow("Metrics1000"),
-		cff.Metrics(scope),
 		cff.WithEmitter(metricsBuilder),
 		cff.Logger(logger),
 		cff.Results(&res),

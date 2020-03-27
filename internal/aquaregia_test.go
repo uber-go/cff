@@ -161,6 +161,11 @@ func TestCodeGenerateFails(t *testing.T) {
 				File:         "instrument.go",
 				ErrorMatches: "cff.Instrument requires a \\*tally.Scope via cff\\.Metrics or cff\\.Emitter to be provided",
 			},
+			// ProvidedMetricsAndEmitter
+			{
+				File:         "instrument.go",
+				ErrorMatches: "cff.Emitter cannot be used with cff.Metrics",
+			},
 
 			{
 				File:         "missing-provider.go",

@@ -430,14 +430,26 @@ func (c *compiler) validateTasks(f *flow) {
 }
 
 func (c *compiler) validateInstrument(f *flow) {
-	if f.ObservabilityEnabled {
-		if f.Logger == nil {
-			c.errf("cff.Instrument requires a *zap.Logger to be provided: use cff.Logger", c.nodePosition(f.Node))
-		}
-		if f.Emitter == nil && f.Metrics == nil {
-			c.errf("cff.Instrument requires a *tally.Scope via cff.Metrics or cff.Emitter to be provided",
-				c.nodePosition(f.Node))
-		}
+	if !f.ObservabilityEnabled {
+		return
+	}
+
+	if f.Logger == nil {
+		c.errf("cff.Instrument requires a *zap.Logger to be provided: use cff.Logger", c.nodePosition(f.Node))
+	}
+
+	if f.Emitter == nil && f.Metrics == nil {
+		c.errf("cff.Instrument requires a *tally.Scope via cff.Metrics or cff.Emitter to be provided",
+			c.nodePosition(f.Node))
+	}
+
+	if f.Emitter != nil && f.Metrics != nil {
+		c.errf("cff.Emitter cannot be used with cff.Metrics: "+
+			"found cff.Emitter on line %v and cff.Metrics on line %v",
+			c.nodePosition(f.Node),
+			c.nodePosition(f.Emitter).Line,
+			c.nodePosition(f.Metrics).Line,
+		)
 	}
 }
 

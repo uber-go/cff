@@ -34,10 +34,10 @@ func BenchmarkMetrics(b *testing.B) {
 	builder := cff.DefaultEmitter(scope)
 
 	metricsMemoized := func(logger *zap.Logger, scope tally.Scope) float64 {
-		return MetricsMemoized1000(logger, scope, builder)
+		return MetricsMemoized1000(logger, builder)
 	}
 	metricsFailedMemoized := func(logger *zap.Logger, scope tally.Scope) float64 {
-		return Metrics1000FailedMemoized(logger, scope, builder)
+		return Metrics1000FailedMemoized(logger, builder)
 	}
 
 	metricsCases := []struct {

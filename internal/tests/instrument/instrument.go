@@ -191,7 +191,6 @@ func (h *CustomEmitter) Run(ctx context.Context, req string) (res uint8, err err
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
-		cff.Metrics(h.Scope),
 		cff.Logger(h.Logger),
 		cff.InstrumentFlow("AtoiRun"),
 		cff.WithEmitter(h.Emitter),
@@ -220,7 +219,6 @@ func (h *CustomEmitter) Do(ctx context.Context, req string) (res int, err error)
 		cff.Results(&res),
 		cff.InstrumentFlow("AtoiDo"),
 		cff.WithEmitter(h.Emitter),
-		cff.Metrics(h.Scope),
 		cff.Logger(h.Logger),
 		cff.Task(
 			strconv.Atoi,
@@ -235,7 +233,6 @@ func (h *CustomEmitter) Work(ctx context.Context, req string) (res int, err erro
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
-		cff.Metrics(h.Scope),
 		cff.WithEmitter(h.Emitter),
 		cff.Logger(h.Logger),
 		cff.Task(
@@ -252,7 +249,6 @@ func (h *CustomEmitter) T3630161(ctx context.Context) {
 	var s string
 	_ = cff.Flow(ctx,
 		cff.Results(&s),
-		cff.Metrics(h.Scope),
 		cff.WithEmitter(h.Emitter),
 		cff.Logger(h.Logger),
 		cff.InstrumentFlow("T3630161"),
@@ -283,7 +279,6 @@ func (h *CustomEmitter) T3795761(ctx context.Context, shouldRun bool,
 	var s string
 	_ = cff.Flow(ctx,
 		cff.Results(&s),
-		cff.Metrics(h.Scope),
 		cff.WithEmitter(h.Emitter),
 		cff.Logger(h.Logger),
 		cff.InstrumentFlow("T3795761"),
