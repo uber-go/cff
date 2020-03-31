@@ -4,6 +4,11 @@
 //
 // Specify one or more flows in your code with the Flow function, tag your Go
 // file with the "cff" build tag, and run the cff tool.
+//
+//   // +build cff
+//
+// This is necessary for every Go file that makes use of CFF2's code
+// generation directives.
 package cff
 
 import (
@@ -22,6 +27,9 @@ type FlowOption interface {
 // values are made available to the Flow as-is.
 //
 //  cff.Params(request)
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func Params(args ...interface{}) FlowOption {
 	panic("code not generated; run cff")
 }
@@ -33,18 +41,27 @@ func Params(args ...interface{}) FlowOption {
 //    cff.Results(&result),
 //    cff.Task(...),
 //  )
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func Results(results ...interface{}) FlowOption {
 	panic("code not generated; run cff")
 }
 
 // Metrics provides the Tally scope to which metrics will be logged for Tasks
 // and Flows that have been instrumented with Instrument or InstrumentFlow.
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func Metrics(scope tally.Scope) FlowOption {
 	panic("code not generated; run cff")
 }
 
 // Logger provides the logger to which messages will be logged for Tasks and
 // Flows that have been instrumented with Instrument or InstrumentFlow.
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func Logger(logger *zap.Logger) FlowOption {
 	panic("code not generated; run cff")
 }
@@ -52,12 +69,18 @@ func Logger(logger *zap.Logger) FlowOption {
 // WithEmitter provides an optional observer for task metric events.
 // If provided, we will use the provided Emitter rather than the default
 // metrics implementation.
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func WithEmitter(Emitter) FlowOption {
 	panic("code not generated; run cff")
 }
 
 // WithLogFields specifies additional log fields that should be added to emitted
 // logs.
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func WithLogFields(...zap.Field) FlowOption {
 	panic("code not generated; run cff")
 }
@@ -95,6 +118,9 @@ func WithLogFields(...zap.Field) FlowOption {
 //  func(context.Context, I1, I2, ...) (R1, R2, ..., error)
 //
 // Task behavior may further be customized with TaskOptions.
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func Task(fn interface{}, opts ...TaskOption) FlowOption {
 	panic("code not generated; run cff")
 }
@@ -102,6 +128,9 @@ func Task(fn interface{}, opts ...TaskOption) FlowOption {
 // InstrumentFlow specifies that this Flow should be instrumented for
 // observability. The provided name will be used in emitted metrics, logs, and
 // spans, if any.
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func InstrumentFlow(name string) FlowOption {
 	panic("code not generated; run cff")
 }
@@ -122,6 +151,9 @@ func InstrumentFlow(name string) FlowOption {
 // Tasks may be specified in any order. They will be connected based on their
 // inputs and outputs. If any of the tasks fail, the entire Flow fails and the
 // corresponding error is returned.
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func Flow(ctx context.Context, opts ...FlowOption) error {
 	panic("code not generated; run cff")
 }
@@ -131,8 +163,9 @@ type TaskOption interface {
 	cffTaskOption()
 }
 
-// FallbackWith specifies that if the corresponding Task failed with an error,
-// we should recover from that error and return the provided values instead.
+// FallbackWith specifies that if the corresponding Task failed with an error
+// or panic, we should recover from that failure and return the provided
+// values instead.
 //
 // This function accepts the same number of values as returned by the Task
 // with exactly the same types. This DOES NOT include the error type returned
@@ -140,8 +173,8 @@ type TaskOption interface {
 //
 //   cff.Task(client.ListUsers, cff.FallbackWith(cachedUserList))
 //
-// Note that this function DOES NOT recover from Task panics. If panics should
-// be handled, it is the caller or the Task implementation's responsibility.
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func FallbackWith(results ...interface{}) TaskOption {
 	panic("code not generated; run cff")
 }
@@ -159,6 +192,9 @@ func FallbackWith(results ...interface{}) TaskOption {
 //
 // When specified, the corresponding Task will be executed only if this
 // function returns true.
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func Predicate(fn interface{}) TaskOption {
 	panic("code not generated; run cff")
 }
@@ -166,6 +202,9 @@ func Predicate(fn interface{}) TaskOption {
 // Instrument specifies that this Task should be instrumented for
 // observability. The provided name will be used in emitted metrics, logs, and
 // spans, if any.
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func Instrument(name string) TaskOption {
 	panic("code not generated; run cff")
 }
@@ -175,6 +214,9 @@ func Instrument(name string) TaskOption {
 //
 // Only tasks marked with Invoke are allowed to have zero non-error or
 // single error returns.
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func Invoke(enable bool) TaskOption {
 	panic("code not generated; run cff")
 }
