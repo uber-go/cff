@@ -2,7 +2,6 @@ package cff
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/uber-go/tally"
@@ -76,147 +75,8 @@ type Emitter interface {
 	FlowInit(*FlowInfo) FlowEmitter
 }
 
-type flowEmitter struct {
-	scope tally.Scope
-}
-
-type taskEmitter struct {
-	scope tally.Scope
-}
-
-type emitter struct {
-	scope tally.Scope
-
-	flows *sync.Map // map[string]FlowEmitter
-	tasks *sync.Map // map[string]TaskEmitter
-}
-
-// Task Emitter implementation.
-//
-func (e *taskEmitter) TaskError(context.Context, error) {
-	e.scope.Counter("task.error").Inc(1)
-}
-
-func (e *taskEmitter) TaskErrorRecovered(_ context.Context, err error) {
-	e.scope.Counter("task.error").Inc(1)
-	e.scope.Counter("task.recovered").Inc(1)
-}
-
-func (e *taskEmitter) TaskPanic(_ context.Context, x interface{}) {
-	e.scope.Counter("task.panic").Inc(1)
-}
-
-func (e *taskEmitter) TaskPanicRecovered(_ context.Context, x interface{}) {
-	e.scope.Counter("task.panic").Inc(1)
-	e.scope.Counter("task.recovered").Inc(1)
-}
-
-func (e *taskEmitter) TaskSkipped(context.Context, error) {
-	e.scope.Counter("task.skipped").Inc(1)
-}
-
-func (e *taskEmitter) TaskSuccess(context.Context) {
-	e.scope.Counter("task.success").Inc(1)
-}
-
-func (e *taskEmitter) TaskDone(_ context.Context, d time.Duration) {
-	e.scope.Timer("task.timing").Record(d)
-}
-
-// FlowEmitter implementation.
-//
-func (e *flowEmitter) FlowError(context.Context, error) {
-	e.scope.Counter("taskflow.error").Inc(1)
-}
-
-func (e *flowEmitter) FlowSkipped(context.Context, error) {
-	e.scope.Counter("taskflow.skipped").Inc(1)
-}
-
-func (e *flowEmitter) FlowSuccess(context.Context) {
-	e.scope.Counter("taskflow.success").Inc(1)
-}
-
-func (e *flowEmitter) FlowFailedTask(_ context.Context, task string, _ error) FlowEmitter {
-	return &flowEmitter{
-		scope: e.scope.Tagged(map[string]string{
-			"failedtask": task,
-		})}
-}
-
-func (e *flowEmitter) FlowDone(_ context.Context, d time.Duration) {
-	e.scope.Timer("taskflow.timing").Record(d)
-}
-
-// cacheKey uniquely identifies a task or a flow based on the position information.
-type cacheKey struct {
-	TaskName             string // name of the task
-	TaskFile             string // file where task is defined
-	TaskLine, TaskColumn int    // line and column in the file where the task is defined
-	FlowName             string // name of the flow
-	FlowFile             string // file where flow is defined
-	FlowLine, FlowColumn int    // line and column in the file where the flow is defined
-}
-
-// Emitter implementation.
-//
-func (e *emitter) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmitter {
-	cacheKey := cacheKey{
-		TaskName:   taskInfo.Task,
-		TaskFile:   taskInfo.File,
-		TaskLine:   taskInfo.Line,
-		TaskColumn: taskInfo.Column,
-		FlowName:   flowInfo.Flow,
-		FlowFile:   flowInfo.File,
-		FlowLine:   flowInfo.Line,
-		FlowColumn: flowInfo.Column,
-	}
-	// Note: this lookup is an optimization to avoid the expensive Tagged call.
-	if v, ok := e.tasks.Load(cacheKey); ok {
-		return v.(TaskEmitter)
-	}
-	tags := map[string]string{
-		"task": taskInfo.Task,
-	}
-	if flowInfo.Flow != "" {
-		tags["flow"] = flowInfo.Flow
-	}
-
-	scope := e.scope.Tagged(tags)
-	te := &taskEmitter{
-		scope: scope,
-	}
-	v, _ := e.tasks.LoadOrStore(cacheKey, te)
-
-	return v.(TaskEmitter)
-}
-
-func (e *emitter) FlowInit(info *FlowInfo) FlowEmitter {
-	cacheKey := cacheKey{
-		FlowName:   info.Flow,
-		FlowFile:   info.File,
-		FlowLine:   info.Line,
-		FlowColumn: info.Column,
-	}
-	// Note: this lookup is an optimization to avoid the expensive Tagged call.
-	if v, ok := e.flows.Load(cacheKey); ok {
-		return v.(FlowEmitter)
-	}
-	scope := e.scope.Tagged(map[string]string{"flow": info.Flow})
-	fe := &flowEmitter{
-		scope: scope,
-	}
-	v, _ := e.flows.LoadOrStore(cacheKey, fe)
-
-	return v.(FlowEmitter)
-}
-
 // DefaultEmitter sets up default implementation of metrics used in the
 // template with memoization of the scope.
 func DefaultEmitter(scope tally.Scope) Emitter {
-	return &emitter{
-		scope: scope,
-		flows: new(sync.Map),
-		tasks: new(sync.Map),
-	}
+	return TallyEmitter(scope)
 }

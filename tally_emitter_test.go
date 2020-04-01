@@ -10,11 +10,11 @@ import (
 	"github.com/uber-go/tally"
 )
 
-// TestCacheFlow verifies that we get back an initial cached object.
-func TestCacheFlow(t *testing.T) {
+// TestTallyEmitter_CacheFlow verifies that we get back an initial cached object.
+func TestTallyEmitter_CacheFlow(t *testing.T) {
 	t.Run("same object", func(t *testing.T) {
 		scope := tally.NewTestScope("", nil)
-		e := DefaultEmitter(scope)
+		e := TallyEmitter(scope)
 		fe := e.FlowInit(&FlowInfo{
 			Flow:   "flow",
 			File:   "location/flow.go",
@@ -31,7 +31,7 @@ func TestCacheFlow(t *testing.T) {
 	})
 	t.Run("mutate object and not get it back", func(t *testing.T) {
 		scope := tally.NewTestScope("", nil)
-		e := DefaultEmitter(scope)
+		e := TallyEmitter(scope)
 		fe := e.FlowInit(&FlowInfo{
 			Flow:   "flow",
 			File:   "location/flow.go",
@@ -52,11 +52,11 @@ func TestCacheFlow(t *testing.T) {
 
 }
 
-// TestCacheTask verifies that we get back an initial cached object.
-func TestCacheTask(t *testing.T) {
+// TestTallyEmitter_CacheTask verifies that we get back an initial cached object.
+func TestTallyEmitter_CacheTask(t *testing.T) {
 	t.Run("same object", func(t *testing.T) {
 		scope := tally.NewTestScope("", nil)
-		e := DefaultEmitter(scope)
+		e := TallyEmitter(scope)
 		te := e.TaskInit(
 			&TaskInfo{
 				Task:   "task",
@@ -103,11 +103,11 @@ func TestCacheTask(t *testing.T) {
 	})
 }
 
-// TestCacheReadRace tests contention around initial caching of TaskEmitter obj.
-func TestCacheTaskReadRace(t *testing.T) {
+// TestTallyEmitter_CacheReadRace tests contention around initial caching of TaskEmitter obj.
+func TestTallyEmitter_CacheTaskReadRace(t *testing.T) {
 	const N = 1000
 	scope := tally.NewTestScope("", nil)
-	e := DefaultEmitter(scope)
+	e := TallyEmitter(scope)
 	start := make(chan struct{})
 	results := make([]TaskEmitter, N)
 	var wg sync.WaitGroup
@@ -142,11 +142,11 @@ func TestCacheTaskReadRace(t *testing.T) {
 	}
 }
 
-// TestCacheReadRace tests contention around initial caching of FlowEmitter obj.
-func TestCacheFlowReadRace(t *testing.T) {
+// TestTallyEmitter_CacheReadRace tests contention around initial caching of FlowEmitter obj.
+func TestTallyEmitter_CacheFlowReadRace(t *testing.T) {
 	const N = 1000
 	scope := tally.NewTestScope("", nil)
-	e := DefaultEmitter(scope)
+	e := TallyEmitter(scope)
 	start := make(chan struct{})
 	results := make([]FlowEmitter, N)
 	mutatedResults := make([]FlowEmitter, N/2)
