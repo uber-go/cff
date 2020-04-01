@@ -37,14 +37,17 @@ type TaskEmitter interface {
 	TaskSuccess(context.Context)
 	// TaskError is called when a task fails due to a task error.
 	TaskError(context.Context, error)
+	// TaskErrorRecovered is called when a task fails due to a task error
+	// and recovers in a FallbackWith.
+	TaskErrorRecovered(context.Context, error)
 	// TaskSkipped is called when a task is skipped due to predicate or an
 	// earlier task error.
 	TaskSkipped(context.Context, error)
 	// TaskPanic is called when a task panics.
 	TaskPanic(context.Context, interface{})
-	// TaskRecovered is called when a task errors but it was recovered by a
-	// RecoverWith annotation.
-	TaskRecovered(context.Context, interface{})
+	// TaskPanicRecovered is called when a task panics but is recovered by
+	// a FallbackWith.
+	TaskPanicRecovered(context.Context, interface{})
 	// TaskDone is called when a task finishes.
 	TaskDone(context.Context, time.Duration)
 }
@@ -94,11 +97,17 @@ func (e *taskEmitter) TaskError(context.Context, error) {
 	e.scope.Counter("task.error").Inc(1)
 }
 
-func (e *taskEmitter) TaskPanic(context.Context, interface{}) {
+func (e *taskEmitter) TaskErrorRecovered(_ context.Context, err error) {
+	e.scope.Counter("task.error").Inc(1)
+	e.scope.Counter("task.recovered").Inc(1)
+}
+
+func (e *taskEmitter) TaskPanic(_ context.Context, x interface{}) {
 	e.scope.Counter("task.panic").Inc(1)
 }
 
-func (e *taskEmitter) TaskRecovered(context.Context, interface{}) {
+func (e *taskEmitter) TaskPanicRecovered(_ context.Context, x interface{}) {
+	e.scope.Counter("task.panic").Inc(1)
 	e.scope.Counter("task.recovered").Inc(1)
 }
 

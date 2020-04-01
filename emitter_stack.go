@@ -45,6 +45,13 @@ func (s *emitterStackTask) TaskError(ctx context.Context, err error) {
 	}
 }
 
+// TaskError is called when a task fails due to a task error.
+func (s *emitterStackTask) TaskErrorRecovered(ctx context.Context, err error) {
+	for _, e := range s.stack {
+		e.TaskErrorRecovered(ctx, err)
+	}
+}
+
 // TaskSkipped is called when a task is skipped due to predicate or an
 // earlier task error.
 func (s *emitterStackTask) TaskSkipped(ctx context.Context, err error) {
@@ -62,9 +69,9 @@ func (s *emitterStackTask) TaskPanic(ctx context.Context, pv interface{}) {
 
 // TaskRecovered is called when a task errors but it was recovered by a
 // RecoverWith annotation.
-func (s *emitterStackTask) TaskRecovered(ctx context.Context, pv interface{}) {
+func (s *emitterStackTask) TaskPanicRecovered(ctx context.Context, pv interface{}) {
 	for _, e := range s.stack {
-		e.TaskRecovered(ctx, pv)
+		e.TaskPanicRecovered(ctx, pv)
 	}
 }
 

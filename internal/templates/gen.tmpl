@@ -135,8 +135,7 @@
             if recovered != nil {
             {{ if .FallbackWith }}
                 {{ if .Instrument -}}
-                    taskEmitter.TaskPanic(ctx, recovered)
-                    taskEmitter.TaskRecovered(ctx, recovered)
+                    taskEmitter.TaskPanicRecovered(ctx, recovered)
                     recoveredErr, ok := recovered.(error)
                     if ok {
                     logger.Error("task panic recovered",
@@ -182,8 +181,7 @@
                 if {{ $serr }} != nil {
                 {{ if .FallbackWith -}}
                     {{ if .Instrument -}}
-                        taskEmitter.TaskError(ctx, {{$serr}})
-                        taskEmitter.TaskRecovered(ctx, {{$serr}})
+                        taskEmitter.TaskErrorRecovered(ctx, {{$serr}})
                         logger.Error("task error recovered",
                         zap.String("task", {{ expr .Instrument.Name }}),
                         zap.Error({{ $serr }}),

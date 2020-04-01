@@ -174,9 +174,8 @@ func TestInstrumentRecoverME(t *testing.T) {
 	flowEmitter.EXPECT().FlowSuccess(ctx)
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
 
-	taskEmitter.EXPECT().TaskError(ctx, gomock.Any())
 	taskEmitter.EXPECT().TaskSuccess(ctx)
-	taskEmitter.EXPECT().TaskRecovered(ctx, gomock.Any())
+	taskEmitter.EXPECT().TaskErrorRecovered(ctx, gomock.Any())
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
 
 	emitter.EXPECT().FlowInit(&cff.FlowInfo{"AtoiRun", "go.uber.org/cff/internal/tests/instrument/instrument.go", 191, 8}).Return(flowEmitter)
@@ -209,8 +208,7 @@ func TestT3630161ME(t *testing.T) {
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
 
 	// 2 tasks.
-	taskEmitter.EXPECT().TaskError(ctx, gomock.Any())
-	taskEmitter.EXPECT().TaskRecovered(ctx, gomock.Any())
+	taskEmitter.EXPECT().TaskErrorRecovered(ctx, gomock.Any())
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
 	taskEmitter.EXPECT().TaskSuccess(ctx)
 

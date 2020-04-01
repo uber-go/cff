@@ -177,6 +177,23 @@ func TestEmitterStack(t *testing.T) {
 			m.stack.TaskInit(
 				&cff.TaskInfo{"foo", "foo.go", 14, 16}, &cff.FlowInfo{"fooFlow", "foo.go", 10, 12}).TaskError(ctx, err)
 		})
+		t.Run("TaskErrorRecovered", func(t *testing.T) {
+			ctx := context.Background()
+			m := mocks(t)
+			defer m.ctrl.Finish()
+
+			m.emitter1.EXPECT().TaskInit(
+				&cff.TaskInfo{"foo", "foo.go", 14, 16}, &cff.FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task1)
+			m.emitter2.EXPECT().TaskInit(
+				&cff.TaskInfo{"foo", "foo.go", 14, 16}, &cff.FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task2)
+
+			err := errors.New("great sadness")
+
+			m.task1.EXPECT().TaskErrorRecovered(ctx, err)
+			m.task2.EXPECT().TaskErrorRecovered(ctx, err)
+			m.stack.TaskInit(
+				&cff.TaskInfo{"foo", "foo.go", 14, 16}, &cff.FlowInfo{"fooFlow", "foo.go", 10, 12}).TaskErrorRecovered(ctx, err)
+		})
 		t.Run("TaskSkipped", func(t *testing.T) {
 			ctx := context.Background()
 			m := mocks(t)
@@ -211,7 +228,7 @@ func TestEmitterStack(t *testing.T) {
 			m.stack.TaskInit(
 				&cff.TaskInfo{"foo", "foo.go", 14, 16}, &cff.FlowInfo{"fooFlow", "foo.go", 10, 12}).TaskPanic(ctx, pv)
 		})
-		t.Run("TaskRecovered", func(t *testing.T) {
+		t.Run("TaskPanicRecovered", func(t *testing.T) {
 			ctx := context.Background()
 			m := mocks(t)
 			defer m.ctrl.Finish()
@@ -223,10 +240,10 @@ func TestEmitterStack(t *testing.T) {
 
 			pv := int(1)
 
-			m.task1.EXPECT().TaskRecovered(ctx, pv)
-			m.task2.EXPECT().TaskRecovered(ctx, pv)
+			m.task1.EXPECT().TaskPanicRecovered(ctx, pv)
+			m.task2.EXPECT().TaskPanicRecovered(ctx, pv)
 			m.stack.TaskInit(
-				&cff.TaskInfo{"foo", "foo.go", 14, 16}, &cff.FlowInfo{"fooFlow", "foo.go", 10, 12}).TaskRecovered(ctx, pv)
+				&cff.TaskInfo{"foo", "foo.go", 14, 16}, &cff.FlowInfo{"fooFlow", "foo.go", 10, 12}).TaskPanicRecovered(ctx, pv)
 		})
 		t.Run("TaskDone", func(t *testing.T) {
 			ctx := context.Background()

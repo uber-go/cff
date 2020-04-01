@@ -242,8 +242,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				recovered := recover()
 				if recovered != nil {
 
-					taskEmitter.TaskPanic(ctx, recovered)
-					taskEmitter.TaskRecovered(ctx, recovered)
+					taskEmitter.TaskPanicRecovered(ctx, recovered)
 					recoveredErr, ok := recovered.(error)
 					if ok {
 						logger.Error("task panic recovered",
@@ -264,8 +263,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			v5, err4 = h.users.List(v3)
 			tasks[1][1].ran = true
 			if err4 != nil {
-				taskEmitter.TaskError(ctx, err4)
-				taskEmitter.TaskRecovered(ctx, err4)
+				taskEmitter.TaskErrorRecovered(ctx, err4)
 				logger.Error("task error recovered",
 					zap.String("task", "FormSendEmailRequest"),
 					zap.Error(err4),
