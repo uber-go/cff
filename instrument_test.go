@@ -35,7 +35,12 @@ func TestInstrumentEmitter(t *testing.T) {
 	taskEmitter.EXPECT().TaskSuccess(ctx).Times(2)
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
 
-	emitter.EXPECT().FlowInit(&cff.FlowInfo{"AtoiRun", "go.uber.org/cff/internal/tests/instrument/instrument.go", 191, 8}).Return(flowEmitter)
+	emitter.EXPECT().FlowInit(&cff.FlowInfo{
+		Flow:   "AtoiRun",
+		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
+		Line:   189,
+		Column: 8,
+	}).Return(flowEmitter)
 	// 2 in the tasks for loop inside defer() and twice after.
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
 
@@ -178,7 +183,12 @@ func TestInstrumentRecoverME(t *testing.T) {
 	taskEmitter.EXPECT().TaskErrorRecovered(ctx, gomock.Any())
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
 
-	emitter.EXPECT().FlowInit(&cff.FlowInfo{"AtoiRun", "go.uber.org/cff/internal/tests/instrument/instrument.go", 191, 8}).Return(flowEmitter)
+	emitter.EXPECT().FlowInit(&cff.FlowInfo{
+		Flow:   "AtoiRun",
+		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
+		Line:   189,
+		Column: 8,
+	}).Return(flowEmitter)
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
 
 	g := &instrument.CustomEmitter{
@@ -300,13 +310,13 @@ func TestPanic(t *testing.T) {
 		&cff.TaskInfo{
 			Task:   "Atoi",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   313,
+			Line:   311,
 			Column: 12,
 		},
 		&cff.FlowInfo{
 			Flow:   "",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   310,
+			Line:   308,
 			Column: 9,
 		}).Return(taskEmitter)
 

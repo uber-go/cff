@@ -58,54 +58,6 @@ func TestInstrument(t *testing.T) {
 	}
 }
 
-func TestInstrumentWithLogFields(t *testing.T) {
-	t.Run("Ellipsis", func(t *testing.T) {
-		core, observedLogs := observer.New(zap.DebugLevel)
-		logger := zap.New(core)
-		h := &DefaultEmitter{Scope: tally.NoopScope, Logger: logger}
-
-		_, err := h.Run(context.Background(), "1",
-			zap.String("foo", "bar"), zap.Int("baz", 42))
-		require.NoError(t, err)
-
-		logEntries := observedLogs.All()
-		assert.NotEmpty(t, logEntries)
-		for _, entry := range logEntries {
-			fields := entry.ContextMap()
-			foo, ok := fields["foo"]
-			assert.True(t, ok, "foo must be present in all log messages")
-			assert.Equal(t, "bar", foo)
-
-			baz, ok := fields["baz"]
-			assert.True(t, ok, "baz must be present in all log messages")
-			assert.EqualValues(t, 42, baz)
-		}
-	})
-
-	t.Run("Explicit", func(t *testing.T) {
-		core, observedLogs := observer.New(zap.DebugLevel)
-		logger := zap.New(core)
-		h := &DefaultEmitter{Scope: tally.NoopScope, Logger: logger}
-
-		_, err := h.ExplicitListOfFields(context.Background(), "1")
-		require.NoError(t, err)
-
-		logEntries := observedLogs.All()
-		assert.NotEmpty(t, logEntries)
-		for _, entry := range logEntries {
-			fields := entry.ContextMap()
-
-			foo, ok := fields["foo"]
-			assert.True(t, ok, "foo must be present in all log messages")
-			assert.Equal(t, "bar", foo)
-
-			baz, ok := fields["baz"]
-			assert.True(t, ok, "baz must be present in all log messages")
-			assert.EqualValues(t, 42, baz)
-		}
-	})
-}
-
 func TestInstrumentError(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)

@@ -41,13 +41,12 @@ type DefaultEmitter struct {
 }
 
 // Run executes a flow to test instrumentation.
-func (h *DefaultEmitter) Run(ctx context.Context, req string, fields ...zap.Field) (res uint8, err error) {
+func (h *DefaultEmitter) Run(ctx context.Context, req string) (res uint8, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
 		cff.Metrics(h.Scope),
 		cff.Logger(h.Logger),
-		cff.WithLogFields(fields...),
 		cff.InstrumentFlow("AtoiRun"),
 
 		cff.Task(
@@ -77,7 +76,6 @@ func (h *DefaultEmitter) ExplicitListOfFields(ctx context.Context, req string) (
 		cff.InstrumentFlow("ExplicitListOfFields"),
 		cff.Metrics(h.Scope),
 		cff.Logger(h.Logger),
-		cff.WithLogFields(zap.String("foo", "bar"), zap.Int("baz", 42)),
 		cff.Task(
 			strconv.Atoi,
 			cff.Instrument("Atoi"),

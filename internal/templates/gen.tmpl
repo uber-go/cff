@@ -13,14 +13,6 @@
         v{{ typeHash .Type }} {{ type .Type }},
     {{- end }}) (err error) {
     var _ = ({{ $cff }}.FlowOption)(nil)
-    {{ if $flow.ObservabilityEnabled }}
-        {{ with $flow.LogFields }}
-        logger = logger.With(
-            {{- range $i, $f := .Args }}
-                {{- if $i }},{{ end -}} {{ expr $f }}
-            {{- end }}{{ if .Ellipsis }}...{{ end }})
-        {{ end }}
-    {{ end }}
     {{ if $flow.Instrument }}
         var flowEmitterReplace sync.Once
         var _ = &flowEmitterReplace

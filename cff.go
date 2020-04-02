@@ -76,15 +76,6 @@ func WithEmitter(Emitter) FlowOption {
 	panic("code not generated; run cff")
 }
 
-// WithLogFields specifies additional log fields that should be added to emitted
-// logs.
-//
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
-func WithLogFields(...zap.Field) FlowOption {
-	panic("code not generated; run cff")
-}
-
 // Task specifies a task for execution with a flow. A Task is any executable
 // function or bound method available in the scope when cff.Flow is called.
 //
