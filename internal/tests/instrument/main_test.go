@@ -2,6 +2,7 @@ package instrument
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"go.uber.org/cff"
@@ -411,22 +412,26 @@ func TestT3795761(t *testing.T) {
 // logEvolutionTester helps verify that a new code path behaves similarly to
 // an older code path in terms of logged information.
 //
-// Logs emitted by the new code path must have at least as much information as
-// the old code path.
+// The new code path must emit at least as many logs with at least as much
+// information as the old code path.
+//
+// The following is valid.
 //
 //   lev := newLogEvolutionTester(t, zapcore.DebugLevel)
 //   defer lev.Verify()
 //
-//   lev.Old().Info("foo")
-//   lev.New().Info("foo", zap.String("bar", "baz"))
+//   lev.Old().Info("foo", zap.Int("bar", 1))
 //
+//   lev.New().Info("foo", zap.Int("bar", 1), zap.Stirng("baz", "qux"))
+//   lev.New().Debug("more information")
 //
 type logEvolutionTester struct {
 	t                *testing.T
 	oldCore, newCore zapcore.Core
 	oldLogs, newLogs *observer.ObservedLogs
 
-	skipFields []string
+	skipFields   []string
+	transformOld func(observer.LoggedEntry) observer.LoggedEntry
 }
 
 func newLogEvolutionTester(lvl zapcore.Level) *logEvolutionTester {
@@ -446,6 +451,13 @@ func (lev *logEvolutionTester) SkipFields(names ...string) {
 	lev.skipFields = append(lev.skipFields, names...)
 }
 
+// TransformOld configures the logEvolutionTester to transform log entries
+// written to the old logger before comparing them to the entries written to
+// the new logger.
+func (lev *logEvolutionTester) TransformOld(f func(observer.LoggedEntry) observer.LoggedEntry) {
+	lev.transformOld = f
+}
+
 // Old returns the logger for the old code path.
 func (lev *logEvolutionTester) Old() *zap.Logger { return zap.New(lev.oldCore) }
 
@@ -455,11 +467,21 @@ func (lev *logEvolutionTester) New() *zap.Logger { return zap.New(lev.newCore) }
 // Verify confirms that log entries emitted on the new code path match those
 // on the old code path, optionally with new fields.
 func (lev *logEvolutionTester) Verify(t *testing.T) {
+	skipFields := make(map[string]struct{})
+	for _, f := range lev.skipFields {
+		skipFields[f] = struct{}{}
+	}
 
 	oldLogs := lev.oldLogs.AllUntimed()
+	if f := lev.transformOld; f != nil {
+		for i, e := range oldLogs {
+			oldLogs[i] = f(e)
+		}
+	}
+
 	newLogs := lev.newLogs.AllUntimed()
 
-	if !assert.Equal(t, len(oldLogs), len(newLogs), "number of log entries") {
+	if !assert.LessOrEqualf(t, len(oldLogs), len(newLogs), "new logger must see at least as many entries as old") {
 		t.Log("Old:")
 		for _, e := range oldLogs {
 			t.Logf("\t%v\t%#v", e.Entry, e.ContextMap())
@@ -472,14 +494,34 @@ func (lev *logEvolutionTester) Verify(t *testing.T) {
 		return
 	}
 
-	skipFields := make(map[string]struct{})
-	for _, f := range lev.skipFields {
-		skipFields[f] = struct{}{}
-	}
+	for _, oldEntry := range oldLogs {
+		// Find the next entry that matches the old log entry.
+		// Everything in between is considered additional information
+		// that wasn't previously logged.
+		var (
+			newEntry observer.LoggedEntry
+			found    bool
+		)
+		for j, candidate := range newLogs {
+			if oldEntry.Message == candidate.Message {
+				found = true
+				newEntry = candidate
+				newLogs = newLogs[j+1:]
+				break
+			}
+		}
 
-	for i, oldEntry := range oldLogs {
-		newEntry := newLogs[i]
-		if !assert.Equalf(t, oldEntry.Entry, newEntry.Entry, "entry %v", i) {
+		if !assert.Truef(t, found, "log entry %q not found in new logs", oldEntry.Message) {
+			t.Log("New logs:")
+			for _, e := range newLogs {
+				t.Logf("\t%v\t%#v", e.Entry, e.ContextMap())
+			}
+			continue
+		}
+
+		// Verify that the rest matches.
+
+		if !assert.Equal(t, oldEntry.Entry, newEntry.Entry) {
 			continue
 		}
 
@@ -489,7 +531,7 @@ func (lev *logEvolutionTester) Verify(t *testing.T) {
 			if _, ok := skipFields[k]; ok {
 				continue
 			}
-			assert.Equalf(t, oldv, newContext[k], "field %q of entry %v", k, i)
+			assert.Equalf(t, oldv, newContext[k], "field %q mismatch", k)
 		}
 	}
 }
@@ -573,6 +615,30 @@ func TestLogEmitterDefaultLoggerParity(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			lev := newLogEvolutionTester(zapcore.DebugLevel)
 			lev.SkipFields("stack") // don't verify stack trace equality
+			lev.TransformOld(func(e observer.LoggedEntry) observer.LoggedEntry {
+				msg := e.Message
+
+				msg = strings.ReplaceAll(msg, "taskflow", "flow")
+				msg = strings.ReplaceAll(msg, "succeeded", "success")
+
+				// For panics, look for the "error" key and
+				// switch it to "panic-value". This is super
+				// janky but it's only temporary until we
+				// delete the log entries from the generated
+				// code.
+				if strings.Contains(msg, "task panic") {
+					for i, f := range e.Context {
+						if f.Key != "error" {
+							continue
+						}
+
+						e.Context[i] = zap.String("panic-value", "always")
+					}
+				}
+
+				e.Message = msg
+				return e
+			})
 			defer lev.Verify(t)
 
 			ctx := context.Background()

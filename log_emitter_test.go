@@ -26,6 +26,20 @@ func TestLogFlowEmitter_IncludesFlowName(t *testing.T) {
 			"flow name expected in %#v", fields)
 	}
 }
+func TestLogFloWEmitter_ErrorLevelChange(t *testing.T) {
+	core, observed := observer.New(zapcore.DebugLevel)
+
+	LogEmitter(
+		zap.New(core),
+		LogErrors(zapcore.WarnLevel),
+	).FlowInit(&FlowInfo{Flow: "myflow"}).
+		FlowError(context.Background(), errors.New("great sadness"))
+
+	logs := observed.TakeAll()
+	require.Len(t, logs, 1)
+	logs[0].Level = zapcore.WarnLevel
+	assert.Equal(t, "great sadness", logs[0].ContextMap()["error"])
+}
 
 func TestLogTaskEmitter(t *testing.T) {
 	ctx := context.Background()
@@ -50,27 +64,77 @@ func TestLogTaskEmitter(t *testing.T) {
 		tem.TaskPanic(ctx, "foo")
 		logs := observed.TakeAll()
 		require.Len(t, logs, 1)
-		assert.Equal(t, "task panic: foo", fmt.Sprint(logs[0].ContextMap()["error"]))
+		assert.Equal(t, "foo", fmt.Sprint(logs[0].ContextMap()["panic-value"]))
 	})
 
 	t.Run("panic with error", func(t *testing.T) {
 		tem.TaskPanic(ctx, errors.New("great sadness"))
 		logs := observed.TakeAll()
 		require.Len(t, logs, 1)
-		assert.Equal(t, "great sadness", fmt.Sprint(logs[0].ContextMap()["error"]))
+		assert.Equal(t, "great sadness", fmt.Sprint(logs[0].ContextMap()["panic-value"]))
 	})
 
 	t.Run("panic recovered with value", func(t *testing.T) {
 		tem.TaskPanicRecovered(ctx, "foo")
 		logs := observed.TakeAll()
 		require.Len(t, logs, 1)
-		assert.Equal(t, "task panic: foo", fmt.Sprint(logs[0].ContextMap()["error"]))
+		assert.Equal(t, "foo", fmt.Sprint(logs[0].ContextMap()["panic-value"]))
 	})
 
 	t.Run("panic recovered with error", func(t *testing.T) {
 		tem.TaskPanicRecovered(ctx, errors.New("great sadness"))
 		logs := observed.TakeAll()
 		require.Len(t, logs, 1)
-		assert.Equal(t, "great sadness", fmt.Sprint(logs[0].ContextMap()["error"]))
+		assert.Equal(t, "great sadness", fmt.Sprint(logs[0].ContextMap()["panic-value"]))
+	})
+}
+
+func TestLogTaskEmitter_CustomizeLevels(t *testing.T) {
+	core, observed := observer.New(zapcore.DebugLevel)
+	ctx := context.Background()
+
+	em := LogEmitter(
+		zap.New(core),
+		LogErrors(zapcore.WarnLevel),
+		LogPanics(zapcore.InfoLevel),
+		LogRecovers(zapcore.DebugLevel),
+	).TaskInit(&TaskInfo{Task: "mytask"}, &FlowInfo{Flow: "myflow"})
+
+	t.Run("error level", func(t *testing.T) {
+		em.TaskError(ctx, errors.New("great sadness"))
+
+		logs := observed.TakeAll()
+		require.Len(t, logs, 1)
+		logs[0].Level = zapcore.WarnLevel
+		assert.Equal(t, "great sadness", logs[0].ContextMap()["error"])
+	})
+
+	t.Run("panic level", func(t *testing.T) {
+		em.TaskPanic(ctx, "something went wrong")
+
+		logs := observed.TakeAll()
+		require.Len(t, logs, 1)
+		logs[0].Level = zapcore.InfoLevel
+		assert.Equal(t, "something went wrong", logs[0].ContextMap()["panic-value"])
+	})
+
+	t.Run("recover level", func(t *testing.T) {
+		t.Run("error", func(t *testing.T) {
+			em.TaskErrorRecovered(ctx, errors.New("great sadness"))
+
+			logs := observed.TakeAll()
+			require.Len(t, logs, 1)
+			logs[0].Level = zapcore.DebugLevel
+			assert.Equal(t, "great sadness", logs[0].ContextMap()["error"])
+		})
+
+		t.Run("panic", func(t *testing.T) {
+			em.TaskPanicRecovered(ctx, "something went wrong")
+
+			logs := observed.TakeAll()
+			require.Len(t, logs, 1)
+			logs[0].Level = zapcore.DebugLevel
+			assert.Equal(t, "something went wrong", logs[0].ContextMap()["panic-value"])
+		})
 	})
 }
