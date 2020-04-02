@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"go.uber.org/cff"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uber-go/tally"
@@ -405,4 +406,189 @@ func TestT3795761(t *testing.T) {
 			assert.Equal(t, expectedMessages[i], entry.Message)
 		}
 	})
+}
+
+// logEvolutionTester helps verify that a new code path behaves similarly to
+// an older code path in terms of logged information.
+//
+// Logs emitted by the new code path must have at least as much information as
+// the old code path.
+//
+//   lev := newLogEvolutionTester(t, zapcore.DebugLevel)
+//   defer lev.Verify()
+//
+//   lev.Old().Info("foo")
+//   lev.New().Info("foo", zap.String("bar", "baz"))
+//
+//
+type logEvolutionTester struct {
+	t                *testing.T
+	oldCore, newCore zapcore.Core
+	oldLogs, newLogs *observer.ObservedLogs
+
+	skipFields []string
+}
+
+func newLogEvolutionTester(lvl zapcore.Level) *logEvolutionTester {
+	oldCore, oldLogs := observer.New(lvl)
+	newCore, newLogs := observer.New(lvl)
+	return &logEvolutionTester{
+		oldCore: oldCore,
+		oldLogs: oldLogs,
+		newCore: newCore,
+		newLogs: newLogs,
+	}
+}
+
+// SkipFields informs the logEvolutionTester that it should not verify
+// equality of the provided fields in log messages.
+func (lev *logEvolutionTester) SkipFields(names ...string) {
+	lev.skipFields = append(lev.skipFields, names...)
+}
+
+// Old returns the logger for the old code path.
+func (lev *logEvolutionTester) Old() *zap.Logger { return zap.New(lev.oldCore) }
+
+// New returns the logger for the new code path.
+func (lev *logEvolutionTester) New() *zap.Logger { return zap.New(lev.newCore) }
+
+// Verify confirms that log entries emitted on the new code path match those
+// on the old code path, optionally with new fields.
+func (lev *logEvolutionTester) Verify(t *testing.T) {
+
+	oldLogs := lev.oldLogs.AllUntimed()
+	newLogs := lev.newLogs.AllUntimed()
+
+	if !assert.Equal(t, len(oldLogs), len(newLogs), "number of log entries") {
+		t.Log("Old:")
+		for _, e := range oldLogs {
+			t.Logf("\t%v\t%#v", e.Entry, e.ContextMap())
+		}
+
+		t.Log("New:")
+		for _, e := range newLogs {
+			t.Logf("\t%v\t%#v", e.Entry, e.ContextMap())
+		}
+		return
+	}
+
+	skipFields := make(map[string]struct{})
+	for _, f := range lev.skipFields {
+		skipFields[f] = struct{}{}
+	}
+
+	for i, oldEntry := range oldLogs {
+		newEntry := newLogs[i]
+		if !assert.Equalf(t, oldEntry.Entry, newEntry.Entry, "entry %v", i) {
+			continue
+		}
+
+		oldContext := oldEntry.ContextMap()
+		newContext := newEntry.ContextMap()
+		for k, oldv := range oldContext {
+			if _, ok := skipFields[k]; ok {
+				continue
+			}
+			assert.Equalf(t, oldv, newContext[k], "field %q of entry %v", k, i)
+		}
+	}
+}
+
+func TestLogEmitterDefaultLoggerParity(t *testing.T) {
+	// This test verifies that the LogEmitter generates the same logs as
+	// the CFF2-generated code.
+	//
+	// This test may be deleted once CFF2-generated code is transitioned
+	// to using the LogEmitter.
+
+	tests := []struct {
+		desc string
+		call func(context.Context, *CustomEmitter)
+	}{
+		{
+			desc: "Run",
+			call: func(ctx context.Context, e *CustomEmitter) {
+				e.Run(ctx, "42")
+			},
+		},
+		{
+			desc: "Run/error",
+			call: func(ctx context.Context, e *CustomEmitter) {
+				e.Run(ctx, "5000") // out of range
+			},
+		},
+		{
+			desc: "Do",
+			call: func(ctx context.Context, e *CustomEmitter) {
+				e.Do(ctx, "42")
+			},
+		},
+		{
+			desc: "Do/error",
+			call: func(ctx context.Context, e *CustomEmitter) {
+				e.Do(ctx, "not a number")
+			},
+		},
+		{
+			desc: "Work",
+			call: func(ctx context.Context, e *CustomEmitter) {
+				e.Work(ctx, "42")
+			},
+		},
+		{
+			desc: "Work/error",
+			call: func(ctx context.Context, e *CustomEmitter) {
+				e.Work(ctx, "not a number")
+			},
+		},
+		{
+			desc: "T3630161",
+			call: func(ctx context.Context, e *CustomEmitter) { e.T3630161(ctx) },
+		},
+		{
+			desc: "T3795761",
+			call: func(ctx context.Context, e *CustomEmitter) {
+				e.T3795761(ctx, true /* run */, false /* error */)
+			},
+		},
+		{
+			desc: "T3795761/no run",
+			call: func(ctx context.Context, e *CustomEmitter) {
+				e.T3795761(ctx, false /* run */, false /* error */)
+			},
+		},
+		{
+			desc: "T3795761/error",
+			call: func(ctx context.Context, e *CustomEmitter) {
+				e.T3795761(ctx, true /* run */, true /* error */)
+			},
+		},
+		{
+			desc: "FlowAlwaysPanics",
+			call: func(ctx context.Context, e *CustomEmitter) { e.FlowAlwaysPanics(ctx) },
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			lev := newLogEvolutionTester(zapcore.DebugLevel)
+			lev.SkipFields("stack") // don't verify stack trace equality
+			defer lev.Verify(t)
+
+			ctx := context.Background()
+
+			tt.call(ctx, &CustomEmitter{
+				Scope:   tally.NoopScope,
+				Logger:  lev.Old(),
+				Emitter: cff.LogEmitter(zap.NewNop()),
+			})
+
+			tt.call(ctx, &CustomEmitter{
+				Scope:   tally.NoopScope,
+				Logger:  zap.NewNop(),
+				Emitter: cff.LogEmitter(lev.New()),
+			})
+		})
+	}
+
 }
