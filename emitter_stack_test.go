@@ -8,7 +8,53 @@ import (
 
 	"go.uber.org/cff"
 	"github.com/golang/mock/gomock"
+	"github.com/uber-go/tally"
+	"go.uber.org/zap"
 )
+
+func TestEmitterStackConstruction(t *testing.T) {
+	tests := []struct {
+		desc string
+		give []cff.Emitter
+	}{
+		{desc: "empty"},
+		{
+			desc: "single",
+			give: []cff.Emitter{
+				cff.LogEmitter(zap.NewNop()),
+			},
+		},
+		{
+			desc: "multiple",
+			give: []cff.Emitter{
+				cff.LogEmitter(zap.NewNop()),
+				cff.NopEmitter(),
+				cff.TallyEmitter(tally.NoopScope),
+			},
+		},
+		{
+			desc: "nested",
+			give: []cff.Emitter{
+				cff.LogEmitter(zap.NewNop()),
+				cff.EmitterStack(
+					cff.NopEmitter(),
+					cff.TallyEmitter(tally.NoopScope),
+				),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			e := cff.EmitterStack(tt.give...)
+			e.FlowInit(&cff.FlowInfo{Flow: "foo"}).
+				FlowFailedTask(ctx, "bar", errors.New("baz")).
+				FlowDone(ctx, time.Second)
+		})
+	}
+}
 
 type testStructs struct {
 	ctrl     *gomock.Controller
@@ -30,10 +76,10 @@ func mocks(t *testing.T) testStructs {
 	m.task2 = cff.NewMockTaskEmitter(m.ctrl)
 	m.flow2 = cff.NewMockFlowEmitter(m.ctrl)
 	m.emitter2 = cff.NewMockEmitter(m.ctrl)
-	m.stack = cff.EmitterStack([]cff.Emitter{
+	m.stack = cff.EmitterStack(
 		m.emitter1,
 		m.emitter2,
-	})
+	)
 
 	return m
 }

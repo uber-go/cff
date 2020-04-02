@@ -9,10 +9,28 @@ type emitterStack []Emitter
 
 func (emitterStack) emitter() {}
 
-// EmitterStack allows users to combine multiple Emitter objects into a single one
-// that sends events to all of them.
-func EmitterStack(e []Emitter) Emitter {
-	return emitterStack(e)
+// EmitterStack allows users to combine multiple Emitters together.
+//
+// Events are sent to the emitters in an unspecified order. Emitters should
+// not assume the ordering of events.
+func EmitterStack(emitters ...Emitter) Emitter {
+	switch len(emitters) {
+	case 0:
+		return NopEmitter()
+	case 1:
+		return emitters[0]
+	default:
+		var stack emitterStack
+		for _, e := range emitters {
+			if s, ok := e.(emitterStack); ok {
+				// Flatten nested stacks.
+				stack = append(stack, s...)
+			} else {
+				stack = append(stack, e)
+			}
+		}
+		return stack
+	}
 }
 
 type emitterStackTask struct {
