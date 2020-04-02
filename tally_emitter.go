@@ -25,6 +25,8 @@ type tallyEmitter struct {
 	tasks *sync.Map // map[cacheKey]TaskEmitter
 }
 
+func (tallyEmitter) emitter() {}
+
 // TallyEmitter is a CFF2 emitter that emits metrics to Tally.
 //
 // A full list of metrics published by TallyEmitter can be found at
@@ -92,6 +94,8 @@ type tallyFlowEmitter struct {
 	scope tally.Scope
 }
 
+func (tallyFlowEmitter) flowEmitter() {}
+
 func (e *tallyFlowEmitter) FlowError(context.Context, error) {
 	e.scope.Counter("taskflow.error").Inc(1)
 }
@@ -118,6 +122,8 @@ func (e *tallyFlowEmitter) FlowDone(_ context.Context, d time.Duration) {
 type tallyTaskEmitter struct {
 	scope tally.Scope
 }
+
+func (tallyTaskEmitter) taskEmitter() {}
 
 func (e *tallyTaskEmitter) TaskError(context.Context, error) {
 	e.scope.Counter("task.error").Inc(1)

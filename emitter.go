@@ -25,6 +25,8 @@ type FlowEmitter interface {
 	// FlowFailedTask is called when a flow fails due to a task error and
 	// returns a shallow copy of current FlowEmitter with updated tags.
 	FlowFailedTask(ctx context.Context, task string, err error) FlowEmitter
+
+	flowEmitter() // private interface
 }
 
 // TaskEmitter receives events for when task events occur, for the purpose of
@@ -49,6 +51,8 @@ type TaskEmitter interface {
 	TaskPanicRecovered(context.Context, interface{})
 	// TaskDone is called when a task finishes.
 	TaskDone(context.Context, time.Duration)
+
+	taskEmitter() // private interface
 }
 
 // FlowInfo provides information to uniquely identify a flow.
@@ -73,6 +77,8 @@ type Emitter interface {
 	TaskInit(*TaskInfo, *FlowInfo) TaskEmitter
 	// FlowInit returns a FlowEmitter which could be memoized based on flow name.
 	FlowInit(*FlowInfo) FlowEmitter
+
+	emitter() // private interface
 }
 
 // DefaultEmitter sets up default implementation of metrics used in the

@@ -7,6 +7,8 @@ import (
 
 type emitterStack []Emitter
 
+func (emitterStack) emitter() {}
+
 // EmitterStack allows users to combine multiple Emitter objects into a single one
 // that sends events to all of them.
 func EmitterStack(e []Emitter) Emitter {
@@ -17,6 +19,8 @@ type emitterStackTask struct {
 	task  string
 	stack []TaskEmitter
 }
+
+func (emitterStackTask) taskEmitter() {}
 
 // TaskInit returns a TaskEmitter which could be memoized based on task name.
 func (s emitterStack) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmitter {
@@ -86,6 +90,8 @@ type emitterStackFlow struct {
 	flow  string
 	stack []FlowEmitter
 }
+
+func (emitterStackFlow) flowEmitter() {}
 
 // FlowInit returns a FlowEmitter which could be memoized based on flow name.
 func (s emitterStack) FlowInit(info *FlowInfo) FlowEmitter {
