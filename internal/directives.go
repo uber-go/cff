@@ -14,7 +14,6 @@ var _codegenDirectives = []string{
 	"Results",
 	"Task",
 	"WithEmitter",
-	"WithLogFields",
 }
 
 var _directiveIndex map[string]struct{}
