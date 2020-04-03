@@ -132,20 +132,25 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 				return true // keep looking
 			}
 
-			if fn.Name() == "DefaultEmitter" {
-				return true
-			}
+			// Inside a +cff file, code generation directives
+			// should only appear inside a cff.Flow.
+			//
+			// Code generation directives by themselves at the
+			// top-level are not allowed.
 
-			if fn.Name() == "EmitterStack" {
-				return true
-			}
-
-			if fn.Name() != "Flow" {
-				c.errf("unknown top-level cff function %q: "+
-					"only cff.Flow may be called at the top-level", c.nodePosition(n), fn.Name())
-			} else {
+			switch {
+			case fn.Name() == "Flow":
 				file.Flows = append(file.Flows, c.compileFlow(astFile, n))
+
+			case IsCodegenDirective(fn.Name()):
+				c.errf("unexpected code generation directive %q: "+
+					"only cff.Flow may be called at the top-level", c.nodePosition(n), fn.Name())
+			default:
+				// Calls to functions that are not code
+				// generation directives (LogEmitter, etc.)
+				// are allowed.
 			}
+
 			return false
 		default:
 			return true // keep looking

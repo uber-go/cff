@@ -72,7 +72,7 @@ func TestCodeGenerateFails(t *testing.T) {
 			// ExpectedFlowArgumentsCallExpressions
 			{
 				File:         "cff-task-arguments.go",
-				ErrorMatches: "unknown top-level cff function \"Instrument\": only cff.Flow may be called at the top-level",
+				ErrorMatches: `unexpected code generation directive "Instrument": only cff.Flow may be called at the top-level`,
 			},
 			// ExpectedFlowArgumentsNotCFF
 			{
@@ -193,7 +193,7 @@ func TestCodeGenerateFails(t *testing.T) {
 			},
 			{
 				File:         "top-level-flow.go",
-				ErrorMatches: "unknown top-level cff function \"Predicate\"",
+				ErrorMatches: "unexpected code generation directive \"Predicate\"",
 			},
 			{
 				File:         "unused-inputs.go",

@@ -18,6 +18,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// NOTE: If you add a new code generation directive, remember to update
+// the list of codegen directives in internal/directives.go.
+
 // FlowOption specifies parameters for a Flow.
 type FlowOption interface {
 	cffOption()
