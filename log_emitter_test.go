@@ -72,6 +72,7 @@ func TestLogTaskEmitter(t *testing.T) {
 		logs := observed.TakeAll()
 		require.Len(t, logs, 1)
 		assert.Equal(t, "great sadness", fmt.Sprint(logs[0].ContextMap()["panic-value"]))
+		assert.Equal(t, "great sadness", fmt.Sprint(logs[0].ContextMap()["error"]))
 	})
 
 	t.Run("panic recovered with value", func(t *testing.T) {
@@ -86,6 +87,7 @@ func TestLogTaskEmitter(t *testing.T) {
 		logs := observed.TakeAll()
 		require.Len(t, logs, 1)
 		assert.Equal(t, "great sadness", fmt.Sprint(logs[0].ContextMap()["panic-value"]))
+		assert.Equal(t, "great sadness", fmt.Sprint(logs[0].ContextMap()["error"]))
 	})
 }
 

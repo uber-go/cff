@@ -170,18 +170,37 @@ func (e *logTaskEmitter) TaskSkipped(ctx context.Context, err error) {
 	e.logger.Debug("task skipped", e.flow, e.task, zap.Error(err))
 }
 
-func (e *logTaskEmitter) TaskPanic(ctx context.Context, x interface{}) {
+func (e *logTaskEmitter) TaskPanic(ctx context.Context, pv interface{}) {
 	if ce := e.logger.Check(e.panicLevel, "task panic"); ce != nil {
-		ce.Write(e.flow, e.task, zap.Stack("stack"), zap.Any("panic-value", x))
+		ce.Write(
+			e.flow,
+			e.task,
+			zap.Stack("stack"),
+			zap.Any("panic-value", pv),
+			maybeErrorField(pv),
+		)
 	}
 }
 
-func (e *logTaskEmitter) TaskPanicRecovered(ctx context.Context, x interface{}) {
+func (e *logTaskEmitter) TaskPanicRecovered(ctx context.Context, pv interface{}) {
 	if ce := e.logger.Check(e.recoverLevel, "task panic recovered"); ce != nil {
-		ce.Write(e.flow, e.task, zap.Stack("stack"), zap.Any("panic-value", x))
+		ce.Write(
+			e.flow,
+			e.task,
+			zap.Stack("stack"),
+			zap.Any("panic-value", pv),
+			maybeErrorField(pv),
+		)
 	}
 }
 
 func (e *logTaskEmitter) TaskDone(ctx context.Context, _ time.Duration) {
 	e.logger.Debug("task done", e.flow, e.task)
+}
+
+func maybeErrorField(pv interface{}) zap.Field {
+	if err, ok := pv.(error); ok {
+		return zap.Error(err)
+	}
+	return zap.Skip()
 }
