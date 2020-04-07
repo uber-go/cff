@@ -610,3 +610,18 @@ func TestLogEmitterDefaultLoggerParity(t *testing.T) {
 	}
 
 }
+
+func TestWithMultipleEmitters(t *testing.T) {
+	core1, logs1 := observer.New(zapcore.DebugLevel)
+	core2, logs2 := observer.New(zapcore.DebugLevel)
+
+	n, err := AtoiWithTwoEmitters(context.Background(),
+		cff.LogEmitter(zap.New(core1)),
+		cff.LogEmitter(zap.New(core2)),
+		"42",
+	)
+	require.NoError(t, err)
+	assert.Equal(t, 42, n)
+
+	assert.Equal(t, logs1.AllUntimed(), logs2.AllUntimed(), "logs did not match")
+}

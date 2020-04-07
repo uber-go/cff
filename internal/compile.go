@@ -163,9 +163,10 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 type flow struct {
 	ast.Node
 
-	Ctx     ast.Expr // the expression that is a local variable of type context.Context
-	Logger  ast.Expr // the expression that is a local variable of type *zap.Logger
-	Emitter ast.Expr
+	Ctx    ast.Expr // the expression that is a local variable of type context.Context
+	Logger ast.Expr // the expression that is a local variable of type *zap.Logger
+
+	Emitters []ast.Expr // zero or more expressions of the type cff.Emitter.
 
 	Inputs  []*input
 	Outputs []*output
@@ -214,7 +215,7 @@ func (f *flow) addInstrument(name ast.Expr) {
 }
 
 func (f *flow) addEmitter(expr ast.Expr) {
-	f.Emitter = expr
+	f.Emitters = append(f.Emitters, expr)
 }
 
 // mustSetNoOutputProvider sets the provider for the no-output, panicking if the no-output sentinel type was already
@@ -423,7 +424,7 @@ func (c *compiler) validateInstrument(f *flow) {
 		c.errf("cff.Instrument requires a *zap.Logger to be provided: use cff.Logger", c.nodePosition(f.Node))
 	}
 
-	if f.Emitter == nil {
+	if len(f.Emitters) == 0 {
 		c.errf("cff.Instrument requires a cff.Emitter to be provided: use cff.WithEmitter",
 			c.nodePosition(f.Node))
 	}

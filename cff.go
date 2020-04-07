@@ -67,6 +67,14 @@ func Logger(logger *zap.Logger) FlowOption {
 //    cff.WithEmitter(cff.TallyEmitter(scope)),
 //  )
 //
+// Provide this option multiple times to connect multiple emitters.
+//
+//  cff.Flow(ctx,
+//    ...
+//    cff.WithEmitter(cff.TallyEmitter(scope)),
+//    cff.WithEmitter(cff.LogEmitter(logger)),
+//  )
+//
 // This is a code generation directive. Files using this must have the "cff"
 // build tag.
 func WithEmitter(Emitter) FlowOption {

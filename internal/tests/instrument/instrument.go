@@ -316,3 +316,17 @@ func (h *CustomEmitter) FlowAlwaysPanics(ctx context.Context) error {
 		),
 	)
 }
+
+// A flow that uses WithEmitter multiple tipes.
+func AtoiWithTwoEmitters(ctx context.Context, e1, e2 cff.Emitter, req string) (res int, err error) {
+	err = cff.Flow(ctx,
+		cff.Params(req),
+		cff.Results(&res),
+		cff.Logger(zap.NewNop()),
+		cff.WithEmitter(e1),
+		cff.WithEmitter(e2),
+		cff.InstrumentFlow("AtoiDo"),
+		cff.Task(strconv.Atoi, cff.Instrument("Atoi")),
+	)
+	return
+}
