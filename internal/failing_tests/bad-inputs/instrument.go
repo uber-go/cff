@@ -32,7 +32,7 @@ func MissingCFFMetrics() {
 // a cff.Logger.
 func MissingCFFLogger() {
 	cff.Flow(context.Background(),
-		cff.Metrics(tally.NewTestScope("", nil)),
+		cff.WithEmitter(cff.TallyEmitter(tally.NewTestScope("", nil))),
 		cff.Task(
 			func() error {
 				return nil
@@ -62,23 +62,6 @@ func MissingCFFLoggerME() {
 // a cff.Metrics nor cff.Logger.
 func MissingCFFLoggerAndMetrics() {
 	cff.Flow(context.Background(),
-		cff.Task(
-			func() error {
-				return nil
-			},
-			cff.Invoke(true),
-			cff.Instrument("foo"),
-		),
-	)
-}
-
-// ProvidedMetricsAndEmitter is a flow that wants instrumentation but provides
-// both, a tally.Scope and an Emitter.
-func ProvidedMetricsAndEmitter() {
-	scope := tally.NewTestScope("", nil)
-	cff.Flow(context.Background(),
-		cff.WithEmitter(cff.DefaultEmitter(scope)),
-		cff.Metrics(scope),
 		cff.Task(
 			func() error {
 				return nil

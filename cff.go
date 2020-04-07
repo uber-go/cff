@@ -14,7 +14,6 @@ package cff
 import (
 	"context"
 
-	"github.com/uber-go/tally"
 	"go.uber.org/zap"
 )
 
@@ -51,15 +50,6 @@ func Results(results ...interface{}) FlowOption {
 	panic("code not generated; run cff")
 }
 
-// Metrics provides the Tally scope to which metrics will be logged for Tasks
-// and Flows that have been instrumented with Instrument or InstrumentFlow.
-//
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
-func Metrics(scope tally.Scope) FlowOption {
-	panic("code not generated; run cff")
-}
-
 // Logger provides the logger to which messages will be logged for Tasks and
 // Flows that have been instrumented with Instrument or InstrumentFlow.
 //
@@ -69,9 +59,13 @@ func Logger(logger *zap.Logger) FlowOption {
 	panic("code not generated; run cff")
 }
 
-// WithEmitter provides an optional observer for task metric events.
-// If provided, we will use the provided Emitter rather than the default
-// metrics implementation.
+// WithEmitter provides an optional observer for flow events. Emitters can
+// track metrics, logs, or other observability data.
+//
+//  cff.Flow(ctx,
+//    ...
+//    cff.WithEmitter(cff.TallyEmitter(scope)),
+//  )
 //
 // This is a code generation directive. Files using this must have the "cff"
 // build tag.

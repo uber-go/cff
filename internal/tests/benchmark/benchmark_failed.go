@@ -17,7 +17,7 @@ func Metrics1000Failed(logger *zap.Logger, scope tally.Scope) float64 {
 	cff.Flow(
 		context.Background(),
 		cff.InstrumentFlow("Metrics1000Failed"),
-		cff.Metrics(scope),
+		cff.WithEmitter(cff.TallyEmitter(scope)),
 		cff.Logger(logger),
 		cff.Results(&res),
 		cff.Task(

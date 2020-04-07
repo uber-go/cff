@@ -164,7 +164,6 @@ type flow struct {
 	ast.Node
 
 	Ctx     ast.Expr // the expression that is a local variable of type context.Context
-	Metrics ast.Expr // the expression that is a local variable of type tally.Scope
 	Logger  ast.Expr // the expression that is a local variable of type *zap.Logger
 	Emitter ast.Expr
 
@@ -279,8 +278,6 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 					flow.receivers.Set(output.Type, []taskIndex{taskIndexRESULT})
 				}
 			}
-		case "Metrics":
-			flow.Metrics = c.compileMetrics(&flow, ce)
 		case "Logger":
 			flow.Logger = c.compileLogger(&flow, ce)
 		case "InstrumentFlow":
@@ -426,18 +423,9 @@ func (c *compiler) validateInstrument(f *flow) {
 		c.errf("cff.Instrument requires a *zap.Logger to be provided: use cff.Logger", c.nodePosition(f.Node))
 	}
 
-	if f.Emitter == nil && f.Metrics == nil {
-		c.errf("cff.Instrument requires a *tally.Scope via cff.Metrics or cff.Emitter to be provided",
+	if f.Emitter == nil {
+		c.errf("cff.Instrument requires a cff.Emitter to be provided: use cff.WithEmitter",
 			c.nodePosition(f.Node))
-	}
-
-	if f.Emitter != nil && f.Metrics != nil {
-		c.errf("cff.Emitter cannot be used with cff.Metrics: "+
-			"found cff.Emitter on line %v and cff.Metrics on line %v",
-			c.nodePosition(f.Node),
-			c.nodePosition(f.Emitter).Line,
-			c.nodePosition(f.Metrics).Line,
-		)
 	}
 }
 
@@ -803,10 +791,6 @@ func (c *compiler) compileOutput(o ast.Expr) *output {
 		Node: o,
 		Type: p.Elem(),
 	}
-}
-
-func (c *compiler) compileMetrics(flow *flow, call *ast.CallExpr) ast.Expr {
-	return call.Args[0]
 }
 
 func (c *compiler) compileLogger(flow *flow, call *ast.CallExpr) ast.Expr {

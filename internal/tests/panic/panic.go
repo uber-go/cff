@@ -23,7 +23,7 @@ func (p *Panicker) FlowPanicsParallel() error {
 
 	err := cff.Flow(
 		context.Background(),
-		cff.Metrics(p.Scope),
+		cff.WithEmitter(cff.TallyEmitter(p.Scope)),
 		cff.Logger(p.Logger),
 		cff.InstrumentFlow("PanicParallel"),
 		cff.Results(&b),
@@ -57,7 +57,7 @@ func (p *Panicker) FlowPanicsSerial() error {
 	err := cff.Flow(
 		context.Background(),
 		cff.Results(&r),
-		cff.Metrics(p.Scope),
+		cff.WithEmitter(cff.TallyEmitter(p.Scope)),
 		cff.Logger(p.Logger),
 		cff.InstrumentFlow("FlowPanicsSerial"),
 		cff.Task(

@@ -45,7 +45,7 @@ func (h *DefaultEmitter) Run(ctx context.Context, req string) (res uint8, err er
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
-		cff.Metrics(h.Scope),
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
 		cff.Logger(h.Logger),
 		cff.InstrumentFlow("AtoiRun"),
 
@@ -74,7 +74,7 @@ func (h *DefaultEmitter) ExplicitListOfFields(ctx context.Context, req string) (
 		cff.Params(req),
 		cff.Results(&res),
 		cff.InstrumentFlow("ExplicitListOfFields"),
-		cff.Metrics(h.Scope),
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
 		cff.Logger(h.Logger),
 		cff.Task(
 			strconv.Atoi,
@@ -90,7 +90,7 @@ func (h *DefaultEmitter) Do(ctx context.Context, req string) (res int, err error
 		cff.Params(req),
 		cff.Results(&res),
 		cff.InstrumentFlow("AtoiDo"),
-		cff.Metrics(h.Scope),
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
 		cff.Logger(h.Logger),
 		cff.Task(
 			strconv.Atoi,
@@ -105,7 +105,7 @@ func (h *DefaultEmitter) Work(ctx context.Context, req string) (res int, err err
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
-		cff.Metrics(h.Scope),
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
 		cff.Logger(h.Logger),
 		cff.Task(
 			strconv.Atoi,
@@ -120,7 +120,7 @@ func (h *DefaultEmitter) T3630161(ctx context.Context) {
 	var s string
 	_ = cff.Flow(ctx,
 		cff.Results(&s),
-		cff.Metrics(h.Scope),
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
 		cff.Logger(h.Logger),
 		cff.InstrumentFlow("T3630161"),
 
@@ -148,7 +148,7 @@ func (h *DefaultEmitter) T3795761(ctx context.Context, shouldRun bool, shouldErr
 	var s string
 	_ = cff.Flow(ctx,
 		cff.Results(&s),
-		cff.Metrics(h.Scope),
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
 		cff.Logger(h.Logger),
 		cff.InstrumentFlow("T3795761"),
 

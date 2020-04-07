@@ -247,17 +247,7 @@
     {{- end }}
 
     return err
-    }({{ expr .Ctx }}{{ if $flow.ObservabilityEnabled }}, {{ template "buildEmitter" $flow }}, {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
-{{- end -}}
-
-{{/* Builds a cff.Emitter for a flow. */}}
-{{- define "buildEmitter" -}}
-    {{- if .Emitter -}}
-        {{ expr .Emitter }}
-    {{- else -}}
-        {{- $cff := import "go.uber.org/cff" -}}
-        {{ $cff }}.DefaultEmitter({{ expr .Metrics }})
-    {{- end -}}
+    }({{ expr .Ctx }}{{ if $flow.ObservabilityEnabled }}, {{ expr $flow.Emitter }}, {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
 {{- end -}}
 
 {{- define "taskResultVarDecl" -}}

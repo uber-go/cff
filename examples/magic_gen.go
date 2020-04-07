@@ -453,7 +453,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		}
 
 		return err
-	}(ctx, cff.DefaultEmitter(h.scope), h.logger, req)
+	}(ctx, cff.TallyEmitter(h.scope), h.logger, req)
 	return res, err
 }
 

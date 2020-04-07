@@ -149,7 +149,7 @@ func TestCodeGenerateFails(t *testing.T) {
 			// MissingCFFMetrics
 			{
 				File:         "instrument.go",
-				ErrorMatches: "cff.Instrument requires a \\*tally.Scope via cff\\.Metrics or cff\\.Emitter to be provided",
+				ErrorMatches: "cff.Instrument requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
 			},
 			// MissingCFFLogger and MissingCFFLoggerME
 			{
@@ -159,12 +159,7 @@ func TestCodeGenerateFails(t *testing.T) {
 			// MissingCFFLoggerAndMetrics
 			{
 				File:         "instrument.go",
-				ErrorMatches: "cff.Instrument requires a \\*tally.Scope via cff\\.Metrics or cff\\.Emitter to be provided",
-			},
-			// ProvidedMetricsAndEmitter
-			{
-				File:         "instrument.go",
-				ErrorMatches: "cff.Emitter cannot be used with cff.Metrics",
+				ErrorMatches: "cff.Instrument requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
 			},
 
 			{

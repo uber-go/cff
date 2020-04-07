@@ -25,7 +25,7 @@ func (h *H) ImpliedName(ctx context.Context, req string) (res int, err error) {
 		cff.Params(req),
 		cff.Results(&res, &unsigned),
 		cff.Results(&unsigned),
-		cff.Metrics(h.Scope),
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
 		cff.Logger(h.Logger),
 		cff.InstrumentFlow("ImpliedName"),
 		cff.Task(

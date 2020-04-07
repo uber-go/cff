@@ -63,7 +63,7 @@ func Metrics(logger *zap.Logger, scope tally.Scope) float64 {
 	cff.Flow(
 		context.Background(),
 		cff.InstrumentFlow("Metrics"),
-		cff.Metrics(scope),
+		cff.WithEmitter(cff.TallyEmitter(scope)),
 		cff.Logger(logger),
 		cff.Results(&res),
 		cff.Task(
@@ -88,7 +88,7 @@ func Metrics100(logger *zap.Logger, scope tally.Scope) float64 {
 	cff.Flow(
 		context.Background(),
 		cff.InstrumentFlow("Metrics100"),
-		cff.Metrics(scope),
+		cff.WithEmitter(cff.TallyEmitter(scope)),
 		cff.Logger(logger),
 		cff.Results(&res),
 		cff.Task(
@@ -205,7 +205,7 @@ func Metrics500(logger *zap.Logger, scope tally.Scope) float64 {
 	cff.Flow(
 		context.Background(),
 		cff.InstrumentFlow("Metrics500"),
-		cff.Metrics(scope),
+		cff.WithEmitter(cff.TallyEmitter(scope)),
 		cff.Logger(logger),
 		cff.Results(&res),
 		cff.Task(
@@ -722,7 +722,7 @@ func Metrics1000(logger *zap.Logger, scope tally.Scope) float64 {
 	cff.Flow(
 		context.Background(),
 		cff.InstrumentFlow("Metrics1000"),
-		cff.Metrics(scope),
+		cff.WithEmitter(cff.TallyEmitter(scope)),
 		cff.Logger(logger),
 		cff.Results(&res),
 		cff.Task(
