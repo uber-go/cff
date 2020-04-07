@@ -3,8 +3,6 @@ package cff
 import (
 	"context"
 	"time"
-
-	"github.com/uber-go/tally"
 )
 
 // FlowEmitter receives events for when flow events occur, for the purpose of
@@ -79,10 +77,4 @@ type Emitter interface {
 	FlowInit(*FlowInfo) FlowEmitter
 
 	emitter() // private interface
-}
-
-// DefaultEmitter sets up default implementation of metrics used in the
-// template with memoization of the scope.
-func DefaultEmitter(scope tally.Scope) Emitter {
-	return TallyEmitter(scope)
 }

@@ -339,7 +339,7 @@ func TestConcurrentFlow(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	builder := cff.DefaultEmitter(scope)
+	builder := cff.TallyEmitter(scope)
 
 	var wg sync.WaitGroup
 	for i := 0; i < 2; i++ {

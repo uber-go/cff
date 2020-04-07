@@ -47,7 +47,7 @@ func MissingCFFLogger() {
 // a cff.Logger.
 func MissingCFFLoggerME() {
 	cff.Flow(context.Background(),
-		cff.WithEmitter(cff.DefaultEmitter(tally.NewTestScope("", nil))),
+		cff.WithEmitter(cff.TallyEmitter(tally.NewTestScope("", nil))),
 		cff.Task(
 			func() error {
 				return nil
