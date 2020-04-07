@@ -34,8 +34,7 @@ type fooHandler struct {
 
 func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
 	var res *Response
-	err := func(ctx context.Context, emitter cff.Emitter,
-		logger *zap.Logger, v1 *Request) (err error) {
+	err := func(ctx context.Context, emitter cff.Emitter, v1 *Request) (err error) {
 		var _ = (cff.FlowOption)(nil)
 
 		var flowEmitterReplace sync.Once
@@ -129,16 +128,10 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 						continue
 					}
 					task.taskEmitter.TaskSkipped(ctx, err)
-					if err == nil {
-						logger.Debug("task skipped", zap.String("task", task.name))
-					} else {
-						logger.Debug("task skipped", zap.String("task", task.name), zap.Error(err))
-					}
 				}
 			}
 			if err != nil {
 				flowEmitter.FlowSkipped(ctx, err)
-				logger.Debug("taskflow skipped", zap.String("flow", "HandleFoo"), zap.Error(err))
 			}
 
 		}()
@@ -243,18 +236,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				if recovered != nil {
 
 					taskEmitter.TaskPanicRecovered(ctx, recovered)
-					recoveredErr, ok := recovered.(error)
-					if ok {
-						logger.Error("task panic recovered",
-							zap.String("task", "FormSendEmailRequest"),
-							zap.Stack("stack"),
-							zap.Error(recoveredErr))
-					} else {
-						logger.Error("task panic recovered",
-							zap.String("task", "FormSendEmailRequest"),
-							zap.Stack("stack"),
-							zap.Any("recoveredValue", recovered))
-					}
 					v5, err4 = &ListUsersResponse{}, nil
 
 				}
@@ -264,15 +245,10 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			tasks[1][1].ran = true
 			if err4 != nil {
 				taskEmitter.TaskErrorRecovered(ctx, err4)
-				logger.Error("task error recovered",
-					zap.String("task", "FormSendEmailRequest"),
-					zap.Error(err4),
-				)
 
 				v5, err4 = &ListUsersResponse{}, nil
 			} else {
 				taskEmitter.TaskSuccess(ctx)
-				logger.Debug("task succeeded", zap.String("task", "FormSendEmailRequest"))
 			}
 
 		}()
@@ -310,10 +286,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 					once2.Do(func() {
 						recoveredErr := fmt.Errorf("task panic: %v", recovered)
 						taskEmitter.TaskPanic(ctx, recovered)
-						logger.Error("task panic",
-							zap.String("task", "FormSendEmailRequest"),
-							zap.Stack("stack"),
-							zap.Error(recoveredErr))
 						err = recoveredErr
 					})
 
@@ -334,7 +306,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				tasks[2][0].ran = true
 
 				taskEmitter.TaskSuccess(ctx)
-				logger.Debug("task succeeded", zap.String("task", "FormSendEmailRequest"))
 
 			}
 
@@ -449,11 +420,10 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			flowEmitter.FlowError(ctx, err)
 		} else {
 			flowEmitter.FlowSuccess(ctx)
-			logger.Debug("taskflow succeeded", zap.String("flow", "HandleFoo"))
 		}
 
 		return err
-	}(ctx, cff.EmitterStack(cff.TallyEmitter(h.scope)), h.logger, req)
+	}(ctx, cff.EmitterStack(cff.TallyEmitter(h.scope), cff.LogEmitter(h.logger)), req)
 	return res, err
 }
 

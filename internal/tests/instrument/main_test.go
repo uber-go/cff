@@ -43,9 +43,12 @@ func TestInstrument(t *testing.T) {
 	// logs
 	expectedLevel := zap.DebugLevel
 	expectedMessages := []string{
-		"task succeeded",
-		"task succeeded",
-		"taskflow succeeded",
+		"task success",
+		"task done",
+		"task success",
+		"task done",
+		"flow success",
+		"flow done",
 	}
 	logEntries := observedLogs.All()
 	assert.Equal(t, len(expectedMessages), len(logEntries))
@@ -81,16 +84,12 @@ func TestInstrumentError(t *testing.T) {
 		message string
 		fields  map[string]interface{}
 	}{
-		{
-			zap.DebugLevel,
-			"task skipped",
-			map[string]interface{}{"task": "uint8"},
-		},
-		{
-			zap.DebugLevel,
-			"taskflow skipped",
-			nil,
-		},
+		{zap.DebugLevel, "task error", map[string]interface{}{"task": "Atoi"}},
+		{zap.DebugLevel, "task done", map[string]interface{}{"task": "Atoi"}},
+		{zap.DebugLevel, "flow error", nil},
+		{zap.DebugLevel, "task skipped", map[string]interface{}{"task": "uint8"}},
+		{zap.DebugLevel, "flow skipped", nil},
+		{zap.DebugLevel, "flow done", nil},
 	}
 
 	// logs
@@ -136,14 +135,15 @@ func TestInstrumentCancelledContext(t *testing.T) {
 	expectedMessages := []string{
 		"task skipped",
 		"task skipped",
-		"taskflow skipped",
+		"flow skipped",
+		"flow done",
 	}
 	logEntries := observedLogs.All()
 	assert.Equal(t, len(expectedMessages), len(logEntries))
 	for i, entry := range logEntries {
+		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
 		assert.Equal(t, expectedLevel, entry.Level)
 		assert.Equal(t, expectedMessages[i], entry.Message)
-		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
 	}
 }
 
@@ -173,25 +173,19 @@ func TestInstrumentRecover(t *testing.T) {
 		level   zapcore.Level
 		message string
 	}{
-		{
-			zap.DebugLevel,
-			"task succeeded",
-		},
-		{
-			zap.ErrorLevel,
-			"task error recovered",
-		},
-		{
-			zap.DebugLevel,
-			"taskflow succeeded",
-		},
+		{zap.DebugLevel, "task success"},
+		{zap.DebugLevel, "task done"},
+		{zap.ErrorLevel, "task error recovered"},
+		{zap.DebugLevel, "task done"},
+		{zap.DebugLevel, "flow success"},
+		{zap.DebugLevel, "flow done"},
 	}
 	logEntries := observedLogs.All()
 	assert.Equal(t, len(expected), len(logEntries))
 	for i, entry := range logEntries {
+		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
 		assert.Equal(t, expected[i].level, entry.Level)
 		assert.Equal(t, expected[i].message, entry.Message)
-		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
 	}
 }
 
@@ -217,15 +211,17 @@ func TestInstrumentAnnotationOrder(t *testing.T) {
 	// logs
 	expectedLevel := zap.DebugLevel
 	expectedMessages := []string{
-		"task succeeded",
-		"taskflow succeeded",
+		"task success",
+		"task done",
+		"flow success",
+		"flow done",
 	}
 	logEntries := observedLogs.All()
 	assert.Equal(t, len(expectedMessages), len(logEntries))
 	for i, entry := range logEntries {
+		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
 		assert.Equal(t, expectedLevel, entry.Level)
 		assert.Equal(t, expectedMessages[i], entry.Message)
-		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
 	}
 }
 
@@ -250,14 +246,15 @@ func TestInstrumentTaskButNotFlow(t *testing.T) {
 	// logs
 	expectedLevel := zap.DebugLevel
 	expectedMessages := []string{
-		"task succeeded",
+		"task success",
+		"task done",
 	}
 	logEntries := observedLogs.All()
 	assert.Equal(t, len(expectedMessages), len(logEntries))
 	for i, entry := range logEntries {
+		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
 		assert.Equal(t, expectedLevel, entry.Level)
 		assert.Equal(t, expectedMessages[i], entry.Message)
-		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
 	}
 }
 
@@ -307,8 +304,13 @@ func TestT3795761(t *testing.T) {
 
 		// logs
 		expectedMessages := []string{
-			"task succeeded",
-			"taskflow skipped",
+			"task success",
+			"task done",
+			"task error",
+			"task done",
+			"flow error",
+			"flow skipped",
+			"flow done",
 		}
 		logEntries := observedLogs.TakeAll()
 		for _, entry := range logEntries {
@@ -325,9 +327,12 @@ func TestT3795761(t *testing.T) {
 		h.T3795761(ctx, true, false)
 
 		expectedMessages := []string{
-			"task succeeded",
-			"task succeeded",
-			"taskflow succeeded",
+			"task success",
+			"task done",
+			"task success",
+			"task done",
+			"flow success",
+			"flow done",
 		}
 		logEntries := observedLogs.TakeAll()
 		for _, entry := range logEntries {
@@ -345,9 +350,12 @@ func TestT3795761(t *testing.T) {
 		h.T3795761(ctx, false, true)
 
 		expectedMessages := []string{
-			"task succeeded",
-			"taskflow succeeded",
+			"task success",
+			"task done",
+			"task done",
+			"flow success",
 			"task skipped",
+			"flow done",
 		}
 		logEntries := observedLogs.TakeAll()
 		for _, entry := range logEntries {

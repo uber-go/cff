@@ -35,29 +35,17 @@ func TestInstrumentImpliedName(t *testing.T) {
 		message string
 		fields  map[string]interface{}
 	}{
-		{
-			"task succeeded",
-			map[string]interface{}{
-				"task": "instrument-implied.go.32",
-			},
-		},
-		{
-			"task succeeded",
-			map[string]interface{}{
-				"task": "instrument-implied.go.36",
-			},
-		},
-		{
-			"taskflow succeeded",
-			map[string]interface{}{
-				"flow": "ImpliedName",
-			},
-		},
+		{"task success", map[string]interface{}{"flow": "ImpliedName", "task": "instrument-implied.go.32"}},
+		{"task done", map[string]interface{}{"flow": "ImpliedName", "task": "instrument-implied.go.32"}},
+		{"task success", map[string]interface{}{"flow": "ImpliedName", "task": "instrument-implied.go.36"}},
+		{"task done", map[string]interface{}{"flow": "ImpliedName", "task": "instrument-implied.go.36"}},
+		{"flow success", map[string]interface{}{"flow": "ImpliedName"}},
+		{"flow done", map[string]interface{}{"flow": "ImpliedName"}},
 	}
 	for i, entry := range logEntries {
+		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.ContextMap())
 		assert.Equal(t, expectedLevel, entry.Level)
 		assert.Equal(t, expectedMessages[i].message, entry.Message)
 		assert.Equal(t, expectedMessages[i].fields, entry.ContextMap())
-		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.ContextMap())
 	}
 }

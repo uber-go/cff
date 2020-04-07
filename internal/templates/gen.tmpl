@@ -5,9 +5,7 @@
     func(ctx {{ $context }}.Context,
     {{- $cff := import "go.uber.org/cff" -}}
     {{- if $flow.ObservabilityEnabled -}}
-        {{- $zap := import "go.uber.org/zap" -}}
         emitter {{ $cff }}.Emitter,
-        logger *{{ $zap }}.Logger,
     {{- end -}}
     {{- range .Inputs -}}
         v{{ typeHash .Type }} {{ type .Type }},
@@ -71,17 +69,11 @@
         for _, task := range sched {
         if task.name == "" || task.ran { continue }
         task.taskEmitter.TaskSkipped(ctx, err)
-        if err == nil {
-        logger.Debug("task skipped", zap.String("task", task.name))
-        } else {
-        logger.Debug("task skipped", zap.String("task", task.name), zap.Error(err))
-        }
         }
         }
         {{- if $flow.Instrument }}
             if err != nil {
             flowEmitter.FlowSkipped(ctx, err)
-            logger.Debug("taskflow skipped", zap.String("flow", {{ expr $flow.Instrument.Name }}), zap.Error(err))
             }
         {{ end }}
         }()
@@ -128,18 +120,6 @@
             {{ if .FallbackWith }}
                 {{ if .Instrument -}}
                     taskEmitter.TaskPanicRecovered(ctx, recovered)
-                    recoveredErr, ok := recovered.(error)
-                    if ok {
-                    logger.Error("task panic recovered",
-                    zap.String("task", {{ expr .Instrument.Name }}),
-                    zap.Stack("stack"),
-                    zap.Error(recoveredErr))
-                    } else {
-                    logger.Error("task panic recovered",
-                    zap.String("task", {{ expr .Instrument.Name }}),
-                    zap.Stack("stack"),
-                    zap.Any("recoveredValue", recovered))
-                    }
                 {{ end -}}
                 {{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
                     {{ if gt $i 0 }},{{ end }}{{ expr $v }}
@@ -150,10 +130,6 @@
                 recoveredErr := {{ $fmt }}.Errorf("task panic: %v", recovered)
                 {{ if .Instrument -}}
                     taskEmitter.TaskPanic(ctx, recovered)
-                    logger.Error("task panic",
-                    zap.String("task", {{ expr .Instrument.Name }}),
-                    zap.Stack("stack"),
-                    zap.Error(recoveredErr))
                 {{- end }}
                 err = recoveredErr
                 })
@@ -174,10 +150,6 @@
                 {{ if .FallbackWith -}}
                     {{ if .Instrument -}}
                         taskEmitter.TaskErrorRecovered(ctx, {{$serr}})
-                        logger.Error("task error recovered",
-                        zap.String("task", {{ expr .Instrument.Name }}),
-                        zap.Error({{ $serr }}),
-                        )
                     {{- end }}
 
                     {{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
@@ -198,12 +170,10 @@
                 {{- end }}
                 } {{ if .Instrument }} else {
                 taskEmitter.TaskSuccess(ctx)
-                logger.Debug("task succeeded", zap.String("task", {{ expr .Instrument.Name }}))
                 } {{ end }}
             {{ else }} {{/* cannot return error */}}
             {{ if .Instrument -}}
                 taskEmitter.TaskSuccess(ctx)
-                logger.Debug("task succeeded", zap.String("task", {{ expr .Instrument.Name }}))
             {{- end }}
             {{ end }}
             {{ if .Predicate }}
@@ -242,18 +212,21 @@
             flowEmitter.FlowError(ctx, err)
         } else {
                 flowEmitter.FlowSuccess(ctx)
-            logger.Debug("taskflow succeeded", zap.String("flow", {{ expr $flow.Instrument.Name }}))
         }
     {{- end }}
 
     return err
-    }({{ expr .Ctx }}{{ if $flow.ObservabilityEnabled }}, {{ template "buildEmitter" $flow }}, {{ expr $flow.Logger }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
+    }({{ expr .Ctx }}{{ if $flow.ObservabilityEnabled }}, {{ template "buildEmitter" $flow }} {{ end }}{{ range .Inputs }}, {{ expr .Node }}{{ end }})
 {{- end -}}
 
 {{- define "buildEmitter" -}}
-	{{- import "go.uber.org/cff" }}.EmitterStack(
+	{{- $cff :=  import "go.uber.org/cff" -}}
+	{{ $cff }}.EmitterStack(
 		{{- range .Emitters -}}
 			{{ expr . }},
+		{{- end -}}
+		{{- with .Logger -}}
+			{{ $cff }}.LogEmitter({{ expr . }}),
 		{{- end -}}
 	)
 {{- end -}}
