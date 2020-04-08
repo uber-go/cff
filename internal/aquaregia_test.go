@@ -154,7 +154,7 @@ func TestCodeGenerateFails(t *testing.T) {
 			// MissingCFFLogger and MissingCFFLoggerME
 			{
 				File:         "instrument.go",
-				ErrorMatches: "cff.Instrument requires a \\*zap.Logger to be provided: use cff\\.Logger",
+				ErrorMatches: "cff.Instrument requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
 			},
 			// MissingCFFLoggerAndMetrics
 			{

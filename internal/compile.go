@@ -420,10 +420,6 @@ func (c *compiler) validateInstrument(f *flow) {
 		return
 	}
 
-	if f.Logger == nil {
-		c.errf("cff.Instrument requires a *zap.Logger to be provided: use cff.Logger", c.nodePosition(f.Node))
-	}
-
 	if len(f.Emitters) == 0 {
 		c.errf("cff.Instrument requires a cff.Emitter to be provided: use cff.WithEmitter",
 			c.nodePosition(f.Node))
