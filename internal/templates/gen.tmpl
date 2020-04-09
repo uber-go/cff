@@ -225,9 +225,6 @@
 		{{- range .Emitters -}}
 			{{ expr . }},
 		{{- end -}}
-		{{- with .Logger -}}
-			{{ $cff }}.LogEmitter({{ expr . }}),
-		{{- end -}}
 	)
 {{- end -}}
 

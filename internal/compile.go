@@ -163,8 +163,7 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 type flow struct {
 	ast.Node
 
-	Ctx    ast.Expr // the expression that is a local variable of type context.Context
-	Logger ast.Expr // the expression that is a local variable of type *zap.Logger
+	Ctx ast.Expr // the expression that is a local variable of type context.Context
 
 	Emitters []ast.Expr // zero or more expressions of the type cff.Emitter.
 
@@ -279,8 +278,6 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 					flow.receivers.Set(output.Type, []taskIndex{taskIndexRESULT})
 				}
 			}
-		case "Logger":
-			flow.Logger = c.compileLogger(&flow, ce)
 		case "InstrumentFlow":
 			flow.addInstrument(ce.Args[0])
 		case "WithEmitter":
@@ -488,7 +485,7 @@ type task struct {
 	Outputs []types.Type // non error results
 
 	Predicate  *predicate  // non-nil if Predicate was provided
-	Instrument *instrument // non-nil if Scope and Logger were provided
+	Instrument *instrument // non-nil if instrumentation was enabled
 
 	FallbackWith        bool       // whether we should ignore errors from this function
 	FallbackWithResults []ast.Expr // expressions that return a value for each return type of this function
@@ -788,10 +785,6 @@ func (c *compiler) compileOutput(o ast.Expr) *output {
 		Node: o,
 		Type: p.Elem(),
 	}
-}
-
-func (c *compiler) compileLogger(flow *flow, call *ast.CallExpr) ast.Expr {
-	return call.Args[0]
 }
 
 // isPackagePathEquivalent returns whether the path of the package is exactly equal to the path given or is equivalent due to vendoring.

@@ -16,7 +16,7 @@ func MetricsMemoized1000(logger *zap.Logger, metricsBuilder cff.Emitter) float64
 		context.Background(),
 		cff.InstrumentFlow("Metrics1000"),
 		cff.WithEmitter(metricsBuilder),
-		cff.Logger(logger),
+		cff.WithEmitter(cff.LogEmitter(logger)),
 		cff.Results(&res),
 		cff.Task(
 			func() float64 { return 0 },

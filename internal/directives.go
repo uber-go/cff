@@ -7,7 +7,6 @@ var _codegenDirectives = []string{
 	"Instrument",
 	"InstrumentFlow",
 	"Invoke",
-	"Logger",
 	"Params",
 	"Predicate",
 	"Results",

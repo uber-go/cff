@@ -11,11 +11,7 @@
 // generation directives.
 package cff
 
-import (
-	"context"
-
-	"go.uber.org/zap"
-)
+import "context"
 
 // NOTE: If you add a new code generation directive, remember to update
 // the list of codegen directives in internal/directives.go.
@@ -47,15 +43,6 @@ func Params(args ...interface{}) FlowOption {
 // This is a code generation directive. Files using this must have the "cff"
 // build tag.
 func Results(results ...interface{}) FlowOption {
-	panic("code not generated; run cff")
-}
-
-// Logger provides the logger to which messages will be logged for Tasks and
-// Flows that have been instrumented with Instrument or InstrumentFlow.
-//
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
-func Logger(logger *zap.Logger) FlowOption {
 	panic("code not generated; run cff")
 }
 

@@ -17,7 +17,7 @@ func MissingCFFMetrics() {
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 	cff.Flow(context.Background(),
-		cff.Logger(logger),
+		cff.WithEmitter(cff.LogEmitter(logger)),
 		cff.Task(
 			func() error {
 				return nil

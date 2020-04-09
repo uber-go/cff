@@ -17,7 +17,7 @@ func Metrics1000FailedMemoized(logger *zap.Logger, metricsBuilder cff.Emitter) f
 	cff.Flow(
 		context.Background(),
 		cff.InstrumentFlow("Metrics1000Failed"),
-		cff.Logger(logger),
+		cff.WithEmitter(cff.LogEmitter(logger)),
 		cff.WithEmitter(metricsBuilder),
 		cff.Results(&res),
 		cff.Task(

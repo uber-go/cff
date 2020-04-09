@@ -24,7 +24,7 @@ func (p *Panicker) FlowPanicsParallel() error {
 	err := cff.Flow(
 		context.Background(),
 		cff.WithEmitter(cff.TallyEmitter(p.Scope)),
-		cff.Logger(p.Logger),
+		cff.WithEmitter(cff.LogEmitter(p.Logger)),
 		cff.InstrumentFlow("PanicParallel"),
 		cff.Results(&b),
 		cff.Task(
@@ -58,7 +58,7 @@ func (p *Panicker) FlowPanicsSerial() error {
 		context.Background(),
 		cff.Results(&r),
 		cff.WithEmitter(cff.TallyEmitter(p.Scope)),
-		cff.Logger(p.Logger),
+		cff.WithEmitter(cff.LogEmitter(p.Logger)),
 		cff.InstrumentFlow("FlowPanicsSerial"),
 		cff.Task(
 			func() string {

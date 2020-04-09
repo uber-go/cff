@@ -35,7 +35,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		cff.Params(req),
 		cff.Results(&res),
 		cff.WithEmitter(cff.TallyEmitter(h.scope)),
-		cff.Logger(h.logger),
+		cff.WithEmitter(cff.LogEmitter(h.logger)),
 		cff.InstrumentFlow("HandleFoo"),
 
 		cff.Task(
