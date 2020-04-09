@@ -13,8 +13,8 @@ package cff
 
 import "context"
 
-// NOTE: If you add a new code generation directive, remember to update
-// the list of codegen directives in internal/directives.go.
+// NOTE: All code generation directives must be added to this file. The list
+// of directives is updated automatically based on the contents of this file.
 
 // FlowOption specifies parameters for a Flow.
 type FlowOption interface {
