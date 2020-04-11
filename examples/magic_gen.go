@@ -34,7 +34,11 @@ type fooHandler struct {
 
 func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
 	var res *Response
-	err := func(ctx context.Context, emitter cff.Emitter, v1 *Request) (err error) {
+	err := func(
+		ctx context.Context,
+		emitter cff.Emitter,
+		v1 *Request,
+	) (err error) {
 		var _ = (cff.FlowOption)(nil)
 
 		var flowEmitterReplace sync.Once
@@ -47,6 +51,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				Column: 9,
 			},
 		)
+
 		startTime := time.Now()
 		defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
 		type task struct {
@@ -121,6 +126,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				},
 			},
 		}
+
 		defer func() {
 			for _, sched := range tasks {
 				for _, task := range sched {
@@ -217,9 +223,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			tasks[1][0].ran = true
 			if err1 != nil {
 
-				once1.Do(func() {
-					err = err1
-				})
+				once1.Do(func() { err = err1 })
 			}
 
 		}()
@@ -350,9 +354,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			tasks[3][0].ran = true
 			if err2 != nil {
 
-				once3.Do(func() {
-					err = err2
-				})
+				once3.Do(func() { err = err2 })
 			}
 
 		}()
@@ -423,7 +425,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		}
 
 		return err
-	}(ctx, cff.EmitterStack(cff.TallyEmitter(h.scope), cff.LogEmitter(h.logger)), req)
+	}(
+		ctx,
+		cff.EmitterStack(cff.TallyEmitter(h.scope), cff.LogEmitter(h.logger)),
+		req,
+	)
 	return res, err
 }
 
