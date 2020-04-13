@@ -20,9 +20,6 @@ type FlowEmitter interface {
 	FlowSkipped(context.Context, error)
 	// FlowDone is called when a flow finishes.
 	FlowDone(context.Context, time.Duration)
-	// FlowFailedTask is called when a flow fails due to a task error and
-	// returns a shallow copy of current FlowEmitter with updated tags.
-	FlowFailedTask(ctx context.Context, task string, err error) FlowEmitter
 
 	flowEmitter() // private interface
 }

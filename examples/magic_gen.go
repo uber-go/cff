@@ -41,8 +41,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 	) (err error) {
 		var _ = (cff.FlowOption)(nil)
 
-		var flowEmitterReplace sync.Once
-		var _ = &flowEmitterReplace
 		flowEmitter := emitter.FlowInit(
 			&cff.FlowInfo{
 				Flow:   "HandleFoo",

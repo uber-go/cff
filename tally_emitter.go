@@ -108,13 +108,6 @@ func (e *tallyFlowEmitter) FlowSuccess(context.Context) {
 	e.scope.Counter("taskflow.success").Inc(1)
 }
 
-func (e *tallyFlowEmitter) FlowFailedTask(_ context.Context, task string, _ error) FlowEmitter {
-	return &tallyFlowEmitter{
-		scope: e.scope.Tagged(map[string]string{
-			"failedtask": task,
-		})}
-}
-
 func (e *tallyFlowEmitter) FlowDone(_ context.Context, d time.Duration) {
 	e.scope.Timer("taskflow.timing").Record(d)
 }
@@ -130,7 +123,6 @@ func (e *tallyTaskEmitter) TaskError(context.Context, error) {
 }
 
 func (e *tallyTaskEmitter) TaskErrorRecovered(_ context.Context, err error) {
-	e.scope.Counter("task.error").Inc(1)
 	e.scope.Counter("task.recovered").Inc(1)
 }
 
@@ -139,7 +131,6 @@ func (e *tallyTaskEmitter) TaskPanic(_ context.Context, x interface{}) {
 }
 
 func (e *tallyTaskEmitter) TaskPanicRecovered(_ context.Context, x interface{}) {
-	e.scope.Counter("task.panic").Inc(1)
 	e.scope.Counter("task.recovered").Inc(1)
 }
 

@@ -153,18 +153,3 @@ func (s *emitterStackFlow) FlowDone(ctx context.Context, d time.Duration) {
 		e.FlowDone(ctx, d)
 	}
 }
-
-// FlowFailedTask is called when a flow fails due to a task error and
-// returns a shallow copy of current FlowEmitter with updated tags.
-func (s *emitterStackFlow) FlowFailedTask(ctx context.Context, task string, err error) FlowEmitter {
-	emitters := make([]FlowEmitter, 0, len(s.stack))
-
-	for _, e := range s.stack {
-		emitters = append(emitters, e.FlowFailedTask(ctx, task, err))
-	}
-
-	return &emitterStackFlow{
-		flow:  s.flow,
-		stack: emitters,
-	}
-}

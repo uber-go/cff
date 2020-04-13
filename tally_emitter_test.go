@@ -1,7 +1,6 @@
 package cff
 
 import (
-	"context"
 	"sync"
 	"testing"
 
@@ -29,27 +28,6 @@ func TestTallyEmitter_CacheFlow(t *testing.T) {
 		})
 		assert.True(t, fe == fe2)
 	})
-	t.Run("mutate object and not get it back", func(t *testing.T) {
-		scope := tally.NewTestScope("", nil)
-		e := TallyEmitter(scope)
-		fe := e.FlowInit(&FlowInfo{
-			Flow:   "flow",
-			File:   "location/flow.go",
-			Line:   42,
-			Column: 84,
-		})
-		feMutated := fe.FlowFailedTask(context.Background(), "foo", nil)
-		fe2 := e.FlowInit(&FlowInfo{
-			Flow:   "flow",
-			File:   "location/flow.go",
-			Line:   42,
-			Column: 84,
-		})
-		assert.False(t, feMutated == fe)
-		assert.False(t, feMutated == fe2)
-		assert.True(t, fe == fe2) // Already tested in "same object".
-	})
-
 }
 
 // TestTallyEmitter_CacheTask verifies that we get back an initial cached object.
@@ -149,7 +127,6 @@ func TestTallyEmitter_CacheFlowReadRace(t *testing.T) {
 	e := TallyEmitter(scope)
 	start := make(chan struct{})
 	results := make([]FlowEmitter, N)
-	mutatedResults := make([]FlowEmitter, N/2)
 	var wg sync.WaitGroup
 	wg.Add(N)
 	for i := 0; i < N; i++ {
@@ -163,11 +140,6 @@ func TestTallyEmitter_CacheFlowReadRace(t *testing.T) {
 					Line:   42,
 					Column: 84,
 				})
-			// Verifying that original cached FlowEmitter isn't mutated and we
-			// return a new object.
-			if i%2 == 0 {
-				results[i].FlowFailedTask(context.Background(), "foo", nil)
-			}
 			// Don't need a lock because we're filling in independent indexes of
 			// a pre-allocated slice.
 		}(i)
@@ -178,10 +150,5 @@ func TestTallyEmitter_CacheFlowReadRace(t *testing.T) {
 	for _, got := range results[1:] {
 		require.True(t, got == want)
 		// require because we don't want to log a 1000 messages
-	}
-	wantMutated := mutatedResults[0]
-	for i, got := range mutatedResults[1:] {
-		require.True(t, got == wantMutated)
-		require.False(t, got == results[i])
 	}
 }

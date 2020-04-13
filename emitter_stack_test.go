@@ -50,7 +50,6 @@ func TestEmitterStackConstruction(t *testing.T) {
 
 			e := cff.EmitterStack(tt.give...)
 			e.FlowInit(&cff.FlowInfo{Flow: "foo"}).
-				FlowFailedTask(ctx, "bar", errors.New("baz")).
 				FlowDone(ctx, time.Second)
 		})
 	}
@@ -144,31 +143,6 @@ func TestEmitterStack(t *testing.T) {
 			m.flow1.EXPECT().FlowDone(ctx, time.Duration(1))
 			m.flow2.EXPECT().FlowDone(ctx, time.Duration(1))
 			m.stack.FlowInit(&cff.FlowInfo{"foo", "foo.go", 0, 0}).FlowDone(ctx, time.Duration(1))
-		})
-		t.Run("FlowFailedTask", func(t *testing.T) {
-			ctx := context.Background()
-			m := mocks(t)
-			defer m.ctrl.Finish()
-
-			m.emitter1.EXPECT().FlowInit(&cff.FlowInfo{"foo", "foo.go", 0, 0}).Return(m.flow1)
-			m.emitter2.EXPECT().FlowInit(&cff.FlowInfo{"foo", "foo.go", 0, 0}).Return(m.flow2)
-
-			newFlow1 := cff.NewMockFlowEmitter(m.ctrl)
-			newFlow2 := cff.NewMockFlowEmitter(m.ctrl)
-
-			err := errors.New("foobar")
-
-			m.flow1.EXPECT().FlowFailedTask(ctx, "foobar", err).Return(newFlow1)
-			m.flow2.EXPECT().FlowFailedTask(ctx, "foobar", err).Return(newFlow2)
-
-			newEmitter := m.stack.FlowInit(&cff.FlowInfo{"foo", "foo.go", 0, 0}).FlowFailedTask(ctx, "foobar", err)
-
-			// Asserts that the subsequent requests should go to the return-value from FlowFailedTask, not m.flow1, m.flow2
-
-			newFlow1.EXPECT().FlowSuccess(ctx)
-			newFlow2.EXPECT().FlowSuccess(ctx)
-
-			newEmitter.FlowSuccess(ctx)
 		})
 	})
 

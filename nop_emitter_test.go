@@ -18,8 +18,6 @@ func TestNopEmitter(t *testing.T) {
 		e.FlowSuccess(ctx)
 		e.FlowError(ctx, errors.New("great sadness"))
 
-		e = e.FlowFailedTask(ctx, "foo", errors.New("bar"))
-
 		e.FlowSkipped(ctx, errors.New("something went wrong"))
 		e.FlowDone(ctx, 3*time.Second)
 	})

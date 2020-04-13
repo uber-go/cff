@@ -30,10 +30,6 @@ func (*nopEmitter) FlowSkipped(context.Context, error) {}
 
 func (*nopEmitter) FlowDone(context.Context, time.Duration) {}
 
-func (e *nopEmitter) FlowFailedTask(context.Context, string, error) FlowEmitter {
-	return e
-}
-
 func (e *nopEmitter) TaskInit(*TaskInfo, *FlowInfo) TaskEmitter { return e }
 
 func (*nopEmitter) TaskSuccess(context.Context) {}

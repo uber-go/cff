@@ -15,8 +15,6 @@ func(
 	var _ = ({{ $cff }}.FlowOption)(nil)
 
 	{{ if $flow.Instrument }}
-		var flowEmitterReplace sync.Once
-		var _ = &flowEmitterReplace
 		flowEmitter := emitter.FlowInit(
 			&{{ $cff }}.FlowInfo{
 				Flow: {{ expr $flow.Instrument.Name }},
@@ -164,11 +162,6 @@ func(
 								{{- end }}{{ if gt (len .FallbackWithResults) 0 }}, {{ end }} nil
 							{{- else -}}
 								{{ if .Instrument -}}
-									{{ if $flow.Instrument -}}
-										flowEmitterReplace.Do(func() {
-											flowEmitter = flowEmitter.FlowFailedTask(ctx, {{ expr .Instrument.Name }}, {{$serr}})
-										})
-									{{- end }}
 									taskEmitter.TaskError(ctx, {{$serr}})
 								{{- end }}
 								{{ $once }}.Do(func() { err = {{ $serr }} })

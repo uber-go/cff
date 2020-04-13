@@ -71,12 +71,12 @@ func TestInstrumentErrorME(t *testing.T) {
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
 
-	flowFailedEmitter := cff.NewMockFlowEmitter(mockCtrl)
+	// flowFailedEmitter := cff.NewMockFlowEmitter(mockCtrl)
 
-	flowFailedEmitter.EXPECT().FlowError(ctx, gomock.Any())
-	flowFailedEmitter.EXPECT().FlowSkipped(ctx, gomock.Any())
-	flowFailedEmitter.EXPECT().FlowDone(ctx, gomock.Any())
-	flowEmitter.EXPECT().FlowFailedTask(ctx, "Atoi", gomock.Any()).Return(flowFailedEmitter)
+	flowEmitter.EXPECT().FlowError(ctx, gomock.Any())
+	flowEmitter.EXPECT().FlowSkipped(ctx, gomock.Any())
+	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
+
 	// 2 tasks.
 	taskEmitter.EXPECT().TaskError(ctx, gomock.Any())
 	taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
@@ -241,51 +241,84 @@ func TestT3630161ME(t *testing.T) {
 // TestT3795761 tests against regression for T3795761 where a task that returns no error is not reported as
 // skipped when an earlier task that it depends on returns an error.
 func TestT3795761ME(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
 	ctx := context.Background()
 
-	emitter := cff.NewMockEmitter(mockCtrl)
-
-	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
-	flowFailedEmitter := cff.NewMockFlowEmitter(mockCtrl)
-
-	flowEmitter.EXPECT().FlowFailedTask(ctx, "NeedsInt", gomock.Any()).Return(flowFailedEmitter)
-	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any()).AnyTimes()
-	flowEmitter.EXPECT().FlowSuccess(ctx).AnyTimes()
-
-	flowFailedEmitter.EXPECT().FlowError(ctx, gomock.Any())
-	flowFailedEmitter.EXPECT().FlowSkipped(ctx, gomock.Any())
-	flowFailedEmitter.EXPECT().FlowDone(ctx, gomock.Any())
-
-	taskEmitter.EXPECT().TaskSuccess(ctx).AnyTimes()
-	taskEmitter.EXPECT().TaskError(ctx, gomock.Any())
-	taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
-	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).AnyTimes()
-
-	emitter.EXPECT().FlowInit(gomock.Any()).AnyTimes().Return(flowEmitter)
-	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 
-	g := &instrument.CustomEmitter{
-		Scope:   scope,
-		Logger:  logger,
-		Emitter: emitter,
-	}
-
 	t.Run("should run error", func(t *testing.T) {
+		emitter := cff.NewMockEmitter(mockCtrl)
+
+		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+		flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
+
+		taskEmitter.EXPECT().TaskSuccess(ctx)
+		taskEmitter.EXPECT().TaskError(ctx, gomock.Any())
+		taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
+
+		flowEmitter.EXPECT().FlowError(ctx, gomock.Any())
+		flowEmitter.EXPECT().FlowSkipped(ctx, gomock.Any())
+		flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
+
+		emitter.EXPECT().FlowInit(gomock.Any()).AnyTimes().Return(flowEmitter)
+		emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
+
+		g := &instrument.CustomEmitter{
+			Scope:   scope,
+			Logger:  logger,
+			Emitter: emitter,
+		}
 		g.T3795761(ctx, true, true)
 	})
 
 	t.Run("should run no error", func(t *testing.T) {
+		emitter := cff.NewMockEmitter(mockCtrl)
+
+		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+		flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
+
+		taskEmitter.EXPECT().TaskSuccess(ctx).Times(2)
+		taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
+
+		flowEmitter.EXPECT().FlowSuccess(ctx)
+		flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
+
+		emitter.EXPECT().FlowInit(gomock.Any()).AnyTimes().Return(flowEmitter)
+		emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
+
+		g := &instrument.CustomEmitter{
+			Scope:   scope,
+			Logger:  logger,
+			Emitter: emitter,
+		}
 		g.T3795761(ctx, true, false)
 	})
 
 	t.Run("should not run", func(t *testing.T) {
+		emitter := cff.NewMockEmitter(mockCtrl)
+
+		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+		flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
+
+		taskEmitter.EXPECT().TaskSuccess(ctx)
+		taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
+		taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
+
+		flowEmitter.EXPECT().FlowSuccess(ctx)
+		flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
+
+		emitter.EXPECT().FlowInit(gomock.Any()).AnyTimes().Return(flowEmitter)
+		emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
+
+		g := &instrument.CustomEmitter{
+			Scope:   scope,
+			Logger:  logger,
+			Emitter: emitter,
+		}
 		// false, false is equivalent
 		g.T3795761(ctx, false, true)
 	})

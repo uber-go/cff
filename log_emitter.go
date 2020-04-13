@@ -84,10 +84,6 @@ type logFlowEmitter struct {
 	// Field holding the flow name.
 	flow zap.Field
 
-	// Field holding failed task name or zap.Skip if no task is known to
-	// have failed.
-	failedTask zap.Field
-
 	logger   *zap.Logger
 	errLevel zapcore.Level
 }
@@ -96,10 +92,9 @@ func (logFlowEmitter) flowEmitter() {}
 
 func (e *logEmitter) FlowInit(info *FlowInfo) FlowEmitter {
 	return &logFlowEmitter{
-		flow:       zap.String("flow", info.Flow),
-		failedTask: zap.Skip(),
-		logger:     e.logger,
-		errLevel:   e.errLevel,
+		flow:     zap.String("flow", info.Flow),
+		logger:   e.logger,
+		errLevel: e.errLevel,
 	}
 }
 
@@ -109,7 +104,7 @@ func (e *logFlowEmitter) FlowSuccess(context.Context) {
 
 func (e *logFlowEmitter) FlowError(ctx context.Context, err error) {
 	if ce := e.logger.Check(e.errLevel, "flow error"); ce != nil {
-		ce.Write(e.flow, e.failedTask, zap.Error(err))
+		ce.Write(e.flow, zap.Error(err))
 	}
 }
 
@@ -119,12 +114,6 @@ func (e *logFlowEmitter) FlowSkipped(ctx context.Context, err error) {
 
 func (e *logFlowEmitter) FlowDone(ctx context.Context, d time.Duration) {
 	e.logger.Debug("flow done", e.flow)
-}
-
-func (e *logFlowEmitter) FlowFailedTask(ctx context.Context, task string, err error) FlowEmitter {
-	newE := *e // shallow copy
-	newE.failedTask = zap.String("failedTask", task)
-	return &newE
 }
 
 type logTaskEmitter struct {

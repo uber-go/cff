@@ -76,7 +76,7 @@ func TestInstrumentError(t *testing.T) {
 		t.Logf("got counter with key %q val %v", k, v.Value())
 	}
 	assert.Equal(t, int64(1), counters["task.error+flow=AtoiRun,task=Atoi"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.error+failedtask=Atoi,flow=AtoiRun"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.error+flow=AtoiRun"].Value())
 
 	expected := []struct {
 		level   zapcore.Level
@@ -163,7 +163,6 @@ func TestInstrumentRecover(t *testing.T) {
 		t.Logf("got counter with key %q", k)
 	}
 	assert.Equal(t, int64(1), counters["task.success+flow=AtoiRun,task=Atoi"].Value())
-	assert.Equal(t, int64(1), counters["task.error+flow=AtoiRun,task=uint8"].Value())
 	assert.Equal(t, int64(1), counters["task.recovered+flow=AtoiRun,task=uint8"].Value())
 	assert.Equal(t, int64(1), counters["taskflow.success+flow=AtoiRun"].Value())
 
@@ -275,8 +274,6 @@ func TestT3630161(t *testing.T) {
 
 	assert.Equal(t, 1, len(countersByName["task.success"]))
 	assert.Equal(t, map[string]string{"flow": "T3630161", "task": "End"}, countersByName["task.success"][0].Tags())
-	assert.Equal(t, 1, len(countersByName["task.error"]))
-	assert.Equal(t, map[string]string{"flow": "T3630161", "task": "Err"}, countersByName["task.error"][0].Tags())
 	assert.Equal(t, 1, len(countersByName["task.recovered"]))
 	assert.Equal(t, map[string]string{"flow": "T3630161", "task": "Err"}, countersByName["task.recovered"][0].Tags())
 	assert.Equal(t, 1, len(countersByName["task.recovered"]))
