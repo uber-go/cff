@@ -207,10 +207,6 @@ func (f *flow) addNoOutput() *noOutput {
 	return no
 }
 
-func (f *flow) addEmitter(expr ast.Expr) {
-	f.Emitters = append(f.Emitters, expr)
-}
-
 // mustSetNoOutputProvider sets the provider for the no-output, panicking if the no-output sentinel type was already
 // present.
 func (f *flow) mustSetNoOutputProvider(key *task, value int) {
@@ -275,7 +271,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 		case "InstrumentFlow":
 			flow.Instrument = c.compileInstrument(ce)
 		case "WithEmitter":
-			flow.addEmitter(ce.Args[0])
+			flow.Emitters = append(flow.Emitters, ce.Args[0])
 		case "Task":
 			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
 				flow.Tasks = append(flow.Tasks, task)
