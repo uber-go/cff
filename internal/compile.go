@@ -207,10 +207,6 @@ func (f *flow) addNoOutput() *noOutput {
 	return no
 }
 
-func (f *flow) addInstrument(name ast.Expr) {
-	f.Instrument = &instrument{Name: name}
-}
-
 func (f *flow) addEmitter(expr ast.Expr) {
 	f.Emitters = append(f.Emitters, expr)
 }
@@ -277,7 +273,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 				}
 			}
 		case "InstrumentFlow":
-			flow.addInstrument(ce.Args[0])
+			flow.Instrument = c.compileInstrument(ce)
 		case "WithEmitter":
 			flow.addEmitter(ce.Args[0])
 		case "Task":
@@ -582,12 +578,8 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 	// passed.
 	if flow.Instrument != nil && c.compilerOpts.InstrumentAllTasks && t.Instrument == nil {
 		taskPos := c.nodePosition(t)
-		literalImpliedName := fmt.Sprintf("%s.%d", filepath.Base(taskPos.Filename), taskPos.Line)
-		impliedNameQuoted := strconv.Quote(literalImpliedName)
-		t.Instrument = &instrument{Name: &ast.BasicLit{
-			Kind:  token.STRING,
-			Value: impliedNameQuoted,
-		}}
+		name := fmt.Sprintf("%s.%d", filepath.Base(taskPos.Filename), taskPos.Line)
+		t.Instrument = c.compileInstrumentName(name)
 	}
 
 	return &t
@@ -668,7 +660,7 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 		case "Predicate":
 			t.Predicate = c.compilePredicate(t, call)
 		case "Instrument":
-			t.Instrument = c.compileInstrument(flow, call)
+			t.Instrument = c.compileInstrument(call)
 		case "Invoke":
 			t.invokeType = c.compileInvoke(flow, call)
 		}
@@ -736,9 +728,18 @@ type instrument struct {
 	Name ast.Expr // name to use in metrics for this task
 }
 
-func (c *compiler) compileInstrument(flow *flow, call *ast.CallExpr) *instrument {
+func (c *compiler) compileInstrument(call *ast.CallExpr) *instrument {
 	name := call.Args[0]
 	return &instrument{Name: name}
+}
+
+func (c *compiler) compileInstrumentName(name string) *instrument {
+	return &instrument{
+		Name: &ast.BasicLit{
+			Kind:  token.STRING,
+			Value: strconv.Quote(name),
+		},
+	}
 }
 
 func (c *compiler) compileInvoke(flow *flow, o *ast.CallExpr) *noOutput {
