@@ -5,9 +5,7 @@
 {{- $cff := import "go.uber.org/cff" -}}
 func(
 	ctx {{ $context }}.Context,
-	{{ if $flow.ObservabilityEnabled -}}
-		emitter {{ $cff }}.Emitter,
-	{{- end }}
+	emitter {{ $cff }}.Emitter,
 	{{ range .Inputs -}}
 		v{{ typeHash .Type }} {{ type .Type }},
 	{{- end }}
@@ -28,60 +26,58 @@ func(
 		defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
 	{{- end }}
 
-	{{- if $flow.ObservabilityEnabled }}
-		type task struct {
-			name string
-			taskEmitter {{ $cff }}.TaskEmitter
-			ran bool
-		}
+	type task struct {
+		name string
+		taskEmitter {{ $cff }}.TaskEmitter
+		ran bool
+	}
 
-		tasks := [][]*task{
-			{{ range $schedule -}}
-				{
-					{{ range . -}}
-						{
-							{{ if .Instrument -}}
-								name: {{ expr .Instrument.Name }},
-								taskEmitter: emitter.TaskInit(
-									&{{ $cff }}.TaskInfo{
-										Task: {{ expr .Instrument.Name }},
-										File: {{ quote .PosInfo.File}},
-										Line: {{ .PosInfo.Line }},
-										Column: {{ .PosInfo.Column}},
-									},
-									&{{ $cff }}.FlowInfo{
-										{{- if $flow.Instrument }}
-											Flow: {{ expr $flow.Instrument.Name }},
-										{{ else }}
-											Flow: "",
-										{{- end }}
-										File: {{ quote $flow.PosInfo.File}},
-										Line: {{ $flow.PosInfo.Line }},
-										Column: {{ $flow.PosInfo.Column}},
-									},
-								),
-							{{- end }}
-							ran: false,
-						},
-					{{ end }}
-				},
-			{{ end }}
-		}
+	tasks := [][]*task{
+		{{ range $schedule -}}
+			{
+				{{ range . -}}
+					{
+						{{ if .Instrument -}}
+							name: {{ expr .Instrument.Name }},
+							taskEmitter: emitter.TaskInit(
+								&{{ $cff }}.TaskInfo{
+									Task: {{ expr .Instrument.Name }},
+									File: {{ quote .PosInfo.File}},
+									Line: {{ .PosInfo.Line }},
+									Column: {{ .PosInfo.Column}},
+								},
+								&{{ $cff }}.FlowInfo{
+									{{- if $flow.Instrument }}
+										Flow: {{ expr $flow.Instrument.Name }},
+									{{ else }}
+										Flow: "",
+									{{- end }}
+									File: {{ quote $flow.PosInfo.File}},
+									Line: {{ $flow.PosInfo.Line }},
+									Column: {{ $flow.PosInfo.Column}},
+								},
+							),
+						{{- end }}
+						ran: false,
+					},
+				{{ end }}
+			},
+		{{ end }}
+	}
 
-		defer func() {
-			for _, sched := range tasks {
-				for _, task := range sched {
-					if task.name == "" || task.ran { continue }
-					task.taskEmitter.TaskSkipped(ctx, err)
-				}
+	defer func() {
+		for _, sched := range tasks {
+			for _, task := range sched {
+				if task.name == "" || task.ran { continue }
+				task.taskEmitter.TaskSkipped(ctx, err)
 			}
-			{{- if $flow.Instrument }}
-				if err != nil {
-					flowEmitter.FlowSkipped(ctx, err)
-				}
-			{{ end }}
-		}()
-	{{ end }}
+		}
+		{{- if $flow.Instrument }}
+			if err != nil {
+				flowEmitter.FlowSkipped(ctx, err)
+			}
+		{{ end }}
+	}()
 
 	{{ range $schedIdx, $sched := $schedule }}
 		if ctx.Err() != nil {
@@ -147,9 +143,7 @@ func(
 
 					{{ template "taskResultList" . }}{{ if or .HasError (len .Outputs) }} = {{ end }}{{ template "callTask" . }}
 
-					{{- if $flow.ObservabilityEnabled }}
-						tasks[{{ $schedIdx }}][{{ $taskIdx }}].ran = true
-					{{- end }}
+					tasks[{{ $schedIdx }}][{{ $taskIdx }}].ran = true
 					{{ if .HasError -}}
 						if {{ $serr }} != nil {
 							{{ if .FallbackWith -}}
@@ -216,9 +210,7 @@ func(
 	return err
 }(
 	{{ expr .Ctx }},
-	{{ if $flow.ObservabilityEnabled -}}
-		{{ template "buildEmitter" $flow }},
-	{{ end -}}
+	{{ template "buildEmitter" $flow }},
 	{{ range .Inputs -}}
 		{{ expr .Node }},
 	{{ end }}
@@ -227,11 +219,15 @@ func(
 
 {{- define "buildEmitter" -}}
 	{{- $cff :=  import "go.uber.org/cff" -}}
-	{{ $cff }}.EmitterStack(
-		{{- range .Emitters -}}
-			{{ expr . }},
-		{{- end -}}
-	)
+	{{- with .Emitters -}}
+		{{ $cff }}.EmitterStack(
+			{{- range . -}}
+				{{ expr . }},
+			{{- end -}}
+		)
+	{{- else -}}
+		{{ $cff }}.NopEmitter()
+	{{- end -}}
 {{- end -}}
 
 {{- define "taskResultVarDecl" -}}

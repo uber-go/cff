@@ -181,8 +181,7 @@ type flow struct {
 	// executed.
 	Schedule [][]*task
 
-	Instrument           *instrument
-	ObservabilityEnabled bool
+	Instrument *instrument
 
 	providers *typeutil.Map // map[types.Type]int (index in Tasks)
 	receivers *typeutil.Map // map[types.Type][]taskIndex tracks types needed to detect unused inputs
@@ -209,7 +208,6 @@ func (f *flow) addNoOutput() *noOutput {
 }
 
 func (f *flow) addInstrument(name ast.Expr) {
-	f.ObservabilityEnabled = true
 	f.Instrument = &instrument{Name: name}
 }
 
@@ -413,7 +411,19 @@ func (c *compiler) validateTasks(f *flow) {
 }
 
 func (c *compiler) validateInstrument(f *flow) {
-	if !f.ObservabilityEnabled {
+	instrumented := f.Instrument != nil
+	if !instrumented {
+		for _, t := range f.Tasks {
+			if t.Instrument != nil {
+				instrumented = true
+				break
+			}
+		}
+	}
+
+	// If the flow, or any task in the flow were instrumented, we require
+	// at least one emitter to be provided.
+	if !instrumented {
 		return
 	}
 
@@ -566,8 +576,11 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 		c.errf("cff.Invoke cannot be provided on a Task that produces values besides errors",
 			c.nodePosition(expr))
 	}
-	// Create an implied Instrument(...) annotation.
-	if flow.ObservabilityEnabled && c.compilerOpts.InstrumentAllTasks && t.Instrument == nil {
+
+	// Create an implied Instrument(...) annotation for all tasks if the
+	// flow is instrumented and the --instrument-all-tasks flag was
+	// passed.
+	if flow.Instrument != nil && c.compilerOpts.InstrumentAllTasks && t.Instrument == nil {
 		taskPos := c.nodePosition(t)
 		literalImpliedName := fmt.Sprintf("%s.%d", filepath.Base(taskPos.Filename), taskPos.Line)
 		impliedNameQuoted := strconv.Quote(literalImpliedName)
@@ -725,10 +738,6 @@ type instrument struct {
 
 func (c *compiler) compileInstrument(flow *flow, call *ast.CallExpr) *instrument {
 	name := call.Args[0]
-
-	// It's possible to enable observability for a single task without enabling it for the flow.
-	flow.ObservabilityEnabled = true
-
 	return &instrument{Name: name}
 }
 

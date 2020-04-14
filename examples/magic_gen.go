@@ -52,6 +52,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		startTime := time.Now()
 		defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
+
 		type task struct {
 			name        string
 			taskEmitter cff.TaskEmitter
@@ -172,6 +173,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 						LDAPGroup: req.LDAPGroup,
 					}
 			}(v1)
+
 			tasks[0][0].ran = true
 
 		}()
@@ -218,6 +220,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}()
 
 			v4, err1 = h.mgr.Get(v2)
+
 			tasks[1][0].ran = true
 			if err1 != nil {
 
@@ -244,6 +247,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}()
 
 			v5, err4 = h.users.List(v3)
+
 			tasks[1][1].ran = true
 			if err4 != nil {
 				taskEmitter.TaskErrorRecovered(ctx, err4)
@@ -305,6 +309,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 					}
 					return reqs
 				}(v4, v5)
+
 				tasks[2][0].ran = true
 
 				taskEmitter.TaskSuccess(ctx)
@@ -349,6 +354,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}()
 
 			v7, err2 = h.ses.BatchSendEmail(v6)
+
 			tasks[3][0].ran = true
 			if err2 != nil {
 
@@ -399,6 +405,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 				return &r
 			}(v7)
+
 			tasks[4][0].ran = true
 
 		}()
