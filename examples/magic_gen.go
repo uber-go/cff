@@ -41,14 +41,15 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 	) (err error) {
 		var _ = (cff.FlowOption)(nil)
 
-		flowEmitter := emitter.FlowInit(
-			&cff.FlowInfo{
-				Flow:   "HandleFoo",
-				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   34,
-				Column: 9,
-			},
-		)
+		flowInfo := &cff.FlowInfo{
+			Flow:   "HandleFoo",
+			File:   "go.uber.org/cff/examples/magic.go",
+			Line:   34,
+			Column: 9,
+		}
+		_ = flowInfo // prevent variable unused errors
+
+		flowEmitter := emitter.FlowInit(flowInfo)
 
 		startTime := time.Now()
 		defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
@@ -80,13 +81,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 							Line:   62,
 							Column: 4,
 						},
-						&cff.FlowInfo{
-							Flow: "HandleFoo",
-
-							File:   "go.uber.org/cff/examples/magic.go",
-							Line:   34,
-							Column: 9,
-						},
+						flowInfo,
 					),
 					ran: false,
 				},
@@ -101,13 +96,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 							Line:   67,
 							Column: 4,
 						},
-						&cff.FlowInfo{
-							Flow: "HandleFoo",
-
-							File:   "go.uber.org/cff/examples/magic.go",
-							Line:   34,
-							Column: 9,
-						},
+						flowInfo,
 					),
 					ran: false,
 				},

@@ -12,15 +12,18 @@ func(
 ) (err error) {
 	var _ = ({{ $cff }}.FlowOption)(nil)
 
+	flowInfo := &{{ $cff }}.FlowInfo{
+		{{ with $flow.Instrument -}}
+			Flow: {{ expr .Name }},
+		{{ end -}}
+		File: {{ quote $flow.PosInfo.File}},
+		Line: {{ $flow.PosInfo.Line }},
+		Column: {{ $flow.PosInfo.Column}},
+	}
+	_ = flowInfo // prevent variable unused errors
+
 	{{ if $flow.Instrument }}
-		flowEmitter := emitter.FlowInit(
-			&{{ $cff }}.FlowInfo{
-				Flow: {{ expr $flow.Instrument.Name }},
-				File: {{ quote $flow.PosInfo.File}},
-				Line: {{ $flow.PosInfo.Line }},
-				Column: {{ $flow.PosInfo.Column}},
-			},
-		)
+		flowEmitter := emitter.FlowInit(flowInfo)
 
 		startTime := {{ import "time" }}.Now()
 		defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
@@ -46,16 +49,7 @@ func(
 									Line: {{ .PosInfo.Line }},
 									Column: {{ .PosInfo.Column}},
 								},
-								&{{ $cff }}.FlowInfo{
-									{{- if $flow.Instrument }}
-										Flow: {{ expr $flow.Instrument.Name }},
-									{{ else }}
-										Flow: "",
-									{{- end }}
-									File: {{ quote $flow.PosInfo.File}},
-									Line: {{ $flow.PosInfo.Line }},
-									Column: {{ $flow.PosInfo.Column}},
-								},
+								flowInfo,
 							),
 						{{- end }}
 						ran: false,
