@@ -1,4 +1,5 @@
 {{- $context := import "context" -}}
+{{- $sync := import "sync" -}}
 {{- $schedule := .Flow.Schedule -}}
 {{- $flow := .Flow -}}
 {{- with .Flow -}}
@@ -10,23 +11,24 @@ func(
 		v{{ typeHash .Type }} {{ type .Type }},
 	{{- end }}
 ) (err error) {
-	var _ = ({{ $cff }}.FlowOption)(nil)
+	var (
+		flowInfo = &{{ $cff }}.FlowInfo{
+			{{ with $flow.Instrument -}}
+				Flow: {{ expr .Name }},
+			{{ end -}}
+			File: {{ quote $flow.PosInfo.File}},
+			Line: {{ $flow.PosInfo.Line }},
+			Column: {{ $flow.PosInfo.Column}},
+		}
+		{{ if $flow.Instrument -}}
+			flowEmitter = emitter.FlowInit(flowInfo)
+		{{- else -}}
+			flowEmitter = {{ $cff }}.NopFlowEmitter()
+		{{- end }}
 
-	flowInfo := &{{ $cff }}.FlowInfo{
-		{{ with $flow.Instrument -}}
-			Flow: {{ expr .Name }},
-		{{ end -}}
-		File: {{ quote $flow.PosInfo.File}},
-		Line: {{ $flow.PosInfo.Line }},
-		Column: {{ $flow.PosInfo.Column}},
-	}
-	_ = flowInfo // prevent variable unused errors
-
-	{{ if $flow.Instrument -}}
-		flowEmitter := emitter.FlowInit(flowInfo)
-	{{- else -}}
-		flowEmitter := {{ $cff }}.NopFlowEmitter()
-	{{- end }}
+		// possibly unused
+		_ = flowInfo
+	)
 
 	startTime := {{ import "time" }}.Now()
 	defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
@@ -34,39 +36,14 @@ func(
 	type task struct {
 		emitter {{ $cff }}.TaskEmitter
 		ran bool
+		run func({{ $context }}.Context) error
 	}
 
-	tasks := [][]*task{
-		{{ range $schedule -}}
-			{
-				{{ range . -}}
-					{
-						{{ if .Instrument -}}
-							emitter: emitter.TaskInit(
-								&{{ $cff }}.TaskInfo{
-									Task: {{ expr .Instrument.Name }},
-									File: {{ quote .PosInfo.File}},
-									Line: {{ .PosInfo.Line }},
-									Column: {{ .PosInfo.Column}},
-								},
-								flowInfo,
-							),
-						{{- else -}}
-							emitter: {{ $cff }}.NopTaskEmitter(),
-						{{- end }}
-						ran: false,
-					},
-				{{ end }}
-			},
-		{{ end }}
-	}
-
+	var tasks []*task
 	defer func() {
-		for _, sched := range tasks {
-			for _, task := range sched {
-				if !task.ran {
-					task.emitter.TaskSkipped(ctx, err)
-				}
+		for _, t := range tasks {
+			if !t.ran {
+				t.emitter.TaskSkipped(ctx, err)
 			}
 		}
 
@@ -75,120 +52,147 @@ func(
 		}
 	}()
 
-	{{ range $schedIdx, $sched := $schedule }}
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-
-		{{- $once := printf "once%v" $schedIdx -}}
-		{{- $wg := printf "wg%v" $schedIdx -}}
-		{{- $sync := import "sync" -}}
-		{{- $hasMultipleTasks := ne 1 (len $sched) }}
+	{{/*
+	  Declare output variables for each task so that the order in which
+	  task.run functions are declared is irrelevant.
+	*/}}
+	{{ with $flow.Tasks -}}
 		var (
-			{{ if $hasMultipleTasks }}
-				{{ $wg }} {{ $sync }}.WaitGroup
+			{{ range . }}
+				{{- $t := . -}}
+				{{- range .Outputs -}}
+					v{{ typeHash . }} {{ type . }} // from {{ printf "task%d" $t.Serial }}
+				{{ end -}}
 			{{ end }}
-			{{ $once }} {{ $sync }}.Once
 		)
+	{{- end }}
 
-		{{ if $hasMultipleTasks }}
-			{{ $wg }}.Add({{ len . }})
-		{{ end }}
+	{{ range $flow.Tasks -}}
+		{{ $t := printf "task%d" .Serial }}
 
-		{{ range $taskIdx, $task := $sched }}
-			{{- $serr := printf "err%v" .Serial -}}
-			{{ template "taskResultVarDecl" . }}
-			{{ if $hasMultipleTasks -}}
-			go func() {
-				defer {{ $wg }}.Done()
-			{{ else -}}
-			func() {
-			{{ end -}}
+		// {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
+		{{ $t }} := new(task)
+		tasks = append(tasks, {{ $t }})
+		{{ $t }}.emitter =
+			{{- if .Instrument -}}
+				emitter.TaskInit(
+					&{{ $cff }}.TaskInfo{
+						Task: {{ expr .Instrument.Name }},
+						File: {{ quote .PosInfo.File}},
+						Line: {{ .PosInfo.Line }},
+						Column: {{ .PosInfo.Column}},
+					},
+					flowInfo,
+				)
+			{{- else -}}
+				{{ $cff }}.NopTaskEmitter()
+			{{- end }}
+		{{ $t }}.run = func(ctx {{ $context }}.Context) (err error) {
+			taskEmitter := {{ $t }}.emitter
+			startTime := {{ import "time" }}.Now()
+			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
 
-				taskEmitter := tasks[{{ $schedIdx }}][{{ $taskIdx }}].emitter
-				startTime := {{ import "time" }}.Now()
-				defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+				{{ if .FallbackWith -}}
+					taskEmitter.TaskPanicRecovered(ctx, recovered)
+					{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
+						{{ if gt $i 0 }},{{ end }}{{ expr $v }}
+					{{- end }}{{ if gt (len .FallbackWithResults) 0 }}, {{ end }} nil
+				{{- else -}}
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = {{ import "fmt" }}.Errorf("task panic: %v", recovered)
+				{{- end }}
+				}
+			}()
 
-				defer func() {
-					recovered := recover()
-					if recovered != nil {
-					{{ if .FallbackWith }}
-						taskEmitter.TaskPanicRecovered(ctx, recovered)
+			{{ if .Predicate }}
+				if !({{ template "callTask" .Predicate }}) {
+					return nil
+				}
+			{{ end }}
+
+			{{ template "taskResultList" . }}{{ if or .HasError (len .Outputs) }} = {{ end }}{{ template "callTask" . }}
+			{{ $t }}.ran = true
+
+			{{ if .HasError -}}
+				if err != nil {
+					{{- if .FallbackWith -}}
+						taskEmitter.TaskErrorRecovered(ctx, err)
 						{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
 							{{ if gt $i 0 }},{{ end }}{{ expr $v }}
 						{{- end }}{{ if gt (len .FallbackWithResults) 0 }}, {{ end }} nil
-					{{ else }}
-						{{ $fmt := import "fmt" }}
-						{{ $once }}.Do(func() {
-							recoveredErr := {{ $fmt }}.Errorf("task panic: %v", recovered)
-							taskEmitter.TaskPanic(ctx, recovered)
-							err = recoveredErr
-						})
-					{{ end }}
-					}
-				}()
+					{{- else -}}
+						taskEmitter.TaskError(ctx, err)
+						return err
+					{{- end }}
+				} else {
+					taskEmitter.TaskSuccess(ctx)
+				}
+			{{- else -}}
+				taskEmitter.TaskSuccess(ctx)
+			{{- end }}
 
-				{{ if .Predicate }}
-					if {{ template "callTask" .Predicate }} {
-				{{ end }}
+			return
+		}
+	{{ end }}
 
-					{{ template "taskResultList" . }}{{ if or .HasError (len .Outputs) }} = {{ end }}{{ template "callTask" . }}
-
-					tasks[{{ $schedIdx }}][{{ $taskIdx }}].ran = true
-					{{ if .HasError -}}
-						if {{ $serr }} != nil {
-							{{ if .FallbackWith -}}
-								taskEmitter.TaskErrorRecovered(ctx, {{$serr}})
-
-								{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
-									{{ if gt $i 0 }},{{ end }}{{ expr $v }}
-								{{- end }}{{ if gt (len .FallbackWithResults) 0 }}, {{ end }} nil
-							{{- else -}}
-								taskEmitter.TaskError(ctx, {{$serr}})
-								{{ $once }}.Do(func() { err = {{ $serr }} })
-							{{- end }}
-						} else {
-							taskEmitter.TaskSuccess(ctx)
-						}
-					{{ else }} {{/* cannot return error */}}
-						taskEmitter.TaskSuccess(ctx)
-					{{ end }}
-				{{ if .Predicate }}
-					}
-				{{ end }}
-			}()
-		{{ end }}
-
-		{{ if $hasMultipleTasks }}
-			{{ $wg }}.Wait()
+	schedule := [][]*task{
+		{{ range $schedule -}}
+			{
+				{{- range . -}}
+					{{ printf "task%d" .Serial }},
+				{{- end -}}
+			},
 		{{ end -}}
+	}
+
+	for _, taskGroup := range schedule {
+		if err := ctx.Err(); err != nil  {
+			return err
+		}
+
+		if len(taskGroup) == 1 {
+			if err := taskGroup[0].run(ctx); err != nil {
+				flowEmitter.FlowError(ctx, err)
+				return err
+			}
+			continue
+		}
+
+		var (
+			wg {{ $sync }}.WaitGroup
+			once {{ $sync }}.Once
+			err error
+		)
+
+		wg.Add(len(taskGroup))
+		for _, t := range taskGroup {
+			go func(t *task) {
+				defer wg.Done()
+				if terr := t.run(ctx); terr != nil {
+					once.Do(func() {
+						err = terr
+					})
+				}
+			}(t)
+		}
+
+		wg.Wait()
+
 		if err != nil {
 			flowEmitter.FlowError(ctx, err)
 			return err
 		}
-
-		// Prevent variable unused errors.
-		var (
-			_ = &{{ $once }}
-			{{ range . -}}
-				{{ range .Outputs -}}
-					_ = &v{{ typeHash .}}
-				{{ end -}}
-			{{ end }}
-		)
-	{{ end }}
-
-	{{ range .Outputs }}
-		*({{ expr .Node }}) = v{{ typeHash .Type }}
-	{{- end }}
-
-	if err != nil {
-		flowEmitter.FlowError(ctx, err)
-	} else {
-		flowEmitter.FlowSuccess(ctx)
 	}
 
-	return err
+	{{ range .Outputs }}
+		*({{ expr .Node }}) = v{{ typeHash .Type }} // {{ typeName .Type }}
+	{{- end }}
+
+	flowEmitter.FlowSuccess(ctx)
+	return nil
 }(
 	{{ expr .Ctx }},
 	{{ template "buildEmitter" $flow }},
@@ -211,17 +215,10 @@ func(
 	{{- end -}}
 {{- end -}}
 
-{{- define "taskResultVarDecl" -}}
-	{{ range .Outputs }}
-		var v{{ typeHash . }} {{ type . }}
-	{{- end }}
-	{{ if .HasError }}var {{ printf "err%d" .Serial }} error{{ end }}
-{{- end -}}
-
 {{- define "taskResultList" -}}
 	{{- range $i, $t := .Outputs -}}
 		{{ if gt $i 0 }},{{ end }}v{{ typeHash $t }}
-	{{- end }}{{ if .HasError }}{{ if len .Outputs }}, {{ end }}{{ printf "err%d" .Serial }}{{ end }}
+	{{- end }}{{ if .HasError }}{{ if len .Outputs }}, {{ end }}err{{ end }}
 {{- end -}}
 
 {{- define "callTask" -}}

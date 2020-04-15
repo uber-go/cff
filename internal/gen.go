@@ -136,7 +136,12 @@ func (g *generator) GenerateFile(f *file) error {
 func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string) error {
 	t := tmpls.MustAssetString(_genTemplate)
 	tmpl := template.Must(template.New("cff").Funcs(template.FuncMap{
-		"type":     g.typePrinter(file, addImports),
+		"type": g.typePrinter(file, addImports),
+		"typeName": func(t types.Type) string {
+			// Report the name of the type without importing it.
+			// Useful for comments.
+			return types.TypeString(t, nil)
+		},
 		"typeHash": g.printTypeHash,
 		"expr":     g.printExpr,
 		"quote":    strconv.Quote,
