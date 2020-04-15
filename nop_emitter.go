@@ -14,6 +14,16 @@ func NopEmitter() Emitter {
 	return &nopEmitter{}
 }
 
+// NopFlowEmitter is a Flow emitter that does not do anything.
+func NopFlowEmitter() FlowEmitter {
+	return &nopEmitter{}
+}
+
+// NopTaskEmitter is a Task emitter that does not do anything.
+func NopTaskEmitter() TaskEmitter {
+	return &nopEmitter{}
+}
+
 type nopEmitter struct{}
 
 func (*nopEmitter) emitter()     {}

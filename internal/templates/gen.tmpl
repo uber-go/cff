@@ -22,16 +22,17 @@ func(
 	}
 	_ = flowInfo // prevent variable unused errors
 
-	{{ if $flow.Instrument }}
+	{{ if $flow.Instrument -}}
 		flowEmitter := emitter.FlowInit(flowInfo)
-
-		startTime := {{ import "time" }}.Now()
-		defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
+	{{- else -}}
+		flowEmitter := {{ $cff }}.NopFlowEmitter()
 	{{- end }}
 
+	startTime := {{ import "time" }}.Now()
+	defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
+
 	type task struct {
-		name string
-		taskEmitter {{ $cff }}.TaskEmitter
+		emitter {{ $cff }}.TaskEmitter
 		ran bool
 	}
 
@@ -41,8 +42,7 @@ func(
 				{{ range . -}}
 					{
 						{{ if .Instrument -}}
-							name: {{ expr .Instrument.Name }},
-							taskEmitter: emitter.TaskInit(
+							emitter: emitter.TaskInit(
 								&{{ $cff }}.TaskInfo{
 									Task: {{ expr .Instrument.Name }},
 									File: {{ quote .PosInfo.File}},
@@ -51,6 +51,8 @@ func(
 								},
 								flowInfo,
 							),
+						{{- else -}}
+							emitter: {{ $cff }}.NopTaskEmitter(),
 						{{- end }}
 						ran: false,
 					},
@@ -62,15 +64,15 @@ func(
 	defer func() {
 		for _, sched := range tasks {
 			for _, task := range sched {
-				if task.name == "" || task.ran { continue }
-				task.taskEmitter.TaskSkipped(ctx, err)
+				if !task.ran {
+					task.emitter.TaskSkipped(ctx, err)
+				}
 			}
 		}
-		{{- if $flow.Instrument }}
-			if err != nil {
-				flowEmitter.FlowSkipped(ctx, err)
-			}
-		{{ end }}
+
+		if err != nil {
+			flowEmitter.FlowSkipped(ctx, err)
+		}
 	}()
 
 	{{ range $schedIdx, $sched := $schedule }}
@@ -103,18 +105,15 @@ func(
 			func() {
 			{{ end -}}
 
-				{{ if .Instrument -}}
-					taskEmitter := tasks[{{ $schedIdx }}][{{ $taskIdx }}].taskEmitter
-					startTime := {{ import "time" }}.Now()
-					defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
-				{{- end }}
+				taskEmitter := tasks[{{ $schedIdx }}][{{ $taskIdx }}].emitter
+				startTime := {{ import "time" }}.Now()
+				defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+
 				defer func() {
 					recovered := recover()
 					if recovered != nil {
 					{{ if .FallbackWith }}
-						{{ if .Instrument -}}
-							taskEmitter.TaskPanicRecovered(ctx, recovered)
-						{{ end -}}
+						taskEmitter.TaskPanicRecovered(ctx, recovered)
 						{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
 							{{ if gt $i 0 }},{{ end }}{{ expr $v }}
 						{{- end }}{{ if gt (len .FallbackWithResults) 0 }}, {{ end }} nil
@@ -122,9 +121,7 @@ func(
 						{{ $fmt := import "fmt" }}
 						{{ $once }}.Do(func() {
 							recoveredErr := {{ $fmt }}.Errorf("task panic: %v", recovered)
-							{{ if .Instrument -}}
-								taskEmitter.TaskPanic(ctx, recovered)
-							{{- end }}
+							taskEmitter.TaskPanic(ctx, recovered)
 							err = recoveredErr
 						})
 					{{ end }}
@@ -141,26 +138,20 @@ func(
 					{{ if .HasError -}}
 						if {{ $serr }} != nil {
 							{{ if .FallbackWith -}}
-								{{ if .Instrument -}}
-									taskEmitter.TaskErrorRecovered(ctx, {{$serr}})
-								{{- end }}
+								taskEmitter.TaskErrorRecovered(ctx, {{$serr}})
 
 								{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
 									{{ if gt $i 0 }},{{ end }}{{ expr $v }}
 								{{- end }}{{ if gt (len .FallbackWithResults) 0 }}, {{ end }} nil
 							{{- else -}}
-								{{ if .Instrument -}}
-									taskEmitter.TaskError(ctx, {{$serr}})
-								{{- end }}
+								taskEmitter.TaskError(ctx, {{$serr}})
 								{{ $once }}.Do(func() { err = {{ $serr }} })
 							{{- end }}
-						} {{ if .Instrument }} else {
+						} else {
 							taskEmitter.TaskSuccess(ctx)
-						} {{ end }}
+						}
 					{{ else }} {{/* cannot return error */}}
-					{{ if .Instrument -}}
 						taskEmitter.TaskSuccess(ctx)
-					{{- end }}
 					{{ end }}
 				{{ if .Predicate }}
 					}
@@ -172,9 +163,7 @@ func(
 			{{ $wg }}.Wait()
 		{{ end -}}
 		if err != nil {
-			{{ if $flow.Instrument -}}
-				flowEmitter.FlowError(ctx, err)
-			{{- end }}
+			flowEmitter.FlowError(ctx, err)
 			return err
 		}
 
@@ -193,13 +182,11 @@ func(
 		*({{ expr .Node }}) = v{{ typeHash .Type }}
 	{{- end }}
 
-	{{ if $flow.Instrument -}}
-		if err != nil {
-			flowEmitter.FlowError(ctx, err)
-		} else {
-			flowEmitter.FlowSuccess(ctx)
-		}
-	{{- end }}
+	if err != nil {
+		flowEmitter.FlowError(ctx, err)
+	} else {
+		flowEmitter.FlowSuccess(ctx)
+	}
 
 	return err
 }(

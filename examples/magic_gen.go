@@ -55,26 +55,24 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
 
 		type task struct {
-			name        string
-			taskEmitter cff.TaskEmitter
-			ran         bool
+			emitter cff.TaskEmitter
+			ran     bool
 		}
 
 		tasks := [][]*task{
 			{
 				{
-
-					ran: false,
+					emitter: cff.NopTaskEmitter(),
+					ran:     false,
 				},
 			},
 			{
 				{
-
-					ran: false,
+					emitter: cff.NopTaskEmitter(),
+					ran:     false,
 				},
 				{
-					name: "FormSendEmailRequest",
-					taskEmitter: emitter.TaskInit(
+					emitter: emitter.TaskInit(
 						&cff.TaskInfo{
 							Task:   "FormSendEmailRequest",
 							File:   "go.uber.org/cff/examples/magic.go",
@@ -88,8 +86,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			},
 			{
 				{
-					name: "FormSendEmailRequest",
-					taskEmitter: emitter.TaskInit(
+					emitter: emitter.TaskInit(
 						&cff.TaskInfo{
 							Task:   "FormSendEmailRequest",
 							File:   "go.uber.org/cff/examples/magic.go",
@@ -103,14 +100,14 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			},
 			{
 				{
-
-					ran: false,
+					emitter: cff.NopTaskEmitter(),
+					ran:     false,
 				},
 			},
 			{
 				{
-
-					ran: false,
+					emitter: cff.NopTaskEmitter(),
+					ran:     false,
 				},
 			},
 		}
@@ -118,16 +115,15 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		defer func() {
 			for _, sched := range tasks {
 				for _, task := range sched {
-					if task.name == "" || task.ran {
-						continue
+					if !task.ran {
+						task.emitter.TaskSkipped(ctx, err)
 					}
-					task.taskEmitter.TaskSkipped(ctx, err)
 				}
 			}
+
 			if err != nil {
 				flowEmitter.FlowSkipped(ctx, err)
 			}
-
 		}()
 
 		if ctx.Err() != nil {
@@ -141,6 +137,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var v3 *ListUsersRequest
 
 		func() {
+			taskEmitter := tasks[0][0].emitter
+			startTime := time.Now()
+			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
 
 			defer func() {
 				recovered := recover()
@@ -148,7 +147,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 					once0.Do(func() {
 						recoveredErr := fmt.Errorf("task panic: %v", recovered)
-
+						taskEmitter.TaskPanic(ctx, recovered)
 						err = recoveredErr
 					})
 
@@ -164,6 +163,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}(v1)
 
 			tasks[0][0].ran = true
+
+			taskEmitter.TaskSuccess(ctx)
 
 		}()
 
@@ -194,6 +195,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var err1 error
 		go func() {
 			defer wg1.Done()
+			taskEmitter := tasks[1][0].emitter
+			startTime := time.Now()
+			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
 
 			defer func() {
 				recovered := recover()
@@ -201,7 +205,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 					once1.Do(func() {
 						recoveredErr := fmt.Errorf("task panic: %v", recovered)
-
+						taskEmitter.TaskPanic(ctx, recovered)
 						err = recoveredErr
 					})
 
@@ -212,8 +216,10 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			tasks[1][0].ran = true
 			if err1 != nil {
-
+				taskEmitter.TaskError(ctx, err1)
 				once1.Do(func() { err = err1 })
+			} else {
+				taskEmitter.TaskSuccess(ctx)
 			}
 
 		}()
@@ -222,9 +228,10 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var err4 error
 		go func() {
 			defer wg1.Done()
-			taskEmitter := tasks[1][1].taskEmitter
+			taskEmitter := tasks[1][1].emitter
 			startTime := time.Now()
 			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+
 			defer func() {
 				recovered := recover()
 				if recovered != nil {
@@ -271,9 +278,10 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var v6 []*SendEmailRequest
 
 		func() {
-			taskEmitter := tasks[2][0].taskEmitter
+			taskEmitter := tasks[2][0].emitter
 			startTime := time.Now()
 			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+
 			defer func() {
 				recovered := recover()
 				if recovered != nil {
@@ -328,6 +336,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var v7 []*SendEmailResponse
 		var err2 error
 		func() {
+			taskEmitter := tasks[3][0].emitter
+			startTime := time.Now()
+			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
 
 			defer func() {
 				recovered := recover()
@@ -335,7 +346,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 					once3.Do(func() {
 						recoveredErr := fmt.Errorf("task panic: %v", recovered)
-
+						taskEmitter.TaskPanic(ctx, recovered)
 						err = recoveredErr
 					})
 
@@ -346,8 +357,10 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			tasks[3][0].ran = true
 			if err2 != nil {
-
+				taskEmitter.TaskError(ctx, err2)
 				once3.Do(func() { err = err2 })
+			} else {
+				taskEmitter.TaskSuccess(ctx)
 			}
 
 		}()
@@ -373,6 +386,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var v8 *Response
 
 		func() {
+			taskEmitter := tasks[4][0].emitter
+			startTime := time.Now()
+			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
 
 			defer func() {
 				recovered := recover()
@@ -380,7 +396,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 					once4.Do(func() {
 						recoveredErr := fmt.Errorf("task panic: %v", recovered)
-
+						taskEmitter.TaskPanic(ctx, recovered)
 						err = recoveredErr
 					})
 
@@ -396,6 +412,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}(v7)
 
 			tasks[4][0].ran = true
+
+			taskEmitter.TaskSuccess(ctx)
 
 		}()
 
