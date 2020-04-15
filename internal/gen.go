@@ -16,13 +16,15 @@ import (
 	"strings"
 	"text/template"
 
+	"bindata/src/go.uber.org/cff/internal/templates"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/types/typeutil"
-
-	tmpls "bindata/src/go.uber.org/cff/internal/templates"
 )
 
-const _genTemplate = "gen.tmpl"
+const (
+	_flowTmpl = "flow.go.tmpl"
+	_taskTmpl = "task.go.tmpl"
+)
 
 type generator struct {
 	fset *token.FileSet
@@ -134,8 +136,12 @@ func (g *generator) GenerateFile(f *file) error {
 // generateFlow runs the CFF template for the given flow and writes it to w, modifying addImports if the template
 // requires additional imports to be added.
 func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string) error {
-	t := tmpls.MustAssetString(_genTemplate)
-	tmpl := template.Must(template.New("cff").Funcs(template.FuncMap{
+	tmpl := parseTemplates(g.funcMap(file, addImports), _flowTmpl, _taskTmpl)
+	return tmpl.ExecuteTemplate(w, _flowTmpl, flowTemplateData{Flow: f})
+}
+
+func (g *generator) funcMap(file *file, addImports map[string]string) template.FuncMap {
+	return template.FuncMap{
 		"type": g.typePrinter(file, addImports),
 		"typeName": func(t types.Type) string {
 			// Report the name of the type without importing it.
@@ -166,9 +172,7 @@ func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports ma
 
 			return name
 		},
-	}).Parse(t))
-
-	return tmpl.Execute(w, flowTemplateData{Flow: f})
+	}
 }
 
 // typePrinter returns the qualifier for the type to form an identifier using that type, modifying addImports if the
@@ -228,4 +232,30 @@ func (g *generator) typeID(t types.Type) int {
 
 type flowTemplateData struct {
 	Flow *flow
+}
+
+// Parses bindata-packaged templates by name in-order.
+func parseTemplates(funcs template.FuncMap, paths ...string) *template.Template {
+	var t *template.Template
+	for _, path := range paths {
+		contents := templates.MustAssetString(path)
+		name := filepath.Base(path)
+
+		// The first template is the root template and all others are
+		// associated with it via .New. Only the first template needs
+		// the functions attached to it.
+		var tmpl *template.Template
+		if t == nil {
+			t = template.New(name).Funcs(funcs)
+			tmpl = t
+		} else {
+			tmpl = t.New(name)
+		}
+
+		template.Must(tmpl.Parse(contents))
+		// We can ignore the return value because the template is
+		// associated with the tree.
+	}
+
+	return t
 }

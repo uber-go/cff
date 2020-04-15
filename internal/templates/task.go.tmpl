@@ -1,0 +1,82 @@
+{{- $context := import "context" -}}
+{{- $cff := import "go.uber.org/cff" -}}
+{{- $t := printf "task%d" .Serial -}}
+
+// {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
+{{ $t }} := new(task)
+tasks = append(tasks, {{ $t }})
+{{ $t }}.emitter =
+	{{- if .Instrument -}}
+		emitter.TaskInit(
+			&{{ $cff }}.TaskInfo{
+				Task: {{ expr .Instrument.Name }},
+				File: {{ quote .PosInfo.File}},
+				Line: {{ .PosInfo.Line }},
+				Column: {{ .PosInfo.Column}},
+			},
+			flowInfo,
+		)
+	{{- else -}}
+		{{ $cff }}.NopTaskEmitter()
+	{{- end }}
+{{ $t }}.run = func(ctx {{ $context }}.Context) (err error) {
+	taskEmitter := {{ $t }}.emitter
+	startTime := {{ import "time" }}.Now()
+	defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+
+	defer func() {
+		recovered := recover()
+		if recovered != nil {
+		{{ if .FallbackWith -}}
+			taskEmitter.TaskPanicRecovered(ctx, recovered)
+			{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
+				{{ if gt $i 0 }},{{ end }}{{ expr $v }}
+			{{- end }}{{ if gt (len .FallbackWithResults) 0 }}, {{ end }} nil
+		{{- else -}}
+			taskEmitter.TaskPanic(ctx, recovered)
+			err = {{ import "fmt" }}.Errorf("task panic: %v", recovered)
+		{{- end }}
+		}
+	}()
+
+	{{ if .Predicate }}
+		if !({{ template "callTask" .Predicate }}) {
+			return nil
+		}
+	{{ end }}
+
+	{{ template "taskResultList" . }}{{ if or .HasError (len .Outputs) }} = {{ end }}{{ template "callTask" . }}
+	{{ $t }}.ran = true
+
+	{{ if .HasError -}}
+		if err != nil {
+			{{- if .FallbackWith -}}
+				taskEmitter.TaskErrorRecovered(ctx, err)
+				{{ template "taskResultList" . }} = {{ range $i, $v := .FallbackWithResults -}}
+					{{ if gt $i 0 }},{{ end }}{{ expr $v }}
+				{{- end }}{{ if gt (len .FallbackWithResults) 0 }}, {{ end }} nil
+			{{- else -}}
+				taskEmitter.TaskError(ctx, err)
+				return err
+			{{- end }}
+		} else {
+			taskEmitter.TaskSuccess(ctx)
+		}
+	{{- else -}}
+		taskEmitter.TaskSuccess(ctx)
+	{{- end }}
+
+	return
+}
+
+{{- define "taskResultList" -}}
+	{{- range $i, $t := .Outputs -}}
+		{{ if gt $i 0 }},{{ end }}v{{ typeHash $t }}
+	{{- end }}{{ if .HasError }}{{ if len .Outputs }}, {{ end }}err{{ end }}
+{{- end -}}
+
+{{- define "callTask" -}}
+	{{- expr .Node }}({{- if .WantCtx }}ctx,{{ end }} {{- range .Inputs }}v{{ typeHash . }}, {{- end }})
+{{- end -}}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}

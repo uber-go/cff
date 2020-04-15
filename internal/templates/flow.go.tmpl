@@ -1,0 +1,148 @@
+{{- $context := import "context" -}}
+{{- $sync := import "sync" -}}
+{{- $cff := import "go.uber.org/cff" -}}
+{{- $flow := .Flow -}}
+{{- with .Flow -}}
+func(
+	ctx {{ $context }}.Context,
+	emitter {{ $cff }}.Emitter,
+	{{ range .Inputs -}}
+		v{{ typeHash .Type }} {{ type .Type }},
+	{{- end }}
+) (err error) {
+	var (
+		flowInfo = &{{ $cff }}.FlowInfo{
+			{{ with $flow.Instrument -}}
+				Flow: {{ expr .Name }},
+			{{ end -}}
+			File: {{ quote $flow.PosInfo.File}},
+			Line: {{ $flow.PosInfo.Line }},
+			Column: {{ $flow.PosInfo.Column}},
+		}
+		{{ if $flow.Instrument -}}
+			flowEmitter = emitter.FlowInit(flowInfo)
+		{{- else -}}
+			flowEmitter = {{ $cff }}.NopFlowEmitter()
+		{{- end }}
+
+		// possibly unused
+		_ = flowInfo
+	)
+
+	startTime := {{ import "time" }}.Now()
+	defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
+
+	type task struct {
+		emitter {{ $cff }}.TaskEmitter
+		ran bool
+		run func({{ $context }}.Context) error
+	}
+
+	var tasks []*task
+	defer func() {
+		for _, t := range tasks {
+			if !t.ran {
+				t.emitter.TaskSkipped(ctx, err)
+			}
+		}
+
+		if err != nil {
+			flowEmitter.FlowSkipped(ctx, err)
+		}
+	}()
+
+	{{/*
+	Declare output variables for each task so that the order in which
+	task.run functions are declared is irrelevant.
+	*/}}
+	var (
+		{{ range $flow.Tasks }}
+			{{- $t := . -}}
+			{{- range .Outputs -}}
+        			v{{ typeHash . }} {{ type . }} // from {{ printf "task%d" $t.Serial }}
+			{{ end -}}
+		{{ end }}
+	)
+
+	{{ range $flow.Tasks }}
+		{{ template "task.go.tmpl" . }}
+	{{ end }}
+
+	schedule := [][]*task{
+		{{ range .Schedule -}}
+			{
+				{{- range . -}}
+					{{ printf "task%d" .Serial }},
+				{{- end -}}
+			},
+		{{ end -}}
+	}
+
+	for _, taskGroup := range schedule {
+		if err := ctx.Err(); err != nil  {
+			return err
+		}
+
+		if len(taskGroup) == 1 {
+			if err := taskGroup[0].run(ctx); err != nil {
+				flowEmitter.FlowError(ctx, err)
+				return err
+			}
+			continue
+		}
+
+		var (
+			wg {{ $sync }}.WaitGroup
+			once {{ $sync }}.Once
+			err error
+		)
+
+		wg.Add(len(taskGroup))
+		for _, t := range taskGroup {
+			go func(t *task) {
+				defer wg.Done()
+				if terr := t.run(ctx); terr != nil {
+					once.Do(func() {
+						err = terr
+					})
+				}
+			}(t)
+		}
+
+		wg.Wait()
+
+		if err != nil {
+			flowEmitter.FlowError(ctx, err)
+			return err
+		}
+	}
+
+	{{ range .Outputs }}
+		*({{ expr .Node }}) = v{{ typeHash .Type }} // {{ typeName .Type }}
+	{{- end }}
+
+	flowEmitter.FlowSuccess(ctx)
+	return nil
+}(
+	{{ expr .Ctx }},
+	{{ template "buildEmitter" $flow }},
+	{{ range .Inputs -}}
+		{{ expr .Node }},
+	{{ end }}
+)
+{{- end -}}
+
+{{- define "buildEmitter" -}}
+	{{- $cff :=  import "go.uber.org/cff" -}}
+	{{- with .Emitters -}}
+		{{ $cff }}.EmitterStack(
+			{{- range . -}}
+				{{ expr . }},
+			{{- end -}}
+		)
+	{{- else -}}
+		{{ $cff }}.NopEmitter()
+	{{- end -}}
+{{- end -}}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}
