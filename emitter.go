@@ -14,10 +14,6 @@ type FlowEmitter interface {
 	FlowSuccess(context.Context)
 	// FlowError is called when a flow fails due to a task error.
 	FlowError(context.Context, error)
-	// FlowSkipped is called when a flow fails due to a task error. Currently,
-	// only adding to be backwards compatible. There is discussion in ERD to
-	// remove this metric.
-	FlowSkipped(context.Context, error)
 	// FlowDone is called when a flow finishes.
 	FlowDone(context.Context, time.Duration)
 

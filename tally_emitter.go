@@ -100,10 +100,6 @@ func (e *tallyFlowEmitter) FlowError(context.Context, error) {
 	e.scope.Counter("taskflow.error").Inc(1)
 }
 
-func (e *tallyFlowEmitter) FlowSkipped(context.Context, error) {
-	e.scope.Counter("taskflow.skipped").Inc(1)
-}
-
 func (e *tallyFlowEmitter) FlowSuccess(context.Context) {
 	e.scope.Counter("taskflow.success").Inc(1)
 }

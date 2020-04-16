@@ -87,7 +87,6 @@ func TestInstrumentError(t *testing.T) {
 		{zap.DebugLevel, "task done", map[string]interface{}{"task": "Atoi"}},
 		{zap.DebugLevel, "flow error", nil},
 		{zap.DebugLevel, "task skipped", map[string]interface{}{"task": "uint8"}},
-		{zap.DebugLevel, "flow skipped", nil},
 		{zap.DebugLevel, "flow done", nil},
 	}
 
@@ -127,7 +126,6 @@ func TestInstrumentCancelledContext(t *testing.T) {
 	}
 	assert.Equal(t, int64(1), counters["task.skipped+flow=AtoiRun,task=Atoi"].Value())
 	assert.Equal(t, int64(1), counters["task.skipped+flow=AtoiRun,task=uint8"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.skipped+flow=AtoiRun"].Value())
 
 	// logs
 	expectedLevel := zap.DebugLevel
@@ -135,7 +133,6 @@ func TestInstrumentCancelledContext(t *testing.T) {
 		"flow error",
 		"task skipped",
 		"task skipped",
-		"flow skipped",
 		"flow done",
 	}
 	logEntries := observedLogs.All()
@@ -306,7 +303,6 @@ func TestT3795761(t *testing.T) {
 			"task error",
 			"task done",
 			"flow error",
-			"flow skipped",
 			"flow done",
 		}
 		logEntries := observedLogs.TakeAll()

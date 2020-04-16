@@ -108,10 +108,6 @@ func (e *logFlowEmitter) FlowError(ctx context.Context, err error) {
 	}
 }
 
-func (e *logFlowEmitter) FlowSkipped(ctx context.Context, err error) {
-	e.logger.Debug("flow skipped", e.flow, zap.Error(err))
-}
-
 func (e *logFlowEmitter) FlowDone(ctx context.Context, d time.Duration) {
 	e.logger.Debug("flow done", e.flow)
 }

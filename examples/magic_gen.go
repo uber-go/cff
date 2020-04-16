@@ -67,10 +67,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 					t.emitter.TaskSkipped(ctx, err)
 				}
 			}
-
-			if err != nil {
-				flowEmitter.FlowSkipped(ctx, err)
-			}
 		}()
 
 		// go.uber.org/cff/examples/magic.go:42:4

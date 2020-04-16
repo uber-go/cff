@@ -118,19 +118,6 @@ func TestEmitterStack(t *testing.T) {
 			m.flow2.EXPECT().FlowError(ctx, err)
 			m.stack.FlowInit(&FlowInfo{"foo", "foo.go", 0, 0}).FlowError(ctx, err)
 		})
-		t.Run("FlowSkipped", func(t *testing.T) {
-			ctx := context.Background()
-			m := mocks(t)
-			defer m.ctrl.Finish()
-
-			m.emitter1.EXPECT().FlowInit(&FlowInfo{"foo", "foo.go", 0, 0}).Return(m.flow1)
-			m.emitter2.EXPECT().FlowInit(&FlowInfo{"foo", "foo.go", 0, 0}).Return(m.flow2)
-
-			err := errors.New("foobar")
-			m.flow1.EXPECT().FlowSkipped(ctx, err)
-			m.flow2.EXPECT().FlowSkipped(ctx, err)
-			m.stack.FlowInit(&FlowInfo{"foo", "foo.go", 0, 0}).FlowSkipped(ctx, err)
-		})
 		t.Run("FlowDone", func(t *testing.T) {
 			ctx := context.Background()
 			m := mocks(t)

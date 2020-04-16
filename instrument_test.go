@@ -74,7 +74,6 @@ func TestInstrumentErrorME(t *testing.T) {
 	// flowFailedEmitter := cff.NewMockFlowEmitter(mockCtrl)
 
 	flowEmitter.EXPECT().FlowError(ctx, gomock.Any())
-	flowEmitter.EXPECT().FlowSkipped(ctx, gomock.Any())
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
 
 	// 2 tasks.
@@ -145,7 +144,6 @@ func TestInstrumentCancelledContextME(t *testing.T) {
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
 
 	flowEmitter.EXPECT().FlowError(ctx, flowCancelledErr)
-	flowEmitter.EXPECT().FlowSkipped(ctx, flowCancelledErr)
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
 
 	taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any()).Times(2)
@@ -262,7 +260,6 @@ func TestT3795761ME(t *testing.T) {
 		taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
 
 		flowEmitter.EXPECT().FlowError(ctx, gomock.Any())
-		flowEmitter.EXPECT().FlowSkipped(ctx, gomock.Any())
 		flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
 
 		emitter.EXPECT().FlowInit(gomock.Any()).AnyTimes().Return(flowEmitter)

@@ -18,7 +18,7 @@ func TestLogFlowEmitter_IncludesFlowName(t *testing.T) {
 
 	em := LogEmitter(zap.New(core)).FlowInit(&FlowInfo{Flow: "myflow"})
 	em.FlowSuccess(context.Background())
-	em.FlowSkipped(context.Background(), errors.New("foo"))
+	em.FlowError(context.Background(), errors.New("foo"))
 
 	for _, logEntry := range observed.TakeAll() {
 		fields := logEntry.ContextMap()

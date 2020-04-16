@@ -138,15 +138,6 @@ func (s *emitterStackFlow) FlowError(ctx context.Context, err error) {
 	}
 }
 
-// FlowSkipped is called when a flow fails due to a task error. Currently,
-// only adding to be backwards compatible. There is discussion in ERD to
-// remove this metric.
-func (s *emitterStackFlow) FlowSkipped(ctx context.Context, err error) {
-	for _, e := range s.stack {
-		e.FlowSkipped(ctx, err)
-	}
-}
-
 // FlowDone is called when a flow finishes.
 func (s *emitterStackFlow) FlowDone(ctx context.Context, d time.Duration) {
 	for _, e := range s.stack {

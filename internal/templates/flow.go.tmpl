@@ -44,10 +44,6 @@ func(
 				t.emitter.TaskSkipped(ctx, err)
 			}
 		}
-
-		if err != nil {
-			flowEmitter.FlowSkipped(ctx, err)
-		}
 	}()
 
 	{{ range $flow.TopoTasks }}
