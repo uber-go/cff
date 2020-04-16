@@ -132,6 +132,7 @@ func TestInstrumentCancelledContext(t *testing.T) {
 	// logs
 	expectedLevel := zap.DebugLevel
 	expectedMessages := []string{
+		"flow error",
 		"task skipped",
 		"task skipped",
 		"flow skipped",

@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"sync"
 	"time"
 
 	"go.uber.org/cff"
@@ -298,51 +297,17 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		}
 		tasks = append(tasks, task3)
 
-		schedule := [][]*task{
-			{task0},
-			{task1, task4},
-			{task5},
-			{task2},
-			{task3},
+		schedule := [][]func(context.Context) error{
+			{task0.run},
+			{task1.run, task4.run},
+			{task5.run},
+			{task2.run},
+			{task3.run},
 		}
 
-		for _, taskGroup := range schedule {
-			if err := ctx.Err(); err != nil {
-				return err
-			}
-
-			if len(taskGroup) == 1 {
-				if err := taskGroup[0].run(ctx); err != nil {
-					flowEmitter.FlowError(ctx, err)
-					return err
-				}
-				continue
-			}
-
-			var (
-				wg   sync.WaitGroup
-				once sync.Once
-				err  error
-			)
-
-			wg.Add(len(taskGroup))
-			for _, t := range taskGroup {
-				go func(t *task) {
-					defer wg.Done()
-					if terr := t.run(ctx); terr != nil {
-						once.Do(func() {
-							err = terr
-						})
-					}
-				}(t)
-			}
-
-			wg.Wait()
-
-			if err != nil {
-				flowEmitter.FlowError(ctx, err)
-				return err
-			}
+		if err := cff.RunStaticTasks(ctx, schedule); err != nil {
+			flowEmitter.FlowError(ctx, err)
+			return err
 		}
 
 		*(&res) = v8 // *go.uber.org/cff/examples.Response

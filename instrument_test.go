@@ -144,6 +144,7 @@ func TestInstrumentCancelledContextME(t *testing.T) {
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
 
+	flowEmitter.EXPECT().FlowError(ctx, flowCancelledErr)
 	flowEmitter.EXPECT().FlowSkipped(ctx, flowCancelledErr)
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
 
