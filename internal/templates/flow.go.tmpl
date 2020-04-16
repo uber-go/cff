@@ -51,21 +51,9 @@ func(
 		}
 	}()
 
-	{{/*
-	Declare output variables for each task so that the order in which
-	task.run functions are declared is irrelevant.
-	*/}}
-	var (
-		{{ range $flow.Tasks }}
-			{{- $t := . -}}
-			{{- range .Outputs -}}
-        			v{{ typeHash . }} {{ type . }} // from {{ printf "task%d" $t.Serial }}
-			{{ end -}}
-		{{ end }}
-	)
-
-	{{ range $flow.Tasks }}
+	{{ range $flow.TopoTasks }}
 		{{ template "task.go.tmpl" . }}
+		tasks = append(tasks, {{ printf "task%d" .Serial }})
 	{{ end }}
 
 	schedule := [][]*task{

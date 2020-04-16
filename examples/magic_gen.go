@@ -74,20 +74,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 		}()
 
-		var (
-			v2 *GetManagerRequest   // from task0
-			v3 *ListUsersRequest    // from task0
-			v4 *GetManagerResponse  // from task1
-			v5 []*SendEmailResponse // from task2
-			v6 *Response            // from task3
-			v7 *ListUsersResponse   // from task4
-			v8 []*SendEmailRequest  // from task5
-
-		)
-
 		// go.uber.org/cff/examples/magic.go:42:4
+		var (
+			v2 *GetManagerRequest
+			v3 *ListUsersRequest
+		)
 		task0 := new(task)
-		tasks = append(tasks, task0)
 		task0.emitter = cff.NopTaskEmitter()
 		task0.run = func(ctx context.Context) (err error) {
 			taskEmitter := task0.emitter
@@ -115,10 +107,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			return
 		}
+		tasks = append(tasks, task0)
 
 		// go.uber.org/cff/examples/magic.go:50:4
+		var (
+			v4 *GetManagerResponse
+		)
 		task1 := new(task)
-		tasks = append(tasks, task1)
 		task1.emitter = cff.NopTaskEmitter()
 		task1.run = func(ctx context.Context) (err error) {
 			taskEmitter := task1.emitter
@@ -145,71 +140,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			return
 		}
-
-		// go.uber.org/cff/examples/magic.go:51:12
-		task2 := new(task)
-		tasks = append(tasks, task2)
-		task2.emitter = cff.NopTaskEmitter()
-		task2.run = func(ctx context.Context) (err error) {
-			taskEmitter := task2.emitter
-			startTime := time.Now()
-			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
-
-			defer func() {
-				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
-				}
-			}()
-
-			v5, err = h.ses.BatchSendEmail(v8)
-			task2.ran = true
-
-			if err != nil {
-				taskEmitter.TaskError(ctx, err)
-				return err
-			} else {
-				taskEmitter.TaskSuccess(ctx)
-			}
-
-			return
-		}
-
-		// go.uber.org/cff/examples/magic.go:53:4
-		task3 := new(task)
-		tasks = append(tasks, task3)
-		task3.emitter = cff.NopTaskEmitter()
-		task3.run = func(ctx context.Context) (err error) {
-			taskEmitter := task3.emitter
-			startTime := time.Now()
-			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
-
-			defer func() {
-				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
-				}
-			}()
-
-			v6 = func(responses []*SendEmailResponse) *Response {
-				var r Response
-				for _, res := range responses {
-					r.MessageIDs = append(r.MessageIDs, res.MessageID)
-				}
-				return &r
-			}(v5)
-			task3.ran = true
-
-			taskEmitter.TaskSuccess(ctx)
-
-			return
-		}
+		tasks = append(tasks, task1)
 
 		// go.uber.org/cff/examples/magic.go:62:4
+		var (
+			v5 *ListUsersResponse
+		)
 		task4 := new(task)
-		tasks = append(tasks, task4)
 		task4.emitter = emitter.TaskInit(
 			&cff.TaskInfo{
 				Task:   "FormSendEmailRequest",
@@ -228,26 +165,29 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanicRecovered(ctx, recovered)
-					v7, err = &ListUsersResponse{}, nil
+					v5, err = &ListUsersResponse{}, nil
 				}
 			}()
 
-			v7, err = h.users.List(v3)
+			v5, err = h.users.List(v3)
 			task4.ran = true
 
 			if err != nil {
 				taskEmitter.TaskErrorRecovered(ctx, err)
-				v7, err = &ListUsersResponse{}, nil
+				v5, err = &ListUsersResponse{}, nil
 			} else {
 				taskEmitter.TaskSuccess(ctx)
 			}
 
 			return
 		}
+		tasks = append(tasks, task4)
 
 		// go.uber.org/cff/examples/magic.go:67:4
+		var (
+			v6 []*SendEmailRequest
+		)
 		task5 := new(task)
-		tasks = append(tasks, task5)
 		task5.emitter = emitter.TaskInit(
 			&cff.TaskInfo{
 				Task:   "FormSendEmailRequest",
@@ -276,19 +216,87 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				return nil
 			}
 
-			v8 = func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest {
+			v6 = func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest {
 				var reqs []*SendEmailRequest
 				for _, u := range users.Emails {
 					reqs = append(reqs, &SendEmailRequest{Address: u})
 				}
 				return reqs
-			}(v4, v7)
+			}(v4, v5)
 			task5.ran = true
 
 			taskEmitter.TaskSuccess(ctx)
 
 			return
 		}
+		tasks = append(tasks, task5)
+
+		// go.uber.org/cff/examples/magic.go:51:12
+		var (
+			v7 []*SendEmailResponse
+		)
+		task2 := new(task)
+		task2.emitter = cff.NopTaskEmitter()
+		task2.run = func(ctx context.Context) (err error) {
+			taskEmitter := task2.emitter
+			startTime := time.Now()
+			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = fmt.Errorf("task panic: %v", recovered)
+				}
+			}()
+
+			v7, err = h.ses.BatchSendEmail(v6)
+			task2.ran = true
+
+			if err != nil {
+				taskEmitter.TaskError(ctx, err)
+				return err
+			} else {
+				taskEmitter.TaskSuccess(ctx)
+			}
+
+			return
+		}
+		tasks = append(tasks, task2)
+
+		// go.uber.org/cff/examples/magic.go:53:4
+		var (
+			v8 *Response
+		)
+		task3 := new(task)
+		task3.emitter = cff.NopTaskEmitter()
+		task3.run = func(ctx context.Context) (err error) {
+			taskEmitter := task3.emitter
+			startTime := time.Now()
+			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = fmt.Errorf("task panic: %v", recovered)
+				}
+			}()
+
+			v8 = func(responses []*SendEmailResponse) *Response {
+				var r Response
+				for _, res := range responses {
+					r.MessageIDs = append(r.MessageIDs, res.MessageID)
+				}
+				return &r
+			}(v7)
+			task3.ran = true
+
+			taskEmitter.TaskSuccess(ctx)
+
+			return
+		}
+		tasks = append(tasks, task3)
 
 		schedule := [][]*task{
 			{task0},
@@ -337,7 +345,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 		}
 
-		*(&res) = v6 // *go.uber.org/cff/examples.Response
+		*(&res) = v8 // *go.uber.org/cff/examples.Response
 
 		flowEmitter.FlowSuccess(ctx)
 		return nil

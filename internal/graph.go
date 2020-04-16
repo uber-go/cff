@@ -4,18 +4,44 @@ type graph struct {
 	// Number of nodes in this graph.
 	Count int
 
-	// Indexes of the root nodes.
-	Roots []int
-
 	// Returns the dependencies of the node at the given index.
 	Dependencies func(int) []int
 }
 
-func scheduleGraph(g graph) [][]int {
+// Returns a topologically sorted list of nodes.
+//
+// Does not detect cycles. Make sure that is already done.
+func toposort(g graph) []int {
+	topo := make([]int, 0, g.Count)
+
+	visited := make(map[int]struct{}, g.Count)
+	var visit func(int)
+	visit = func(n int) {
+		if _, ok := visited[n]; ok {
+			return
+		}
+
+		for _, d := range g.Dependencies(n) {
+			visit(d)
+		}
+
+		visited[n] = struct{}{}
+		topo = append(topo, n)
+	}
+
+	for n := 0; n < g.Count; n++ {
+		visit(n)
+	}
+
+	return topo
+}
+
+// Builds a static execution schedule of the nodes defined in the graph
+// starting at the provided roots.
+func scheduleGraph(nodes []int, g graph) [][]int {
 	// distances[i] is distance of node i from root.
 	distances := make([]int, g.Count)
 
-	nodes := g.Roots
 	d := 0 // current distance
 	for len(nodes) > 0 {
 		var newNodes []int

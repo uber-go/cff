@@ -3,8 +3,14 @@
 {{- $t := printf "task%d" .Serial -}}
 
 // {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
+{{ with .Outputs -}}
+	var (
+		{{ range . -}}
+ 			v{{ typeHash . }} {{ type . }}
+		{{ end }}
+	)
+{{ end -}}
 {{ $t }} := new(task)
-tasks = append(tasks, {{ $t }})
 {{ $t }}.emitter =
 	{{- if .Instrument -}}
 		emitter.TaskInit(

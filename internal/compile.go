@@ -171,6 +171,11 @@ type flow struct {
 	Outputs []*output
 	Tasks   []*task
 
+	// Topoloically ordered list of tasks.
+	//
+	// For all i < j, TopoTasks[i] cannot depend on TopoTasks[j].
+	TopoTasks []*task
+
 	// Partition of all tasks defining a schedule in which the tasks must be
 	// executed. All tasks in one of the subsets can be executed in parallel,
 	// and they must all have finished executing before the next subset of
@@ -318,7 +323,8 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 	if len(c.errors) > 0 {
 		return nil
 	}
-	c.scheduleFlow(&flow)
+
+	c.scheduleFlowAndToposort(&flow)
 	return &flow
 }
 
@@ -425,7 +431,7 @@ func (c *compiler) validateInstrument(f *flow) {
 	}
 }
 
-func (c *compiler) scheduleFlow(f *flow) {
+func (c *compiler) scheduleFlowAndToposort(f *flow) {
 	g := graph{
 		Count: len(f.Tasks),
 		Dependencies: func(taskIdx int) []int {
@@ -441,15 +447,16 @@ func (c *compiler) scheduleFlow(f *flow) {
 		},
 	}
 
+	var roots []int
 	for _, o := range f.Outputs {
-		g.Roots = append(g.Roots, f.providers.At(o.Type).(int))
+		roots = append(roots, f.providers.At(o.Type).(int))
 	}
 	for _, o := range f.invokeTypes {
-		g.Roots = append(g.Roots, f.providers.At(o.Type).(int))
+		roots = append(roots, f.providers.At(o.Type).(int))
 	}
 
 	var schedule [][]*task
-	for _, idxSet := range scheduleGraph(g) {
+	for _, idxSet := range scheduleGraph(roots, g) {
 		var tasks []*task
 		for _, idx := range idxSet {
 			tasks = append(tasks, f.Tasks[idx])
@@ -457,6 +464,12 @@ func (c *compiler) scheduleFlow(f *flow) {
 		schedule = append(schedule, tasks)
 	}
 	f.Schedule = schedule
+
+	var topo []*task
+	for _, idx := range toposort(g) {
+		topo = append(topo, f.Tasks[idx])
+	}
+	f.TopoTasks = topo
 }
 
 // PosInfo contains positional information about a Flow or Task. This may be
@@ -476,6 +489,7 @@ type task struct {
 
 	// Whether the last result is an error.
 	HasError bool
+
 	// Serial is a unique serially incrementing number for each task.
 	Serial int
 
