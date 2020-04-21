@@ -117,11 +117,13 @@ func (g *generator) GenerateFile(f *file) error {
 			break
 		}
 
-		// Replace +build cff with +build !cff.
+		// Replace +build cff with +build !cff and add a generated comment that tells
+		// Phabricator to skip showing this file in diffs.
 		for _, c := range cg.List {
 			if strings.TrimSpace(strings.TrimPrefix(c.Text, "//")) == "+build cff" {
-				// Tricking Phab not to consider this file to be generated.
-				c.Text = "// @g" + "enerated by CFF"
+				// Build tags must be followed by a blank line (https://golang.org/pkg/go/build/#hdr-Build_Constraints)
+				// Trick Phabricator not to consider *this* file to be generated.
+				c.Text = "// +build !cff\n\n// @g" + "enerated by CFF"
 				break
 			}
 		}
