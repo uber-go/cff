@@ -1,11 +1,9 @@
 package example_test
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +13,7 @@ import (
 // TestGoldenMagic provides a test that asserts that the checked-in generated code in magic_gen.go is cleanly generated
 // so that updates to the template without updating magic_gen.go trigger a failing test.
 func TestGoldenMagic(t *testing.T) {
-	expectedPath := path.Join(os.Getenv("TEST_SRCDIR"), fmt.Sprintf("__main__/src/go.uber.org/cff/examples/%s_%s_stripped/cff%%/magic_gen.go", runtime.GOOS, runtime.GOARCH))
+	expectedPath := path.Join(os.Getenv("TEST_SRCDIR"), "__main__/src/go.uber.org/cff/examples/cff_/magic_gen.go")
 	actualPath := path.Join(os.Getenv("TEST_SRCDIR"), "__main__/src/go.uber.org/cff/examples/magic_gen.go")
 
 	expected, err := ioutil.ReadFile(expectedPath)
