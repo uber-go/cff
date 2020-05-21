@@ -16,7 +16,7 @@ import (
 	"strings"
 	"text/template"
 
-	"bindata/src/go.uber.org/cff/internal/templates"
+	"go.uber.org/cff/internal/templates"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/types/typeutil"
 )
