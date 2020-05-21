@@ -151,7 +151,8 @@ func run(args []string) error {
 		return err
 	}
 
-	compilerOpts := internal.CompilerOpts{
+	processor := internal.Processor{
+		Fset:               fset,
 		InstrumentAllTasks: f.InstrumentAllTasks,
 	}
 
@@ -178,7 +179,7 @@ func run(args []string) error {
 			}
 
 			processed++
-			if perr := internal.Process(fset, pkg, pkg.Syntax[i], output, compilerOpts); perr != nil {
+			if perr := processor.Process(pkg, pkg.Syntax[i], output); perr != nil {
 				errored++
 				err = multierr.Append(err, perr)
 			}

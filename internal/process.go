@@ -5,16 +5,27 @@ import (
 	"go/token"
 )
 
-// Process processes the provided Go package with cff.
-func Process(fset *token.FileSet, pkg *Package, file *ast.File, outputPath string, compilerOpts CompilerOpts) error {
-	c := newCompiler(fset, pkg.TypesInfo, pkg.Types, compilerOpts)
+// Processor processes CFF2 files.
+type Processor struct {
+	Fset               *token.FileSet
+	InstrumentAllTasks bool
+}
+
+// Process processes a single CFF2 file.
+func (p *Processor) Process(pkg *Package, file *ast.File, outputPath string) error {
+	c := newCompiler(compilerOpts{
+		Fset:               p.Fset,
+		Info:               pkg.TypesInfo,
+		Package:            pkg.Types,
+		InstrumentAllTasks: p.InstrumentAllTasks,
+	})
 
 	f, err := c.CompileFile(file, pkg)
 	if err != nil {
 		return err
 	}
 
-	g := newGenerator(fset, outputPath)
+	g := newGenerator(p.Fset, outputPath)
 	if err := g.GenerateFile(f); err != nil {
 		return err
 	}

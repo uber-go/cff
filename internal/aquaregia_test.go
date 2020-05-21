@@ -284,13 +284,16 @@ func TestCodeGenerateFails(t *testing.T) {
 				pattern)
 			require.NoError(t, err, "could not load packages")
 			require.NotEmpty(t, pkgs, "didn't find any packages")
+
+			processor := Processor{Fset: fset}
+
 			for _, gopkg := range pkgs {
 				pkg := NewPackage(gopkg)
 				// Output path can be empty so code gets generated next to source in case of failed
 				// tests.
 				var errors []error
 				for i := range pkg.CompiledGoFiles {
-					if err := Process(fset, pkg, pkg.Syntax[i], "", CompilerOpts{}); err != nil {
+					if err := processor.Process(pkg, pkg.Syntax[i], ""); err != nil {
 						errors = append(errors, err)
 					}
 				}

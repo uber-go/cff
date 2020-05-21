@@ -26,26 +26,29 @@ const (
 )
 
 type compiler struct {
-	pkg          *types.Package
-	fset         *token.FileSet
-	info         *types.Info
-	compilerOpts CompilerOpts
-	taskSerial   int
-	errors       []error
+	pkg        *types.Package
+	fset       *token.FileSet
+	info       *types.Info
+	taskSerial int
+	errors     []error
+
+	instrumentAllTasks bool
 }
 
-func newCompiler(fset *token.FileSet, info *types.Info, pkg *types.Package, compilerOpts CompilerOpts) *compiler {
-	return &compiler{
-		fset:         fset,
-		info:         info,
-		pkg:          pkg,
-		compilerOpts: compilerOpts,
-	}
-}
-
-// CompilerOpts is a set of options to pass to the compiler that control the output of the generated code.
-type CompilerOpts struct {
+type compilerOpts struct {
+	Fset               *token.FileSet
+	Info               *types.Info
+	Package            *types.Package
 	InstrumentAllTasks bool
+}
+
+func newCompiler(opts compilerOpts) *compiler {
+	return &compiler{
+		fset:               opts.Fset,
+		info:               opts.Info,
+		pkg:                opts.Package,
+		instrumentAllTasks: opts.InstrumentAllTasks,
+	}
 }
 
 func (c *compiler) errf(msg string, pos token.Position, args ...interface{}) {
@@ -586,7 +589,7 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 	// Create an implied Instrument(...) annotation for all tasks if the
 	// flow is instrumented and the --instrument-all-tasks flag was
 	// passed.
-	if flow.Instrument != nil && c.compilerOpts.InstrumentAllTasks && t.Instrument == nil {
+	if flow.Instrument != nil && c.instrumentAllTasks && t.Instrument == nil {
 		taskPos := c.nodePosition(t)
 		name := fmt.Sprintf("%s.%d", filepath.Base(taskPos.Filename), taskPos.Line)
 		t.Instrument = c.compileInstrumentName(name)
