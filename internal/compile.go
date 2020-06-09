@@ -450,6 +450,12 @@ func (c *compiler) scheduleFlowAndToposort(f *flow) {
 		},
 	}
 
+	for idx, t := range f.Tasks {
+		for _, depIdx := range g.Dependencies(idx) {
+			t.DependsOn = append(t.DependsOn, f.Tasks[depIdx])
+		}
+	}
+
 	var roots []int
 	for _, o := range f.Outputs {
 		roots = append(roots, f.providers.At(o.Type).(int))
@@ -499,6 +505,9 @@ type task struct {
 	// Dependencies are the types required for the task, including inputs and
 	// predicate inputs.
 	Dependencies []types.Type
+
+	// Tasks that this task depends on.
+	DependsOn []*task
 
 	Inputs  []types.Type // non ctx params
 	Outputs []types.Type // non error results

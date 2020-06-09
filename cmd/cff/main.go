@@ -25,6 +25,9 @@ type options struct {
 		ImportPath string `positional-arg-name:"importPath"`
 	} `positional-args:"yes" required:"yes"`
 	Quiet bool `long:"quiet"`
+
+	// Temporary flag to gradually onboard users to online scheduling.
+	OnlineScheduling bool `long:"online-scheduling"`
 }
 
 // file is the value of the --file option.
@@ -94,6 +97,10 @@ func newCLIParser() (*flags.Parser, *options) {
 	parser.FindOptionByLongName("stdlibroot").Description =
 		"When using archives to parse the source code, specifies the path containing " +
 			"archive files for the Go standard library."
+	parser.FindOptionByLongName("online-scheduling").Description =
+		"If set, CFF2 will use an online scheduling algorithm instead of " +
+			"static scheduling at compile time. This will usually " +
+			"yield reduced flow latencies."
 
 	parser.Args()[0].Description = "Import path of a package containing CFF flows."
 
@@ -154,6 +161,7 @@ func run(args []string) error {
 	processor := internal.Processor{
 		Fset:               fset,
 		InstrumentAllTasks: f.InstrumentAllTasks,
+		OnlineScheduling:   f.OnlineScheduling,
 	}
 
 	// If --file was provided, only the requested files will be processed.

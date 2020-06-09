@@ -52,7 +52,7 @@
 	{{ end }}
 
 	{{ template "taskResultList" . }}{{ if or .HasError (len .Outputs) }} = {{ end }}{{ template "callTask" . }}
-	{{ $t }}.ran = true
+	{{ $t }}.ran.Store(true)
 
 	{{ if .HasError -}}
 		if err != nil {

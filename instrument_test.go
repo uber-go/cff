@@ -242,14 +242,14 @@ func TestT3630161ME(t *testing.T) {
 func TestT3795761ME(t *testing.T) {
 	ctx := context.Background()
 
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 
 	t.Run("should run error", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
+
 		emitter := cff.NewMockEmitter(mockCtrl)
 
 		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
@@ -274,6 +274,9 @@ func TestT3795761ME(t *testing.T) {
 	})
 
 	t.Run("should run no error", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
+
 		emitter := cff.NewMockEmitter(mockCtrl)
 
 		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
@@ -297,6 +300,9 @@ func TestT3795761ME(t *testing.T) {
 	})
 
 	t.Run("should not run", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
+
 		emitter := cff.NewMockEmitter(mockCtrl)
 
 		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)

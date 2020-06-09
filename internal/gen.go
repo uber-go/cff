@@ -34,14 +34,23 @@ type generator struct {
 
 	// File path to which generated code is written.
 	outputPath string
+
+	onlineScheduling bool
 }
 
-func newGenerator(fset *token.FileSet, outputPath string) *generator {
+type generatorOpts struct {
+	Fset             *token.FileSet
+	OutputPath       string
+	OnlineScheduling bool
+}
+
+func newGenerator(opts generatorOpts) *generator {
 	return &generator{
-		fset:       fset,
-		typeIDs:    new(typeutil.Map),
-		nextTypeID: 1,
-		outputPath: outputPath,
+		fset:             opts.Fset,
+		typeIDs:          new(typeutil.Map),
+		nextTypeID:       1,
+		outputPath:       opts.OutputPath,
+		onlineScheduling: opts.OnlineScheduling,
 	}
 }
 
@@ -139,7 +148,10 @@ func (g *generator) GenerateFile(f *file) error {
 // requires additional imports to be added.
 func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string) error {
 	tmpl := parseTemplates(g.funcMap(file, addImports), _flowTmpl, _taskTmpl)
-	return tmpl.ExecuteTemplate(w, _flowTmpl, flowTemplateData{Flow: f})
+	return tmpl.ExecuteTemplate(w, _flowTmpl, flowTemplateData{
+		Flow:   f,
+		Online: g.onlineScheduling,
+	})
 }
 
 func (g *generator) funcMap(file *file, addImports map[string]string) template.FuncMap {
@@ -233,7 +245,8 @@ func (g *generator) typeID(t types.Type) int {
 }
 
 type flowTemplateData struct {
-	Flow *flow
+	Flow   *flow
+	Online bool
 }
 
 // Parses bindata-packaged templates by name in-order.

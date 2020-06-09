@@ -55,16 +55,19 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		startTime := time.Now()
 		defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
 
+		sched := cff.BeginFlow(0)
+
 		type task struct {
 			emitter cff.TaskEmitter
-			ran     bool
+			ran     cff.AtomicBool
 			run     func(context.Context) error
+			job     *cff.ScheduledJob
 		}
 
 		var tasks []*task
 		defer func() {
 			for _, t := range tasks {
-				if !t.ran {
+				if !t.ran.Load() {
 					t.emitter.TaskSkipped(ctx, err)
 				}
 			}
@@ -97,12 +100,15 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 						LDAPGroup: req.LDAPGroup,
 					}
 			}(v1)
-			task0.ran = true
+			task0.ran.Store(true)
 
 			taskEmitter.TaskSuccess(ctx)
 
 			return
 		}
+		task0.job = sched.Enqueue(ctx, cff.Job{
+			Run: task0.run,
+		})
 		tasks = append(tasks, task0)
 
 		// go.uber.org/cff/examples/magic.go:50:4
@@ -125,7 +131,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}()
 
 			v4, err = h.mgr.Get(v2)
-			task1.ran = true
+			task1.ran.Store(true)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -136,6 +142,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			return
 		}
+		task1.job = sched.Enqueue(ctx, cff.Job{
+			Run: task1.run,
+			Dependencies: []*cff.ScheduledJob{
+				task0.job,
+			},
+		})
 		tasks = append(tasks, task1)
 
 		// go.uber.org/cff/examples/magic.go:62:4
@@ -166,7 +178,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}()
 
 			v5, err = h.users.List(v3)
-			task4.ran = true
+			task4.ran.Store(true)
 
 			if err != nil {
 				taskEmitter.TaskErrorRecovered(ctx, err)
@@ -177,6 +189,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			return
 		}
+		task4.job = sched.Enqueue(ctx, cff.Job{
+			Run: task4.run,
+			Dependencies: []*cff.ScheduledJob{
+				task0.job,
+			},
+		})
 		tasks = append(tasks, task4)
 
 		// go.uber.org/cff/examples/magic.go:67:4
@@ -219,12 +237,20 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 				return reqs
 			}(v4, v5)
-			task5.ran = true
+			task5.ran.Store(true)
 
 			taskEmitter.TaskSuccess(ctx)
 
 			return
 		}
+		task5.job = sched.Enqueue(ctx, cff.Job{
+			Run: task5.run,
+			Dependencies: []*cff.ScheduledJob{
+				task1.job,
+				task4.job,
+				task0.job,
+			},
+		})
 		tasks = append(tasks, task5)
 
 		// go.uber.org/cff/examples/magic.go:51:12
@@ -247,7 +273,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}()
 
 			v7, err = h.ses.BatchSendEmail(v6)
-			task2.ran = true
+			task2.ran.Store(true)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -258,6 +284,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			return
 		}
+		task2.job = sched.Enqueue(ctx, cff.Job{
+			Run: task2.run,
+			Dependencies: []*cff.ScheduledJob{
+				task5.job,
+			},
+		})
 		tasks = append(tasks, task2)
 
 		// go.uber.org/cff/examples/magic.go:53:4
@@ -286,23 +318,21 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 				return &r
 			}(v7)
-			task3.ran = true
+			task3.ran.Store(true)
 
 			taskEmitter.TaskSuccess(ctx)
 
 			return
 		}
+		task3.job = sched.Enqueue(ctx, cff.Job{
+			Run: task3.run,
+			Dependencies: []*cff.ScheduledJob{
+				task2.job,
+			},
+		})
 		tasks = append(tasks, task3)
 
-		schedule := [][]func(context.Context) error{
-			{task0.run},
-			{task1.run, task4.run},
-			{task5.run},
-			{task2.run},
-			{task3.run},
-		}
-
-		if err := cff.RunStaticTasks(ctx, schedule); err != nil {
+		if err := sched.Wait(ctx); err != nil {
 			flowEmitter.FlowError(ctx, err)
 			return err
 		}
