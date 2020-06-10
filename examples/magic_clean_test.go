@@ -23,5 +23,5 @@ func TestGoldenMagic(t *testing.T) {
 
 	assert.Equal(t, string(expected), string(actual), "magic_gen.go is out of date, try running these commands:\n"+
 		os.ExpandEnv("cd $GOPATH/src/go.uber.org/cff/examples\n")+
-		"rm magic_gen.go &&  $GOPATH/bin/cff --file=magic.go go.uber.org/cff/examples")
+		"rm -f magic_gen.go &&  $GOPATH/bin/cff --online-scheduling --file=magic.go go.uber.org/cff/examples")
 }

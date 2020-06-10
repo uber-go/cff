@@ -118,6 +118,16 @@ func InstrumentFlow(name string) FlowOption {
 	panic("code not generated; run cff")
 }
 
+// Concurrency specifies the maximum number of goroutines CFF2 should use to
+// execute the tasks of this Flow.
+//
+// Defaults to GOMAXPROCS.
+//
+// This option has effect only if the online_scheduling option is enabled.
+func Concurrency(n int) FlowOption {
+	panic("code not generated; run cff")
+}
+
 // Flow specifies a single Flow for execution with CFF. The provided context
 // is made available to all tasks in the Flow.
 //

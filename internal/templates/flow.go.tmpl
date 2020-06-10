@@ -32,7 +32,14 @@ func(
 	defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
 
 	{{ if $.Online -}}
-		sched := {{ $cff }}.BeginFlow(0)
+		sched := {{ $cff }}.BeginFlow(
+			{{- with .Concurrency -}}
+				{{ expr . }}
+			{{- else -}}
+				0
+			{{- end -}}
+
+		)
 	{{- end }}
 
 	type task struct {

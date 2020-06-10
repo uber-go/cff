@@ -72,6 +72,9 @@ type jobResult struct {
 }
 
 // worker implements the logic for a worker goroutine.
+//
+// NOTE: If you rename this function, update _workerFunction in
+// internal/tests/setconcurrency/setconcurrency.go.
 func worker(readyc <-chan *ScheduledJob, donec chan<- jobResult) {
 	for j := range readyc {
 		res := jobResult{Job: j}

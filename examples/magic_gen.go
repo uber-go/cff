@@ -55,7 +55,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		startTime := time.Now()
 		defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
 
-		sched := cff.BeginFlow(0)
+		sched := cff.BeginFlow(8)
 
 		type task struct {
 			emitter cff.TaskEmitter
@@ -73,7 +73,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 		}()
 
-		// go.uber.org/cff/examples/magic.go:42:4
+		// go.uber.org/cff/examples/magic.go:43:4
 		var (
 			v2 *GetManagerRequest
 			v3 *ListUsersRequest
@@ -111,7 +111,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task0)
 
-		// go.uber.org/cff/examples/magic.go:50:4
+		// go.uber.org/cff/examples/magic.go:51:4
 		var (
 			v4 *GetManagerResponse
 		)
@@ -150,7 +150,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task1)
 
-		// go.uber.org/cff/examples/magic.go:62:4
+		// go.uber.org/cff/examples/magic.go:63:4
 		var (
 			v5 *ListUsersResponse
 		)
@@ -159,7 +159,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			&cff.TaskInfo{
 				Task:   "FormSendEmailRequest",
 				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   62,
+				Line:   63,
 				Column: 4,
 			},
 			flowInfo,
@@ -197,7 +197,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task4)
 
-		// go.uber.org/cff/examples/magic.go:67:4
+		// go.uber.org/cff/examples/magic.go:68:4
 		var (
 			v6 []*SendEmailRequest
 		)
@@ -206,7 +206,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			&cff.TaskInfo{
 				Task:   "FormSendEmailRequest",
 				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   67,
+				Line:   68,
 				Column: 4,
 			},
 			flowInfo,
@@ -253,7 +253,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task5)
 
-		// go.uber.org/cff/examples/magic.go:51:12
+		// go.uber.org/cff/examples/magic.go:52:12
 		var (
 			v7 []*SendEmailResponse
 		)
@@ -292,7 +292,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task2)
 
-		// go.uber.org/cff/examples/magic.go:53:4
+		// go.uber.org/cff/examples/magic.go:54:4
 		var (
 			v8 *Response
 		)

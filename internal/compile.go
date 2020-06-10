@@ -166,7 +166,8 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 type flow struct {
 	ast.Node
 
-	Ctx ast.Expr // the expression that is a local variable of type context.Context
+	Ctx         ast.Expr // initial ctx argument to cff.Flow(...)
+	Concurrency ast.Expr // argument to cff.Concurrency, if any.
 
 	Emitters []ast.Expr // zero or more expressions of the type cff.Emitter.
 
@@ -280,6 +281,8 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			flow.Instrument = c.compileInstrument(ce)
 		case "WithEmitter":
 			flow.Emitters = append(flow.Emitters, ce.Args[0])
+		case "Concurrency":
+			flow.Concurrency = ce.Args[0]
 		case "Task":
 			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
 				flow.Tasks = append(flow.Tasks, task)
