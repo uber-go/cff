@@ -1,6 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 load("//rules:cff.bzl", "cff")
 load("@bazel_skylib//lib:collections.bzl", "collections")
+load("@bazel_skylib//lib:dicts.bzl", "dicts")
 
 _default_deps = ["//src/go.uber.org/cff:go_default_library"]
 
@@ -13,23 +14,41 @@ _base_importpath = "go.uber.org/cff/internal/tests/"
 
 _visibility = ["//src/go.uber.org/cff:__subpackages__"]
 
-def cff_internal_test(
+def cff_internal_test(name, **kwargs):
+    # If the test explicitly sets online scheduling, use that and don't
+    # parameterize. Otherwise, parameterize over true and false.
+
+    kwargs.setdefault("cff_srcs", native.glob(include = ["*.go"], exclude = ["*_test.go"]))
+    kwargs.setdefault("test_srcs", native.glob(include = ["*_test.go"]))
+    kwargs.setdefault("importpath", _base_importpath + name)
+
+    if "online_scheduling" in kwargs:
+        _cff_internal_test(name, **kwargs)
+        return
+
+    _cff_internal_test(
+        name + "-online",
+        **dicts.add(kwargs, online_scheduling = True)
+    )
+
+    _cff_internal_test(
+        name + "-offline",
+        **dicts.add(kwargs, online_scheduling = False)
+    )
+
+def _cff_internal_test(
         name,
-        cff_srcs = None,
-        test_srcs = None,
+        cff_srcs,
+        test_srcs,
+        importpath,
         srcs = None,
         deps = None,
         test_deps = None,
         instrument_all_tasks = False,
         online_scheduling = False):
-    cff_srcs = cff_srcs or native.glob(include = ["*.go"], exclude = ["*_test.go"])
-    test_srcs = test_srcs or native.glob(include = ["*_test.go"])
-
     srcs = srcs or []
     deps = deps or []
     test_deps = test_deps or []
-
-    importpath = _base_importpath + name
 
     lib_name = name + "-library"
     test_name = name + "-test"
