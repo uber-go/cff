@@ -83,7 +83,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		task0.run = func(ctx context.Context) (err error) {
 			taskEmitter := task0.emitter
 			startTime := time.Now()
-			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+			defer func() {
+				if task0.ran.Load() {
+					taskEmitter.TaskDone(ctx, time.Since(startTime))
+				}
+			}()
 
 			defer func() {
 				recovered := recover()
@@ -93,6 +97,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 			}()
 
+			defer task0.ran.Store(true)
+
 			v2, v3 = func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
 				return &GetManagerRequest{
 						LDAPGroup: req.LDAPGroup,
@@ -100,7 +106,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 						LDAPGroup: req.LDAPGroup,
 					}
 			}(v1)
-			task0.ran.Store(true)
 
 			taskEmitter.TaskSuccess(ctx)
 
@@ -120,7 +125,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		task1.run = func(ctx context.Context) (err error) {
 			taskEmitter := task1.emitter
 			startTime := time.Now()
-			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+			defer func() {
+				if task1.ran.Load() {
+					taskEmitter.TaskDone(ctx, time.Since(startTime))
+				}
+			}()
 
 			defer func() {
 				recovered := recover()
@@ -130,8 +139,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 			}()
 
+			defer task1.ran.Store(true)
+
 			v4, err = h.mgr.Get(v2)
-			task1.ran.Store(true)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -167,7 +177,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		task4.run = func(ctx context.Context) (err error) {
 			taskEmitter := task4.emitter
 			startTime := time.Now()
-			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+			defer func() {
+				if task4.ran.Load() {
+					taskEmitter.TaskDone(ctx, time.Since(startTime))
+				}
+			}()
 
 			defer func() {
 				recovered := recover()
@@ -177,8 +191,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 			}()
 
+			defer task4.ran.Store(true)
+
 			v5, err = h.users.List(v3)
-			task4.ran.Store(true)
 
 			if err != nil {
 				taskEmitter.TaskErrorRecovered(ctx, err)
@@ -214,7 +229,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		task5.run = func(ctx context.Context) (err error) {
 			taskEmitter := task5.emitter
 			startTime := time.Now()
-			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+			defer func() {
+				if task5.ran.Load() {
+					taskEmitter.TaskDone(ctx, time.Since(startTime))
+				}
+			}()
 
 			defer func() {
 				recovered := recover()
@@ -230,6 +249,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				return nil
 			}
 
+			defer task5.ran.Store(true)
+
 			v6 = func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest {
 				var reqs []*SendEmailRequest
 				for _, u := range users.Emails {
@@ -237,7 +258,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 				return reqs
 			}(v4, v5)
-			task5.ran.Store(true)
 
 			taskEmitter.TaskSuccess(ctx)
 
@@ -262,7 +282,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		task2.run = func(ctx context.Context) (err error) {
 			taskEmitter := task2.emitter
 			startTime := time.Now()
-			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+			defer func() {
+				if task2.ran.Load() {
+					taskEmitter.TaskDone(ctx, time.Since(startTime))
+				}
+			}()
 
 			defer func() {
 				recovered := recover()
@@ -272,8 +296,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 			}()
 
+			defer task2.ran.Store(true)
+
 			v7, err = h.ses.BatchSendEmail(v6)
-			task2.ran.Store(true)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -301,7 +326,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		task3.run = func(ctx context.Context) (err error) {
 			taskEmitter := task3.emitter
 			startTime := time.Now()
-			defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+			defer func() {
+				if task3.ran.Load() {
+					taskEmitter.TaskDone(ctx, time.Since(startTime))
+				}
+			}()
 
 			defer func() {
 				recovered := recover()
@@ -311,6 +340,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 			}()
 
+			defer task3.ran.Store(true)
+
 			v8 = func(responses []*SendEmailResponse) *Response {
 				var r Response
 				for _, res := range responses {
@@ -318,7 +349,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 				return &r
 			}(v7)
-			task3.ran.Store(true)
 
 			taskEmitter.TaskSuccess(ctx)
 

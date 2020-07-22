@@ -28,7 +28,11 @@
 {{ $t }}.run = func(ctx {{ $context }}.Context) (err error) {
 	taskEmitter := {{ $t }}.emitter
 	startTime := {{ import "time" }}.Now()
-	defer func() { taskEmitter.TaskDone(ctx, time.Since(startTime)) }()
+	defer func() {
+		if {{ $t }}.ran.Load() {
+			taskEmitter.TaskDone(ctx, time.Since(startTime))
+		}
+	}()
 
 	defer func() {
 		recovered := recover()
@@ -51,8 +55,9 @@
 		}
 	{{ end }}
 
+	defer {{ $t }}.ran.Store(true)
+
 	{{ template "taskResultList" . }}{{ if or .HasError (len .Outputs) }} = {{ end }}{{ template "callTask" . }}
-	{{ $t }}.ran.Store(true)
 
 	{{ if .HasError -}}
 		if err != nil {

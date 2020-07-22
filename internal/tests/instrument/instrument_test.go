@@ -185,6 +185,25 @@ func TestInstrumentRecover(t *testing.T) {
 	}
 }
 
+func TestInstrumentPanic(t *testing.T) {
+	scope := tally.NewTestScope("", nil)
+	h := &DefaultEmitter{Scope: scope}
+	ctx := context.Background()
+	h.AlwaysPanics(ctx)
+
+	counters := scope.Snapshot().Counters()
+	for k := range counters {
+		t.Logf("got counter with key %q", k)
+	}
+	assert.Equal(t, int64(1), counters["task.panic+flow=Flow,task=Task"].Value())
+	assert.Equal(t, int64(1), counters["taskflow.error+flow=Flow"].Value())
+	assert.Nil(t, counters["task.skipped+flow=Flow,task=Task"])
+
+	timers := scope.Snapshot().Timers()
+
+	assert.NotNil(t, timers["task.timing+flow=Flow,task=Task"])
+}
+
 func TestInstrumentAnnotationOrder(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
@@ -345,7 +364,6 @@ func TestT3795761(t *testing.T) {
 		expectedMessages := []string{
 			"task success",
 			"task done",
-			"task done",
 			"flow success",
 			"task skipped",
 			"flow done",
@@ -375,4 +393,30 @@ func TestWithMultipleEmitters(t *testing.T) {
 	assert.Equal(t, 42, n)
 
 	assert.Equal(t, logs1.AllUntimed(), logs2.AllUntimed(), "logs did not match")
+}
+
+func TestT6278905(t *testing.T) {
+	t.Run("predicate is true, regresion test, task.timing is reported", func(t *testing.T) {
+		scope := tally.NewTestScope("", nil)
+		h := &DefaultEmitter{Scope: scope}
+		ctx := context.Background()
+
+		h.TaskLatencySkipped(ctx, true)
+		metrics := scope.Snapshot()
+		timers := metrics.Timers()
+		assert.NotNil(t, timers["task.timing+flow=TaskLatencySkipped,task=Task"])
+		assert.NotNil(t, timers["taskflow.timing+flow=TaskLatencySkipped"])
+	})
+
+	t.Run("predicate is false disables reporting task.timing", func(t *testing.T) {
+		scope := tally.NewTestScope("", nil)
+		h := &DefaultEmitter{Scope: scope}
+		ctx := context.Background()
+
+		h.TaskLatencySkipped(ctx, false)
+		metrics := scope.Snapshot()
+		timers := metrics.Timers()
+		assert.Nil(t, timers["task.timing+flow=TaskLatencySkipped,task=Task"])
+		assert.NotNil(t, timers["taskflow.timing+flow=TaskLatencySkipped"])
+	})
 }

@@ -174,6 +174,44 @@ func (h *DefaultEmitter) T3795761(ctx context.Context, shouldRun bool, shouldErr
 	return s
 }
 
+// TaskLatencySkipped guards against regressino of T6278905 where task
+// latency metrics are emitted when a task is skipped due to predicate.
+func (h *DefaultEmitter) TaskLatencySkipped(ctx context.Context, shouldRun bool) {
+	var s string
+	_ = cff.Flow(ctx,
+		cff.Results(&s),
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
+		cff.InstrumentFlow("TaskLatencySkipped"),
+
+		cff.Task(
+			func() string {
+				return "ok"
+			},
+			cff.Predicate(func() bool { return shouldRun }),
+			cff.Instrument("Task"),
+		),
+	)
+	return
+}
+
+// AlwaysPanics tests a task which always panics.
+func (h *DefaultEmitter) AlwaysPanics(ctx context.Context) {
+	var s string
+	_ = cff.Flow(ctx,
+		cff.Results(&s),
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
+		cff.InstrumentFlow("Flow"),
+
+		cff.Task(
+			func() string {
+				panic("panic value")
+			},
+			cff.Instrument("Task"),
+		),
+	)
+	return
+}
+
 // These tests replicate the ones written for instrumentation to verify that
 // custom Emitter will trigger similarly to default implementation.
 
@@ -317,7 +355,7 @@ func (h *CustomEmitter) FlowAlwaysPanics(ctx context.Context) error {
 	)
 }
 
-// A flow that uses WithEmitter multiple tipes.
+// AtoiWithTwoEmitters is a flow that uses WithEmitter multiple tipes.
 func AtoiWithTwoEmitters(ctx context.Context, e1, e2 cff.Emitter, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
