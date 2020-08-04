@@ -94,13 +94,13 @@ func main() {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			defer envtest.OverrideVar(t, "PATH", os.ExpandEnv("$TEST_SRCDIR/__main__/external/go_sdk/bin:$PATH")).Reset()
+			envtest.OverrideVar(t, "PATH", os.ExpandEnv("$TEST_SRCDIR/__main__/external/go_sdk/bin:$PATH"))
 			// Go executable requires a GOCACHE to be set after go1.12.
 			tmpDir := os.Getenv("TEST_TMPDIR")
 			if file, err := os.Stat(tmpDir); err == nil {
 				if file.IsDir() {
 					// Go executable requires a GOCACHE to be set after go1.12.
-					defer envtest.OverrideVar(t, "GOCACHE", filepath.Join(tmpDir, "/cache")).Reset()
+					envtest.OverrideVar(t, "GOCACHE", filepath.Join(tmpDir, "/cache"))
 				}
 			}
 			dir, cleanup, err := analysistest.WriteFiles(tt.files)
