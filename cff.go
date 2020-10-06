@@ -121,7 +121,7 @@ func InstrumentFlow(name string) FlowOption {
 // Concurrency specifies the maximum number of goroutines CFF2 should use to
 // execute the tasks of this Flow.
 //
-// Defaults to GOMAXPROCS.
+// Defaults to max(GOMAXPROCS, 4).
 //
 // This option has effect only if the online_scheduling option is enabled.
 func Concurrency(n int) FlowOption {

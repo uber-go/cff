@@ -40,6 +40,10 @@ import (
 	"runtime"
 )
 
+// minDefaultWorkers sets minimum number of workers we'll spawn by default if
+// not explicitly specified by the user.
+const minDefaultWorkers = 4
+
 // --------------------
 // IMPLEMENTATION NOTES
 // --------------------
@@ -114,13 +118,16 @@ type Scheduler struct {
 }
 
 // Begin begins execution of a flow with the provided number of
-// goroutines. Concurrency defaults to GOMAXPROCS if zero.
+// goroutines. Concurrency defaults to max(GOMAXPROCS, 4) if zero.
 //
 // Enqueue jobs into the returned scheduler using the Enqueue method, and wait
 // for the result with Wait.
 func Begin(concurrency int) *Scheduler {
 	if concurrency == 0 {
 		concurrency = runtime.GOMAXPROCS(0)
+		if concurrency < minDefaultWorkers {
+			concurrency = minDefaultWorkers
+		}
 	}
 
 	// Channel size 1: Support enqueuing one additional job when the

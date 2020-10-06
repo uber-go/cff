@@ -37,6 +37,26 @@ func NumWorkers(conc int) (int, error) {
 	return numGoroutines, err
 }
 
+// NumWorkersNoArg runs a CFF flow, and reports the
+// number of workers from within the flow.
+func NumWorkersNoArg() (int, error) {
+	var numGoroutines int
+
+	err := cff.Flow(
+		context.Background(),
+		cff.Results(&numGoroutines),
+
+		// Workers may run this task while other workers are still
+		// spinning up. To work around this, we wait for the number of
+		// workers to stabilize before returning.
+		cff.Task(func() (int, error) {
+			return numWorkersStable(10, time.Millisecond)
+		}),
+	)
+
+	return numGoroutines, err
+}
+
 // numWorkersStable waits for the number of workers reported by numWorkers to
 // stabilize for n ticks before reporting it.
 func numWorkersStable(n int, tick time.Duration) (int, error) {

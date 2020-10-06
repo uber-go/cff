@@ -20,7 +20,6 @@ import (
 // it's passed in.
 func TestInstrumentEmitter(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
 	ctx := context.Background()
 
 	emitter := cff.NewMockEmitter(mockCtrl)
@@ -38,7 +37,7 @@ func TestInstrumentEmitter(t *testing.T) {
 	emitter.EXPECT().FlowInit(&cff.FlowInfo{
 		Flow:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   209,
+		Line:   227,
 		Column: 8,
 	}).Return(flowEmitter)
 	// 2 in the tasks for loop inside defer() and twice after.
@@ -63,7 +62,6 @@ func TestInstrumentEmitter(t *testing.T) {
 
 func TestInstrumentErrorME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
 	ctx := context.Background()
 
 	emitter := cff.NewMockEmitter(mockCtrl)
@@ -100,7 +98,6 @@ func TestInstrumentErrorME(t *testing.T) {
 
 func TestInstrumentTaskButNotFlowME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
 	ctx := context.Background()
 
 	emitter := cff.NewMockEmitter(mockCtrl)
@@ -127,7 +124,6 @@ func TestInstrumentTaskButNotFlowME(t *testing.T) {
 
 func TestInstrumentCancelledContextME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
@@ -163,7 +159,6 @@ func TestInstrumentCancelledContextME(t *testing.T) {
 
 func TestInstrumentRecoverME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
 	ctx := context.Background()
 
 	scope := tally.NewTestScope("", nil)
@@ -185,7 +180,7 @@ func TestInstrumentRecoverME(t *testing.T) {
 	emitter.EXPECT().FlowInit(&cff.FlowInfo{
 		Flow:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   209,
+		Line:   227,
 		Column: 8,
 	}).Return(flowEmitter)
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
@@ -205,7 +200,6 @@ func TestInstrumentRecoverME(t *testing.T) {
 // TestT3630161ME tests against regression for T3630161
 func TestT3630161ME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
 	ctx := context.Background()
 
 	emitter := cff.NewMockEmitter(mockCtrl)
@@ -248,7 +242,6 @@ func TestT3795761ME(t *testing.T) {
 
 	t.Run("should run error", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
 
 		emitter := cff.NewMockEmitter(mockCtrl)
 
@@ -275,7 +268,6 @@ func TestT3795761ME(t *testing.T) {
 
 	t.Run("should run no error", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
 
 		emitter := cff.NewMockEmitter(mockCtrl)
 
@@ -301,7 +293,6 @@ func TestT3795761ME(t *testing.T) {
 
 	t.Run("should not run", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
 
 		emitter := cff.NewMockEmitter(mockCtrl)
 
@@ -330,7 +321,6 @@ func TestT3795761ME(t *testing.T) {
 
 func TestPanic(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
 	ctx := context.Background()
 
 	emitter := cff.NewMockEmitter(mockCtrl)
@@ -345,13 +335,13 @@ func TestPanic(t *testing.T) {
 		&cff.TaskInfo{
 			Task:   "Atoi",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   331,
+			Line:   349,
 			Column: 12,
 		},
 		&cff.FlowInfo{
 			Flow:   "",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   328,
+			Line:   346,
 			Column: 9,
 		}).Return(taskEmitter)
 
