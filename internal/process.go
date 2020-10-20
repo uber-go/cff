@@ -9,7 +9,6 @@ import (
 type Processor struct {
 	Fset               *token.FileSet
 	InstrumentAllTasks bool
-	OnlineScheduling   bool
 }
 
 // Process processes a single CFF2 file.
@@ -27,9 +26,8 @@ func (p *Processor) Process(pkg *Package, file *ast.File, outputPath string) err
 	}
 
 	g := newGenerator(generatorOpts{
-		Fset:             p.Fset,
-		OutputPath:       outputPath,
-		OnlineScheduling: p.OnlineScheduling,
+		Fset:       p.Fset,
+		OutputPath: outputPath,
 	})
 	if err := g.GenerateFile(f); err != nil {
 		return err

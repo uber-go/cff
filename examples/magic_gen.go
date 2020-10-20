@@ -111,6 +111,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			return
 		}
+
 		task0.job = sched.Enqueue(ctx, cff.Job{
 			Run: task0.run,
 		})
@@ -152,6 +153,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			return
 		}
+
 		task1.job = sched.Enqueue(ctx, cff.Job{
 			Run: task1.run,
 			Dependencies: []*cff.ScheduledJob{
@@ -204,6 +206,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			return
 		}
+
 		task4.job = sched.Enqueue(ctx, cff.Job{
 			Run: task4.run,
 			Dependencies: []*cff.ScheduledJob{
@@ -263,6 +266,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			return
 		}
+
 		task5.job = sched.Enqueue(ctx, cff.Job{
 			Run: task5.run,
 			Dependencies: []*cff.ScheduledJob{
@@ -309,6 +313,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			return
 		}
+
 		task2.job = sched.Enqueue(ctx, cff.Job{
 			Run: task2.run,
 			Dependencies: []*cff.ScheduledJob{
@@ -354,6 +359,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			return
 		}
+
 		task3.job = sched.Enqueue(ctx, cff.Job{
 			Run: task3.run,
 			Dependencies: []*cff.ScheduledJob{

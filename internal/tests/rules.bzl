@@ -15,26 +15,11 @@ _base_importpath = "go.uber.org/cff/internal/tests/"
 _visibility = ["//src/go.uber.org/cff:__subpackages__"]
 
 def cff_internal_test(name, **kwargs):
-    # If the test explicitly sets online scheduling, use that and don't
-    # parameterize. Otherwise, parameterize over true and false.
-
     kwargs.setdefault("cff_srcs", native.glob(include = ["*.go"], exclude = ["*_test.go"]))
     kwargs.setdefault("test_srcs", native.glob(include = ["*_test.go"]))
     kwargs.setdefault("importpath", _base_importpath + name)
 
-    if "online_scheduling" in kwargs:
-        _cff_internal_test(name, **kwargs)
-        return
-
-    _cff_internal_test(
-        name + "-online",
-        **dicts.add(kwargs, online_scheduling = True)
-    )
-
-    _cff_internal_test(
-        name + "-offline",
-        **dicts.add(kwargs, online_scheduling = False)
-    )
+    _cff_internal_test(name, **kwargs)
 
 def _cff_internal_test(
         name,
@@ -44,8 +29,7 @@ def _cff_internal_test(
         srcs = None,
         deps = None,
         test_deps = None,
-        instrument_all_tasks = False,
-        online_scheduling = False):
+        instrument_all_tasks = False):
     srcs = srcs or []
     deps = deps or []
     test_deps = test_deps or []
@@ -67,7 +51,6 @@ def _cff_internal_test(
         visibility = _visibility,
         deps = deps,
         instrument_all_tasks = instrument_all_tasks,
-        online_scheduling = online_scheduling,
     )
 
     go_library(

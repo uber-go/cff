@@ -80,6 +80,17 @@
 	return
 }
 
+{{ $t }}.job = sched.Enqueue(ctx, {{ $cff }}.Job{
+    Run: task{{ .Serial }}.run,
+    {{ if .DependsOn -}}
+        Dependencies: []*{{ $cff }}.ScheduledJob{
+            {{ range .DependsOn -}}
+                task{{.Serial}}.job,
+            {{ end -}}
+        },
+    {{- end }}
+})
+
 {{- define "taskResultList" -}}
 	{{- range $i, $t := .Outputs -}}
 		{{ if gt $i 0 }},{{ end }}v{{ typeHash $t }}

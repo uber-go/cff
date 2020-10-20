@@ -31,24 +31,19 @@ func(
 	startTime := {{ import "time" }}.Now()
 	defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
 
-	{{ if $.Online -}}
-		sched := {{ $cff }}.BeginFlow(
-			{{- with .Concurrency -}}
-				{{ expr . }}
-			{{- else -}}
-				0
-			{{- end -}}
-
-		)
-	{{- end }}
+    sched := {{ $cff }}.BeginFlow(
+        {{- with .Concurrency -}}
+            {{ expr . }}
+        {{- else -}}
+            0
+        {{- end -}}
+    )
 
 	type task struct {
 		emitter {{ $cff }}.TaskEmitter
 		ran {{ $cff }}.AtomicBool
 		run func({{ $context }}.Context) error
-		{{- if $.Online }}
-			job *{{ $cff }}.ScheduledJob
-		{{- end }}
+        job *{{ $cff }}.ScheduledJob
 	}
 
 	var tasks []*task
@@ -62,42 +57,13 @@ func(
 
 	{{ range $flow.TopoTasks }}
 		{{ template "task.go.tmpl" . }}
-		{{- if $.Online }}
-			task{{ .Serial }}.job = sched.Enqueue(ctx, {{ $cff }}.Job{
-				Run: task{{ .Serial }}.run,
-				{{ if .DependsOn -}}
-					Dependencies: []*{{ $cff }}.ScheduledJob{
-						{{ range .DependsOn -}}
-							task{{.Serial}}.job,
-						{{ end -}}
-					},
-				{{- end }}
-			})
-		{{- end }}
 		tasks = append(tasks, task{{ .Serial }})
 	{{ end }}
 
-	{{ if not $.Online }}
-		schedule := [][]func({{ $context }}.Context) error{
-			{{ range .Schedule -}}
-				{
-					{{- range . -}}
-						{{ printf "task%d" .Serial }}.run,
-					{{- end -}}
-				},
-			{{ end -}}
-		}
-
-		if err := {{ $cff }}.RunStaticTasks(ctx, schedule); err != nil {
-			flowEmitter.FlowError(ctx, err)
-			return err
-		}
-	{{ else }}
-		if err := sched.Wait(ctx); err != nil {
-			flowEmitter.FlowError(ctx, err)
-			return err
-		}
-	{{ end }}
+    if err := sched.Wait(ctx); err != nil {
+        flowEmitter.FlowError(ctx, err)
+        return err
+    }
 
 	{{ range .Outputs }}
 		*({{ expr .Node }}) = v{{ typeHash .Type }} // {{ typeName .Type }}
