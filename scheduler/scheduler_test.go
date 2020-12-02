@@ -130,7 +130,9 @@ func TestScheduler(t *testing.T) {
 		ctrl := newFakeJobController(t)
 		defer ctrl.Verify()
 
-		sched := Begin(numWorkers)
+		cfg := Config{Concurrency: numWorkers}
+		sched := cfg.Begin()
+
 		ctx := context.Background()
 		jobs := make([]*ScheduledJob, len(tt.jobs))
 		for i, job := range tt.jobs {
@@ -186,7 +188,9 @@ func TestScheduler_Wait(t *testing.T) {
 
 	ctx := context.Background()
 
-	sched := Begin(0)
+	cfg := Config{Concurrency: 0}
+	sched := cfg.Begin()
+
 	if err := sched.Wait(ctx); err != nil {
 		t.Fatalf("Wait without enqueuing anything failed: %v", err)
 	}
@@ -213,7 +217,9 @@ func TestScheduler_WaitAfterCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	sched := Begin(0)
+	cfg := Config{Concurrency: 0}
+	sched := cfg.Begin()
+
 	if err := sched.Wait(ctx); err == nil {
 		t.Error("Wait with canceled context should fail")
 	}
@@ -233,7 +239,8 @@ func TestScheduler_EnqueueManyConcurrently(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	sched := Begin(0)
+	cfg := Config{Concurrency: 0}
+	sched := cfg.Begin()
 
 	// Goroutines use 'ready' to wait for each other so that we have a
 	// higher chance of a race. We use `done` to wait for all these

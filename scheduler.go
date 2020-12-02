@@ -28,5 +28,8 @@ type ScheduledJob = scheduler.ScheduledJob
 //  // ...
 //  err := sched.Wait()
 func BeginFlow(n int) *scheduler.Scheduler {
-	return scheduler.Begin(n)
+	cfg := scheduler.Config{
+		Concurrency: n,
+	}
+	return cfg.Begin()
 }

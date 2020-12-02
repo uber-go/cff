@@ -117,16 +117,22 @@ type Scheduler struct {
 	donec <-chan jobResult
 }
 
+// Config stores parameters the the scheduler should run with and executes
+// the scheduler.
+type Config struct {
+	Concurrency int
+}
+
 // Begin begins execution of a flow with the provided number of
 // goroutines. Concurrency defaults to max(GOMAXPROCS, 4) if zero.
 //
 // Enqueue jobs into the returned scheduler using the Enqueue method, and wait
 // for the result with Wait.
-func Begin(concurrency int) *Scheduler {
-	if concurrency == 0 {
-		concurrency = runtime.GOMAXPROCS(0)
-		if concurrency < minDefaultWorkers {
-			concurrency = minDefaultWorkers
+func (c Config) Begin() *Scheduler {
+	if c.Concurrency == 0 {
+		c.Concurrency = runtime.GOMAXPROCS(0)
+		if c.Concurrency < minDefaultWorkers {
+			c.Concurrency = minDefaultWorkers
 		}
 	}
 
@@ -145,14 +151,14 @@ func Begin(concurrency int) *Scheduler {
 
 	// Channel size should match concurrency: Workers should always be
 	// able to post their results, even if the Scheduler Loop is busy.
-	donec := make(chan jobResult, concurrency)
+	donec := make(chan jobResult, c.Concurrency)
 
 	// Start the workers.
 	go func() {
 		// TODO(abg): Maybe we should spawn workers on demand as
 		// needed with a maximum of N workers instead of spawning them
 		// in advance.
-		for i := 0; i < concurrency; i++ {
+		for i := 0; i < c.Concurrency; i++ {
 			go worker(readyc, donec)
 		}
 	}()
