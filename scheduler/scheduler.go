@@ -117,8 +117,8 @@ type Scheduler struct {
 	donec <-chan jobResult
 }
 
-// Config stores parameters the the scheduler should run with and executes
-// the scheduler.
+// Config stores parameters the scheduler should run with and is the
+// entry point for running the scheduler.
 type Config struct {
 	Concurrency int
 }
