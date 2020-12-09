@@ -41,7 +41,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 	) (err error) {
 		var (
 			flowInfo = &cff.FlowInfo{
-				Flow:   "HandleFoo",
+				Name:   "HandleFoo",
 				File:   "go.uber.org/cff/examples/magic.go",
 				Line:   34,
 				Column: 9,
@@ -169,7 +169,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		task4 := new(task)
 		task4.emitter = emitter.TaskInit(
 			&cff.TaskInfo{
-				Task:   "FormSendEmailRequest",
+				Name:   "FormSendEmailRequest",
 				File:   "go.uber.org/cff/examples/magic.go",
 				Line:   63,
 				Column: 4,
@@ -222,7 +222,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		task5 := new(task)
 		task5.emitter = emitter.TaskInit(
 			&cff.TaskInfo{
-				Task:   "FormSendEmailRequest",
+				Name:   "FormSendEmailRequest",
 				File:   "go.uber.org/cff/examples/magic.go",
 				Line:   68,
 				Column: 4,

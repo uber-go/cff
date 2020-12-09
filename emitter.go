@@ -19,14 +19,14 @@ type Emitter interface {
 
 // FlowInfo provides information to uniquely identify a flow.
 type FlowInfo struct {
-	Flow         string
+	Name         string
 	File         string
 	Line, Column int
 }
 
 // TaskInfo provides information to uniquely identify a task.
 type TaskInfo struct {
-	Task         string
+	Name         string
 	File         string
 	Line, Column int
 }

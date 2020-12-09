@@ -16,7 +16,7 @@ import (
 func TestLogFlowEmitter_IncludesFlowName(t *testing.T) {
 	core, observed := observer.New(zapcore.DebugLevel)
 
-	em := LogEmitter(zap.New(core)).FlowInit(&FlowInfo{Flow: "myflow"})
+	em := LogEmitter(zap.New(core)).FlowInit(&FlowInfo{Name: "myflow"})
 	em.FlowSuccess(context.Background())
 	em.FlowError(context.Background(), errors.New("foo"))
 
@@ -32,7 +32,7 @@ func TestLogFloWEmitter_ErrorLevelChange(t *testing.T) {
 	LogEmitter(
 		zap.New(core),
 		LogErrors(zapcore.WarnLevel),
-	).FlowInit(&FlowInfo{Flow: "myflow"}).
+	).FlowInit(&FlowInfo{Name: "myflow"}).
 		FlowError(context.Background(), errors.New("great sadness"))
 
 	logs := observed.TakeAll()
@@ -45,7 +45,7 @@ func TestLogTaskEmitter(t *testing.T) {
 	ctx := context.Background()
 	core, observed := observer.New(zapcore.DebugLevel)
 	emitter := LogEmitter(zap.New(core))
-	tem := emitter.TaskInit(&TaskInfo{Task: "mytask"}, &FlowInfo{Flow: "myflow"})
+	tem := emitter.TaskInit(&TaskInfo{Name: "mytask"}, &FlowInfo{Name: "myflow"})
 
 	t.Run("includes task and flow name", func(t *testing.T) {
 		tem.TaskSuccess(ctx)
@@ -100,7 +100,7 @@ func TestLogTaskEmitter_CustomizeLevels(t *testing.T) {
 		LogErrors(zapcore.WarnLevel),
 		LogPanics(zapcore.InfoLevel),
 		LogRecovers(zapcore.DebugLevel),
-	).TaskInit(&TaskInfo{Task: "mytask"}, &FlowInfo{Flow: "myflow"})
+	).TaskInit(&TaskInfo{Name: "mytask"}, &FlowInfo{Name: "myflow"})
 
 	t.Run("error level", func(t *testing.T) {
 		em.TaskError(ctx, errors.New("great sadness"))

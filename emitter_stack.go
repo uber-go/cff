@@ -48,7 +48,7 @@ func (s emitterStack) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmitt
 	}
 
 	return &emitterStackTask{
-		task:  taskInfo.Task,
+		task:  taskInfo.Name,
 		stack: emitters,
 	}
 }
@@ -119,7 +119,7 @@ func (s emitterStack) FlowInit(info *FlowInfo) FlowEmitter {
 	}
 
 	return &emitterStackFlow{
-		flow:  info.Flow,
+		flow:  info.Name,
 		stack: emitters,
 	}
 }

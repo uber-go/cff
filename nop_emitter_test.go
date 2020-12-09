@@ -13,7 +13,7 @@ func TestNopEmitter(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("flow", func(t *testing.T) {
-		e := e.FlowInit(&FlowInfo{Flow: "foo"})
+		e := e.FlowInit(&FlowInfo{Name: "foo"})
 
 		e.FlowSuccess(ctx)
 		e.FlowError(ctx, errors.New("great sadness"))
@@ -22,7 +22,7 @@ func TestNopEmitter(t *testing.T) {
 	})
 
 	t.Run("task", func(t *testing.T) {
-		e := e.TaskInit(&TaskInfo{Task: "foo"}, &FlowInfo{Flow: "bar"})
+		e := e.TaskInit(&TaskInfo{Name: "foo"}, &FlowInfo{Name: "bar"})
 
 		e.TaskSuccess(ctx)
 		e.TaskError(ctx, errors.New("great sadness"))

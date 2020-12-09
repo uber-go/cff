@@ -15,13 +15,13 @@ func TestTallyEmitter_CacheFlow(t *testing.T) {
 		scope := tally.NewTestScope("", nil)
 		e := TallyEmitter(scope)
 		fe := e.FlowInit(&FlowInfo{
-			Flow:   "flow",
+			Name:   "flow",
 			File:   "location/flow.go",
 			Line:   42,
 			Column: 84,
 		})
 		fe2 := e.FlowInit(&FlowInfo{
-			Flow:   "flow",
+			Name:   "flow",
 			File:   "location/flow.go",
 			Line:   42,
 			Column: 84,
@@ -37,39 +37,39 @@ func TestTallyEmitter_CacheTask(t *testing.T) {
 		e := TallyEmitter(scope)
 		te := e.TaskInit(
 			&TaskInfo{
-				Task:   "task",
+				Name:   "task",
 				File:   "location/task.go",
 				Line:   42,
 				Column: 84,
 			},
 			&FlowInfo{
-				Flow:   "flow",
+				Name:   "flow",
 				File:   "location/flow.go",
 				Line:   42,
 				Column: 84,
 			})
 		te2 := e.TaskInit(
 			&TaskInfo{
-				Task:   "another task",
+				Name:   "another task",
 				File:   "location/task.go",
 				Line:   42,
 				Column: 84,
 			},
 			&FlowInfo{
-				Flow:   "flow",
+				Name:   "flow",
 				File:   "location/flow.go",
 				Line:   42,
 				Column: 84,
 			})
 		te2same := e.TaskInit(
 			&TaskInfo{
-				Task:   "task",
+				Name:   "task",
 				File:   "location/task.go",
 				Line:   42,
 				Column: 84,
 			},
 			&FlowInfo{
-				Flow:   "flow",
+				Name:   "flow",
 				File:   "location/flow.go",
 				Line:   42,
 				Column: 84,
@@ -96,13 +96,13 @@ func TestTallyEmitter_CacheTaskReadRace(t *testing.T) {
 			<-start
 			results[i] = e.TaskInit(
 				&TaskInfo{
-					Task:   "task",
+					Name:   "task",
 					File:   "location/task.go",
 					Line:   42,
 					Column: 84,
 				},
 				&FlowInfo{
-					Flow:   "flow",
+					Name:   "flow",
 					File:   "location/flow.go",
 					Line:   42,
 					Column: 84,
@@ -135,7 +135,7 @@ func TestTallyEmitter_CacheFlowReadRace(t *testing.T) {
 			<-start
 			results[i] = e.FlowInit(
 				&FlowInfo{
-					Flow:   "flow",
+					Name:   "flow",
 					File:   "location/flow.go",
 					Line:   42,
 					Column: 84,

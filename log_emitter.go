@@ -92,7 +92,7 @@ func (logFlowEmitter) flowEmitter() {}
 
 func (e *logEmitter) FlowInit(info *FlowInfo) FlowEmitter {
 	return &logFlowEmitter{
-		flow:     zap.String("flow", info.Flow),
+		flow:     zap.String("flow", info.Name),
 		logger:   e.logger,
 		errLevel: e.errLevel,
 	}
@@ -126,8 +126,8 @@ func (logTaskEmitter) taskEmitter() {}
 
 func (e *logEmitter) TaskInit(task *TaskInfo, flow *FlowInfo) TaskEmitter {
 	return &logTaskEmitter{
-		flow:         zap.String("flow", flow.Flow),
-		task:         zap.String("task", task.Task),
+		flow:         zap.String("flow", flow.Name),
+		task:         zap.String("task", task.Name),
 		logger:       e.logger,
 		errLevel:     e.errLevel,
 		panicLevel:   e.panicLevel,

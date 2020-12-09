@@ -48,7 +48,7 @@ func TestEmitterStackConstruction(t *testing.T) {
 			ctx := context.Background()
 
 			e := EmitterStack(tt.give...)
-			e.FlowInit(&FlowInfo{Flow: "foo"}).
+			e.FlowInit(&FlowInfo{Name: "foo"}).
 				FlowDone(ctx, time.Second)
 		})
 	}

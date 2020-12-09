@@ -41,11 +41,11 @@ func TallyEmitter(scope tally.Scope) Emitter {
 
 func (e *tallyEmitter) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmitter {
 	cacheKey := cacheKey{
-		TaskName:   taskInfo.Task,
+		TaskName:   taskInfo.Name,
 		TaskFile:   taskInfo.File,
 		TaskLine:   taskInfo.Line,
 		TaskColumn: taskInfo.Column,
-		FlowName:   flowInfo.Flow,
+		FlowName:   flowInfo.Name,
 		FlowFile:   flowInfo.File,
 		FlowLine:   flowInfo.Line,
 		FlowColumn: flowInfo.Column,
@@ -55,10 +55,10 @@ func (e *tallyEmitter) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmit
 		return v.(TaskEmitter)
 	}
 	tags := map[string]string{
-		"task": taskInfo.Task,
+		"task": taskInfo.Name,
 	}
-	if flowInfo.Flow != "" {
-		tags["flow"] = flowInfo.Flow
+	if flowInfo.Name != "" {
+		tags["flow"] = flowInfo.Name
 	}
 
 	scope := e.scope.Tagged(tags)
@@ -72,7 +72,7 @@ func (e *tallyEmitter) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmit
 
 func (e *tallyEmitter) FlowInit(info *FlowInfo) FlowEmitter {
 	cacheKey := cacheKey{
-		FlowName:   info.Flow,
+		FlowName:   info.Name,
 		FlowFile:   info.File,
 		FlowLine:   info.Line,
 		FlowColumn: info.Column,
@@ -81,7 +81,7 @@ func (e *tallyEmitter) FlowInit(info *FlowInfo) FlowEmitter {
 	if v, ok := e.flows.Load(cacheKey); ok {
 		return v.(FlowEmitter)
 	}
-	scope := e.scope.Tagged(map[string]string{"flow": info.Flow})
+	scope := e.scope.Tagged(map[string]string{"flow": info.Name})
 	fe := &tallyFlowEmitter{
 		scope: scope,
 	}

@@ -12,7 +12,7 @@ func(
 	var (
 		flowInfo = &{{ $cff }}.FlowInfo{
 			{{ with $flow.Instrument -}}
-				Flow: {{ expr .Name }},
+				Name: {{ expr .Name }},
 			{{ end -}}
 			File: {{ quote $flow.PosInfo.File}},
 			Line: {{ $flow.PosInfo.Line }},

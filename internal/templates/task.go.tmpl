@@ -15,7 +15,7 @@
 	{{- if .Instrument -}}
 		emitter.TaskInit(
 			&{{ $cff }}.TaskInfo{
-				Task: {{ expr .Instrument.Name }},
+				Name: {{ expr .Instrument.Name }},
 				File: {{ quote .PosInfo.File}},
 				Line: {{ .PosInfo.Line }},
 				Column: {{ .PosInfo.Column}},
