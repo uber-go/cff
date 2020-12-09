@@ -5,6 +5,32 @@ import (
 	"time"
 )
 
+// Emitter initializes Task and Flow emitters.
+//
+// WARNING: This interface is not stable and may change in the future.
+type Emitter interface {
+	// TaskInit returns a TaskEmitter which could be memoized based on task name.
+	TaskInit(*TaskInfo, *FlowInfo) TaskEmitter
+	// FlowInit returns a FlowEmitter which could be memoized based on flow name.
+	FlowInit(*FlowInfo) FlowEmitter
+
+	emitter() // private interface
+}
+
+// FlowInfo provides information to uniquely identify a flow.
+type FlowInfo struct {
+	Flow         string
+	File         string
+	Line, Column int
+}
+
+// TaskInfo provides information to uniquely identify a task.
+type TaskInfo struct {
+	Task         string
+	File         string
+	Line, Column int
+}
+
 // FlowEmitter receives events for when flow events occur, for the purpose of
 // emitting metrics.
 //
@@ -44,30 +70,4 @@ type TaskEmitter interface {
 	TaskDone(context.Context, time.Duration)
 
 	taskEmitter() // private interface
-}
-
-// FlowInfo provides information to uniquely identify a flow.
-type FlowInfo struct {
-	Flow         string
-	File         string
-	Line, Column int
-}
-
-// TaskInfo provides information to uniquely identify a task.
-type TaskInfo struct {
-	Task         string
-	File         string
-	Line, Column int
-}
-
-// Emitter initializes Task and Flow emitters.
-//
-// WARNING: This interface is not stable and may change in the future.
-type Emitter interface {
-	// TaskInit returns a TaskEmitter which could be memoized based on task name.
-	TaskInit(*TaskInfo, *FlowInfo) TaskEmitter
-	// FlowInit returns a FlowEmitter which could be memoized based on flow name.
-	FlowInit(*FlowInfo) FlowEmitter
-
-	emitter() // private interface
 }
