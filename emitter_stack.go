@@ -33,114 +33,101 @@ func EmitterStack(emitters ...Emitter) Emitter {
 	}
 }
 
-type emitterStackTask struct {
-	task  string
-	stack []TaskEmitter
-}
+type taskEmitterStack []TaskEmitter
 
-func (emitterStackTask) taskEmitter() {}
+func (taskEmitterStack) taskEmitter() {}
 
 // TaskInit returns a TaskEmitter which could be memoized based on task name.
-func (s emitterStack) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmitter {
-	emitters := make([]TaskEmitter, 0, len(s))
-	for _, e := range s {
+func (es emitterStack) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmitter {
+	emitters := make(taskEmitterStack, 0, len(es))
+	for _, e := range es {
 		emitters = append(emitters, e.TaskInit(taskInfo, flowInfo))
 	}
-
-	return &emitterStackTask{
-		task:  taskInfo.Name,
-		stack: emitters,
-	}
+	return emitters
 }
 
 // TaskSuccess is called when a task runs successfully.
-func (s *emitterStackTask) TaskSuccess(ctx context.Context) {
-	for _, e := range s.stack {
+func (ts taskEmitterStack) TaskSuccess(ctx context.Context) {
+	for _, e := range ts {
 		e.TaskSuccess(ctx)
 	}
 }
 
 // TaskError is called when a task fails due to a task error.
-func (s *emitterStackTask) TaskError(ctx context.Context, err error) {
-	for _, e := range s.stack {
+func (ts taskEmitterStack) TaskError(ctx context.Context, err error) {
+	for _, e := range ts {
 		e.TaskError(ctx, err)
 	}
 }
 
 // TaskError is called when a task fails due to a task error.
-func (s *emitterStackTask) TaskErrorRecovered(ctx context.Context, err error) {
-	for _, e := range s.stack {
+func (ts taskEmitterStack) TaskErrorRecovered(ctx context.Context, err error) {
+	for _, e := range ts {
 		e.TaskErrorRecovered(ctx, err)
 	}
 }
 
 // TaskSkipped is called when a task is skipped due to predicate or an
 // earlier task error.
-func (s *emitterStackTask) TaskSkipped(ctx context.Context, err error) {
-	for _, e := range s.stack {
+func (ts taskEmitterStack) TaskSkipped(ctx context.Context, err error) {
+	for _, e := range ts {
 		e.TaskSkipped(ctx, err)
 	}
 }
 
 // TaskPanic is called when a task panics.
-func (s *emitterStackTask) TaskPanic(ctx context.Context, pv interface{}) {
-	for _, e := range s.stack {
+func (ts taskEmitterStack) TaskPanic(ctx context.Context, pv interface{}) {
+	for _, e := range ts {
 		e.TaskPanic(ctx, pv)
 	}
 }
 
 // TaskRecovered is called when a task errors but it was recovered by a
 // RecoverWith annotation.
-func (s *emitterStackTask) TaskPanicRecovered(ctx context.Context, pv interface{}) {
-	for _, e := range s.stack {
+func (ts taskEmitterStack) TaskPanicRecovered(ctx context.Context, pv interface{}) {
+	for _, e := range ts {
 		e.TaskPanicRecovered(ctx, pv)
 	}
 }
 
 // TaskDone is called when a task finishes.
-func (s *emitterStackTask) TaskDone(ctx context.Context, d time.Duration) {
-	for _, e := range s.stack {
+func (ts taskEmitterStack) TaskDone(ctx context.Context, d time.Duration) {
+	for _, e := range ts {
 		e.TaskDone(ctx, d)
 	}
 }
 
-type emitterStackFlow struct {
-	flow  string
-	stack []FlowEmitter
-}
+type flowEmitterStack []FlowEmitter
 
-func (emitterStackFlow) flowEmitter() {}
+func (flowEmitterStack) flowEmitter() {}
 
 // FlowInit returns a FlowEmitter which could be memoized based on flow name.
-func (s emitterStack) FlowInit(info *FlowInfo) FlowEmitter {
-	emitters := make([]FlowEmitter, 0, len(s))
-	for _, e := range s {
+func (es emitterStack) FlowInit(info *FlowInfo) FlowEmitter {
+	emitters := make(flowEmitterStack, 0, len(es))
+	for _, e := range es {
 		emitters = append(emitters, e.FlowInit(info))
 	}
 
-	return &emitterStackFlow{
-		flow:  info.Name,
-		stack: emitters,
-	}
+	return emitters
 }
 
 // FlowSuccess is called when a flow runs successfully.
-func (s *emitterStackFlow) FlowSuccess(ctx context.Context) {
-	for _, e := range s.stack {
+func (fs flowEmitterStack) FlowSuccess(ctx context.Context) {
+	for _, e := range fs {
 		e.FlowSuccess(ctx)
 	}
 }
 
 // FlowError is called when a flow fails due to a task error.
-func (s *emitterStackFlow) FlowError(ctx context.Context, err error) {
-	for _, e := range s.stack {
+func (fs flowEmitterStack) FlowError(ctx context.Context, err error) {
+	for _, e := range fs {
 		e.FlowError(ctx, err)
 	}
 }
 
 // FlowDone is called when a flow finishes.
-func (s *emitterStackFlow) FlowDone(ctx context.Context, d time.Duration) {
-	for _, e := range s.stack {
+func (fs flowEmitterStack) FlowDone(ctx context.Context, d time.Duration) {
+	for _, e := range fs {
 		e.FlowDone(ctx, d)
 	}
 }
