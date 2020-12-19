@@ -328,8 +328,8 @@ func TestPanic(t *testing.T) {
 	// No flow emitter as flow isn't instrumented.
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 
-	taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
 	taskEmitter.EXPECT().TaskPanic(ctx, gomock.Any())
+	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
 
 	emitter.EXPECT().TaskInit(
 		&cff.TaskInfo{
