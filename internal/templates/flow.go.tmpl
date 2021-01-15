@@ -24,6 +24,10 @@ func(
 			flowEmitter = {{ $cff }}.NopFlowEmitter()
 		{{- end }}
 
+		schedInfo = &{{ $cff }}.SchedulerInfo{
+			FlowInfo: flowInfo,
+		}
+
 		// possibly unused
 		_ = flowInfo
 	)
@@ -31,12 +35,14 @@ func(
 	startTime := {{ import "time" }}.Now()
 	defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
 
+	schedEmitter := emitter.SchedulerInit(schedInfo)
+
     sched := {{ $cff }}.BeginFlow(
         {{- with .Concurrency -}}
             {{ expr . }}
         {{- else -}}
             0
-        {{- end -}}
+        {{- end -}}, schedEmitter,
     )
 
 	type task struct {

@@ -26,6 +26,7 @@ func TestInstrumentEmitter(t *testing.T) {
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
+	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
 
 	flowsucc := flowEmitter.EXPECT().FlowSuccess(ctx)
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any()).After(flowsucc)
@@ -34,12 +35,20 @@ func TestInstrumentEmitter(t *testing.T) {
 	taskEmitter.EXPECT().TaskSuccess(ctx).Times(2)
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
 
-	emitter.EXPECT().FlowInit(&cff.FlowInfo{
+	flowInfo := &cff.FlowInfo{
 		Name:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
 		Line:   227,
 		Column: 8,
-	}).Return(flowEmitter)
+	}
+
+	emitter.EXPECT().FlowInit(flowInfo).Return(flowEmitter)
+
+	emitter.EXPECT().SchedulerInit(
+		&cff.SchedulerInfo{
+			FlowInfo: flowInfo,
+		}).Return(schedEmitter)
+
 	// 2 in the tasks for loop inside defer() and twice after.
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
 
@@ -68,6 +77,7 @@ func TestInstrumentErrorME(t *testing.T) {
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
+	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
 
 	// flowFailedEmitter := cff.NewMockFlowEmitter(mockCtrl)
 
@@ -81,6 +91,7 @@ func TestInstrumentErrorME(t *testing.T) {
 
 	emitter.EXPECT().FlowInit(gomock.Any()).Return(flowEmitter)
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
+	emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
@@ -103,10 +114,12 @@ func TestInstrumentTaskButNotFlowME(t *testing.T) {
 	emitter := cff.NewMockEmitter(mockCtrl)
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
 
 	taskEmitter.EXPECT().TaskSuccess(ctx)
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Return(taskEmitter)
+	emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
@@ -138,6 +151,7 @@ func TestInstrumentCancelledContextME(t *testing.T) {
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
+	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
 
 	flowEmitter.EXPECT().FlowError(ctx, flowCancelledErr)
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
@@ -146,6 +160,7 @@ func TestInstrumentCancelledContextME(t *testing.T) {
 
 	emitter.EXPECT().FlowInit(gomock.Any()).Return(flowEmitter)
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
+	emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
 
 	g := &instrument.CustomEmitter{
 		Scope:   scope,
@@ -169,6 +184,7 @@ func TestInstrumentRecoverME(t *testing.T) {
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
+	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
 
 	flowEmitter.EXPECT().FlowSuccess(ctx)
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
@@ -184,6 +200,7 @@ func TestInstrumentRecoverME(t *testing.T) {
 		Column: 8,
 	}).Return(flowEmitter)
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
+	emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
 
 	g := &instrument.CustomEmitter{
 		Scope:   scope,
@@ -206,6 +223,7 @@ func TestT3630161ME(t *testing.T) {
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
+	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
 
 	flowEmitter.EXPECT().FlowSuccess(ctx)
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
@@ -217,6 +235,7 @@ func TestT3630161ME(t *testing.T) {
 
 	emitter.EXPECT().FlowInit(gomock.Any()).Return(flowEmitter)
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
+	emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
@@ -247,6 +266,7 @@ func TestT3795761ME(t *testing.T) {
 
 		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 		flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
+		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
 
 		taskEmitter.EXPECT().TaskSuccess(ctx)
 		taskEmitter.EXPECT().TaskError(ctx, gomock.Any())
@@ -257,6 +277,7 @@ func TestT3795761ME(t *testing.T) {
 
 		emitter.EXPECT().FlowInit(gomock.Any()).AnyTimes().Return(flowEmitter)
 		emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
+		emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
 
 		g := &instrument.CustomEmitter{
 			Scope:   scope,
@@ -273,6 +294,7 @@ func TestT3795761ME(t *testing.T) {
 
 		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 		flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
+		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
 
 		taskEmitter.EXPECT().TaskSuccess(ctx).Times(2)
 		taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
@@ -282,6 +304,7 @@ func TestT3795761ME(t *testing.T) {
 
 		emitter.EXPECT().FlowInit(gomock.Any()).AnyTimes().Return(flowEmitter)
 		emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
+		emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
 
 		g := &instrument.CustomEmitter{
 			Scope:   scope,
@@ -298,6 +321,7 @@ func TestT3795761ME(t *testing.T) {
 
 		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 		flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
+		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
 
 		taskEmitter.EXPECT().TaskSuccess(ctx)
 		taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
@@ -308,6 +332,7 @@ func TestT3795761ME(t *testing.T) {
 
 		emitter.EXPECT().FlowInit(gomock.Any()).AnyTimes().Return(flowEmitter)
 		emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).AnyTimes().Return(taskEmitter)
+		emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
 
 		g := &instrument.CustomEmitter{
 			Scope:   scope,
@@ -331,6 +356,8 @@ func TestPanic(t *testing.T) {
 	taskEmitter.EXPECT().TaskPanic(ctx, gomock.Any())
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
 
+	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+
 	emitter.EXPECT().TaskInit(
 		&cff.TaskInfo{
 			Name:   "Atoi",
@@ -344,6 +371,7 @@ func TestPanic(t *testing.T) {
 			Line:   346,
 			Column: 9,
 		}).Return(taskEmitter)
+	emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
 
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)

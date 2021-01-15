@@ -183,6 +183,35 @@ func (e *logTaskEmitter) TaskDone(ctx context.Context, _ time.Duration) {
 	e.logger.Debug("task done", e.flow, e.task)
 }
 
+// SchedulerInit constructs a logging scheduler emitter.
+func (e *logEmitter) SchedulerInit(info *SchedulerInfo) SchedulerEmitter {
+	flow := zap.Skip()
+	if info.FlowInfo.Name != "" {
+		flow = zap.String("flow", info.FlowInfo.Name)
+	}
+	return &logSchedulerEmitter{
+		flow:   flow,
+		logger: e.logger,
+	}
+}
+
+type logSchedulerEmitter struct {
+	flow   zap.Field
+	logger *zap.Logger
+}
+
+func (e *logSchedulerEmitter) EmitScheduler(s SchedulerState) {
+	e.logger.Debug(
+		"scheduler state",
+		e.flow,
+		zap.Int("pending", s.Pending),
+		zap.Int("ready", s.Ready),
+		zap.Int("waiting", s.Waiting),
+	)
+}
+
+func (logSchedulerEmitter) schedulerEmitter() {}
+
 func maybeErrorField(pv interface{}) zap.Field {
 	if err, ok := pv.(error); ok {
 		return zap.Error(err)

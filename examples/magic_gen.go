@@ -48,6 +48,10 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 			flowEmitter = emitter.FlowInit(flowInfo)
 
+			schedInfo = &cff.SchedulerInfo{
+				FlowInfo: flowInfo,
+			}
+
 			// possibly unused
 			_ = flowInfo
 		)
@@ -55,7 +59,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		startTime := time.Now()
 		defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
 
-		sched := cff.BeginFlow(8)
+		schedEmitter := emitter.SchedulerInit(schedInfo)
+
+		sched := cff.BeginFlow(8, schedEmitter)
 
 		type task struct {
 			emitter cff.TaskEmitter

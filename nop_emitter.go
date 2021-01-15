@@ -26,9 +26,10 @@ func NopTaskEmitter() TaskEmitter {
 
 type nopEmitter struct{}
 
-func (*nopEmitter) emitter()     {}
-func (*nopEmitter) flowEmitter() {}
-func (*nopEmitter) taskEmitter() {}
+func (*nopEmitter) emitter()          {}
+func (*nopEmitter) flowEmitter()      {}
+func (*nopEmitter) taskEmitter()      {}
+func (*nopEmitter) schedulerEmitter() {}
 
 func (e *nopEmitter) FlowInit(*FlowInfo) FlowEmitter { return e }
 
@@ -53,3 +54,7 @@ func (*nopEmitter) TaskPanic(context.Context, interface{}) {}
 func (*nopEmitter) TaskPanicRecovered(context.Context, interface{}) {}
 
 func (*nopEmitter) TaskDone(context.Context, time.Duration) {}
+
+func (e *nopEmitter) SchedulerInit(*SchedulerInfo) SchedulerEmitter { return e }
+
+func (e *nopEmitter) EmitScheduler(SchedulerState) {}

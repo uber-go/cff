@@ -3,6 +3,8 @@ package cff
 import (
 	"context"
 	"time"
+
+	"go.uber.org/cff/scheduler"
 )
 
 // Emitter initializes Task and Flow emitters.
@@ -13,8 +15,30 @@ type Emitter interface {
 	TaskInit(*TaskInfo, *FlowInfo) TaskEmitter
 	// FlowInit returns a FlowEmitter which could be memoized based on flow name.
 	FlowInit(*FlowInfo) FlowEmitter
+	// SchedulerInit returns an emitter for the CFF scheduler.
+	SchedulerInit(s *SchedulerInfo) SchedulerEmitter
 
-	emitter() // private interface
+	emitter() // private interface (GO-258).
+}
+
+// SchedulerState describes the status of jobs managed by the CFF scheduler.
+type SchedulerState = scheduler.State
+
+// SchedulerEmitter provides observability into the state of the CFF
+// scheduler.
+type SchedulerEmitter interface {
+	// EmitScheduler emits the state of the CFF scheduler.
+	EmitScheduler(s SchedulerState)
+
+	schedulerEmitter() // private interface (GO-258).
+}
+
+// SchedulerInfo provides information about the context the scheduler
+// is running in.
+type SchedulerInfo struct {
+	// TODO(rhang): Field for concurrency will be exposed in the next
+	// diff in the stack.
+	FlowInfo *FlowInfo
 }
 
 // FlowInfo provides information to uniquely identify a flow.
@@ -43,7 +67,7 @@ type FlowEmitter interface {
 	// FlowDone is called when a flow finishes.
 	FlowDone(context.Context, time.Duration)
 
-	flowEmitter() // private interface
+	flowEmitter() // private interface (GO-258).
 }
 
 // TaskEmitter receives events for when task events occur, for the purpose of
@@ -69,5 +93,5 @@ type TaskEmitter interface {
 	// TaskDone is called when a task finishes.
 	TaskDone(context.Context, time.Duration)
 
-	taskEmitter() // private interface
+	taskEmitter() // private interface (GO-258).
 }

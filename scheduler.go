@@ -27,9 +27,30 @@ type ScheduledJob = scheduler.ScheduledJob
 //  j2 := sched.Enqueue(cff.Job{..., Dependencies: []*cff.ScheduledJob{j1}}
 //  // ...
 //  err := sched.Wait()
-func BeginFlow(n int) *scheduler.Scheduler {
+func BeginFlow(n int, e SchedulerEmitter) *scheduler.Scheduler {
 	cfg := scheduler.Config{
 		Concurrency: n,
+		Emitter:     adaptSchedulerEmitter(e),
 	}
 	return cfg.New()
+}
+
+// schedulerAdapter adapts a SchedulerEmitter into a scheduler.Emitter.
+type schedulerAdapter struct {
+	emitter SchedulerEmitter
+}
+
+func adaptSchedulerEmitter(e SchedulerEmitter) scheduler.Emitter {
+	if _, isNop := e.(*nopEmitter); e == nil || isNop {
+		// Avoid the cost of a live ticker in the scheduler if we're using
+		// no emitter or a no-op emitter.
+		return nil
+	}
+	return schedulerAdapter{
+		emitter: e,
+	}
+}
+
+func (s schedulerAdapter) Emit(state scheduler.State) {
+	s.emitter.EmitScheduler(SchedulerState(state))
 }

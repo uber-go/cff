@@ -140,3 +140,36 @@ func TestLogTaskEmitter_CustomizeLevels(t *testing.T) {
 		})
 	})
 }
+
+func TestLogTaskEmitter_EmitScheduler(t *testing.T) {
+	core, observed := observer.New(zapcore.DebugLevel)
+
+	t.Run("log a scheduler emission", func(t *testing.T) {
+		em := LogEmitter(
+			zap.New(core),
+		).SchedulerInit(&SchedulerInfo{FlowInfo: &FlowInfo{Name: "myflow"}})
+
+		em.EmitScheduler(SchedulerState{})
+		logs := observed.TakeAll()
+		require.Len(t, logs, 1)
+
+		assert.Contains(t, "scheduler state", logs[0].Message)
+
+		v, ok := logs[0].ContextMap()["flow"]
+		require.True(t, ok)
+		assert.Equal(t, "myflow", v)
+	})
+
+	t.Run("empty flow is skipped", func(t *testing.T) {
+		em := LogEmitter(
+			zap.New(core),
+		).SchedulerInit(&SchedulerInfo{FlowInfo: &FlowInfo{}})
+
+		em.EmitScheduler(SchedulerState{})
+		logs := observed.TakeAll()
+		require.Len(t, logs, 1)
+
+		_, ok := logs[0].ContextMap()["flow"]
+		assert.False(t, ok)
+	})
+}

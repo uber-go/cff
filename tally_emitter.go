@@ -21,8 +21,9 @@ type cacheKey struct {
 type tallyEmitter struct {
 	scope tally.Scope
 
-	flows *sync.Map // map[cacheKey]FlowEmitter
-	tasks *sync.Map // map[cacheKey]TaskEmitter
+	flows  *sync.Map // map[cacheKey]FlowEmitter
+	tasks  *sync.Map // map[cacheKey]TaskEmitter
+	scheds *sync.Map // map[cacheKey]SchedulerEmitter
 }
 
 func (tallyEmitter) emitter() {}
@@ -33,9 +34,10 @@ func (tallyEmitter) emitter() {}
 // https://eng.uberinternal.com/docs/cff2/observability/#metrics.
 func TallyEmitter(scope tally.Scope) Emitter {
 	return &tallyEmitter{
-		scope: scope,
-		flows: new(sync.Map),
-		tasks: new(sync.Map),
+		scope:  scope,
+		flows:  new(sync.Map),
+		tasks:  new(sync.Map),
+		scheds: new(sync.Map),
 	}
 }
 
@@ -140,4 +142,39 @@ func (e *tallyTaskEmitter) TaskSuccess(context.Context) {
 
 func (e *tallyTaskEmitter) TaskDone(_ context.Context, d time.Duration) {
 	e.scope.Timer("task.timing").Record(d)
+}
+
+type tallySchedulerEmitter struct {
+	scope tally.Scope
+}
+
+func (tallySchedulerEmitter) schedulerEmitter() {}
+
+// SchedulerInit constructs a tally SchedulerEmitter.
+func (e *tallyEmitter) SchedulerInit(info *SchedulerInfo) SchedulerEmitter {
+	flow := info.FlowInfo.Name
+	cacheKey := cacheKey{
+		FlowName:   flow,
+		FlowFile:   info.FlowInfo.File,
+		FlowLine:   info.FlowInfo.Line,
+		FlowColumn: info.FlowInfo.Column,
+	}
+	if v, ok := e.scheds.Load(cacheKey); ok {
+		return v.(SchedulerEmitter)
+	}
+	scope := e.scope
+	if flow != "" {
+		scope = scope.Tagged(map[string]string{"flow": flow})
+	}
+	tse := &tallySchedulerEmitter{
+		scope: scope,
+	}
+	v, _ := e.scheds.LoadOrStore(cacheKey, tse)
+	return v.(SchedulerEmitter)
+}
+
+func (e *tallySchedulerEmitter) EmitScheduler(s SchedulerState) {
+	e.scope.Gauge("scheduler.pending").Update(float64(s.Pending))
+	e.scope.Gauge("scheduler.ready").Update(float64(s.Ready))
+	e.scope.Gauge("scheduler.waiting").Update(float64(s.Waiting))
 }

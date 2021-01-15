@@ -131,3 +131,24 @@ func (fs flowEmitterStack) FlowDone(ctx context.Context, d time.Duration) {
 		e.FlowDone(ctx, d)
 	}
 }
+
+// SchedulerInit builds a SchedulerEmitter backed by the SchedulerEmitters of
+// the underlying Emitters.
+func (es emitterStack) SchedulerInit(info *SchedulerInfo) SchedulerEmitter {
+	emitters := make(schedulerEmitterStack, len(es))
+	for i, e := range es {
+		emitters[i] = e.SchedulerInit(info)
+	}
+	return emitters
+}
+
+type schedulerEmitterStack []SchedulerEmitter
+
+func (schedulerEmitterStack) schedulerEmitter() {}
+
+// EmitScheduler emits the state of the CFF scheduler.
+func (ses schedulerEmitterStack) EmitScheduler(s SchedulerState) {
+	for _, e := range ses {
+		e.EmitScheduler(s)
+	}
+}
