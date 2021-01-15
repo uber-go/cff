@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestScheduler(t *testing.T) {
@@ -131,7 +134,7 @@ func TestScheduler(t *testing.T) {
 		defer ctrl.Verify()
 
 		cfg := Config{Concurrency: numWorkers}
-		sched := cfg.Begin()
+		sched := cfg.New()
 
 		ctx := context.Background()
 		jobs := make([]*ScheduledJob, len(tt.jobs))
@@ -189,7 +192,7 @@ func TestScheduler_Wait(t *testing.T) {
 	ctx := context.Background()
 
 	cfg := Config{Concurrency: 0}
-	sched := cfg.Begin()
+	sched := cfg.New()
 
 	if err := sched.Wait(ctx); err != nil {
 		t.Fatalf("Wait without enqueuing anything failed: %v", err)
@@ -218,7 +221,7 @@ func TestScheduler_WaitAfterCanceled(t *testing.T) {
 	cancel()
 
 	cfg := Config{Concurrency: 0}
-	sched := cfg.Begin()
+	sched := cfg.New()
 
 	if err := sched.Wait(ctx); err == nil {
 		t.Error("Wait with canceled context should fail")
@@ -240,7 +243,7 @@ func TestScheduler_EnqueueManyConcurrently(t *testing.T) {
 
 	ctx := context.Background()
 	cfg := Config{Concurrency: 0}
-	sched := cfg.Begin()
+	sched := cfg.New()
 
 	// Goroutines use 'ready' to wait for each other so that we have a
 	// higher chance of a race. We use `done` to wait for all these
@@ -264,4 +267,267 @@ func TestScheduler_EnqueueManyConcurrently(t *testing.T) {
 	if err := sched.Wait(ctx); err != nil {
 		t.Errorf("unexpected failure from Scheduler.Wait: %v", err)
 	}
+}
+
+// Test that a nil emitter does not break the scheduler.
+func TestScheduler_EmitterNil(t *testing.T) {
+	t.Parallel()
+
+	sched := Config{
+		Concurrency:         1,
+		StateFlushFrequency: time.Millisecond,
+	}.New()
+
+	sched.Enqueue(context.Background(), Job{
+		Run: func(c context.Context) error {
+			return nil
+		},
+	})
+
+	assert.NoError(t, sched.Wait(context.Background()))
+}
+
+// emitterFn is a convenience type to block scheduler progress until Emit
+// is called.
+type emitterFn func(State)
+
+func (e emitterFn) Emit(s State) {
+	e(s)
+}
+
+// Test that the scheduler correctly emits state when there is no scheduled
+// activity.
+func TestScheduler_SchedulerEmpty(t *testing.T) {
+	t.Parallel()
+
+	var called bool
+	done := make(chan struct{})
+	emitter := emitterFn(func(s State) {
+		if called {
+			return
+		}
+		called = true
+		assert.Equal(t, s, State{})
+		close(done)
+	})
+
+	sched := Config{
+		Concurrency:         1,
+		Emitter:             emitter,
+		StateFlushFrequency: time.Millisecond,
+	}.New()
+
+	<-done
+
+	if err := sched.Wait(context.Background()); err != nil {
+		t.Errorf("unexpected failure from Scheduler.Wait: %v", err)
+	}
+}
+
+// Test that the scheduler correctly emits state when there is a currently
+// scheduled job.
+func TestScheduler_EmitSingleJob(t *testing.T) {
+	t.Parallel()
+
+	emitter, statec := newChannelEmitter()
+
+	sched := Config{
+		Concurrency:         1,
+		Emitter:             emitter,
+		StateFlushFrequency: time.Millisecond,
+	}.New()
+
+	blocker := newBlocker()
+	sched.Enqueue(context.Background(), Job{
+		Run: blocker.Run,
+	})
+
+	s := awaitStableState(t, statec)
+	assert.Equal(t, s.Pending, 1)
+
+	blocker.UnblockAndWait()
+
+	s = awaitStableState(t, statec)
+	assert.Equal(t, s.Pending, 0)
+
+	if err := sched.Wait(context.Background()); err != nil {
+		t.Errorf("unexpected failure from Scheduler.Wait: %v", err)
+	}
+}
+
+// Test that the scheduler correctly emits state when a job is waiting on
+// another unrelated job to finish.
+func TestScheduler_EmitTwoIndependentJobs(t *testing.T) {
+	t.Parallel()
+
+	emitter, statec := newChannelEmitter()
+
+	sched := Config{
+		Concurrency:         1,
+		Emitter:             emitter,
+		StateFlushFrequency: time.Millisecond,
+	}.New()
+
+	blockerA := newBlocker()
+	sched.Enqueue(context.Background(), Job{
+		Run: blockerA.Run,
+	})
+
+	s := awaitStableState(t, statec)
+	assert.Equal(t, 1, s.Pending)
+	blockerA.AwaitRunning()
+
+	// A must be running before we schedule B.
+	blockerB := newBlocker()
+	sched.Enqueue(context.Background(), Job{
+		Run: blockerB.Run,
+	})
+
+	s = awaitStableState(t, statec)
+	assert.Equal(t, 2, s.Pending)
+	assert.Equal(t, 1, s.Ready)
+
+	blockerA.UnblockAndWait()
+	blockerB.UnblockAndWait()
+
+	s = awaitStableState(t, statec)
+	assert.Equal(t, 0, s.Pending)
+
+	if err := sched.Wait(context.Background()); err != nil {
+		t.Errorf("unexpected failure from Scheduler.Wait: %v", err)
+	}
+}
+
+// Test that the scheduler correctly emits state when there are two scheduled
+// jobs with one job waiting on the other.
+func TestScheduler_EmitTwoDependentJobs(t *testing.T) {
+	t.Parallel()
+
+	emitter, statec := newChannelEmitter()
+
+	sched := Config{
+		Concurrency:         2,
+		Emitter:             emitter,
+		StateFlushFrequency: time.Millisecond,
+	}.New()
+
+	blockerA := newBlocker()
+	scheduledA := sched.Enqueue(context.Background(), Job{
+		Run: blockerA.Run,
+	})
+
+	blockerB := newBlocker()
+	sched.Enqueue(context.Background(), Job{
+		Run: blockerB.Run,
+		Dependencies: []*ScheduledJob{
+			scheduledA,
+		},
+	})
+
+	s := awaitStableState(t, statec)
+	assert.Equal(t, 1, s.Waiting)
+
+	// When all dependencies for a job have run, that job could be
+	// ready or running.
+	blockerA.UnblockAndWait()
+	s = awaitStableState(t, statec)
+	assert.Equal(t, 0, s.Waiting)
+	assert.Equal(t, 1, s.Pending)
+
+	blockerB.UnblockAndWait()
+	s = awaitStableState(t, statec)
+	assert.Equal(t, 0, s.Pending)
+
+	if err := sched.Wait(context.Background()); err != nil {
+		t.Errorf("unexpected failure from Scheduler.Wait: %v", err)
+	}
+}
+
+// blocker is a testing convenience object that runs to block the execution
+// of jobs until Unblock is called.
+type blocker struct {
+	done    chan struct{}
+	proceed chan struct{}
+	running chan struct{}
+}
+
+func newBlocker() blocker {
+	return blocker{
+		done:    make(chan struct{}),
+		proceed: make(chan struct{}),
+		running: make(chan struct{}),
+	}
+}
+
+// Run called inside a job causes execution to block until the
+// corresponding UnblockAndWait is called.
+func (j blocker) Run(context.Context) error {
+	close(j.running)
+	defer close(j.done)
+	<-j.proceed
+	return nil
+}
+
+func (j blocker) UnblockAndWait() {
+	close(j.proceed)
+	<-j.done
+}
+
+func (j blocker) AwaitRunning() {
+	<-j.running
+}
+
+// channelEmitter is an Emitter that posts scheduler state to a channel.
+//
+// The Emitter does not block on channel writes and drops messages if the
+// receiver is slow.
+type channelEmitter struct {
+	statec chan State
+}
+
+func newChannelEmitter() (Emitter, <-chan State) {
+	state := make(chan State, 1)
+	return channelEmitter{statec: state}, state
+}
+
+func (t channelEmitter) Emit(s State) {
+	select {
+	case t.statec <- s:
+	default:
+	}
+}
+
+// awaitStableState polls a State channel until a stable State is found to
+// minimize the effect of a race condition while asserting the state of
+// the scheduler.
+// The race is that we can't coordinate the timing between when the state of
+// the scheduler changes in response to tasks finishing and when the state
+// assertion is evaluated. In the tests, we only unblock the task or know
+// that the defer statement has fired in a job. Here, the scheduler state
+// could be updated before or after the assertion of the state is evaluated.
+func awaitStableState(t *testing.T, ch <-chan State) State {
+	const (
+		// stableN is the threshold of consistent observations considered
+		// stable. This value was found by tuning dependent tests with
+		// --runs_per_test=100.
+		stableN int = 3
+		// maxAttempts is the num of observations allowed to find a stable
+		// state. This value was found by tuning dependent tests with
+		// --runs_per_test=100.
+		maxAttempts int = 3
+	)
+	prevState := <-ch
+attempt:
+	for i := 0; i < maxAttempts; i++ {
+		for run := 1; run < stableN; run++ {
+			s := <-ch
+			if prevState != s {
+				prevState = s
+				continue attempt
+			}
+		}
+		return prevState
+	}
+	t.Fatalf("failed to find stable state after %d attempts", maxAttempts)
+	return State{}
 }

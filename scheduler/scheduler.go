@@ -1,10 +1,10 @@
 // Package scheduler implements a runtime scheduler for CFF2 with support for
 // interdependent jobs.
 //
-// To use the scheduler, build one with Begin, providing the desired maximum
+// To use the scheduler, build one with New, providing the desired maximum
 // number of goroutines. This defaults to the number of CPUs available.
 //
-//  sched := scheduler.Begin(n)
+//  sched := scheduler.New(n)
 //
 // With a scheduler available, enqueue jobs into it with the Enqueue method.
 //
@@ -38,11 +38,18 @@ import (
 	"container/list"
 	"context"
 	"runtime"
+	"time"
 )
 
-// minDefaultWorkers sets minimum number of workers we'll spawn by default if
-// not explicitly specified by the user.
-const minDefaultWorkers = 4
+const (
+	// _minDefaultWorkers sets minimum number of workers we'll spawn by default if
+	// not explicitly specified by the user.
+	_minDefaultWorkers = 4
+
+	// defaultStateFlushFrequency sets the frequency at which the scheduler emits
+	// metrics on its state.
+	_defaultStateFlushFrequency = 100 * time.Millisecond
+)
 
 // --------------------
 // IMPLEMENTATION NOTES
@@ -51,7 +58,7 @@ const minDefaultWorkers = 4
 // There are three kinds of goroutines at play here.
 //
 // Caller
-//   This is the goroutine that calls scheduler.Begin(n), Scheduler.Enqueue,
+//   This is the goroutine that calls scheduler.New(n), Scheduler.Enqueue,
 //   and Scheduler.Wait. This is the point in the code where fan-out begins
 //   (Scheduler.Enqueue) and ends (Scheduler.Wait).
 //
@@ -120,20 +127,32 @@ type Scheduler struct {
 // Config stores parameters the scheduler should run with and is the
 // entry point for running the scheduler.
 type Config struct {
+	// Concurrency is the number of concurrent workers to schedule tasks to.
 	Concurrency int
+	// Emitter provides a hook into the state of the scheduler.
+	Emitter Emitter
+	// StateFlushFrequency is how often the scheduler will emit metrics with the
+	// emitter. This defaults to 100 milliseconds.
+	StateFlushFrequency time.Duration
 }
 
-// Begin begins execution of a flow with the provided number of
+// New begins execution of a flow with the provided number of
 // goroutines. Concurrency defaults to max(GOMAXPROCS, 4) if zero.
 //
 // Enqueue jobs into the returned scheduler using the Enqueue method, and wait
 // for the result with Wait.
-func (c Config) Begin() *Scheduler {
+func (c Config) New() *Scheduler {
 	if c.Concurrency == 0 {
 		c.Concurrency = runtime.GOMAXPROCS(0)
-		if c.Concurrency < minDefaultWorkers {
-			c.Concurrency = minDefaultWorkers
+		// TODO(rhang): This block is currently untested, but should be
+		// tested when we emit concurrency information in scheduler metrics.
+		if c.Concurrency < _minDefaultWorkers {
+			c.Concurrency = _minDefaultWorkers
 		}
+	}
+
+	if c.StateFlushFrequency == 0 {
+		c.StateFlushFrequency = _defaultStateFlushFrequency
 	}
 
 	// Channel size 1: Support enqueuing one additional job when the
@@ -172,7 +191,7 @@ func (c Config) Begin() *Scheduler {
 
 	// We lie to the caller about the number of goroutines. Spawn one
 	// extra goroutine for the Scheduler Loop.
-	go sched.run()
+	go sched.run(c.Emitter, c.StateFlushFrequency)
 
 	return sched
 }
@@ -251,7 +270,7 @@ func (s *Scheduler) Enqueue(ctx context.Context, j Job) *ScheduledJob {
 //  - If a job finished running, signal jobs in `waiting` that were awaiting
 //    its completion. Those that have no more dependencies outstanding are
 //    moved to the `ready` list.
-func (s *Scheduler) run() {
+func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 	defer close(s.finishedc) // unblock Wait()
 	defer close(s.readyc)    // kill workers
 
@@ -272,6 +291,16 @@ func (s *Scheduler) run() {
 		for range s.enqueuec {
 		}
 	}()
+
+	var tickerC <-chan time.Time
+	if emitter != nil {
+		// Note: Phab marks this block as untested, but we believe this is
+		// tested (GM-876).
+		ticker := time.NewTicker(freq)
+		defer ticker.Stop()
+
+		tickerC = ticker.C
+	}
 
 	// Jobs waiting for other jobs to finish.
 	waiting := list.New() // []*ScheduledJob
@@ -363,6 +392,19 @@ func (s *Scheduler) run() {
 					ready.PushBack(consumer)
 				}
 			}
+
+		case <-tickerC:
+			// If emitter is nil, tickerC will be a nil channel that
+			// never resolves.
+			// Note: Phab marks this line as untested, but we believe this is
+			// tested (GM-876).
+			emitter.Emit(
+				State{
+					Pending: pending,
+					Ready:   ready.Len(),
+					Waiting: waiting.Len(),
+				},
+			)
 		}
 
 		// If all enqueued jobs have been finished and no new enqueues

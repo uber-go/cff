@@ -31,5 +31,5 @@ func BeginFlow(n int) *scheduler.Scheduler {
 	cfg := scheduler.Config{
 		Concurrency: n,
 	}
-	return cfg.Begin()
+	return cfg.New()
 }
