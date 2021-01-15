@@ -20,6 +20,11 @@ type State struct {
 	// restructuring dependencies.
 	Waiting int
 
-	// TODO(rhang): Add fields to track number of tasks currently executed
-	// and an estimate of idle workers.
+	// IdleWorkers reports the number of workers that don't have any jobs to run.
+	// If this is consistently high, decrease the concurrency for this flow.
+	IdleWorkers int
+
+	// Concurrency is the number of workers the scheduler can process tasks
+	// with.
+	Concurrency int
 }

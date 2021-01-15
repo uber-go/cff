@@ -122,6 +122,10 @@ type Scheduler struct {
 
 	// Workers post results of executed jobs to this channel.
 	donec <-chan jobResult
+
+	// Concurrency is the number of workers the scheduler can process tasks
+	// with.
+	concurrency int
 }
 
 // Config stores parameters the scheduler should run with and is the
@@ -144,8 +148,6 @@ type Config struct {
 func (c Config) New() *Scheduler {
 	if c.Concurrency == 0 {
 		c.Concurrency = runtime.GOMAXPROCS(0)
-		// TODO(rhang): This block is currently untested, but should be
-		// tested when we emit concurrency information in scheduler metrics.
 		if c.Concurrency < _minDefaultWorkers {
 			c.Concurrency = _minDefaultWorkers
 		}
@@ -183,10 +185,11 @@ func (c Config) New() *Scheduler {
 	}()
 
 	sched := &Scheduler{
-		enqueuec:  enqueuec,
-		readyc:    readyc,
-		donec:     donec,
-		finishedc: make(chan struct{}),
+		enqueuec:    enqueuec,
+		readyc:      readyc,
+		donec:       donec,
+		finishedc:   make(chan struct{}),
+		concurrency: c.Concurrency,
 	}
 
 	// We lie to the caller about the number of goroutines. Spawn one
@@ -310,6 +313,9 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 	// TODO(abg): Use a maxheap here based on the number of consumers.
 	// That way, we'll run jobs that unblock the most consumers first.
 
+	// Number of jobs that are executing.
+	ongoing := 0
+
 	// Total number of jobs in flight. This includes jobs that are
 	// executing or waiting to be executed.
 	pending := 0
@@ -340,6 +346,8 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 			// Remove from the ready queue only if we scheduled in
 			// this iteration.
 			ready.Remove(nextEl)
+
+			ongoing++
 
 		case job, ok := <-enqueuec:
 			// Wait was called and the enqueue channel was closed.
@@ -374,6 +382,7 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 			job.done = true
 
 			pending--
+			ongoing--
 
 			// Record the failure and return early if the job
 			// failed.
@@ -400,9 +409,11 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 			// tested (GM-876).
 			emitter.Emit(
 				State{
-					Pending: pending,
-					Ready:   ready.Len(),
-					Waiting: waiting.Len(),
+					Pending:     pending,
+					Ready:       ready.Len(),
+					Waiting:     waiting.Len(),
+					IdleWorkers: idleWorkers(s.concurrency, ongoing),
+					Concurrency: s.concurrency,
 				},
 			)
 		}
@@ -435,4 +446,16 @@ func (s *Scheduler) Wait(ctx context.Context) error {
 		}
 		return err
 	}
+}
+
+// idleWorkers tracks the difference of scheduler workers and ongoing jobs.
+// Fewer jobs than workers mean there are idle workers.
+func idleWorkers(concurrency, ongoing int) int {
+	idle := concurrency - ongoing
+	if idle < 0 {
+		// It's impossible to have more ongoing jobs than available workers,
+		// but we should guard against it.
+		idle = 0
+	}
+	return idle
 }

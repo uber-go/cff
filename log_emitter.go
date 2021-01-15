@@ -207,6 +207,8 @@ func (e *logSchedulerEmitter) EmitScheduler(s SchedulerState) {
 		zap.Int("pending", s.Pending),
 		zap.Int("ready", s.Ready),
 		zap.Int("waiting", s.Waiting),
+		zap.Int("idle_workers", s.IdleWorkers),
+		zap.Int("concurrency", s.Concurrency),
 	)
 }
 

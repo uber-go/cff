@@ -191,3 +191,14 @@ func TestTallyEmitter_EmitTask(t *testing.T) {
 		assert.NotZero(t, len(scope.Snapshot().Timers()))
 	})
 }
+
+func TestTallyEmitter_EmitScheduler(t *testing.T) {
+	scope := tally.NewTestScope("", nil)
+	e := TallyEmitter(scope)
+	info := &SchedulerInfo{FlowInfo: &FlowInfo{Name: "myflow"}}
+	se := e.SchedulerInit(info)
+
+	require.Zero(t, len(scope.Snapshot().Gauges()))
+	se.EmitScheduler(SchedulerState{})
+	assert.NotZero(t, len(scope.Snapshot().Gauges()))
+}

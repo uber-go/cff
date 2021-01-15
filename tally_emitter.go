@@ -177,4 +177,6 @@ func (e *tallySchedulerEmitter) EmitScheduler(s SchedulerState) {
 	e.scope.Gauge("scheduler.pending").Update(float64(s.Pending))
 	e.scope.Gauge("scheduler.ready").Update(float64(s.Ready))
 	e.scope.Gauge("scheduler.waiting").Update(float64(s.Waiting))
+	e.scope.Gauge("scheduler.idle_workers").Update(float64(s.IdleWorkers))
+	e.scope.Gauge("scheduler.concurrency").Update(float64(s.Concurrency))
 }

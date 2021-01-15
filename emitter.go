@@ -36,8 +36,6 @@ type SchedulerEmitter interface {
 // SchedulerInfo provides information about the context the scheduler
 // is running in.
 type SchedulerInfo struct {
-	// TODO(rhang): Field for concurrency will be exposed in the next
-	// diff in the stack.
 	FlowInfo *FlowInfo
 }
 

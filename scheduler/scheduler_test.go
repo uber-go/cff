@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -300,6 +301,9 @@ func (e emitterFn) Emit(s State) {
 func TestScheduler_SchedulerEmpty(t *testing.T) {
 	t.Parallel()
 
+	currGoMaxProcs := runtime.GOMAXPROCS(1)
+	defer runtime.GOMAXPROCS(currGoMaxProcs)
+
 	var called bool
 	done := make(chan struct{})
 	emitter := emitterFn(func(s State) {
@@ -307,12 +311,14 @@ func TestScheduler_SchedulerEmpty(t *testing.T) {
 			return
 		}
 		called = true
-		assert.Equal(t, s, State{})
+		assert.Equal(t, State{
+			Concurrency: _minDefaultWorkers,
+			IdleWorkers: _minDefaultWorkers,
+		}, s)
 		close(done)
 	})
 
 	sched := Config{
-		Concurrency:         1,
 		Emitter:             emitter,
 		StateFlushFrequency: time.Millisecond,
 	}.New()
@@ -343,12 +349,21 @@ func TestScheduler_EmitSingleJob(t *testing.T) {
 	})
 
 	s := awaitStableState(t, statec)
-	assert.Equal(t, s.Pending, 1)
+	assert.Equal(t, 1, s.Pending)
+
+	blocker.AwaitRunning()
+	assert.Equal(t, State{
+		Pending:     1,
+		Ready:       0,
+		IdleWorkers: 0,
+		Concurrency: 1,
+	}, awaitStableState(t, statec))
 
 	blocker.UnblockAndWait()
 
 	s = awaitStableState(t, statec)
-	assert.Equal(t, s.Pending, 0)
+	assert.Equal(t, 0, s.Pending)
+	assert.Equal(t, 1, s.IdleWorkers)
 
 	if err := sched.Wait(context.Background()); err != nil {
 		t.Errorf("unexpected failure from Scheduler.Wait: %v", err)
@@ -363,7 +378,7 @@ func TestScheduler_EmitTwoIndependentJobs(t *testing.T) {
 	emitter, statec := newChannelEmitter()
 
 	sched := Config{
-		Concurrency:         1,
+		Concurrency:         2,
 		Emitter:             emitter,
 		StateFlushFrequency: time.Millisecond,
 	}.New()
@@ -375,23 +390,39 @@ func TestScheduler_EmitTwoIndependentJobs(t *testing.T) {
 
 	s := awaitStableState(t, statec)
 	assert.Equal(t, 1, s.Pending)
+
+	// A must be running before we schedule B to ensure that B does not
+	// get scheduled first, breaking our assertions below.
 	blockerA.AwaitRunning()
 
-	// A must be running before we schedule B.
+	assert.Equal(t, State{
+		Pending:     1,
+		Ready:       0,
+		IdleWorkers: 1,
+		Waiting:     0,
+		Concurrency: 2,
+	}, awaitStableState(t, statec))
+
 	blockerB := newBlocker()
 	sched.Enqueue(context.Background(), Job{
 		Run: blockerB.Run,
 	})
 
-	s = awaitStableState(t, statec)
-	assert.Equal(t, 2, s.Pending)
-	assert.Equal(t, 1, s.Ready)
+	blockerB.AwaitRunning()
+	assert.Equal(t, State{
+		Pending:     2,
+		Ready:       0,
+		Waiting:     0,
+		IdleWorkers: 0,
+		Concurrency: 2,
+	}, awaitStableState(t, statec))
 
 	blockerA.UnblockAndWait()
 	blockerB.UnblockAndWait()
 
 	s = awaitStableState(t, statec)
 	assert.Equal(t, 0, s.Pending)
+	assert.Equal(t, 2, s.IdleWorkers)
 
 	if err := sched.Wait(context.Background()); err != nil {
 		t.Errorf("unexpected failure from Scheduler.Wait: %v", err)
@@ -430,13 +461,21 @@ func TestScheduler_EmitTwoDependentJobs(t *testing.T) {
 	// When all dependencies for a job have run, that job could be
 	// ready or running.
 	blockerA.UnblockAndWait()
-	s = awaitStableState(t, statec)
-	assert.Equal(t, 0, s.Waiting)
-	assert.Equal(t, 1, s.Pending)
+
+	blockerA.AwaitRunning()
+	assert.Equal(t, State{
+		Pending:     1,
+		Ready:       0,
+		Waiting:     0,
+		IdleWorkers: 1,
+		Concurrency: 2,
+	}, awaitStableState(t, statec))
 
 	blockerB.UnblockAndWait()
+
 	s = awaitStableState(t, statec)
 	assert.Equal(t, 0, s.Pending)
+	assert.Equal(t, 2, s.IdleWorkers)
 
 	if err := sched.Wait(context.Background()); err != nil {
 		t.Errorf("unexpected failure from Scheduler.Wait: %v", err)
@@ -510,7 +549,7 @@ func awaitStableState(t *testing.T, ch <-chan State) State {
 		// stableN is the threshold of consistent observations considered
 		// stable. This value was found by tuning dependent tests with
 		// --runs_per_test=100.
-		stableN int = 3
+		stableN int = 5
 		// maxAttempts is the num of observations allowed to find a stable
 		// state. This value was found by tuning dependent tests with
 		// --runs_per_test=100.
@@ -530,4 +569,42 @@ attempt:
 	}
 	t.Fatalf("failed to find stable state after %d attempts", maxAttempts)
 	return State{}
+}
+
+func TestIdleWorkers(t *testing.T) {
+	tests := []struct {
+		desc                       string
+		concurrency, ongoing, want int
+	}{
+		{
+			desc:        "all idle",
+			concurrency: 3,
+			ongoing:     0,
+			want:        3,
+		},
+		{
+			desc:        "some idle",
+			concurrency: 3,
+			ongoing:     1,
+			want:        2,
+		},
+		{
+			desc:        "none idle",
+			concurrency: 3,
+			ongoing:     3,
+			want:        0,
+		},
+		{
+			desc:        "more jobs than concurrency",
+			concurrency: 3,
+			ongoing:     5,
+			want:        0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			assert.Equal(t, tt.want, idleWorkers(tt.concurrency, tt.ongoing))
+		})
+	}
 }
