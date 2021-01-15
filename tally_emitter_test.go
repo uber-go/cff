@@ -1,8 +1,11 @@
 package cff
 
 import (
+	"context"
+	"errors"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -151,4 +154,40 @@ func TestTallyEmitter_CacheFlowReadRace(t *testing.T) {
 		require.True(t, got == want)
 		// require because we don't want to log a 1000 messages
 	}
+}
+
+func TestTallyEmitter_EmitFlow(t *testing.T) {
+	scope := tally.NewTestScope("", nil)
+	e := TallyEmitter(scope)
+	fe := e.FlowInit(&FlowInfo{})
+
+	t.Run("emit counters", func(t *testing.T) {
+		require.Zero(t, len(scope.Snapshot().Counters()))
+		fe.FlowError(context.Background(), errors.New("great sadness"))
+		assert.NotZero(t, len(scope.Snapshot().Counters()))
+	})
+
+	t.Run("emit timers", func(t *testing.T) {
+		require.Zero(t, len(scope.Snapshot().Timers()))
+		fe.FlowDone(context.Background(), time.Nanosecond)
+		assert.NotZero(t, len(scope.Snapshot().Timers()))
+	})
+}
+
+func TestTallyEmitter_EmitTask(t *testing.T) {
+	scope := tally.NewTestScope("", nil)
+	e := TallyEmitter(scope)
+	te := e.TaskInit(&TaskInfo{}, &FlowInfo{})
+
+	t.Run("emit counters", func(t *testing.T) {
+		require.Zero(t, len(scope.Snapshot().Counters()))
+		te.TaskError(context.Background(), errors.New("great sadness"))
+		assert.NotZero(t, len(scope.Snapshot().Counters()))
+	})
+
+	t.Run("emit timers", func(t *testing.T) {
+		require.Zero(t, len(scope.Snapshot().Timers()))
+		te.TaskDone(context.Background(), time.Nanosecond)
+		assert.NotZero(t, len(scope.Snapshot().Timers()))
+	})
 }
