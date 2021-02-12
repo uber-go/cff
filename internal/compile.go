@@ -180,16 +180,6 @@ type flow struct {
 	// For all i < j, TopoTasks[i] cannot depend on TopoTasks[j].
 	TopoTasks []*task
 
-	// Partition of all tasks defining a schedule in which the tasks must be
-	// executed. All tasks in one of the subsets can be executed in parallel,
-	// and they must all have finished executing before the next subset of
-	// tasks is called.
-	//
-	// So, for all i, j where i < j, all tasks in Schedule[i] may be executed
-	// in parallel, and they must all finish before tasks in Schedule[j] are
-	// executed.
-	Schedule [][]*task
-
 	Instrument *instrument
 
 	providers *typeutil.Map // map[types.Type]int (index in Tasks)
@@ -458,24 +448,6 @@ func (c *compiler) scheduleFlowAndToposort(f *flow) {
 			t.DependsOn = append(t.DependsOn, f.Tasks[depIdx])
 		}
 	}
-
-	var roots []int
-	for _, o := range f.Outputs {
-		roots = append(roots, f.providers.At(o.Type).(int))
-	}
-	for _, o := range f.invokeTypes {
-		roots = append(roots, f.providers.At(o.Type).(int))
-	}
-
-	var schedule [][]*task
-	for _, idxSet := range scheduleGraph(roots, g) {
-		var tasks []*task
-		for _, idx := range idxSet {
-			tasks = append(tasks, f.Tasks[idx])
-		}
-		schedule = append(schedule, tasks)
-	}
-	f.Schedule = schedule
 
 	var topo []*task
 	for _, idx := range toposort(g) {
