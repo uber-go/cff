@@ -186,6 +186,10 @@ func FallbackWith(results ...interface{}) TaskOption {
 // When specified, the corresponding Task will be executed only if this
 // function returns true.
 //
+// If the function evaluates to false, the annotated function is skipped and
+// tasks that depend on the type provided by that function get the zero value
+// for that type.
+//
 // This is a code generation directive. Files using this must have the "cff"
 // build tag.
 func Predicate(fn interface{}) TaskOption {
