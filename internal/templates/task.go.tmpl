@@ -50,16 +50,16 @@
 	}()
 
 	{{ if .Predicate }}
-		if !({{ template "callTask" .Predicate }}) {
+		if !({{ template "callPred" .Predicate }}) {
 			return nil
 		}
 	{{ end }}
 
 	defer {{ $t }}.ran.Store(true)
 
-	{{ template "taskResultList" . }}{{ if or .HasError (len .Outputs) }} = {{ end }}{{ template "callTask" . }}
+	{{ template "taskResultList" . }}{{ if or .Function.HasError (len .Outputs) }} = {{ end }}{{ template "callTask" . }}
 
-	{{ if .HasError -}}
+	{{ if .Function.HasError -}}
 		if err != nil {
 			{{- if .FallbackWith -}}
 				taskEmitter.TaskErrorRecovered(ctx, err)
@@ -82,10 +82,10 @@
 
 {{ $t }}.job = sched.Enqueue(ctx, {{ $cff }}.Job{
     Run: task{{ .Serial }}.run,
-    {{ if .DependsOn -}}
+    {{ if .Function.DependsOn -}}
         Dependencies: []*{{ $cff }}.ScheduledJob{
-            {{ range .DependsOn -}}
-                task{{.Serial}}.job,
+            {{ range .Function.DependsOn -}}
+                task{{.Task.Serial}}.job,
             {{ end -}}
         },
     {{- end }}
@@ -94,10 +94,14 @@
 {{- define "taskResultList" -}}
 	{{- range $i, $t := .Outputs -}}
 		{{ if gt $i 0 }},{{ end }}v{{ typeHash $t }}
-	{{- end }}{{ if .HasError }}{{ if len .Outputs }}, {{ end }}err{{ end }}
+	{{- end }}{{ if .Function.HasError }}{{ if len .Outputs }}, {{ end }}err{{ end }}
 {{- end -}}
 
 {{- define "callTask" -}}
+	{{- expr .Node }}({{- if .Function.WantCtx }}ctx,{{ end }} {{- range .Inputs }}v{{ typeHash . }}, {{- end }})
+{{- end -}}
+
+{{- define "callPred" -}}
 	{{- expr .Node }}({{- if .WantCtx }}ctx,{{ end }} {{- range .Inputs }}v{{ typeHash . }}, {{- end }})
 {{- end -}}
 

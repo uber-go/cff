@@ -17,12 +17,12 @@ import (
 	"golang.org/x/tools/go/types/typeutil"
 )
 
-// taskIndex marks cff.Results outputs.
-type taskIndex int
+// funcIndex marks cff.Results outputs.
+type funcIndex int
 
 const (
 	cffImportPath   = "go.uber.org/cff"
-	taskIndexRESULT = taskIndex(-1)
+	funcIndexResult = funcIndex(-1)
 )
 
 type compiler struct {
@@ -175,15 +175,16 @@ type flow struct {
 	Outputs []*output
 	Tasks   []*task
 
-	// Topoloically ordered list of tasks.
-	//
-	// For all i < j, TopoTasks[i] cannot depend on TopoTasks[j].
-	TopoTasks []*task
+	Funcs []*function
+
+	// Topologically ordered list of functions.
+	// For all i < j, TopoFuncs[i] cannot depend on TopoFuncs[j].
+	TopoFuncs []*function
 
 	Instrument *instrument
 
 	providers *typeutil.Map // map[types.Type]int (index in Tasks)
-	receivers *typeutil.Map // map[types.Type][]taskIndex tracks types needed to detect unused inputs
+	receivers *typeutil.Map // map[types.Type][]funcIndex tracks types needed to detect unused inputs
 
 	invokeTypeCnt int       // input to make unique invokeType sentinels
 	invokeTypes   []*output // tracks tasks of with either no results or a single error
@@ -208,19 +209,18 @@ func (f *flow) addNoOutput() *noOutput {
 
 // mustSetNoOutputProvider sets the provider for the no-output, panicking if the no-output sentinel type was already
 // present.
-func (f *flow) mustSetNoOutputProvider(key *task, value int) {
-	prev := f.providers.Set(key.invokeType, value)
+func (f *flow) mustSetNoOutputProvider(key *function, value int) {
+	prev := f.providers.Set(key.Task.invokeType, value)
 	if prev != nil {
 		panic(fmt.Sprintf("cff assertion error: invokeType sentinel types should be unique, found %T for %dth task (defined at %v), expected to be nil", prev, value, key.Node))
 	}
 
-	if typ, ok := f.receivers.At(key.invokeType).([]taskIndex); ok {
-		typ := append(typ, taskIndex(value))
-		f.receivers.Set(key.invokeType, typ)
+	if typ, ok := f.receivers.At(key.Task.invokeType).([]funcIndex); ok {
+		typ := append(typ, funcIndex(value))
+		f.receivers.Set(key.Task.invokeType, typ)
 	} else {
-		f.receivers.Set(key.invokeType, []taskIndex{taskIndex(value)})
+		f.receivers.Set(key.Task.invokeType, []funcIndex{funcIndex(value)})
 	}
-
 }
 
 func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
@@ -264,7 +264,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 					// receivers is used to look up Task for compilation checks. Since we have
 					// Results, we dont need to find an associated task.
 					// We don't care about other values, cff.Results should be the only receiver.
-					flow.receivers.Set(output.Type, []taskIndex{taskIndexRESULT})
+					flow.receivers.Set(output.Type, []funcIndex{funcIndexResult})
 				}
 			}
 		case "InstrumentFlow":
@@ -276,6 +276,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 		case "Task":
 			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
 				flow.Tasks = append(flow.Tasks, task)
+				flow.Funcs = append(flow.Funcs, task.Function)
 			}
 		}
 	}
@@ -283,34 +284,32 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 	// possible errors prior to scheduling attempt and return them at once.
 	c.validateInstrument(&flow)
 
-	for i, t := range flow.Tasks {
-		for _, in := range t.Dependencies {
-			if typ, ok := flow.receivers.At(in).([]taskIndex); ok {
-				typ := append(typ, taskIndex(i))
+	for i, fn := range flow.Funcs {
+		for _, in := range fn.Dependencies {
+			if typ, ok := flow.receivers.At(in).([]funcIndex); ok {
+				typ := append(typ, funcIndex(i))
 				flow.receivers.Set(in, typ)
 			} else {
-				flow.receivers.Set(in, []taskIndex{taskIndex(i)})
+				flow.receivers.Set(in, []funcIndex{funcIndex(i)})
 			}
 		}
-
-		for _, o := range t.Outputs {
+		for _, o := range fn.outputs() {
 			prev := flow.providers.Set(o, i)
 			if prev != nil {
 				pIdx := prev.(int)
-				p := flow.Tasks[pIdx]
+				p := flow.Funcs[pIdx]
 				c.errf("type %v already provided at %v",
-					c.nodePosition(t), o, c.nodePosition(p))
+					c.nodePosition(fn), o, c.nodePosition(p))
 				continue
 			}
 		}
-
-		if t.invokeType != nil {
-			flow.mustSetNoOutputProvider(t, i)
+		if fn.Task != nil && fn.Task.invokeType != nil {
+			flow.mustSetNoOutputProvider(fn, i)
 		}
 	}
 
 	c.validateNoUnusedOutputTypes(&flow)
-	c.validateTasks(&flow)
+	c.validateFuncs(&flow)
 	// At this point we may have already found some errors in c.errors.
 	if err := validateFlowCycles(&flow, c.fset); err != nil {
 		c.errors = append(c.errors, err)
@@ -321,6 +320,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 	}
 
 	c.scheduleFlowAndToposort(&flow)
+
 	return &flow
 }
 
@@ -334,8 +334,8 @@ type validateVisitedType struct {
 // validateNoUnusedOutputTypes ensures that every output type is consumed by either a cff.Results or another task
 // or a predicate of another task.
 func (c *compiler) validateNoUnusedOutputTypes(f *flow) {
-	for _, t := range f.Tasks {
-		for _, o := range t.Outputs {
+	for _, t := range f.Funcs {
+		for _, o := range t.outputs() {
 			if f.receivers.At(o) == nil {
 				c.errf("unused output type %v", c.nodePosition(t.Node), o)
 			}
@@ -343,10 +343,10 @@ func (c *compiler) validateNoUnusedOutputTypes(f *flow) {
 	}
 }
 
-// validateTasks walks the graph from the bottom of the graph (the outputs) to validate that
+// validateFuncs walks the graph from the bottom of the graph (the outputs) to validate that
 // all outputs are provided by some function. we also walk up the graph in case cff.Results
 // is not the root, and check if there are any tasks with output past cff.Results.
-func (c *compiler) validateTasks(f *flow) {
+func (c *compiler) validateFuncs(f *flow) {
 	var (
 		queue      = list.New() // []validateVisitedType
 		visited    typeutil.Map // map[types.Type]struct{}
@@ -378,10 +378,10 @@ func (c *compiler) validateTasks(f *flow) {
 		}
 		visited.Set(t.Type, struct{}{})
 
-		if taskIdx, ok := f.providers.At(t.Type).(int); ok {
-			task := f.Tasks[taskIdx]
-			for _, i := range task.Dependencies {
-				queue.PushBack(validateVisitedType{Type: i, Node: task.Node})
+		if funcIdx, ok := f.providers.At(t.Type).(int); ok {
+			fn := f.Funcs[funcIdx]
+			for _, i := range fn.Dependencies {
+				queue.PushBack(validateVisitedType{Type: i, Node: fn.Node})
 			}
 
 			continue
@@ -429,10 +429,10 @@ func (c *compiler) validateInstrument(f *flow) {
 
 func (c *compiler) scheduleFlowAndToposort(f *flow) {
 	g := graph{
-		Count: len(f.Tasks),
-		Dependencies: func(taskIdx int) []int {
+		Count: len(f.Funcs),
+		Dependencies: func(funcIdx int) []int {
 			var deps []int
-			for _, typ := range f.Tasks[taskIdx].Dependencies {
+			for _, typ := range f.Funcs[funcIdx].Dependencies {
 				if i, ok := f.providers.At(typ).(int); ok {
 					// For non-ok case, if we do not find a dependency amongst providers, then it
 					// was passed in from Params annotation.
@@ -443,17 +443,17 @@ func (c *compiler) scheduleFlowAndToposort(f *flow) {
 		},
 	}
 
-	for idx, t := range f.Tasks {
+	for idx, fn := range f.Funcs {
 		for _, depIdx := range g.Dependencies(idx) {
-			t.DependsOn = append(t.DependsOn, f.Tasks[depIdx])
+			fn.DependsOn = append(fn.DependsOn, f.Funcs[depIdx])
 		}
 	}
 
-	var topo []*task
+	var topo []*function
 	for _, idx := range toposort(g) {
-		topo = append(topo, f.Tasks[idx])
+		topo = append(topo, f.Funcs[idx])
 	}
-	f.TopoTasks = topo
+	f.TopoFuncs = topo
 }
 
 // PosInfo contains positional information about a Flow or Task. This may be
@@ -466,27 +466,17 @@ type PosInfo struct {
 type task struct {
 	ast.Node
 
-	Sig *types.Signature
-
-	// Whether the first argument to this task is a context.Context.
-	WantCtx bool
-
-	// Whether the last result is an error.
-	HasError bool
+	// Function is the object of a task's execution, a task must have
+	// a function.
+	Function *function
 
 	// Serial is a unique serially incrementing number for each task.
 	Serial int
 
-	// Dependencies are the types required for the task, including inputs and
-	// predicate inputs.
-	Dependencies []types.Type
-
-	// Tasks that this task depends on.
-	DependsOn []*task
-
 	Inputs  []types.Type // non ctx params
 	Outputs []types.Type // non error results
 
+	// A task has at most one predicate.
 	Predicate  *predicate  // non-nil if Predicate was provided
 	Instrument *instrument // non-nil if instrumentation was enabled
 
@@ -503,60 +493,31 @@ type task struct {
 type noOutput = types.Struct
 
 func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task {
-	typ := c.info.TypeOf(expr)
-
-	sig, ok := typ.(*types.Signature)
-
-	if !ok {
-		c.errf("expected function, got %v", c.nodePosition(expr), typ)
+	parsedFn := c.compileFunction(flow, expr)
+	if parsedFn == nil {
 		return nil
 	}
 
-	if sig.Variadic() {
-		c.errf("variadic functions are not yet supported", c.nodePosition(expr))
-		return nil
+	taskFunc := &function{
+		Node:         parsedFn.Node,
+		Sig:          parsedFn.Sig,
+		WantCtx:      parsedFn.WantCtx,
+		HasError:     parsedFn.HasError,
+		Dependencies: parsedFn.Inputs,
+		PosInfo:      parsedFn.PosInfo,
 	}
 
 	t := task{
-		Node:    expr,
-		PosInfo: c.getPosInfo(expr),
-		Serial:  c.taskSerial,
-		Sig:     sig,
+		Node:     expr,
+		Function: taskFunc,
+		Serial:   c.taskSerial,
+		Inputs:   parsedFn.Inputs,
+		Outputs:  parsedFn.Outputs,
+		PosInfo:  c.getPosInfo(expr),
 	}
+
+	taskFunc.Task = &t
 	c.taskSerial++
-
-	params := sig.Params()
-	for i := 0; i < params.Len(); i++ {
-		param := params.At(i)
-		ptype := param.Type()
-		if !isContext(ptype) {
-			t.Inputs = append(t.Inputs, ptype)
-			continue
-		}
-
-		if i != 0 {
-			c.errf("only the first argument may be context.Context", c.position(param.Pos()))
-			return nil
-		}
-		t.WantCtx = true
-	}
-	t.Dependencies = append(t.Dependencies, t.Inputs...)
-
-	results := sig.Results()
-	for i := 0; i < results.Len(); i++ {
-		result := results.At(i)
-		rtype := result.Type()
-		if !isError(rtype) {
-			t.Outputs = append(t.Outputs, rtype)
-			continue
-		}
-		// Error case.
-		if i != results.Len()-1 {
-			c.errf("only the last result may be an error", c.position(result.Pos()))
-			return nil
-		}
-		t.HasError = true
-	}
 
 	c.interpretTaskOptions(flow, &t, opts)
 
@@ -580,6 +541,115 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 	}
 
 	return &t
+}
+
+// function is the smallest unit of execution. Higher level functionality like
+// cff.Tasks, cff.Predicates, and cff.Invokes are mapped to one or more
+// functions.
+type function struct {
+	ast.Node
+
+	Sig *types.Signature
+
+	// Whether the first argument to this task is a context.Context.
+	WantCtx bool
+
+	// Whether the last result is an error.
+	HasError bool
+
+	// Dependencies are types.Type dependencies of this function.
+	Dependencies []types.Type
+
+	// DependsOn are function dependencies of this function.
+	DependsOn []*function
+
+	Task      *task      // non-nil if function executes a task
+	Predicate *predicate // non-nil if function executes a predicate
+
+	PosInfo *PosInfo // Used to pass information to uniquely identify a function.
+}
+
+// Inputs returns the types consumed by this function.
+func (f *function) inputs() []types.Type {
+	return f.Task.Inputs
+}
+
+// Outputs returns the types produced by this function.
+func (f *function) outputs() []types.Type {
+	return f.Task.Outputs
+}
+
+// parsedFn is a parsed function expression.
+type parsedFn struct {
+	ast.Node
+
+	Sig *types.Signature
+
+	// Whether the first argument to this task is a context.Context.
+	WantCtx bool
+
+	// Whether the last result is an error.
+	HasError bool
+
+	Inputs  []types.Type // non ctx params
+	Outputs []types.Type // non error results
+
+	PosInfo *PosInfo // Used to pass information to uniquely identify a function.
+}
+
+func (c *compiler) compileFunction(flow *flow, expr ast.Expr) *parsedFn {
+	typ := c.info.TypeOf(expr)
+	sig, ok := typ.(*types.Signature)
+
+	if !ok {
+		c.errf("expected function, got %v", c.nodePosition(expr), typ)
+		return nil
+	}
+
+	if sig.Variadic() {
+		c.errf("variadic functions are not yet supported", c.nodePosition(expr))
+		return nil
+	}
+
+	f := parsedFn{
+		Node:    expr,
+		Sig:     sig,
+		PosInfo: c.getPosInfo(expr),
+	}
+
+	params := sig.Params()
+	for i := 0; i < params.Len(); i++ {
+		param := params.At(i)
+		ptype := param.Type()
+		if !isContext(ptype) {
+			f.Inputs = append(f.Inputs, ptype)
+			continue
+		}
+
+		if i != 0 {
+			c.errf("only the first argument may be context.Context", c.position(param.Pos()))
+			return nil
+		}
+		f.WantCtx = true
+	}
+
+	results := sig.Results()
+	for i := 0; i < results.Len(); i++ {
+		result := results.At(i)
+		rtype := result.Type()
+		if !isError(rtype) {
+			f.Outputs = append(f.Outputs, rtype)
+			continue
+		}
+		// Error case.
+		if i != results.Len()-1 {
+			c.errf("only the last result may be an error", c.position(result.Pos()))
+			return nil
+		}
+		f.HasError = true
+	}
+
+	return &f
 }
 
 func (c *compiler) getPosInfo(n ast.Node) *PosInfo {
@@ -630,7 +700,7 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 			}
 			// Verify that Task returns an error for FallbackWith to be used.
 			var hasError = false
-			results := t.Sig.Results()
+			results := t.Function.Sig.Results()
 			for i := 0; i < results.Len(); i++ {
 				result := results.At(i)
 				rtype := result.Type()
@@ -655,7 +725,7 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 			t.FallbackWith = true
 			t.FallbackWithResults = call.Args
 		case "Predicate":
-			t.Predicate = c.compilePredicate(t, call)
+			t.Predicate = c.compilePredicate(flow, t, call)
 		case "Instrument":
 			t.Instrument = c.compileInstrument(call)
 		case "Invoke":
@@ -671,7 +741,7 @@ type predicate struct {
 	Inputs []types.Type
 }
 
-func (c *compiler) compilePredicate(t *task, call *ast.CallExpr) *predicate {
+func (c *compiler) compilePredicate(f *flow, t *task, call *ast.CallExpr) *predicate {
 	fn := call.Args[0]
 	fnType := c.info.TypeOf(fn)
 
@@ -696,28 +766,17 @@ func (c *compiler) compilePredicate(t *task, call *ast.CallExpr) *predicate {
 		c.errf("the function must return a single boolean result", c.nodePosition(fn))
 		return nil
 	}
-	var wantCtx = false
-	params := sig.Params()
-	var inputs []types.Type
-	for i := 0; i < params.Len(); i++ {
-		param := params.At(i)
-		ptype := param.Type()
-		if !isContext(ptype) {
-			inputs = append(inputs, ptype)
-			continue
-		}
-		if i != 0 {
-			c.errf("only the first argument may be context.Context", c.position(param.Pos()))
-			return nil
-		}
-		wantCtx = true
+
+	predFunc := c.compileFunction(f, fn)
+	if predFunc == nil {
+		return nil
 	}
 
-	t.Dependencies = append(t.Dependencies, inputs...)
+	t.Function.Dependencies = append(t.Function.Dependencies, predFunc.Inputs...)
 	return &predicate{
 		Node:    fn,
-		Inputs:  inputs,
-		WantCtx: wantCtx,
+		Inputs:  predFunc.Inputs,
+		WantCtx: predFunc.WantCtx,
 	}
 }
 

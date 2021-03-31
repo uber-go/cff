@@ -61,9 +61,9 @@ func(
 		}
 	}()
 
-	{{ range $flow.TopoTasks }}
-		{{ template "task.go.tmpl" . }}
-		tasks = append(tasks, task{{ .Serial }})
+	{{ range $flow.TopoFuncs }}
+		{{ template "task.go.tmpl" .Task }}
+		tasks = append(tasks, task{{ .Task.Serial }})
 	{{ end }}
 
     if err := sched.Wait(ctx); err != nil {

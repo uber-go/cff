@@ -15,28 +15,29 @@ func validateFlowCycles(f *flow, fset *token.FileSet) error {
 	return findFlowCycles(f, &visited, fset)
 }
 
-// taskCyclePathEntry is an entry in the path as we walked the graph to detect cycles
-type taskCyclePathEntry struct {
-	// Tasks is the list of tasks in the order we visited them
-	Task *task
-	// Types is the type for which we visited the corresponding task in the Tasks list.
+// funcCyclePathEntry is an entry in the path as we walked the graph to detect cycles
+type funcCyclePathEntry struct {
+	// Funcs is the list of funcs in the order we visited them
+	Func *function
+	// Types is the type for which we visited the corresponding func in the
+	// Funcs list.
 	Type types.Type
 }
 
-func prettyPrintTaskCycle(path []taskCyclePathEntry) string {
-	str := fmt.Sprintf("need to run [%v] to provide %v (output)", path[0].Task.Sig, path[0].Type)
+func prettyPrintFuncCycle(path []funcCyclePathEntry) string {
+	str := fmt.Sprintf("need to run [%v] to provide %v (output)", path[0].Func.Sig, path[0].Type)
 	for _, item := range path[1:] {
-		str += fmt.Sprintf("\n\tneed to run [%v] to provide %v", item.Task.Sig, item.Type)
+		str += fmt.Sprintf("\n\tneed to run [%v] to provide %v", item.Func.Sig, item.Type)
 	}
 	return str
 }
 
 func findFlowCycles(f *flow, visited *typeutil.Map, fset *token.FileSet) error {
-	// If a flow has no Results eg a heatpipe flow, we need to do a DFS across all tasks. We are not
+	// If a flow has no Results eg a heatpipe flow, we need to do a DFS across all funcs. We are not
 	// concerned with performance as this only happens once during compilation phase.
-	for _, t := range f.Tasks {
+	for _, t := range f.Funcs {
 		for _, dep := range t.Dependencies {
-			if err := findFlowCyclesForType(f, nil /* path */, dep, visited, fset); err != nil {
+			if err := findFlowCyclesForFunc(f, nil /* path */, dep, visited, fset); err != nil {
 				return err
 			}
 		}
@@ -44,27 +45,27 @@ func findFlowCycles(f *flow, visited *typeutil.Map, fset *token.FileSet) error {
 	return nil
 }
 
-func findFlowCyclesForType(f *flow, path []taskCyclePathEntry, t types.Type, visited *typeutil.Map,
+func findFlowCyclesForFunc(f *flow, path []funcCyclePathEntry, t types.Type, visited *typeutil.Map,
 	fset *token.FileSet) error {
-	taskIdx, ok := f.providers.At(t).(int)
+	funcIdx, ok := f.providers.At(t).(int)
 	if !ok {
 		// This can happen if either cff.Params provides the type, but it can't introduce a cycle,
-		// or we failed task validation and a provider is missing, so then we can't detect a cycle
-		// until provider for this task exists again.
+		// or we failed func validation and a provider is missing, so then we can't detect a cycle
+		// until provider for this func exists again.
 		return nil
 	}
 
-	task := f.Tasks[taskIdx]
+	fn := f.Funcs[funcIdx]
 
-	entry := taskCyclePathEntry{Task: task, Type: t}
+	entry := funcCyclePathEntry{Func: fn, Type: t}
 
 	if len(path) > 0 {
 		for _, p := range path {
 			if types.Identical(p.Type, t) {
 				return fmt.Errorf(
 					"%v: cycle detected: %v",
-					fset.Position(task.Node.Pos()),
-					prettyPrintTaskCycle(append(path, entry)))
+					fset.Position(fn.Node.Pos()),
+					prettyPrintFuncCycle(append(path, entry)))
 			}
 		}
 	}
@@ -74,8 +75,8 @@ func findFlowCyclesForType(f *flow, path []taskCyclePathEntry, t types.Type, vis
 		return nil
 	}
 
-	for _, dep := range task.Dependencies {
-		if err := findFlowCyclesForType(f, append(path, entry), dep, visited, fset); err != nil {
+	for _, dep := range fn.Dependencies {
+		if err := findFlowCyclesForFunc(f, append(path, entry), dep, visited, fset); err != nil {
 			return err
 		}
 	}
