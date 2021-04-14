@@ -1,0 +1,28 @@
+{{- $context := import "context" -}}
+{{- $cff := import "go.uber.org/cff" -}}
+{{- $p := printf "pred%d" .Serial -}}
+
+// {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
+var p{{ predHash . }} bool
+{{ $p }} := new(predicate)
+{{ $p }}.run = func(ctx {{ $context }}.Context) (err error) {
+    p{{ predHash . }} = {{ template "callPred" . }}
+    return nil
+}
+
+{{ $p }}.job = sched.Enqueue(ctx, {{ $cff }}.Job{
+Run: {{ $p }}.run,
+    {{ if .Function.DependsOn -}}
+        Dependencies: []*{{ $cff }}.ScheduledJob{
+            {{ range .Function.DependsOn -}}
+                task{{.Task.Serial}}.job,
+            {{ end -}}
+        },
+    {{- end }}
+})
+
+{{- define "callPred" -}}
+	{{- expr .Node }}({{- if .Function.WantCtx }}ctx,{{ end }} {{- range .Inputs }}v{{ typeHash . }}, {{- end }})
+{{- end -}}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}

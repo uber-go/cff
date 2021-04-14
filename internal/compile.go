@@ -175,7 +175,8 @@ type flow struct {
 	Outputs []*output
 	Tasks   []*task
 
-	Funcs []*function
+	Predicates []*predicate
+	Funcs      []*function
 
 	// Topologically ordered list of functions.
 	// For all i < j, TopoFuncs[i] cannot depend on TopoFuncs[j].
@@ -188,6 +189,9 @@ type flow struct {
 
 	invokeTypeCnt int       // input to make unique invokeType sentinels
 	invokeTypes   []*output // tracks tasks of with either no results or a single error
+
+	predicateTypeCnt int                // input to make unique predicateType sentinels.
+	predicateTypes   []*predicateOutput // tracks cff.Predicate sentinel types.
 
 	PosInfo *PosInfo // Used to pass information to uniquely identify a task.
 }
@@ -221,6 +225,19 @@ func (f *flow) mustSetNoOutputProvider(key *function, value int) {
 	} else {
 		f.receivers.Set(key.Task.invokeType, []funcIndex{funcIndex(value)})
 	}
+}
+
+// addPreciateOutput creates a unique predicate sentinel type. Since CFF's
+// dependency resolution logic only allows for one of each type to be provided
+// to the dependency graph and cff.Predicate functions return booleans,
+// these sentinel types distinguish the outputs of cff.Predicates.
+func (f *flow) addPredicateOutput() *predicateOutput {
+	f.predicateTypeCnt++
+	name := strconv.Itoa(f.predicateTypeCnt)
+	field := types.NewVar(0, nil, name, &types.Basic{})
+	np := types.NewStruct([]*types.Var{field}, nil)
+	f.predicateTypes = append(f.predicateTypes, np)
+	return np
 }
 
 func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
@@ -277,6 +294,10 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
 				flow.Tasks = append(flow.Tasks, task)
 				flow.Funcs = append(flow.Funcs, task.Function)
+				if task.Predicate != nil {
+					flow.Funcs = append(flow.Funcs, task.Predicate.Function)
+					flow.Predicates = append(flow.Predicates, task.Predicate)
+				}
 			}
 		}
 	}
@@ -306,6 +327,8 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 		if fn.Task != nil && fn.Task.invokeType != nil {
 			flow.mustSetNoOutputProvider(fn, i)
 		}
+		// Unlike invokeTypes, predicate sentinel types are already registered
+		// as part of a function's Dependencies.
 	}
 
 	c.validateNoUnusedOutputTypes(&flow)
@@ -366,6 +389,10 @@ func (c *compiler) validateFuncs(f *flow) {
 		// be handled after interpreting task options.
 		queue.PushBack(validateVisitedType{Type: o.Type, Node: o.Node})
 	}
+
+	// A list of predicateOutput types are not pushed into the queue as they
+	// are an internal book-keeping type not declared as an input or output
+	// by CFF2's public APIs.
 
 	for queue.Len() > 0 {
 		t := queue.Remove(queue.Front()).(validateVisitedType)
@@ -453,6 +480,7 @@ func (c *compiler) scheduleFlowAndToposort(f *flow) {
 	for _, idx := range toposort(g) {
 		topo = append(topo, f.Funcs[idx])
 	}
+
 	f.TopoFuncs = topo
 }
 
@@ -492,6 +520,11 @@ type task struct {
 // It can not be custom defined type, otherwise it won't work with typeutil.Map.
 type noOutput = types.Struct
 
+// predicateOutput is a sentinel return type for cff.Predicates that return
+// a boolean results that would otherwise conflict other cff.Predicate return
+// values in the dependency graph.
+type predicateOutput = types.Struct
+
 func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task {
 	parsedFn := c.compileFunction(flow, expr)
 	if parsedFn == nil {
@@ -520,6 +553,9 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 	c.taskSerial++
 
 	c.interpretTaskOptions(flow, &t, opts)
+	if t.Predicate != nil {
+		t.Function.Dependencies = append(t.Function.Dependencies, t.Predicate.SentinelOutput)
+	}
 
 	// Check if we return nothing and we don't have an Invoke call.
 	if len(t.Outputs) == 0 && t.invokeType == nil {
@@ -571,11 +607,17 @@ type function struct {
 
 // Inputs returns the types consumed by this function.
 func (f *function) inputs() []types.Type {
+	if f.Predicate != nil {
+		return f.Predicate.Inputs
+	}
 	return f.Task.Inputs
 }
 
 // Outputs returns the types produced by this function.
 func (f *function) outputs() []types.Type {
+	if f.Predicate != nil {
+		return []types.Type{f.Predicate.SentinelOutput}
+	}
 	return f.Task.Outputs
 }
 
@@ -735,10 +777,29 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 }
 
 type predicate struct {
-	WantCtx bool
+	ast.Node
 
-	Node   ast.Expr
-	Inputs []types.Type
+	Function *function
+
+	Inputs []types.Type // non ctx params
+
+	// Output is the parsed return type from the cff.Predicate invocation.
+	// SentinelOutput should be used when there is a need to uniquely
+	// identify the output of the predicate.
+	Output types.Type
+
+	// SentinelOutput is the sentinel value which represents the boolean
+	// output of the predicate and is used to distinguish the results of the
+	// predicate in the CFF graph.
+	SentinelOutput *predicateOutput
+
+	// Serial is a unique serially incrementing number for each predicate.
+	Serial int
+
+	// Task that predicate stops.
+	Task *task
+
+	PosInfo *PosInfo // Used to pass information to uniquely identify a predicate.
 }
 
 func (c *compiler) compilePredicate(f *flow, t *task, call *ast.CallExpr) *predicate {
@@ -767,17 +828,32 @@ func (c *compiler) compilePredicate(f *flow, t *task, call *ast.CallExpr) *predi
 		return nil
 	}
 
-	predFunc := c.compileFunction(f, fn)
-	if predFunc == nil {
+	parsedFn := c.compileFunction(f, fn)
+	if parsedFn == nil {
 		return nil
 	}
 
-	t.Function.Dependencies = append(t.Function.Dependencies, predFunc.Inputs...)
-	return &predicate{
-		Node:    fn,
-		Inputs:  predFunc.Inputs,
-		WantCtx: predFunc.WantCtx,
+	predFunc := &function{
+		Node:         parsedFn.Node,
+		Sig:          parsedFn.Sig,
+		WantCtx:      parsedFn.WantCtx,
+		HasError:     parsedFn.HasError,
+		Dependencies: parsedFn.Inputs,
+		PosInfo:      parsedFn.PosInfo,
 	}
+
+	p := &predicate{
+		Node:           predFunc.Node,
+		PosInfo:        c.getPosInfo(call),
+		Function:       predFunc,
+		Inputs:         parsedFn.Inputs,
+		Output:         parsedFn.Outputs[0], // Predicates must have one output.
+		SentinelOutput: f.addPredicateOutput(),
+		Serial:         f.predicateTypeCnt,
+		Task:           t,
+	}
+	predFunc.Predicate = p
+	return p
 }
 
 type instrument struct {

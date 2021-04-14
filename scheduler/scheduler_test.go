@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/atomic"
 )
 
 func TestScheduler(t *testing.T) {
@@ -606,5 +607,50 @@ func TestIdleWorkers(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			assert.Equal(t, tt.want, idleWorkers(tt.concurrency, tt.ongoing))
 		})
+	}
+}
+
+// Test that a predicate job that does not depend on a slow dependency will
+// execute before that slow dependency. The task that the predicate is a
+// condition for depends on that slow dependency.
+func TestPredicateScheduling(t *testing.T) {
+	t.Parallel()
+
+	slowDepDone := atomic.NewBool(false)
+
+	sched := Config{
+		Concurrency: 2,
+	}.New()
+
+	blocker := make(chan struct{})
+	slowDep := sched.Enqueue(context.Background(), Job{
+		Run: func(context.Context) error {
+			<-blocker
+			defer slowDepDone.Store(true)
+			return nil
+		},
+	})
+	pred := sched.Enqueue(context.Background(), Job{
+		Run: func(context.Context) error {
+			close(blocker)
+			defer func() {
+				assert.False(t, slowDepDone.Load())
+			}()
+			return nil
+		},
+	})
+	sched.Enqueue(context.Background(), Job{
+		Run: func(context.Context) error {
+			// A task with a predicate and a slow dependency.
+			return nil
+		},
+		Dependencies: []*ScheduledJob{
+			slowDep,
+			pred,
+		},
+	})
+
+	if err := sched.Wait(context.Background()); err != nil {
+		t.Errorf("unexpected failure from Scheduler.Wait: %v", err)
 	}
 }

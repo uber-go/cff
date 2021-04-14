@@ -111,3 +111,26 @@ func ExtraDependencies() error {
 		),
 	)
 }
+
+// MultiplePredicates is a task flow which checks that the outputs of multiple
+// predicates can be distinguished.
+func MultiplePredicates() error {
+	var s string
+	var b bool
+	return cff.Flow(
+		context.Background(),
+		cff.Results(&s, &b),
+		cff.Task(
+			func() string {
+				return "foo"
+			},
+			cff.Predicate(func() bool { return true }),
+		),
+		cff.Task(
+			func() bool {
+				return true
+			},
+			cff.Predicate(func() bool { return false }),
+		),
+	)
+}

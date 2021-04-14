@@ -50,7 +50,7 @@
 	}()
 
 	{{ if .Predicate }}
-		if !({{ template "callPred" .Predicate }}) {
+		if !p{{ predHash .Predicate }} {
 			return nil
 		}
 	{{ end }}
@@ -85,11 +85,20 @@
     {{ if .Function.DependsOn -}}
         Dependencies: []*{{ $cff }}.ScheduledJob{
             {{ range .Function.DependsOn -}}
-                task{{.Task.Serial}}.job,
+			    {{ template "dependencies" . }}
             {{ end -}}
         },
     {{- end }}
 })
+tasks = append(tasks, task{{ .Serial }})
+
+{{- define "dependencies" -}}
+	{{- if .Predicate -}}
+		pred{{ .Predicate.Serial }}.job,
+	{{- else -}}
+		task{{ .Task.Serial }}.job,
+	{{- end -}}
+{{- end -}}
 
 {{- define "taskResultList" -}}
 	{{- range $i, $t := .Outputs -}}
@@ -99,10 +108,6 @@
 
 {{- define "callTask" -}}
 	{{- expr .Node }}({{- if .Function.WantCtx }}ctx,{{ end }} {{- range .Inputs }}v{{ typeHash . }}, {{- end }})
-{{- end -}}
-
-{{- define "callPred" -}}
-	{{- expr .Node }}({{- if .WantCtx }}ctx,{{ end }} {{- range .Inputs }}v{{ typeHash . }}, {{- end }})
 {{- end -}}
 
 {{- /* vim:set ft=gotexttmpl noet: */ -}}

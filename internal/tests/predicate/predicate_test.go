@@ -38,3 +38,7 @@ func TestSimpleWithContextAndPredicate(t *testing.T) {
 func TestExtraDependencies(t *testing.T) {
 	require.NoError(t, ExtraDependencies())
 }
+
+func TestMultiplePredicates(t *testing.T) {
+	require.NoError(t, MultiplePredicates())
+}

@@ -24,6 +24,8 @@ import (
 const (
 	_flowTmpl = "flow.go.tmpl"
 	_taskTmpl = "task.go.tmpl"
+	_funcTmpl = "func.go.tmpl"
+	_predTmpl = "predicate.go.tmpl"
 )
 
 type generator struct {
@@ -31,6 +33,9 @@ type generator struct {
 
 	typeIDs    *typeutil.Map // map[types.Type]int
 	nextTypeID int
+
+	predIDs    *typeutil.Map // map[types.Type]int
+	nextPredID int
 
 	// File path to which generated code is written.
 	outputPath string
@@ -45,6 +50,7 @@ func newGenerator(opts generatorOpts) *generator {
 	return &generator{
 		fset:       opts.Fset,
 		typeIDs:    new(typeutil.Map),
+		predIDs:    new(typeutil.Map),
 		nextTypeID: 1,
 		outputPath: opts.OutputPath,
 	}
@@ -143,7 +149,7 @@ func (g *generator) GenerateFile(f *file) error {
 // generateFlow runs the CFF template for the given flow and writes it to w, modifying addImports if the template
 // requires additional imports to be added.
 func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string) error {
-	tmpl := parseTemplates(g.funcMap(file, addImports), _flowTmpl, _taskTmpl)
+	tmpl := parseTemplates(g.funcMap(file, addImports), _flowTmpl, _funcTmpl, _predTmpl, _taskTmpl)
 	return tmpl.ExecuteTemplate(w, _flowTmpl, flowTemplateData{
 		Flow: f,
 	})
@@ -157,9 +163,11 @@ func (g *generator) funcMap(file *file, addImports map[string]string) template.F
 			// Useful for comments.
 			return types.TypeString(t, nil)
 		},
-		"typeHash": g.printTypeHash,
-		"expr":     g.printExpr,
-		"quote":    strconv.Quote,
+		"typeHash":    g.printTypeHash,
+		"predHash":    g.printPredicateHash,
+		"isPredicate": g.isPredicate,
+		"expr":        g.printExpr,
+		"quote":       strconv.Quote,
 		"import": func(importPath string) string {
 			if names := file.Imports[importPath]; len(names) > 0 {
 				// already imported
@@ -222,6 +230,22 @@ func (g *generator) printTypeHash(t types.Type) string {
 	return strconv.Itoa(g.typeID(t))
 }
 
+func (g *generator) printPredicateHash(p *predicate) string {
+	return strconv.Itoa(g.predID(p))
+}
+
+func (g *generator) predID(p *predicate) int {
+	t := p.SentinelOutput
+	if i := g.predIDs.At(t); i != nil {
+		return i.(int)
+	}
+
+	id := g.nextPredID
+	g.nextPredID++
+	g.predIDs.Set(t, id)
+	return id
+}
+
 func (g *generator) printExpr(e ast.Expr) string {
 	var buff bytes.Buffer
 	format.Node(&buff, g.fset, e)
@@ -237,6 +261,11 @@ func (g *generator) typeID(t types.Type) int {
 	g.nextTypeID++
 	g.typeIDs.Set(t, id)
 	return id
+}
+
+func (g *generator) isPredicate(t types.Type) bool {
+	_, ok := t.(*predicateOutput)
+	return ok
 }
 
 type flowTemplateData struct {

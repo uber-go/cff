@@ -52,6 +52,12 @@ func(
         job *{{ $cff }}.ScheduledJob
 	}
 
+	type predicate struct {
+		ran {{ $cff }}.AtomicBool
+		run func({{ $context }}.Context) error
+		job *{{ $cff }}.ScheduledJob
+	}
+
 	var tasks []*task
 	defer func() {
 		for _, t := range tasks {
@@ -62,8 +68,7 @@ func(
 	}()
 
 	{{ range $flow.TopoFuncs }}
-		{{ template "task.go.tmpl" .Task }}
-		tasks = append(tasks, task{{ .Task.Serial }})
+		{{ template "func.go.tmpl" . }}
 	{{ end }}
 
     if err := sched.Wait(ctx); err != nil {

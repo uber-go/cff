@@ -70,6 +70,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			job     *cff.ScheduledJob
 		}
 
+		type predicate struct {
+			ran cff.AtomicBool
+			run func(context.Context) error
+			job *cff.ScheduledJob
+		}
+
 		var tasks []*task
 		defer func() {
 			for _, t := range tasks {
@@ -221,6 +227,23 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task4)
 
+		// go.uber.org/cff/examples/magic.go:76:4
+		var p0 bool
+		pred1 := new(predicate)
+		pred1.run = func(ctx context.Context) (err error) {
+			p0 = func(req *GetManagerRequest) bool {
+				return req.LDAPGroup != "everyone"
+			}(v2)
+			return nil
+		}
+
+		pred1.job = sched.Enqueue(ctx, cff.Job{
+			Run: pred1.run,
+			Dependencies: []*cff.ScheduledJob{
+				task0.job,
+			},
+		})
+
 		// go.uber.org/cff/examples/magic.go:68:4
 		var (
 			v6 []*SendEmailRequest
@@ -252,9 +275,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 			}()
 
-			if !(func(req *GetManagerRequest) bool {
-				return req.LDAPGroup != "everyone"
-			}(v2)) {
+			if !p0 {
 				return nil
 			}
 
@@ -278,7 +299,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			Dependencies: []*cff.ScheduledJob{
 				task1.job,
 				task4.job,
-				task0.job,
+				pred1.job,
 			},
 		})
 		tasks = append(tasks, task5)

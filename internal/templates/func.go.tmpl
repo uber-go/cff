@@ -1,0 +1,7 @@
+{{ if .Predicate }}
+    {{ template "predicate.go.tmpl" .Predicate }}
+{{- else -}}
+    {{ template "task.go.tmpl" .Task }}
+{{- end }}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}
