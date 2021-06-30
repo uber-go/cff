@@ -632,10 +632,8 @@ func TestPredicateScheduling(t *testing.T) {
 	})
 	pred := sched.Enqueue(context.Background(), Job{
 		Run: func(context.Context) error {
+			assert.False(t, slowDepDone.Load())
 			close(blocker)
-			defer func() {
-				assert.False(t, slowDepDone.Load())
-			}()
 			return nil
 		},
 	})
