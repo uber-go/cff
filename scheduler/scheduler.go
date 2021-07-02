@@ -37,8 +37,11 @@ package scheduler
 import (
 	"container/list"
 	"context"
+	"errors"
 	"runtime"
 	"time"
+
+	"go.uber.org/multierr"
 )
 
 const (
@@ -82,6 +85,10 @@ type jobResult struct {
 	Err error         // failure, if any
 }
 
+// errJobInvalid is a sentinel error to capture jobs that are invalidated
+// because their dependencies have errored or are marked invalid.
+var errJobInvalid = errors.New("job invalid")
+
 // worker implements the logic for a worker goroutine.
 //
 // NOTE: If you rename this function, update _workerFunction in
@@ -90,9 +97,12 @@ func worker(readyc <-chan *ScheduledJob, donec chan<- jobResult) {
 	for j := range readyc {
 		res := jobResult{Job: j}
 
-		// Don't run if context already cancelled.
 		if err := j.ctx.Err(); err != nil {
+			// Don't run if context already cancelled.
 			res.Err = err
+		} else if j.invalid {
+			// Don't run if marked as invalid.
+			res.Err = errJobInvalid
 		} else {
 			res.Err = j.run(j.ctx)
 		}
@@ -126,6 +136,10 @@ type Scheduler struct {
 	// Concurrency is the number of workers the scheduler can process tasks
 	// with.
 	concurrency int
+
+	// If true when a job fails, directs the scheduler to record its failure,
+	// invalidate all jobs that depend on the failed job, and keep running.
+	continueOnError bool
 }
 
 // Config stores parameters the scheduler should run with and is the
@@ -138,6 +152,10 @@ type Config struct {
 	// StateFlushFrequency is how often the scheduler will emit metrics with the
 	// emitter. This defaults to 100 milliseconds.
 	StateFlushFrequency time.Duration
+	// ContinueOnError, if true when a job fails, directs the scheduler to
+	// record its failure, invalidate all jobs that depend on the failed job,
+	// and keep running.
+	ContinueOnError bool
 }
 
 // New begins execution of a flow with the provided number of
@@ -185,11 +203,12 @@ func (c Config) New() *Scheduler {
 	}()
 
 	sched := &Scheduler{
-		enqueuec:    enqueuec,
-		readyc:      readyc,
-		donec:       donec,
-		finishedc:   make(chan struct{}),
-		concurrency: c.Concurrency,
+		enqueuec:        enqueuec,
+		readyc:          readyc,
+		donec:           donec,
+		finishedc:       make(chan struct{}),
+		concurrency:     c.Concurrency,
+		continueOnError: c.ContinueOnError,
 	}
 
 	// We lie to the caller about the number of goroutines. Spawn one
@@ -227,6 +246,8 @@ type ScheduledJob struct {
 	remaining int             // number of jobs we're waiting for
 	consumers []*ScheduledJob // jobs waiting for this job
 	done      bool            // whether this was run, regardless of success or failure
+	err       error           // the job error, if encountered when the job ran
+	invalid   bool            // whether the job is marked invalid and should not run
 
 	// waitingEl tracks the position of the Job in the waiting queue.
 	// Having a reference to the list node allows efficiently removing
@@ -360,8 +381,14 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 
 			// Ask to be notified when dependencies are run --
 			// unless they've already been run.
+			//
+			// If a dependency has already run and errored, mark the job as
+			// invalid.
 			for _, dep := range job.deps {
 				if dep.done {
+					if dep.err != nil {
+						job.invalid = true
+					}
 					continue
 				}
 				dep.consumers = append(dep.consumers, job)
@@ -384,11 +411,23 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 			pending--
 			ongoing--
 
-			// Record the failure and return early if the job
-			// failed.
 			if err := res.Err; err != nil {
-				s.err = err
-				return
+				job.err = err
+
+				// Record the failure and return early if the job
+				// failed.
+				if !s.continueOnError {
+					s.err = err
+					return
+				}
+				// With continueOnError, mark invalid directly dependent jobs,
+				// append non-sentinel errors, and continue the scheduler loop.
+				if !errors.Is(err, errJobInvalid) {
+					s.err = multierr.Append(s.err, err)
+				}
+				for _, consumer := range job.consumers {
+					consumer.invalid = true
+				}
 			}
 
 			// Notify jobs waiting on this job, moving them to
@@ -426,8 +465,11 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 	}
 }
 
-// Wait waits for all scheduled jobs to finish and returns the first error
-// encountered, if any.
+// Wait waits for all scheduled jobs to finish by default it returns the first
+// error encountered, if any.
+//
+// If ContinueOnError was specified, the returned error will combine all
+// errors from jobs failures.
 //
 // No new jobs may be enqueued once Wait is called.
 func (s *Scheduler) Wait(ctx context.Context) error {

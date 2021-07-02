@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/atomic"
+	"go.uber.org/multierr"
 )
 
 func TestScheduler(t *testing.T) {
@@ -186,6 +187,112 @@ func TestScheduler(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestScheduler_ContinueOnError(t *testing.T) {
+	t.Parallel()
+
+	t.Run("only invalidate dependent jobs", func(t *testing.T) {
+		t.Parallel()
+
+		sched := Config{
+			Concurrency:     2,
+			ContinueOnError: true,
+		}.New()
+
+		blocker := newBlocker()
+
+		// Enqueue a leaf dependency job that will error.
+		failDep := sched.Enqueue(context.Background(), Job{
+			Run: func(c context.Context) error {
+				defer blocker.Run(c)
+				return errors.New("sad times")
+			},
+		})
+
+		// Enqueue a root dependency job that depends on failDep, should
+		// be invalidated and not run.
+		var failRootRun atomic.Bool
+		defer func() {
+			assert.False(t, failRootRun.Load(), "root job must not run as its dep failed")
+		}()
+		sched.Enqueue(context.Background(), Job{
+			Run: func(context.Context) error {
+				failRootRun.Store(true)
+				return nil
+			},
+			Dependencies: []*ScheduledJob{
+				failDep,
+			},
+		})
+
+		// Block on the completion of the failDep to
+		// (1) Ensure that an error is recorded on the scheduler before the
+		// independent job are run to prove it runs through error.
+		// (2) Ensure that failDep's error is recorded first to mitigate data
+		// races on the err field of the scheduler.
+		blocker.UnblockAndWait()
+
+		// Enqueue an independent job to verify that (1) it still runs
+		// through failure and (2) multiple non-sentinel errors are accumulated.
+		sched.Enqueue(context.Background(), Job{
+			Run: func(context.Context) error {
+				return errors.New("another error")
+			},
+		})
+
+		err := sched.Wait(context.Background())
+		assert.Equal(
+			t,
+			[]error{
+				errors.New("sad times"),
+				errors.New("another error"),
+			},
+			multierr.Errors(err),
+		)
+	})
+
+	t.Run("skip job with already failed dep", func(t *testing.T) {
+		t.Parallel()
+
+		sched := Config{
+			Concurrency:     2,
+			ContinueOnError: true,
+		}.New()
+
+		blocker := newBlocker()
+
+		// Enqueue a leaf dependency job that will error.
+		failDep := sched.Enqueue(context.Background(), Job{
+			Run: func(c context.Context) error {
+				defer blocker.Run(c)
+				return errors.New("sad times")
+			},
+		})
+
+		// Block on the completion of the failDep to ensure that failDep has
+		// errored before a job that depends on it is enqueued.
+		blocker.UnblockAndWait()
+
+		// Enqueue a root dependency job that depends on failDep, should
+		// be invalidated and should not run.
+		var failRootRun atomic.Bool
+		defer func() {
+			assert.False(t, failRootRun.Load(), "root job must not run as its dep failed")
+		}()
+		sched.Enqueue(context.Background(), Job{
+			Run: func(context.Context) error {
+				failRootRun.Store(true)
+				return nil
+			},
+			Dependencies: []*ScheduledJob{
+				failDep,
+			},
+		})
+
+		err := sched.Wait(context.Background())
+		assert.EqualError(t, err, "sad times")
+	})
 }
 
 func TestScheduler_Wait(t *testing.T) {
