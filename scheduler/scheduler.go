@@ -79,6 +79,33 @@ const (
 // We can keep the core scheduler logic lockless because all state management
 // is deferred to the same goroutine: the Scheduler Loop. DO NOT read or write
 // internal state outside that goroutine.
+//
+//  .-----.
+//  |     |----------.
+//  |     |          |
+//  |     |          v
+//  |  C  |     +--------------------------------------------+
+//  |  A  |     | enqueuec := make(chan *ScheduledJob, 1)    |----------.
+//  |  L  |     +--------------------------------------------+          |
+//  |  L  |                                                             v
+//  |  E  |                                                          .-----.
+//  |  R  |     +--------------------------------------------+       |     |
+//  |     |     | readyc := make(chan *ScheduledJob)         |<------|  S  |
+//  |     |     +--------------------------------------------+       |  C  |
+//  |     |          |              |                  |             |  H  |
+//  '-----'          |              |                  |             |  E  |
+//                   v              v                  v             |  D  |
+//              .----------.   .----------.       .----------.       |  U  |
+//              | Worker 1 |   | Worker 2 |  ...  | Worker N |       |  L  |
+//              '----------'   '----------'       '----------'       |  E  |
+//                   |              |                  |             |  R  |
+//                   |              |                  |             |     |
+//                   v              v                  v             |  L  |
+//              +--------------------------------------------+       |  O  |
+//              | donec := make(chan jobResult, N)           |------>|  O  |
+//              +--------------------------------------------+       |  P  |
+//                                                                   |     |
+//                                                                   '-----'
 
 type jobResult struct {
 	Job *ScheduledJob // job that was executed
@@ -89,7 +116,10 @@ type jobResult struct {
 // because their dependencies have errored or are marked invalid.
 var errJobInvalid = errors.New("job invalid")
 
-// worker implements the logic for a worker goroutine.
+// worker implements the logic for a worker goroutine. Workers may read from
+// the ScheduledJob but they MUST NOT modify it. All output from workers should
+// be sent up to the scheduler via jobResult. The scheduler loop is the only
+// goroutine permitted to modify ScheduledJob.
 //
 // NOTE: If you rename this function, update _workerFunction in
 // internal/tests/setconcurrency/setconcurrency.go.
