@@ -74,6 +74,13 @@ func (g *generator) GenerateFile(f *file) error {
 	posFile := g.fset.File(f.AST.Pos())
 
 	addImports := make(map[string]string) // import path -> name or empty for implicit name
+	aliases := make(map[string]struct{})  // map to record aliases that have been used during in code gen
+
+	// Track all aliases that already exist in the file.
+	for _, names := range f.Imports {
+		aliases[names[0]] = struct{}{}
+	}
+
 	var lastOff int
 	for _, flow := range f.Flows {
 		// Everything from previous position up to this flow call.
@@ -82,7 +89,7 @@ func (g *generator) GenerateFile(f *file) error {
 		}
 
 		// Generate code for the flow.
-		if err := g.generateFlow(f, flow, &buff, addImports); err != nil {
+		if err := g.generateFlow(f, flow, &buff, addImports, aliases); err != nil {
 			return err
 		}
 
@@ -148,16 +155,16 @@ func (g *generator) GenerateFile(f *file) error {
 
 // generateFlow runs the CFF template for the given flow and writes it to w, modifying addImports if the template
 // requires additional imports to be added.
-func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string) error {
-	tmpl := parseTemplates(g.funcMap(file, addImports), _flowTmpl, _funcTmpl, _predTmpl, _taskTmpl)
+func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string, aliases map[string]struct{}) error {
+	tmpl := parseTemplates(g.funcMap(file, addImports, aliases), _flowTmpl, _funcTmpl, _predTmpl, _taskTmpl)
 	return tmpl.ExecuteTemplate(w, _flowTmpl, flowTemplateData{
 		Flow: f,
 	})
 }
 
-func (g *generator) funcMap(file *file, addImports map[string]string) template.FuncMap {
+func (g *generator) funcMap(file *file, addImports map[string]string, aliases map[string]struct{}) template.FuncMap {
 	return template.FuncMap{
-		"type": g.typePrinter(file, addImports),
+		"type": g.typePrinter(file, addImports, aliases),
 		"typeName": func(t types.Type) string {
 			// Report the name of the type without importing it.
 			// Useful for comments.
@@ -170,31 +177,17 @@ func (g *generator) funcMap(file *file, addImports map[string]string) template.F
 		"quote":       strconv.Quote,
 		"import": func(importPath string) string {
 			if names := file.Imports[importPath]; len(names) > 0 {
-				// already imported
+				// importPath exists in the file already.
 				return names[0]
 			}
-
-			name, ok := addImports[importPath]
-			if !ok {
-				addImports[importPath] = ""
-			}
-
-			// TODO(abg): If the name is already taken, we will want to use
-			// a named import. This can be done by having the compiler record
-			// a list of unavailable names in the scope where cff.Flow was
-			// called.
-			if name == "" {
-				name = filepath.Base(importPath)
-			}
-
-			return name
+			return printImportAlias(importPath, filepath.Base(importPath), addImports, aliases)
 		},
 	}
 }
 
 // typePrinter returns the qualifier for the type to form an identifier using that type, modifying addImports if the
 // type refers to a package that is not already imported
-func (g *generator) typePrinter(f *file, addImports map[string]string) func(types.Type) string {
+func (g *generator) typePrinter(f *file, addImports map[string]string, aliases map[string]struct{}) func(types.Type) string {
 	return func(t types.Type) string {
 		return types.TypeString(t, func(pkg *types.Package) string {
 			for _, imp := range f.AST.Imports {
@@ -216,8 +209,7 @@ func (g *generator) typePrinter(f *file, addImports map[string]string) func(type
 			// The generated code needs a package (pkg) to be imported to form the qualifier, but it wasn't imported
 			// by the user already and it isn't in this package (f.Package)
 			if !isPackagePathEquivalent(pkg, f.Package.Types.Path()) {
-				addImports[pkg.Path()] = pkg.Name()
-				return pkg.Name()
+				return printImportAlias(pkg.Path(), pkg.Name(), addImports, aliases)
 			}
 
 			// The type is defined in the same package
@@ -296,4 +288,32 @@ func parseTemplates(funcs template.FuncMap, paths ...string) *template.Template 
 	}
 
 	return t
+}
+
+// printImportAlias processes the importPath and returns the alias that should be used for it while
+// updating addImports and aliases maps.
+func printImportAlias(importPath, alias string, addImports map[string]string, aliases map[string]struct{}) string {
+	if name, ok := addImports[importPath]; ok {
+		// importPath already exists in addImports, infer alias and return.
+		if name == "" {
+			name = filepath.Base(importPath)
+		}
+		return name
+	}
+
+	for {
+		if _, ok := aliases[alias]; !ok {
+			// alias is unique.
+			aliases[alias] = struct{}{}
+			if alias == filepath.Base(importPath) {
+				addImports[importPath] = ""
+			} else {
+				addImports[importPath] = alias
+			}
+			return alias
+		}
+		// alias is already used, mangle a new one by prepending
+		// an "_" until it is unique.
+		alias = "_" + alias
+	}
 }
