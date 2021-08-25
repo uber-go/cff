@@ -34,9 +34,9 @@ func TestNoOutputTypes(t *testing.T) {
 	assert.Equal(t, task.invokeType, f.providers.At(task.invokeType))
 }
 
-// toCompile contains a CFF source file and a CFF compiler plus Package
-// that the source file can be compiled with. This assortment is useful for
-// invoking the CFF compiler in test.
+// toCompile contains a CFF source file, compiler, and Package that the source
+// file can be compiled with. This assortment is a convenience for invoking the
+// CFF compiler in test.
 type toCompile struct {
 	file     *ast.File
 	compiler *compiler
@@ -51,7 +51,7 @@ func setupCompilers(
 	modules []packagestest.Module,
 ) map[string]toCompile {
 	exp := packagestest.Export(
-		t, packagestest.Modules,
+		t, packagestest.GOPATH,
 		modules,
 	)
 	fset := token.NewFileSet()
