@@ -526,26 +526,26 @@ type noOutput = types.Struct
 type predicateOutput = types.Struct
 
 func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task {
-	parsedFn := c.compileFunction(expr)
-	if parsedFn == nil {
+	compiledFunc := c.compileFunction(expr)
+	if compiledFunc == nil {
 		return nil
 	}
 
 	taskFunc := &function{
-		Node:         parsedFn.Node,
-		Sig:          parsedFn.Sig,
-		WantCtx:      parsedFn.WantCtx,
-		HasError:     parsedFn.HasError,
-		Dependencies: parsedFn.Inputs,
-		PosInfo:      parsedFn.PosInfo,
+		Node:         compiledFunc.Node,
+		Sig:          compiledFunc.Sig,
+		WantCtx:      compiledFunc.WantCtx,
+		HasError:     compiledFunc.HasError,
+		Dependencies: compiledFunc.Inputs,
+		PosInfo:      compiledFunc.PosInfo,
 	}
 
 	t := task{
 		Node:     expr,
 		Function: taskFunc,
 		Serial:   c.taskSerial,
-		Inputs:   parsedFn.Inputs,
-		Outputs:  parsedFn.Outputs,
+		Inputs:   compiledFunc.Inputs,
+		Outputs:  compiledFunc.Outputs,
 		PosInfo:  c.getPosInfo(expr),
 	}
 
@@ -621,8 +621,8 @@ func (f *function) outputs() []types.Type {
 	return f.Task.Outputs
 }
 
-// parsedFn is a parsed function expression.
-type parsedFn struct {
+// compiledFunc is a compiled function expression.
+type compiledFunc struct {
 	ast.Node
 
 	Sig *types.Signature
@@ -639,7 +639,7 @@ type parsedFn struct {
 	PosInfo *PosInfo // Used to pass information to uniquely identify a function.
 }
 
-func (c *compiler) compileFunction(expr ast.Expr) *parsedFn {
+func (c *compiler) compileFunction(expr ast.Expr) *compiledFunc {
 	typ := c.info.TypeOf(expr)
 	sig, ok := typ.(*types.Signature)
 
@@ -653,7 +653,7 @@ func (c *compiler) compileFunction(expr ast.Expr) *parsedFn {
 		return nil
 	}
 
-	f := parsedFn{
+	f := compiledFunc{
 		Node:    expr,
 		Sig:     sig,
 		PosInfo: c.getPosInfo(expr),
@@ -828,26 +828,26 @@ func (c *compiler) compilePredicate(f *flow, t *task, call *ast.CallExpr) *predi
 		return nil
 	}
 
-	parsedFn := c.compileFunction(fn)
-	if parsedFn == nil {
+	compiledFunc := c.compileFunction(fn)
+	if compiledFunc == nil {
 		return nil
 	}
 
 	predFunc := &function{
-		Node:         parsedFn.Node,
-		Sig:          parsedFn.Sig,
-		WantCtx:      parsedFn.WantCtx,
-		HasError:     parsedFn.HasError,
-		Dependencies: parsedFn.Inputs,
-		PosInfo:      parsedFn.PosInfo,
+		Node:         compiledFunc.Node,
+		Sig:          compiledFunc.Sig,
+		WantCtx:      compiledFunc.WantCtx,
+		HasError:     compiledFunc.HasError,
+		Dependencies: compiledFunc.Inputs,
+		PosInfo:      compiledFunc.PosInfo,
 	}
 
 	p := &predicate{
 		Node:           predFunc.Node,
 		PosInfo:        c.getPosInfo(call),
 		Function:       predFunc,
-		Inputs:         parsedFn.Inputs,
-		Output:         parsedFn.Outputs[0], // Predicates must have one output.
+		Inputs:         compiledFunc.Inputs,
+		Output:         compiledFunc.Outputs[0], // Predicates must have one output.
 		SentinelOutput: f.addPredicateOutput(),
 		Serial:         f.predicateTypeCnt,
 		Task:           t,
