@@ -526,7 +526,7 @@ type noOutput = types.Struct
 type predicateOutput = types.Struct
 
 func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task {
-	parsedFn := c.compileFunction(flow, expr)
+	parsedFn := c.compileFunction(expr)
 	if parsedFn == nil {
 		return nil
 	}
@@ -639,7 +639,7 @@ type parsedFn struct {
 	PosInfo *PosInfo // Used to pass information to uniquely identify a function.
 }
 
-func (c *compiler) compileFunction(flow *flow, expr ast.Expr) *parsedFn {
+func (c *compiler) compileFunction(expr ast.Expr) *parsedFn {
 	typ := c.info.TypeOf(expr)
 	sig, ok := typ.(*types.Signature)
 
@@ -828,7 +828,7 @@ func (c *compiler) compilePredicate(f *flow, t *task, call *ast.CallExpr) *predi
 		return nil
 	}
 
-	parsedFn := c.compileFunction(f, fn)
+	parsedFn := c.compileFunction(fn)
 	if parsedFn == nil {
 		return nil
 	}
