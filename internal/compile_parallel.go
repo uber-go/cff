@@ -29,7 +29,7 @@ type parallelTask struct {
 
 func (c *compiler) compileParallel(file *ast.File, call *ast.CallExpr) *parallel {
 	if len(call.Args) == 1 {
-		c.errf("cff.Parallel expects at least one function", c.nodePosition(call))
+		c.errf(c.nodePosition(call), "cff.Parallel expects at least one function")
 		return nil
 	}
 
@@ -43,14 +43,13 @@ func (c *compiler) compileParallel(file *ast.File, call *ast.CallExpr) *parallel
 
 		ce, ok := arg.(*ast.CallExpr)
 		if !ok {
-			c.errf("expected a function call, got %v",
-				c.nodePosition(arg), astutil.NodeDescription(arg))
+			c.errf(c.nodePosition(arg), "expected a function call, got %v", astutil.NodeDescription(arg))
 			continue
 		}
 
 		f := typeutil.StaticCallee(c.info, ce)
 		if f == nil || !isPackagePathEquivalent(f.Pkg(), cffImportPath) {
-			c.errf("expected cff call but got %v", c.nodePosition(arg), typeutil.Callee(c.info, ce))
+			c.errf(c.nodePosition(arg), "expected cff call but got %v", typeutil.Callee(c.info, ce))
 			continue
 		}
 
@@ -80,11 +79,11 @@ func (c *compiler) compileParallelTasks(p *parallel, call *ast.CallExpr) []*para
 func (c *compiler) compileParallelTask(p *parallel, arg ast.Expr) *parallelTask {
 	taskF := c.compileFunction(arg)
 	if taskF == nil {
-		c.errf("parallel tasks function failed to compile", c.nodePosition(arg))
+		c.errf(c.nodePosition(arg), "parallel tasks function failed to compile")
 		return nil
 	}
 	if err := checkParallelTask(taskF); err != nil {
-		c.errf("parallel tasks function is invalid: %v", c.nodePosition(arg), err)
+		c.errf(c.nodePosition(arg), "parallel tasks function is invalid: %v", err)
 		return nil
 	}
 	fn := &function{

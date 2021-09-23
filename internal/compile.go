@@ -51,7 +51,7 @@ func newCompiler(opts compilerOpts) *compiler {
 	}
 }
 
-func (c *compiler) errf(msg string, pos token.Position, args ...interface{}) {
+func (c *compiler) errf(pos token.Position, msg string, args ...interface{}) {
 	formattedMsg := fmt.Sprintf("%v: ", pos) + fmt.Sprintf(msg, args...)
 
 	c.errors = append(c.errors, errors.New(formattedMsg))
@@ -166,8 +166,7 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 				)
 
 			case IsCodegenDirective(fn.Name()):
-				c.errf("unexpected code generation directive %q: "+
-					"only cff.Flow or cff.Parallel may be called at the top-level", c.nodePosition(n), fn.Name())
+				c.errf(c.nodePosition(n), "unexpected code generation directive %q: "+"only cff.Flow or cff.Parallel may be called at the top-level", fn.Name())
 			default:
 				// Calls to functions that are not code
 				// generation directives (LogEmitter, etc.)
@@ -262,7 +261,7 @@ func (f *flow) addPredicateOutput() *predicateOutput {
 
 func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 	if len(call.Args) == 1 {
-		c.errf("cff.Flow expects at least one function", c.nodePosition(call))
+		c.errf(c.nodePosition(call), "cff.Flow expects at least one function")
 		return nil
 	}
 
@@ -278,14 +277,13 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 
 		ce, ok := arg.(*ast.CallExpr)
 		if !ok {
-			c.errf("expected a function call, got %v",
-				c.nodePosition(arg), astutil.NodeDescription(arg))
+			c.errf(c.nodePosition(arg), "expected a function call, got %v", astutil.NodeDescription(arg))
 			continue
 		}
 
 		f := typeutil.StaticCallee(c.info, ce)
 		if f == nil || !isPackagePathEquivalent(f.Pkg(), cffImportPath) {
-			c.errf("expected cff call but got %v", c.nodePosition(arg), typeutil.Callee(c.info, ce))
+			c.errf(c.nodePosition(arg), "expected cff call but got %v", typeutil.Callee(c.info, ce))
 			continue
 		}
 
@@ -339,8 +337,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			if prev != nil {
 				pIdx := prev.(int)
 				p := flow.Funcs[pIdx]
-				c.errf("type %v already provided at %v",
-					c.nodePosition(fn), o, c.nodePosition(p))
+				c.errf(c.nodePosition(fn), "type %v already provided at %v", o, c.nodePosition(p))
 				continue
 			}
 		}
@@ -380,7 +377,7 @@ func (c *compiler) validateNoUnusedOutputTypes(f *flow) {
 	for _, t := range f.Funcs {
 		for _, o := range t.outputs() {
 			if f.receivers.At(o) == nil {
-				c.errf("unused output type %v", c.nodePosition(t.Node), o)
+				c.errf(c.nodePosition(t.Node), "unused output type %v", o)
 			}
 		}
 	}
@@ -438,7 +435,7 @@ func (c *compiler) validateFuncs(f *flow) {
 			continue
 		}
 
-		c.errf("no provider found for %v", c.nodePosition(t.Node), t.Type)
+		c.errf(c.nodePosition(t.Node), "no provider found for %v", t.Type)
 	}
 
 	if flowInputs.Len() > 0 {
@@ -446,7 +443,7 @@ func (c *compiler) validateFuncs(f *flow) {
 		for _, inputType := range inputs {
 			inputUntyped := flowInputs.At(inputType)
 			input := inputUntyped.(*input)
-			c.errf("unused input type %v", c.nodePosition(input.Node), input.Type)
+			c.errf(c.nodePosition(input.Node), "unused input type %v", input.Type)
 		}
 	}
 }
@@ -469,8 +466,7 @@ func (c *compiler) validateInstrument(f *flow) {
 	}
 
 	if len(f.Emitters) == 0 {
-		c.errf("cff.Instrument requires a cff.Emitter to be provided: use cff.WithEmitter",
-			c.nodePosition(f.Node))
+		c.errf(c.nodePosition(f.Node), "cff.Instrument requires a cff.Emitter to be provided: use cff.WithEmitter")
 	}
 }
 
@@ -579,12 +575,10 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 
 	// Check if we return nothing and we don't have an Invoke call.
 	if len(t.Outputs) == 0 && t.invokeType == nil {
-		c.errf("task must return at least one non-error value but currently produces zero."+
-			" Did you intend to use cff.Invoke(true)?", c.nodePosition(expr))
+		c.errf(c.nodePosition(expr), "task must return at least one non-error value but currently produces zero."+" Did you intend to use cff.Invoke(true)?")
 	}
 	if len(t.Outputs) > 0 && t.invokeType != nil {
-		c.errf("cff.Invoke cannot be provided on a Task that produces values besides errors",
-			c.nodePosition(expr))
+		c.errf(c.nodePosition(expr), "cff.Invoke cannot be provided on a Task that produces values besides errors")
 	}
 
 	// Create an implied Instrument(...) annotation for all tasks if the
@@ -663,12 +657,12 @@ func (c *compiler) compileFunction(expr ast.Expr) *compiledFunc {
 	typ := c.info.TypeOf(expr)
 	sig, ok := typ.(*types.Signature)
 	if !ok {
-		c.errf("expected function, got %v", c.nodePosition(expr), typ)
+		c.errf(c.nodePosition(expr), "expected function, got %v", typ)
 		return nil
 	}
 
 	if sig.Variadic() {
-		c.errf("variadic functions are not yet supported", c.nodePosition(expr))
+		c.errf(c.nodePosition(expr), "variadic functions are not yet supported")
 		return nil
 	}
 
@@ -688,7 +682,7 @@ func (c *compiler) compileFunction(expr ast.Expr) *compiledFunc {
 		}
 
 		if i != 0 {
-			c.errf("only the first argument may be context.Context", c.position(param.Pos()))
+			c.errf(c.position(param.Pos()), "only the first argument may be context.Context")
 			return nil
 		}
 		f.WantCtx = true
@@ -704,7 +698,7 @@ func (c *compiler) compileFunction(expr ast.Expr) *compiledFunc {
 		}
 		// Error case.
 		if i != results.Len()-1 {
-			c.errf("only the last result may be an error", c.position(result.Pos()))
+			c.errf(c.position(result.Pos()), "only the last result may be an error")
 			return nil
 		}
 		f.HasError = true
@@ -729,25 +723,24 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 		// All options are function calls right now.
 		call, ok := opt.(*ast.CallExpr)
 		if !ok {
-			c.errf("expected a function call, got %v", c.nodePosition(opt), astutil.NodeDescription(opt))
+			c.errf(c.nodePosition(opt), "expected a function call, got %v", astutil.NodeDescription(opt))
 			continue
 		}
 
 		sel, ok := call.Fun.(*ast.SelectorExpr)
 		if !ok {
-			c.errf("only cff functions may be passed as task options", c.nodePosition(opt))
+			c.errf(c.nodePosition(opt), "only cff functions may be passed as task options")
 			continue
 		}
 
 		fn, ok := c.info.Uses[sel.Sel]
 		if !ok {
-			c.errf("unresolvable reference in call: %v", c.nodePosition(opt), sel.Sel.String())
+			c.errf(c.nodePosition(opt), "unresolvable reference in call: %v", sel.Sel.String())
 			continue
 		}
 
 		if !isPackagePathEquivalent(fn.Pkg(), cffImportPath) {
-			c.errf("only cff functions may be passed as task options: "+
-				"found package %q", c.nodePosition(opt), fn.Pkg().Path())
+			c.errf(c.nodePosition(opt), "only cff functions may be passed as task options: "+"found package %q", fn.Pkg().Path())
 			continue
 		}
 
@@ -755,8 +748,7 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 		case "FallbackWith":
 			errResults := call.Args
 			if len(errResults) != len(t.Outputs) {
-				c.errf("cff.FallbackWith must produce the same number of results as the task: "+
-					"expected %v, got %v", c.nodePosition(opt), len(t.Outputs), len(errResults))
+				c.errf(c.nodePosition(opt), "cff.FallbackWith must produce the same number of results as the task: "+"expected %v, got %v", len(t.Outputs), len(errResults))
 				continue
 			}
 			// Verify that Task returns an error for FallbackWith to be used.
@@ -771,15 +763,17 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 				}
 			}
 			if !hasError {
-				c.errf("Task must return an error for FallbackWith to be used", c.nodePosition(opt))
+				c.errf(c.nodePosition(opt), "Task must return an error for FallbackWith to be used")
 				continue
 			}
 			for i, er := range errResults {
 				give := c.info.TypeOf(er)
 				want := t.Outputs[i]
 				if !types.AssignableTo(give, want) {
-					c.errf("cff.FallbackWith result at position %v of type %v cannot be used as %v",
-						c.nodePosition(er), i+1, give, want)
+					c.errf(
+						c.nodePosition(er),
+						"cff.FallbackWith result at position %v of type %v cannot be used as %v",
+						i+1, give, want)
 				}
 			}
 
@@ -827,23 +821,23 @@ func (c *compiler) compilePredicate(f *flow, t *task, call *ast.CallExpr) *predi
 
 	sig, ok := fnType.(*types.Signature)
 	if !ok {
-		c.errf("cff.Predicate expected a function but received %v", c.nodePosition(fn), fnType)
+		c.errf(c.nodePosition(fn), "cff.Predicate expected a function but received %v", fnType)
 		return nil
 	}
 
 	if sig.Variadic() {
-		c.errf("variadic functions are not yet supported", c.nodePosition(fn))
+		c.errf(c.nodePosition(fn), "variadic functions are not yet supported")
 		return nil
 	}
 
 	results := sig.Results()
 	if results.Len() != 1 {
-		c.errf("the function must return a single boolean result", c.nodePosition(fn))
+		c.errf(c.nodePosition(fn), "the function must return a single boolean result")
 		return nil
 	}
 
 	if rtype, ok := results.At(0).Type().(*types.Basic); !ok || rtype.Kind() != types.Bool {
-		c.errf("the function must return a single boolean result", c.nodePosition(fn))
+		c.errf(c.nodePosition(fn), "the function must return a single boolean result")
 		return nil
 	}
 
@@ -896,12 +890,11 @@ func (c *compiler) compileInstrumentName(name string) *instrument {
 func (c *compiler) compileInvoke(flow *flow, o *ast.CallExpr) *noOutput {
 	// Bool type checking is satisfied by cff.Invoke interface.
 	if len(o.Args) != 1 {
-		c.errf("invoke expects exactly one argument", c.nodePosition(o.Fun))
+		c.errf(c.nodePosition(o.Fun), "invoke expects exactly one argument")
 	}
 	val, ok := c.info.Types[o.Args[0]]
 	if !ok {
-		c.errf("expected to find a bool, found %v instead",
-			c.nodePosition(o), astutil.NodeDescription(o.Args[0]))
+		c.errf(c.nodePosition(o), "expected to find a bool, found %v instead", astutil.NodeDescription(o.Args[0]))
 		return nil
 	}
 	if constant.BoolVal(val.Value) {
@@ -937,8 +930,7 @@ func (c *compiler) compileOutput(o ast.Expr) *output {
 	t := c.info.TypeOf(o)
 	p, ok := t.(*types.Pointer)
 	if !ok {
-		c.errf("invalid parameter to cff.Results: "+
-			"expected pointer, got %v", c.nodePosition(o), t)
+		c.errf(c.nodePosition(o), "invalid parameter to cff.Results: "+"expected pointer, got %v", t)
 		return nil
 	}
 
