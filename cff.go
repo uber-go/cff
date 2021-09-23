@@ -10,8 +10,8 @@ import "context"
 // NOTE: All code generation directives must be added to this file. The list
 // of directives is updated automatically based on the contents of this file.
 
-// FlowOption specifies parameters for a Flow.
-type FlowOption interface {
+// Option specifies parameters for a Flow.
+type Option interface {
 	cffOption()
 }
 
@@ -21,7 +21,7 @@ type FlowOption interface {
 //  cff.Params(request)
 //
 // This is a code generation directive.
-func Params(args ...interface{}) FlowOption {
+func Params(args ...interface{}) Option {
 	panic("code not generated; run cff")
 }
 
@@ -34,7 +34,7 @@ func Params(args ...interface{}) FlowOption {
 //  )
 //
 // This is a code generation directive.
-func Results(results ...interface{}) FlowOption {
+func Results(results ...interface{}) Option {
 	panic("code not generated; run cff")
 }
 
@@ -55,7 +55,7 @@ func Results(results ...interface{}) FlowOption {
 //  )
 //
 // This is a code generation directive.
-func WithEmitter(Emitter) FlowOption {
+func WithEmitter(Emitter) Option {
 	panic("code not generated; run cff")
 }
 
@@ -94,7 +94,7 @@ func WithEmitter(Emitter) FlowOption {
 // Task behavior may further be customized with TaskOptions.
 //
 // This is a code generation directive.
-func Task(fn interface{}, opts ...TaskOption) FlowOption {
+func Task(fn interface{}, opts ...TaskOption) Option {
 	panic("code not generated; run cff")
 }
 
@@ -103,7 +103,7 @@ func Task(fn interface{}, opts ...TaskOption) FlowOption {
 // spans, if any.
 //
 // This is a code generation directive.
-func InstrumentFlow(name string) FlowOption {
+func InstrumentFlow(name string) Option {
 	panic("code not generated; run cff")
 }
 
@@ -113,7 +113,7 @@ func InstrumentFlow(name string) FlowOption {
 // Defaults to max(GOMAXPROCS, 4).
 //
 // This option has effect only if the online_scheduling option is enabled.
-func Concurrency(n int) FlowOption {
+func Concurrency(n int) Option {
 	panic("code not generated; run cff")
 }
 
@@ -135,7 +135,7 @@ func Concurrency(n int) FlowOption {
 // corresponding error is returned.
 //
 // This is a code generation directive.
-func Flow(ctx context.Context, opts ...FlowOption) error {
+func Flow(ctx context.Context, opts ...Option) error {
 	panic("code not generated; run cff")
 }
 

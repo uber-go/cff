@@ -43,9 +43,9 @@ func SimpleFlow() error {
 
 import "context"
 
-type FlowOption interface {}
+type Option interface {}
 
-func Flow(ctx context.Context, opts ...FlowOption) error {
+func Flow(ctx context.Context, opts ...Option) error {
 	panic("code not generated; run cff")
 }
 `,
@@ -70,9 +70,9 @@ func SimpleFlow() error {
 
 import "context"
 
-type FlowOption interface {}
+type Option interface {}
 
-func Flow(ctx context.Context, opts ...FlowOption) error {
+func Flow(ctx context.Context, opts ...Option) error {
 	panic("code not generated; run cff")
 }
 `,

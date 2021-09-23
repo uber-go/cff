@@ -14,13 +14,13 @@ func ExpectsAtLeastOneArgument() {
 // FlowArgumentCallExpression2 is a function that has the wrong arguments to cff.Flow.
 func FlowArgumentCallExpression2() {
 	cff.Flow(context.Background(),
-		(cff.FlowOption)(nil),
+		(cff.Option)(nil),
 	)
 }
 
 // FlowArgumentCallExpression is a function that has the wrong arguments to cff.Flow.
 func FlowArgumentCallExpression() {
-	bad := (cff.FlowOption)(nil)
+	bad := (cff.Option)(nil)
 	cff.Flow(context.Background(),
 		bad,
 	)
@@ -28,7 +28,7 @@ func FlowArgumentCallExpression() {
 
 // FlowArgumentNonCFF is a function that has the wrong arguments to cff.Flow.
 func FlowArgumentNonCFF() {
-	badProvider := struct{ ProvidesBad func() cff.FlowOption }{ProvidesBad: func() cff.FlowOption { return cff.Params() }}
+	badProvider := struct{ ProvidesBad func() cff.Option }{ProvidesBad: func() cff.Option { return cff.Params() }}
 	cff.Flow(context.Background(),
 		badProvider.ProvidesBad(),
 	)

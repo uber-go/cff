@@ -48,7 +48,7 @@ func TestCodeGenerateFails(t *testing.T) {
 			},
 			{
 				File:         "cff-flow-arguments.go",
-				ErrorMatches: "expected cff call but got field ProvidesBad func\\(\\) go.uber.org/cff.FlowOption",
+				ErrorMatches: "expected cff call but got field ProvidesBad func\\(\\) go.uber.org/cff.Option",
 			},
 			{
 				File:         "cff-flow-arguments.go",
@@ -87,7 +87,7 @@ func TestCodeGenerateFails(t *testing.T) {
 			// ExpectedTasksBadCallExpr
 			{
 				File:         "cff-task-arguments.go",
-				ErrorMatches: "expected function, got go.uber.org/cff.FlowOption",
+				ErrorMatches: "expected function, got go.uber.org/cff.Option",
 			},
 			// ExpectedTasksBadCallExprNotCFF
 			{
