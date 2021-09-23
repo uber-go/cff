@@ -1,5 +1,3 @@
-// +build cff
-
 package instrumentimplied
 
 import (

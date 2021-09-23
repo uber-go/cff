@@ -1,5 +1,3 @@
-// +build cff
-
 package cycles
 
 import (

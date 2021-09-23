@@ -38,7 +38,7 @@ func TestInstrumentEmitter(t *testing.T) {
 	flowInfo := &cff.FlowInfo{
 		Name:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   227,
+		Line:   225,
 		Column: 8,
 	}
 
@@ -196,7 +196,7 @@ func TestInstrumentRecoverME(t *testing.T) {
 	emitter.EXPECT().FlowInit(&cff.FlowInfo{
 		Name:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   227,
+		Line:   225,
 		Column: 8,
 	}).Return(flowEmitter)
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
@@ -362,13 +362,13 @@ func TestPanic(t *testing.T) {
 		&cff.TaskInfo{
 			Name:   "Atoi",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   349,
+			Line:   347,
 			Column: 12,
 		},
 		&cff.FlowInfo{
 			Name:   "",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   346,
+			Line:   344,
 			Column: 9,
 		}).Return(taskEmitter)
 	emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)

@@ -1,5 +1,3 @@
-// +build cff
-
 package nestedparent
 
 import (

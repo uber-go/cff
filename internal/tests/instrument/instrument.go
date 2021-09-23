@@ -1,5 +1,3 @@
-// +build cff
-
 // Package instrument verifies that default and custom Emitter
 // implementations trigger on events and emit specification in the CFF2 ERD.
 // DefaultEmitter tests default emitter.
