@@ -7,6 +7,8 @@ package cff
 
 import "context"
 
+const _noGenMsg = "code not generated; run cff"
+
 // NOTE: All code generation directives must be added to this file. The list
 // of directives is updated automatically based on the contents of this file.
 
@@ -22,7 +24,7 @@ type Option interface {
 //
 // This is a code generation directive.
 func Params(args ...interface{}) Option {
-	panic("code not generated; run cff")
+	panic(_noGenMsg)
 }
 
 // Results specifies one or more outputs for a Flow as pointers.
@@ -35,7 +37,7 @@ func Params(args ...interface{}) Option {
 //
 // This is a code generation directive.
 func Results(results ...interface{}) Option {
-	panic("code not generated; run cff")
+	panic(_noGenMsg)
 }
 
 // WithEmitter provides an optional observer for flow events. Emitters can
@@ -56,7 +58,7 @@ func Results(results ...interface{}) Option {
 //
 // This is a code generation directive.
 func WithEmitter(Emitter) Option {
-	panic("code not generated; run cff")
+	panic(_noGenMsg)
 }
 
 // Task specifies a task for execution with a flow. A Task is any executable
@@ -95,7 +97,7 @@ func WithEmitter(Emitter) Option {
 //
 // This is a code generation directive.
 func Task(fn interface{}, opts ...TaskOption) Option {
-	panic("code not generated; run cff")
+	panic(_noGenMsg)
 }
 
 // InstrumentFlow specifies that this Flow should be instrumented for
@@ -104,7 +106,7 @@ func Task(fn interface{}, opts ...TaskOption) Option {
 //
 // This is a code generation directive.
 func InstrumentFlow(name string) Option {
-	panic("code not generated; run cff")
+	panic(_noGenMsg)
 }
 
 // Concurrency specifies the maximum number of goroutines CFF2 should use to
@@ -114,7 +116,7 @@ func InstrumentFlow(name string) Option {
 //
 // This option has effect only if the online_scheduling option is enabled.
 func Concurrency(n int) Option {
-	panic("code not generated; run cff")
+	panic(_noGenMsg)
 }
 
 // Flow specifies a single Flow for execution with CFF. The provided context
@@ -136,7 +138,7 @@ func Concurrency(n int) Option {
 //
 // This is a code generation directive.
 func Flow(ctx context.Context, opts ...Option) error {
-	panic("code not generated; run cff")
+	panic(_noGenMsg)
 }
 
 // TaskOption customizes the execution behavior of a single Task.
@@ -156,7 +158,7 @@ type TaskOption interface {
 //
 // This is a code generation directive.
 func FallbackWith(results ...interface{}) TaskOption {
-	panic("code not generated; run cff")
+	panic(_noGenMsg)
 }
 
 // Predicate specifies that the corresponding Task should be executed only if
@@ -179,7 +181,7 @@ func FallbackWith(results ...interface{}) TaskOption {
 //
 // This is a code generation directive.
 func Predicate(fn interface{}) TaskOption {
-	panic("code not generated; run cff")
+	panic(_noGenMsg)
 }
 
 // Instrument specifies that this Task should be instrumented for
@@ -188,7 +190,7 @@ func Predicate(fn interface{}) TaskOption {
 //
 // This is a code generation directive.
 func Instrument(name string) TaskOption {
-	panic("code not generated; run cff")
+	panic(_noGenMsg)
 }
 
 // Invoke specifies that task must always be executed, even if none of other
@@ -199,7 +201,7 @@ func Instrument(name string) TaskOption {
 //
 // This is a code generation directive.
 func Invoke(enable bool) TaskOption {
-	panic("code not generated; run cff")
+	panic(_noGenMsg)
 }
 
 // Parallel specifies a Parallel operation for execution with CFF. The provided
@@ -224,7 +226,7 @@ func Invoke(enable bool) TaskOption {
 // This is a code generation directive. Files using this must have the "cff"
 // build tag.
 func Parallel(ctx context.Context, opts ...Option) error {
-	panic("code not generated; run cff")
+	panic(_noGenMsg)
 }
 
 // Tasks specifies functions for execution with Parallel. Tasks are any
@@ -238,6 +240,9 @@ func Parallel(ctx context.Context, opts ...Option) error {
 //  func(context.Context) error
 //
 // Tasks functions do not accept other arguments or return values.
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
 func Tasks(fn ...interface{}) Option {
-	panic("code not generated; run cff")
+	panic(_noGenMsg)
 }
