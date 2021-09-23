@@ -57,8 +57,8 @@ func newGenerator(opts generatorOpts) *generator {
 }
 
 func (g *generator) GenerateFile(f *file) error {
-	if len(f.Flows) == 0 {
-		// Don't regenerate files that don't have flows.
+	if len(f.Generators) == 0 {
+		// Don't regenerate files that don't have directiveGenerators.
 		return nil
 	}
 
@@ -82,18 +82,27 @@ func (g *generator) GenerateFile(f *file) error {
 	}
 
 	var lastOff int
-	for _, flow := range f.Flows {
-		// Everything from previous position up to this flow call.
-		if _, err := buff.Write(bs[lastOff:posFile.Offset(flow.Pos())]); err != nil {
+	for _, gen := range f.Generators {
+		// Everything from previous position up to this cff generator call.
+		if _, err := buff.Write(bs[lastOff:posFile.Offset(gen.Pos())]); err != nil {
 			return err
 		}
 
-		// Generate code for the flow.
-		if err := g.generateFlow(f, flow, &buff, addImports, aliases); err != nil {
+		// Generate code for top-level CFF2 constructs and update the
+		// addImports map.
+		if err = gen.generate(
+			genParams{
+				generator:  g,
+				file:       f,
+				writer:     &buff,
+				addImports: addImports,
+				aliases:    aliases,
+			},
+		); err != nil {
 			return err
 		}
 
-		lastOff = posFile.Offset(flow.End())
+		lastOff = posFile.Offset(gen.End())
 	}
 
 	// Write remaining code as-is.
@@ -316,4 +325,36 @@ func printImportAlias(importPath, alias string, addImports map[string]string, al
 		// an "_" until it is unique.
 		alias = "_" + alias
 	}
+}
+
+type genParams struct {
+	generator  *generator
+	file       *file
+	writer     io.Writer
+	addImports map[string]string
+	aliases    map[string]struct{}
+}
+
+// directiveGenerator generates code for top-level CFF constructs.
+type directiveGenerator interface {
+	ast.Node
+	// generate produces CFF code with side effects.
+	generate(p genParams) error
+}
+
+type flowGenerator struct {
+	flow *flow
+}
+
+// generate adapts cff.Flow code generation.
+func (g flowGenerator) generate(p genParams) error {
+	return p.generator.generateFlow(p.file, g.flow, p.writer, p.addImports, p.aliases)
+}
+
+func (g flowGenerator) End() token.Pos {
+	return g.flow.End()
+}
+
+func (g flowGenerator) Pos() token.Pos {
+	return g.flow.Pos()
 }

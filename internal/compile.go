@@ -78,8 +78,9 @@ type file struct {
 	// Packages that were imported unnamed.
 	UnnamedImports map[string]struct{}
 
-	Filepath string
-	Flows    []*flow
+	Filepath   string
+	Flows      []*flow
+	Generators []directiveGenerator
 }
 
 func (c *compiler) CompileFile(file *ast.File, pkg *Package) (*file, error) {
@@ -143,7 +144,14 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 
 			switch {
 			case fn.Name() == "Flow":
-				file.Flows = append(file.Flows, c.compileFlow(astFile, n))
+				flow := c.compileFlow(astFile, n)
+				file.Flows = append(file.Flows, flow)
+				file.Generators = append(
+					file.Generators,
+					flowGenerator{
+						flow: flow,
+					},
+				)
 
 			case IsCodegenDirective(fn.Name()):
 				c.errf("unexpected code generation directive %q: "+
