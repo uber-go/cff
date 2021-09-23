@@ -32,20 +32,14 @@ err := cff.Flow(
 )
 ```
 
-Tag the files you used CFF in with the `cff` build tag. This excludes them from
-being built by the Go compiler.
+## Bazel Rules
 
-```
-// +build cff
+If you write the code above and then run gazelle, you'll see your `BUILD.bazel`
+file change. Gazelle will add two bazel rules: `cff` and `go_library`. The `cff`
+rule defines how to generate CFF code and the `go_library` rule defines a library
+that uses the generated code.
 
-package userservice
-```
-
-## Bazel Rule
-
-Create cff Bazel target for your package. 
-
-A full example: 
+An example:
 ```
 load("//rules:cff.bzl", "cff")
 
@@ -63,22 +57,22 @@ cff(
 )
 ```
 
+Let's break down each argument.
 
-so let's break down each argument.
-
-In your `BUILD.bazel` file, add import to cff rule:
+This allows the usage of the CFF bazel rule.
 ```
 load("//rules:cff.bzl", "cff")
 ```
 
-This is your only CFF target for the package, so name something relevant to CFF. 
-This name will be used by `go_library` to export your package containing CFF flow:  
+
+The name from the CFF rule is used in a `go_library` to access the generated
+code.
 ```
 name = "cff"
 ```
 
-Internal functions that are dependencies of your CFF flows. They are declared to
-be added onto $GOPATH when compiling your CFF flow. In this case, `aflow.go` uses
+Internal functions that are dependencies of CFF flows. They are declared to
+be added onto $GOPATH when compiling a CFF flow. In this case, `aflow.go` uses
 `afunc.go` within the flow:
 ````
 srcs = [
@@ -86,9 +80,8 @@ srcs = [
     ],
 ````
 
-CFF sources containing `+build cff` tag. You can refer to sources by the full label including the package 
-or just the file name. In this case, `aflow.go` and `bflow.go` are within the same
-package.
+CFF sources for the cff rule. CFF source files are defined as any Go files that
+contain a CFF code generation directive such as `cff.Flow` or `cff.Task`.
 ````
 cff_srcs = ["aflow.go", "bflow.go"],
 ````
@@ -98,7 +91,7 @@ Import path leading to package containing CFF source code:
 importpath = "go.uber.org/cff/internal/tests/sandwich",
 ````
 
-Dependencies of the CFF flows. Must contain at least the interface to supported CFF 
+Dependencies of the CFF flows. This will contain at least the interface to supported CFF
 options.
 ````
 deps = [
@@ -106,60 +99,58 @@ deps = [
     ],
 ````
 
-CFF Bazel rule outputs all generated files with current convention of `_gen.go` 
-appended to the source file. You can view the generated code by adding a 
+CFF Bazel rule outputs all generated files with current convention of `_gen.go`
+appended to the source file. You can view the generated code by adding a
 `--output_groups=go_generated_srcs ` argument when building your target:
 ```
 bazel build --output_groups=go_generated_srcs //src/go.uber.org/cff/internal/tests/nested_parent:cff
 ```
 
-### Using CFF Rule ###
-
-After creating the cff target, you can build a library out of the generated files via
+A library is created out of the generated files via
 ```
 go_library(
     name = "flowcaller",
     srcs = [
         "afunc.go",
         "flowcaller.go",
-        ":cff",  # keep
+        ":cff",
     ],
     importpath = "go.uber.org/cff/internal/tests/sandwich",
     visibility = ["//visibility:public"],
 )
 ```
-where `:cff` is the target we created above. 
+where `:cff` is the target created above.
 
-Note that until gazelle rules are in place, `#keep` signals to gazelle not to 
-delete this source.  
+In order to auto generate all of these rules, just run `bin/gazelle` on your
+chosen package.
 
 ### CLI ###
-Alternatively, to experiment with CFF you can run the `cff` command on a specific package and specify the output path.
-The script lives under monorepo root in `bin/cff` eg `$GOPATH/bin/cff` and if `$PATH` contains it, can be called via 
+To experiment with CFF you can run the `cff` command on a specific package and specify the output path.
+The script lives under monorepo root in `bin/cff` eg `$GOPATH/bin/cff` and if `$PATH` contains it, can be called via
 `cff` for example,
 
 ```shell
 $ cff go.uber.org/cff/internal/tests/basic --file=basic.go=/tmp/basic_gen.go
 ```
 
-This will generate `basic.go` inside `go.uber.org/cff/internal/tests/basic` to 
-`/tmp/basic_gen.go`, and the relevant sections eg `cff.Flow` in the code will be replaced 
+This will generate `basic.go` inside `go.uber.org/cff/internal/tests/basic` to
+`/tmp/basic_gen.go`, and the relevant sections eg `cff.Flow` in the code will be replaced
 with generated code.
 
 ### Developing on CFF ###
 
-`internal/compile.go` and `internal/gen.go` contain the code for the static analysis and Go code generation respectively. 
+`internal/compile.go` and `internal/gen.go` contain the code for the static analysis and Go code generation respectively.
 
 #### Tests ####
 
-"Golden" tests are under the `internal/tests` folder, which is written as one folder per test, and a single CFF 
-source file matching the directory name (e.g. `internal/tests/basic/basic.go`). These have CFF sources that we want 
+"Golden" tests are under the `internal/tests` folder, which is written as one folder per test, and a single CFF
+source file matching the directory name (e.g. `internal/tests/basic/basic.go`). These have CFF sources that we want
 to assert (1) the CFF compiler works on them correctly, and (2) that the behavior of the generated code is as we
-expect. (1) is enforced by the bazel rule in each directory, and (2) is enforced by `*_test.go` files in each directory. 
+expect. (1) is enforced by the bazel rule in each directory, and (2) is enforced by `*_test.go` files in each directory.
 
-Failing test cases are in `internal/failing_tests` and are processed by `aquaregia_test.go` which does **not** use the 
+Failing test cases are in `internal/failing_tests` and are processed by `aquaregia_test.go` which does **not** use the
 bazel rule for CFF, because we want to assert (1) that the source code fails the CFF compiler, and (2) assert on the
-error that was returned for the compiler. 
+error that was returned for the compiler.
 
 ##### Test speedup #####
 

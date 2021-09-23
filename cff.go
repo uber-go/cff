@@ -2,13 +2,7 @@
 // orchestrating a number of related functions with automated concurrent
 // execution.
 //
-// Specify one or more flows in your code with the Flow function, tag your Go
-// file with the "cff" build tag, and run the cff tool.
-//
-//   // +build cff
-//
-// This is necessary for every Go file that makes use of CFF2's code
-// generation directives.
+// Specify one or more flows in your code with the Flow function.
 package cff
 
 import "context"
@@ -26,8 +20,7 @@ type FlowOption interface {
 //
 //  cff.Params(request)
 //
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
+// This is a code generation directive.
 func Params(args ...interface{}) FlowOption {
 	panic("code not generated; run cff")
 }
@@ -40,8 +33,7 @@ func Params(args ...interface{}) FlowOption {
 //    cff.Task(...),
 //  )
 //
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
+// This is a code generation directive.
 func Results(results ...interface{}) FlowOption {
 	panic("code not generated; run cff")
 }
@@ -62,8 +54,7 @@ func Results(results ...interface{}) FlowOption {
 //    cff.WithEmitter(cff.LogEmitter(logger)),
 //  )
 //
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
+// This is a code generation directive.
 func WithEmitter(Emitter) FlowOption {
 	panic("code not generated; run cff")
 }
@@ -102,8 +93,7 @@ func WithEmitter(Emitter) FlowOption {
 //
 // Task behavior may further be customized with TaskOptions.
 //
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
+// This is a code generation directive.
 func Task(fn interface{}, opts ...TaskOption) FlowOption {
 	panic("code not generated; run cff")
 }
@@ -112,8 +102,7 @@ func Task(fn interface{}, opts ...TaskOption) FlowOption {
 // observability. The provided name will be used in emitted metrics, logs, and
 // spans, if any.
 //
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
+// This is a code generation directive.
 func InstrumentFlow(name string) FlowOption {
 	panic("code not generated; run cff")
 }
@@ -145,8 +134,7 @@ func Concurrency(n int) FlowOption {
 // inputs and outputs. If any of the tasks fail, the entire Flow fails and the
 // corresponding error is returned.
 //
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
+// This is a code generation directive.
 func Flow(ctx context.Context, opts ...FlowOption) error {
 	panic("code not generated; run cff")
 }
@@ -166,8 +154,7 @@ type TaskOption interface {
 //
 //   cff.Task(client.ListUsers, cff.FallbackWith(cachedUserList))
 //
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
+// This is a code generation directive.
 func FallbackWith(results ...interface{}) TaskOption {
 	panic("code not generated; run cff")
 }
@@ -190,8 +177,7 @@ func FallbackWith(results ...interface{}) TaskOption {
 // tasks that depend on the type provided by that function get the zero value
 // for that type.
 //
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
+// This is a code generation directive.
 func Predicate(fn interface{}) TaskOption {
 	panic("code not generated; run cff")
 }
@@ -200,8 +186,7 @@ func Predicate(fn interface{}) TaskOption {
 // observability. The provided name will be used in emitted metrics, logs, and
 // spans, if any.
 //
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
+// This is a code generation directive.
 func Instrument(name string) TaskOption {
 	panic("code not generated; run cff")
 }
@@ -212,8 +197,7 @@ func Instrument(name string) TaskOption {
 // Only tasks marked with Invoke are allowed to have zero non-error or
 // single error returns.
 //
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
+// This is a code generation directive.
 func Invoke(enable bool) TaskOption {
 	panic("code not generated; run cff")
 }
