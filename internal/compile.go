@@ -80,6 +80,7 @@ type file struct {
 
 	Filepath   string
 	Flows      []*flow
+	Parallels  []*parallel
 	Generators []directiveGenerator
 }
 
@@ -120,8 +121,9 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 			file.UnnamedImports[importPath] = struct{}{}
 			return false
 		case *ast.CallExpr:
-			// We're looking for a call in the form "cff.Flow". It will be a
-			// SelectorExpr where the "X" is a reference to the "cff" package.
+			// We're looking for a call in the form "cff.Flow" or
+			// "cff.Parallel". It will be a SelectorExpr where the "X" is a
+			// reference to the "cff" package.
 			sel, ok := n.Fun.(*ast.SelectorExpr)
 			if !ok {
 				return true // keep looking
@@ -137,7 +139,7 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 			}
 
 			// Inside a +cff file, code generation directives
-			// should only appear inside a cff.Flow.
+			// should only appear inside a cff.Flow or cff.Parallel.
 			//
 			// Code generation directives by themselves at the
 			// top-level are not allowed.
@@ -153,9 +155,19 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
 					},
 				)
 
+			case fn.Name() == "Parallel":
+				parallel := c.compileParallel(astFile, n)
+				file.Parallels = append(file.Parallels, parallel)
+				file.Generators = append(
+					file.Generators,
+					parallelGenerator{
+						parallel: parallel,
+					},
+				)
+
 			case IsCodegenDirective(fn.Name()):
 				c.errf("unexpected code generation directive %q: "+
-					"only cff.Flow may be called at the top-level", c.nodePosition(n), fn.Name())
+					"only cff.Flow or cff.Parallel may be called at the top-level", c.nodePosition(n), fn.Name())
 			default:
 				// Calls to functions that are not code
 				// generation directives (LogEmitter, etc.)
@@ -650,7 +662,6 @@ type compiledFunc struct {
 func (c *compiler) compileFunction(expr ast.Expr) *compiledFunc {
 	typ := c.info.TypeOf(expr)
 	sig, ok := typ.(*types.Signature)
-
 	if !ok {
 		c.errf("expected function, got %v", c.nodePosition(expr), typ)
 		return nil

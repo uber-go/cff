@@ -358,3 +358,19 @@ func (g flowGenerator) End() token.Pos {
 func (g flowGenerator) Pos() token.Pos {
 	return g.flow.Pos()
 }
+
+type parallelGenerator struct {
+	parallel *parallel
+}
+
+func (g parallelGenerator) generate(p genParams) error {
+	return p.generator.generateParallel(p.file, g.parallel, p.writer, p.addImports, p.aliases)
+}
+
+func (g parallelGenerator) End() token.Pos {
+	return g.parallel.End()
+}
+
+func (g parallelGenerator) Pos() token.Pos {
+	return g.parallel.Pos()
+}

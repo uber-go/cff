@@ -36,7 +36,9 @@ type SchedulerEmitter interface {
 // SchedulerInfo provides information about the context the scheduler
 // is running in.
 type SchedulerInfo struct {
-	FlowInfo *FlowInfo
+	// Only one of these entries should be set at a time.
+	FlowInfo     *FlowInfo
+	ParallelInfo *ParallelInfo
 }
 
 // FlowInfo provides information to uniquely identify a flow.
@@ -49,6 +51,12 @@ type FlowInfo struct {
 // TaskInfo provides information to uniquely identify a task.
 type TaskInfo struct {
 	Name         string
+	File         string
+	Line, Column int
+}
+
+// ParallelInfo provides information to uniquely identify a Parallel operation.
+type ParallelInfo struct {
 	File         string
 	Line, Column int
 }

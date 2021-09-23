@@ -10,7 +10,7 @@ import "context"
 // NOTE: All code generation directives must be added to this file. The list
 // of directives is updated automatically based on the contents of this file.
 
-// Option specifies parameters for a Flow.
+// Option specifies parameters for a Flow or Parallel.
 type Option interface {
 	cffOption()
 }
@@ -199,5 +199,45 @@ func Instrument(name string) TaskOption {
 //
 // This is a code generation directive.
 func Invoke(enable bool) TaskOption {
+	panic("code not generated; run cff")
+}
+
+// Parallel specifies a Parallel operation for execution with CFF. The provided
+// context is made available to all tasks in the Parallel.
+//
+// A Parallel MUST have at least one Tasks function.
+//
+//  cff.Parallel(ctx,
+//    cff.Concurrency(4),
+//    cff.Tasks(
+//      func(ctx context.Context) error {
+//         ...
+//      },
+//      ...
+//    ),
+//  )
+//
+// Tasks will run independently with bounded parallelism with all other
+// Parallel declared tasks. If any of the tasks fail, Parallel stops
+// processsing outstanding tasks and an error is returned.
+//
+// This is a code generation directive. Files using this must have the "cff"
+// build tag.
+func Parallel(ctx context.Context, opts ...Option) error {
+	panic("code not generated; run cff")
+}
+
+// Tasks specifies functions for execution with Parallel. Tasks are any
+// executable function or bound method available in the scope when cff.Parallel
+// is called.
+// Tasks can request the context for the current execution scope by optionally
+// adding a context.Context as the only argument.
+// Additionally, Tasks that may fail can do so by optionally adding an error
+// as the only return value.
+//
+//  func(context.Context) error
+//
+// Tasks functions do not accept other arguments or return values.
+func Tasks(fn ...interface{}) Option {
 	panic("code not generated; run cff")
 }

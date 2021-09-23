@@ -1,0 +1,58 @@
+{{- $context := import "context" -}}
+{{- $cff := import "go.uber.org/cff" -}}
+{{- $parallel := .Parallel -}}
+{{- with .Parallel -}}
+func(
+	ctx {{ $context }}.Context,
+	emitter {{ $cff }}.Emitter,
+) (err error) {
+	var (
+		parallelInfo = &{{ $cff }}.ParallelInfo{
+			File: {{ quote $parallel.PosInfo.File}},
+			Line: {{ $parallel.PosInfo.Line }},
+			Column: {{ $parallel.PosInfo.Column}},
+		}
+
+		schedInfo = &{{ $cff }}.SchedulerInfo{
+			ParallelInfo: parallelInfo,
+		}
+
+		// possibly unused
+		_ = parallelInfo
+	)
+
+	schedEmitter := emitter.SchedulerInit(schedInfo)
+
+	sched := {{ $cff }}.BeginFlow(
+		{{- with .Concurrency -}}
+			{{ expr . }}
+		{{- else -}}
+			0
+		{{- end -}}, schedEmitter,
+	)
+
+	type task struct {
+		run func({{ $context }}.Context) error
+		job *{{ $cff }}.ScheduledJob
+	}
+
+	{{ range $parallel.Tasks }}
+		{{ template "parallel_task.go.tmpl" . }}
+	{{ end }}
+
+	if err := sched.Wait(ctx); err != nil {
+		return err
+	}
+	return nil
+}(
+	{{ expr .Ctx }},
+	{{ template "buildEmitter" $parallel }},
+)
+{{- end -}}
+
+{{- define "buildEmitter" -}}
+	{{- $cff :=  import "go.uber.org/cff" -}}
+	{{ $cff }}.NopEmitter()
+{{- end -}}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}

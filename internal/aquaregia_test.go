@@ -72,7 +72,7 @@ func TestCodeGenerateFails(t *testing.T) {
 			// ExpectedFlowArgumentsCallExpressions
 			{
 				File:         "cff-task-arguments.go",
-				ErrorMatches: `unexpected code generation directive "Instrument": only cff.Flow may be called at the top-level`,
+				ErrorMatches: `unexpected code generation directive "Instrument": only cff.Flow or cff.Parallel may be called at the top-level`,
 			},
 			// ExpectedFlowArgumentsNotCFF
 			{

@@ -406,6 +406,81 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		cff.EmitterStack(cff.TallyEmitter(h.scope), cff.LogEmitter(h.logger)),
 		req,
 	)
+
+	err = func(
+		ctx context.Context,
+		emitter cff.Emitter,
+	) (err error) {
+		var (
+			parallelInfo = &cff.ParallelInfo{
+				File:   "go.uber.org/cff/examples/magic.go",
+				Line:   82,
+				Column: 8,
+			}
+
+			schedInfo = &cff.SchedulerInfo{
+				ParallelInfo: parallelInfo,
+			}
+
+			// possibly unused
+			_ = parallelInfo
+		)
+
+		schedEmitter := emitter.SchedulerInit(schedInfo)
+
+		sched := cff.BeginFlow(2, schedEmitter)
+
+		type task struct {
+			run func(context.Context) error
+			job *cff.ScheduledJob
+		}
+
+		// go.uber.org/cff/examples/magic.go:86:4
+		func6 := new(task)
+		func6.run = func(ctx context.Context) (err error) {
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					err = fmt.Errorf("parallel function panic: %v", recovered)
+				}
+			}()
+
+			err = func(_ context.Context) error {
+				return SendMessage()
+			}(ctx)
+			return
+		}
+
+		func6.job = sched.Enqueue(ctx, cff.Job{
+			Run: func6.run,
+		})
+
+		// go.uber.org/cff/examples/magic.go:89:4
+		func7 := new(task)
+		func7.run = func(ctx context.Context) (err error) {
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					err = fmt.Errorf("parallel function panic: %v", recovered)
+				}
+			}()
+
+			err = SendMessage()
+			return
+		}
+
+		func7.job = sched.Enqueue(ctx, cff.Job{
+			Run: func7.run,
+		})
+
+		if err := sched.Wait(ctx); err != nil {
+			return err
+		}
+		return nil
+	}(
+		ctx,
+		cff.NopEmitter(),
+	)
 	return res, err
 }
 
@@ -467,4 +542,9 @@ func (*SESClient) BatchSendEmail(req []*SendEmailRequest) ([]*SendEmailResponse,
 		res[i] = &SendEmailResponse{MessageID: strconv.Itoa(i)}
 	}
 	return res, nil
+}
+
+// SendMessage returns nil error.
+func SendMessage() error {
+	return nil
 }

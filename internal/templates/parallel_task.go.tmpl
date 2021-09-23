@@ -1,0 +1,27 @@
+{{- $context := import "context" -}}
+{{- $cff := import "go.uber.org/cff" -}}
+{{- $t := printf "func%d" .Serial -}}
+
+// {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
+{{ $t }} := new(task)
+{{ $t }}.run = func(ctx {{ $context }}.Context) (err error) {
+	defer func() {
+		recovered := recover()
+		if recovered != nil {
+			err = {{ import "fmt" }}.Errorf("parallel function panic: %v", recovered)
+		}
+	}()
+
+	{{ if .Function.HasError }} err = {{ end }}{{ template "callFunc" . }}
+	return
+}
+
+{{ $t }}.job = sched.Enqueue(ctx, {{ $cff }}.Job{
+    Run: func{{ .Serial }}.run,
+})
+
+{{- define "callFunc" -}}
+	{{- expr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }})
+{{- end -}}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}

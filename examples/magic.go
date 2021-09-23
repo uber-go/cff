@@ -78,6 +78,17 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			cff.Instrument("FormSendEmailRequest"),
 		),
 	)
+
+	err = cff.Parallel(
+		ctx,
+		cff.Concurrency(2),
+		cff.Tasks(
+			func(_ context.Context) error {
+				return SendMessage()
+			},
+			SendMessage,
+		),
+	)
 	return res, err
 }
 
@@ -139,4 +150,9 @@ func (*SESClient) BatchSendEmail(req []*SendEmailRequest) ([]*SendEmailResponse,
 		res[i] = &SendEmailResponse{MessageID: strconv.Itoa(i)}
 	}
 	return res, nil
+}
+
+// SendMessage returns nil error.
+func SendMessage() error {
+	return nil
 }
