@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"code.uber.internal/go/importer"
 	"go.uber.org/multierr"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/types/typeutil"
@@ -67,7 +68,7 @@ func (c *compiler) nodePosition(n ast.Node) token.Position {
 
 type file struct {
 	AST     *ast.File
-	Package *Package
+	Package *importer.Package
 
 	// Map from import path to local names of the import. If the import is
 	// unnamed, it will be recorded as the package name.
@@ -84,12 +85,12 @@ type file struct {
 	Generators []directiveGenerator
 }
 
-func (c *compiler) CompileFile(file *ast.File, pkg *Package) (*file, error) {
+func (c *compiler) CompileFile(file *ast.File, pkg *importer.Package) (*file, error) {
 	f := c.compileFile(file, pkg)
 	return f, multierr.Combine(c.errors...)
 }
 
-func (c *compiler) compileFile(astFile *ast.File, pkg *Package) *file {
+func (c *compiler) compileFile(astFile *ast.File, pkg *importer.Package) *file {
 	file := file{
 		AST:            astFile,
 		Package:        pkg,

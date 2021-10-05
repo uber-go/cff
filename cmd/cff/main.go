@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"code.uber.internal/go/importer"
 	"go.uber.org/cff/internal"
 	"github.com/jessevdk/go-flags"
 	"go.uber.org/multierr"
@@ -28,7 +29,6 @@ type options struct {
 }
 
 // file is the value of the --file option.
-//
 // Two forms are supported:
 //
 //  --file=NAME
@@ -130,7 +130,7 @@ func run(args []string) error {
 		outputs[file.Name] = file.OutputPath
 	}
 
-	archives := make([]internal.Archive, len(f.Archives))
+	archives := make([]importer.Archive, len(f.Archives))
 	for i, archive := range f.Archives {
 		a, err := parseArchive(archive)
 		if err != nil {
@@ -140,7 +140,7 @@ func run(args []string) error {
 	}
 
 	fset := token.NewFileSet()
-	pkgs, err := loadPackages(internal.LoadParams{
+	pkgs, err := loadPackages(importer.LoadParams{
 		Fset:       fset,
 		ImportPath: f.Args.ImportPath,
 		Srcs:       f.Sources,
@@ -192,9 +192,10 @@ func run(args []string) error {
 	return err
 }
 
-func loadPackages(p internal.LoadParams) ([]*internal.Package, error) {
+func loadPackages(p importer.LoadParams) ([]*importer.Package, error) {
 	if len(p.Archives) > 0 {
-		return internal.PackagesArchive(p)
+		pkg, err := importer.PackagesArchive(p)
+		return []*importer.Package{pkg}, err
 	}
 
 	mode := packages.NeedName |
@@ -220,7 +221,7 @@ func loadPackages(p internal.LoadParams) ([]*internal.Package, error) {
 		return nil, errors.New("no packages found")
 	}
 
-	ipkgs := make([]*internal.Package, 0, len(pkgs))
+	ipkgs := make([]*importer.Package, 0, len(pkgs))
 	for _, pkg := range pkgs {
 		for _, e := range pkg.Errors {
 			err = multierr.Append(err, e)
@@ -228,7 +229,7 @@ func loadPackages(p internal.LoadParams) ([]*internal.Package, error) {
 		if err != nil {
 			return nil, err
 		}
-		ipkgs = append(ipkgs, internal.NewPackage(pkg))
+		ipkgs = append(ipkgs, importer.NewPackage(pkg))
 	}
 	return ipkgs, nil
 }
@@ -246,14 +247,14 @@ func loadPackages(p internal.LoadParams) ([]*internal.Package, error) {
 // The flag is structured in this format to closely follow https://github.com/bazelbuild/rules_go/blob/8ea79bbd5e6ea09dc611c245d1dc09ef7ab7118a/go/private/actions/compile.bzl#L20;
 // however, the IMPORTPATHS and EXPORT elements are ignored. There may be future
 // work involved in resolving import aliases, using IMPORTPATHS.
-func parseArchive(archive string) (internal.Archive, error) {
+func parseArchive(archive string) (importer.Archive, error) {
 	args := strings.Split(archive, "=")
 	if len(args) != 4 {
-		return internal.Archive{}, fmt.Errorf("expected 4 elements, got %d", len(args))
+		return importer.Archive{}, fmt.Errorf("expected 4 elements, got %d", len(args))
 	}
 
 	// Currently, we ignore the IMPORTPATHS and EXPORT elements.
-	return internal.Archive{
+	return importer.Archive{
 		ImportMap: args[1],
 		File:      args[2],
 	}, nil

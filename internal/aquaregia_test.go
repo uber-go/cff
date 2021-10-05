@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"code.uber.internal/devexp/bazel/testutil"
+	"code.uber.internal/go/importer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/tools/go/packages"
@@ -288,7 +289,7 @@ func TestCodeGenerateFails(t *testing.T) {
 			processor := Processor{Fset: fset}
 
 			for _, gopkg := range pkgs {
-				pkg := NewPackage(gopkg)
+				pkg := importer.NewPackage(gopkg)
 				// Output path can be empty so code gets generated next to source in case of failed
 				// tests.
 				var errors []error

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"code.uber.internal/go/importer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/tools/go/packages"
@@ -40,7 +41,7 @@ func TestNoOutputTypes(t *testing.T) {
 type toCompile struct {
 	file     *ast.File
 	compiler *compiler
-	pkg      *Package
+	pkg      *importer.Package
 }
 
 // setupCompilers loads a collection of CFF source files and compilers for
@@ -78,7 +79,7 @@ func setupCompilers(
 
 	toCompileMap := make(map[string]toCompile)
 	for _, gopkg := range pkgs {
-		pkg := NewPackage(gopkg)
+		pkg := importer.NewPackage(gopkg)
 		for i, path := range pkg.CompiledGoFiles {
 			c := newCompiler(compilerOpts{
 				Fset:    cfg.Fset,

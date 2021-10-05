@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"go.uber.org/cff/internal"
+	"code.uber.internal/go/importer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,7 +12,7 @@ func TestParseArchive(t *testing.T) {
 	type testCase struct {
 		desc    string
 		give    string
-		want    internal.Archive
+		want    importer.Archive
 		wantErr string
 	}
 
@@ -20,7 +20,7 @@ func TestParseArchive(t *testing.T) {
 		{
 			desc: "success",
 			give: "foo:bar=hello=world=baz",
-			want: internal.Archive{
+			want: importer.Archive{
 				ImportMap: "hello",
 				File:      "world",
 			},
