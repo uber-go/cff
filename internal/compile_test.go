@@ -79,7 +79,7 @@ func setupCompilers(
 
 	toCompileMap := make(map[string]toCompile)
 	for _, gopkg := range pkgs {
-		pkg := importer.NewPackage(gopkg)
+		pkg := newPackage(gopkg)
 		for i, path := range pkg.CompiledGoFiles {
 			c := newCompiler(compilerOpts{
 				Fset:    cfg.Fset,
@@ -94,6 +94,15 @@ func setupCompilers(
 		}
 	}
 	return toCompileMap
+}
+
+func newPackage(pkg *packages.Package) *importer.Package {
+	return &importer.Package{
+		CompiledGoFiles: pkg.CompiledGoFiles,
+		Syntax:          pkg.Syntax,
+		Types:           pkg.Types,
+		TypesInfo:       pkg.TypesInfo,
+	}
 }
 
 // TestCompileFile_Predicate tests that the internal state of the CFF compiler

@@ -194,7 +194,7 @@ func run(args []string) error {
 
 func loadPackages(p importer.LoadParams) ([]*importer.Package, error) {
 	if len(p.Archives) > 0 {
-		pkg, err := importer.PackagesArchive(p)
+		pkg, err := importer.LoadArchive(p)
 		return []*importer.Package{pkg}, err
 	}
 
@@ -207,31 +207,12 @@ func loadPackages(p importer.LoadParams) ([]*importer.Package, error) {
 		packages.NeedSyntax |
 		packages.NeedTypesInfo |
 		packages.NeedTypesSizes
-	pkgs, err := packages.Load(&packages.Config{
+
+	return importer.LoadPackage(p, &packages.Config{
 		Mode:       mode,
 		Fset:       p.Fset,
 		BuildFlags: []string{"-tags=cff"},
-	}, p.ImportPath)
-
-	if err != nil {
-		return nil, fmt.Errorf("could not load packages: %v", err)
-	}
-
-	if len(pkgs) == 0 {
-		return nil, errors.New("no packages found")
-	}
-
-	ipkgs := make([]*importer.Package, 0, len(pkgs))
-	for _, pkg := range pkgs {
-		for _, e := range pkg.Errors {
-			err = multierr.Append(err, e)
-		}
-		if err != nil {
-			return nil, err
-		}
-		ipkgs = append(ipkgs, importer.NewPackage(pkg))
-	}
-	return ipkgs, nil
+	})
 }
 
 // parseArchive parses the archive string to the internal.Archive type.
