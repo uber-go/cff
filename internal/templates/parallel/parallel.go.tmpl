@@ -50,9 +50,4 @@ func(
 )
 {{- end -}}
 
-{{- define "buildEmitter" -}}
-	{{- $cff :=  import "go.uber.org/cff" -}}
-	{{ $cff }}.NopEmitter()
-{{- end -}}
-
 {{- /* vim:set ft=gotexttmpl noet: */ -}}

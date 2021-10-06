@@ -14,6 +14,8 @@ type parallel struct {
 	Ctx         ast.Expr // initial ctx argument to cff.Parallel(...)
 	Concurrency ast.Expr // argument to cff.Concurrency, if any.
 
+	Emitters []ast.Expr // zero or more expressions of the type cff.Emitter.
+
 	Tasks []*parallelTask
 
 	PosInfo *PosInfo // Used to pass information to uniquely identify a task.

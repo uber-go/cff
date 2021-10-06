@@ -20,7 +20,7 @@ func (g *generator) generateParallel(
 	aliases map[string]struct{},
 ) error {
 	t := template.New(_parallelRootTmpl).Funcs(g.parallelFuncMap(file, addImports, aliases))
-	tmpl, err := t.ParseFS(tmplFS, _parallelTmplDir)
+	tmpl, err := t.ParseFS(tmplFS, _parallelTmplDir, _sharedTmplDir)
 	if err != nil {
 		return err
 	}

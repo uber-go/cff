@@ -1,0 +1,14 @@
+{{- define "buildEmitter" -}}
+	{{- $cff :=  import "go.uber.org/cff" -}}
+	{{- with .Emitters -}}
+		{{ $cff }}.EmitterStack(
+			{{- range . -}}
+				{{ expr . }},
+			{{- end -}}
+		)
+	{{- else -}}
+		{{ $cff }}.NopEmitter()
+	{{- end -}}
+{{- end -}}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}

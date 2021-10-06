@@ -21,8 +21,9 @@ import (
 )
 
 const (
-	_flowRootTmpl = "flow.go.tmpl"
-	_flowTmplDir  = "templates/flow/*"
+	_flowRootTmpl  = "flow.go.tmpl"
+	_flowTmplDir   = "templates/flow/*"
+	_sharedTmplDir = "templates/shared/*"
 )
 
 //go:embed templates/*
@@ -147,7 +148,7 @@ func (g *generator) GenerateFile(f *file) error {
 // requires additional imports to be added.
 func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string, aliases map[string]struct{}) error {
 	t := template.New(_flowRootTmpl).Funcs(g.funcMap(file, addImports, aliases))
-	tmpl, err := t.ParseFS(tmplFS, _flowTmplDir)
+	tmpl, err := t.ParseFS(tmplFS, _flowTmplDir, _sharedTmplDir)
 	if err != nil {
 		return err
 	}
