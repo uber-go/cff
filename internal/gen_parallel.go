@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	_parallelTmpl     = "parallel.go.tmpl"
-	_parallelTaskTmpl = "parallel_task.go.tmpl"
+	_parallelRootTmpl = "parallel.go.tmpl"
+	_parallelTmplDir  = "templates/parallel/*"
 )
 
 func (g *generator) generateParallel(
@@ -19,8 +19,12 @@ func (g *generator) generateParallel(
 	addImports map[string]string,
 	aliases map[string]struct{},
 ) error {
-	tmpl := parseTemplates(g.parallelFuncMap(file, addImports, aliases), _parallelTmpl, _parallelTaskTmpl)
-	return tmpl.ExecuteTemplate(w, _parallelTmpl, parallelTemplateData{
+	t := template.New(_parallelRootTmpl).Funcs(g.parallelFuncMap(file, addImports, aliases))
+	tmpl, err := t.ParseFS(tmplFS, _parallelTmplDir)
+	if err != nil {
+		return err
+	}
+	return tmpl.ExecuteTemplate(w, _parallelRootTmpl, parallelTemplateData{
 		Parallel: p,
 	})
 }

@@ -37,7 +37,7 @@ func(
 	}
 
 	{{ range $parallel.Tasks }}
-		{{ template "parallel_task.go.tmpl" . }}
+		{{ template "task.go.tmpl" . }}
 	{{ end }}
 
 	if err := sched.Wait(ctx); err != nil {

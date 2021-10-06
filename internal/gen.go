@@ -2,6 +2,7 @@ package internal
 
 import (
 	"bytes"
+	"embed"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -15,18 +16,17 @@ import (
 	"strconv"
 	"text/template"
 
-	"go.uber.org/cff/internal/templates"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/types/typeutil"
 )
 
 const (
-	_flowTmpl   = "flow.go.tmpl"
-	_taskTmpl   = "task.go.tmpl"
-	_funcTmpl   = "func.go.tmpl"
-	_predTmpl   = "predicate.go.tmpl"
-	_sharedTmpl = "shared.go.tmpl"
+	_flowRootTmpl = "flow.go.tmpl"
+	_flowTmplDir  = "templates/flow/*"
 )
+
+//go:embed templates/*
+var tmplFS embed.FS
 
 type generator struct {
 	fset *token.FileSet
@@ -146,8 +146,12 @@ func (g *generator) GenerateFile(f *file) error {
 // generateFlow runs the CFF template for the given flow and writes it to w, modifying addImports if the template
 // requires additional imports to be added.
 func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string, aliases map[string]struct{}) error {
-	tmpl := parseTemplates(g.funcMap(file, addImports, aliases), _flowTmpl, _funcTmpl, _predTmpl, _sharedTmpl, _taskTmpl)
-	return tmpl.ExecuteTemplate(w, _flowTmpl, flowTemplateData{
+	t := template.New(_flowRootTmpl).Funcs(g.funcMap(file, addImports, aliases))
+	tmpl, err := t.ParseFS(tmplFS, _flowTmplDir)
+	if err != nil {
+		return err
+	}
+	return tmpl.ExecuteTemplate(w, _flowRootTmpl, flowTemplateData{
 		Flow: f,
 	})
 }
@@ -252,32 +256,6 @@ func (g *generator) isPredicate(t types.Type) bool {
 
 type flowTemplateData struct {
 	Flow *flow
-}
-
-// Parses bindata-packaged templates by name in-order.
-func parseTemplates(funcs template.FuncMap, paths ...string) *template.Template {
-	var t *template.Template
-	for _, path := range paths {
-		contents := templates.MustAssetString(path)
-		name := filepath.Base(path)
-
-		// The first template is the root template and all others are
-		// associated with it via .New. Only the first template needs
-		// the functions attached to it.
-		var tmpl *template.Template
-		if t == nil {
-			t = template.New(name).Funcs(funcs)
-			tmpl = t
-		} else {
-			tmpl = t.New(name)
-		}
-
-		template.Must(tmpl.Parse(contents))
-		// We can ignore the return value because the template is
-		// associated with the tree.
-	}
-
-	return t
 }
 
 // printImportAlias processes the importPath and returns the alias that should be used for it while
