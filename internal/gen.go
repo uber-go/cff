@@ -21,10 +21,11 @@ import (
 )
 
 const (
-	_flowTmpl = "flow.go.tmpl"
-	_taskTmpl = "task.go.tmpl"
-	_funcTmpl = "func.go.tmpl"
-	_predTmpl = "predicate.go.tmpl"
+	_flowTmpl   = "flow.go.tmpl"
+	_taskTmpl   = "task.go.tmpl"
+	_funcTmpl   = "func.go.tmpl"
+	_predTmpl   = "predicate.go.tmpl"
+	_sharedTmpl = "shared.go.tmpl"
 )
 
 type generator struct {
@@ -145,7 +146,7 @@ func (g *generator) GenerateFile(f *file) error {
 // generateFlow runs the CFF template for the given flow and writes it to w, modifying addImports if the template
 // requires additional imports to be added.
 func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string, aliases map[string]struct{}) error {
-	tmpl := parseTemplates(g.funcMap(file, addImports, aliases), _flowTmpl, _funcTmpl, _predTmpl, _taskTmpl)
+	tmpl := parseTemplates(g.funcMap(file, addImports, aliases), _flowTmpl, _funcTmpl, _predTmpl, _sharedTmpl, _taskTmpl)
 	return tmpl.ExecuteTemplate(w, _flowTmpl, flowTemplateData{
 		Flow: f,
 	})

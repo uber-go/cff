@@ -106,8 +106,4 @@ tasks = append(tasks, task{{ .Serial }})
 	{{- end }}{{ if .Function.HasError }}{{ if len .Outputs }}, {{ end }}err{{ end }}
 {{- end -}}
 
-{{- define "callTask" -}}
-	{{- expr .Node }}({{- if .Function.WantCtx }}ctx,{{ end }} {{- range .Inputs }}v{{ typeHash . }}, {{- end }})
-{{- end -}}
-
 {{- /* vim:set ft=gotexttmpl noet: */ -}}

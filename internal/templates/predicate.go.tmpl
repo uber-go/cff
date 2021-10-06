@@ -6,7 +6,7 @@
 var p{{ predHash . }} bool
 {{ $p }} := new(predicate)
 {{ $p }}.run = func(ctx {{ $context }}.Context) (err error) {
-    p{{ predHash . }} = {{ template "callPred" . }}
+    p{{ predHash . }} = {{ template "callTask" . }}
     return nil
 }
 
@@ -20,9 +20,5 @@ Run: {{ $p }}.run,
         },
     {{- end }}
 })
-
-{{- define "callPred" -}}
-	{{- expr .Node }}({{- if .Function.WantCtx }}ctx,{{ end }} {{- range .Inputs }}v{{ typeHash . }}, {{- end }})
-{{- end -}}
 
 {{- /* vim:set ft=gotexttmpl noet: */ -}}

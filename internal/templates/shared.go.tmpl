@@ -1,0 +1,5 @@
+{{- define "callTask" -}}
+	{{- expr .Node }}({{- if .Function.WantCtx }}ctx,{{ end }} {{- range .Inputs }}v{{ typeHash . }}, {{- end }})
+{{- end -}}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}
