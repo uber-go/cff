@@ -8,14 +8,14 @@ import (
 	"github.com/uber-go/tally"
 )
 
-// cacheKey uniquely identifies a task or a flow based on the position information.
+// cacheKey uniquely identifies directive and/or task based on the position information.
 type cacheKey struct {
-	TaskName             string // name of the task
-	TaskFile             string // file where task is defined
-	TaskLine, TaskColumn int    // line and column in the file where the task is defined
-	FlowName             string // name of the flow
-	FlowFile             string // file where flow is defined
-	FlowLine, FlowColumn int    // line and column in the file where the flow is defined
+	TaskName                       string // name of the task
+	TaskFile                       string // file where task is defined
+	TaskLine, TaskColumn           int    // line and column in the file where the task is defined
+	DirectiveName                  string // name of the directive
+	DirectiveFile                  string // file where directive is defined
+	DirectiveLine, DirectiveColumn int    // line and column in the file where the directive is defined
 }
 
 type tallyEmitter struct {
@@ -43,14 +43,14 @@ func TallyEmitter(scope tally.Scope) Emitter {
 
 func (e *tallyEmitter) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmitter {
 	cacheKey := cacheKey{
-		TaskName:   taskInfo.Name,
-		TaskFile:   taskInfo.File,
-		TaskLine:   taskInfo.Line,
-		TaskColumn: taskInfo.Column,
-		FlowName:   flowInfo.Name,
-		FlowFile:   flowInfo.File,
-		FlowLine:   flowInfo.Line,
-		FlowColumn: flowInfo.Column,
+		TaskName:        taskInfo.Name,
+		TaskFile:        taskInfo.File,
+		TaskLine:        taskInfo.Line,
+		TaskColumn:      taskInfo.Column,
+		DirectiveName:   flowInfo.Name,
+		DirectiveFile:   flowInfo.File,
+		DirectiveLine:   flowInfo.Line,
+		DirectiveColumn: flowInfo.Column,
 	}
 	// Note: this lookup is an optimization to avoid the expensive Tagged call.
 	if v, ok := e.tasks.Load(cacheKey); ok {
@@ -74,10 +74,10 @@ func (e *tallyEmitter) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmit
 
 func (e *tallyEmitter) FlowInit(info *FlowInfo) FlowEmitter {
 	cacheKey := cacheKey{
-		FlowName:   info.Name,
-		FlowFile:   info.File,
-		FlowLine:   info.Line,
-		FlowColumn: info.Column,
+		DirectiveName:   info.Name,
+		DirectiveFile:   info.File,
+		DirectiveLine:   info.Line,
+		DirectiveColumn: info.Column,
 	}
 	// Note: this lookup is an optimization to avoid the expensive Tagged call.
 	if v, ok := e.flows.Load(cacheKey); ok {
@@ -152,19 +152,18 @@ func (tallySchedulerEmitter) schedulerEmitter() {}
 
 // SchedulerInit constructs a tally SchedulerEmitter.
 func (e *tallyEmitter) SchedulerInit(info *SchedulerInfo) SchedulerEmitter {
-	flow := info.FlowInfo.Name
 	cacheKey := cacheKey{
-		FlowName:   flow,
-		FlowFile:   info.FlowInfo.File,
-		FlowLine:   info.FlowInfo.Line,
-		FlowColumn: info.FlowInfo.Column,
+		DirectiveName:   info.Name,
+		DirectiveFile:   info.File,
+		DirectiveLine:   info.Line,
+		DirectiveColumn: info.Column,
 	}
 	if v, ok := e.scheds.Load(cacheKey); ok {
 		return v.(SchedulerEmitter)
 	}
 	scope := e.scope
-	if flow != "" {
-		scope = scope.Tagged(map[string]string{"flow": flow})
+	if info.Name != "" && info.Directive != UnknownDirective {
+		scope = scope.Tagged(map[string]string{info.Directive.String(): info.Name})
 	}
 	tse := &tallySchedulerEmitter{
 		scope: scope,

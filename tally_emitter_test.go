@@ -195,7 +195,7 @@ func TestTallyEmitter_EmitTask(t *testing.T) {
 func TestTallyEmitter_EmitScheduler(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	e := TallyEmitter(scope)
-	info := &SchedulerInfo{FlowInfo: &FlowInfo{Name: "myflow"}}
+	info := &SchedulerInfo{Name: "myflow", Directive: FlowDirective}
 	se := e.SchedulerInit(info)
 
 	require.Zero(t, len(scope.Snapshot().Gauges()))

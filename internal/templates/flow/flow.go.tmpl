@@ -25,7 +25,11 @@ func(
 		{{- end }}
 
 		schedInfo = &{{ $cff }}.SchedulerInfo{
-			FlowInfo: flowInfo,
+			Name: flowInfo.Name,
+			Directive: {{ $cff }}.FlowDirective,
+			File: flowInfo.File,
+			Line: flowInfo.Line,
+			Column: flowInfo.Column,
 		}
 
 		// possibly unused

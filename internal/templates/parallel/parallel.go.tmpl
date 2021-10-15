@@ -14,7 +14,11 @@ func(
 		}
 
 		schedInfo = &{{ $cff }}.SchedulerInfo{
-			ParallelInfo: parallelInfo,
+			Name: parallelInfo.Name,
+			Directive: {{ $cff }}.ParallelDirective,
+			File: parallelInfo.File,
+			Line: parallelInfo.Line,
+			Column: parallelInfo.Column,
 		}
 
 		// possibly unused

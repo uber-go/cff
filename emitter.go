@@ -36,9 +36,13 @@ type SchedulerEmitter interface {
 // SchedulerInfo provides information about the context the scheduler
 // is running in.
 type SchedulerInfo struct {
-	// Only one of these entries should be set at a time.
-	FlowInfo     *FlowInfo
-	ParallelInfo *ParallelInfo
+	// Name of the directive the scheduler runs tasks for.
+	Name string
+	// DirectiveType is the type of Directive scheduler is running for
+	// (e.g. flow, parallel).
+	Directive    DirectiveType
+	File         string
+	Line, Column int
 }
 
 // FlowInfo provides information to uniquely identify a flow.
@@ -57,6 +61,7 @@ type TaskInfo struct {
 
 // ParallelInfo provides information to uniquely identify a Parallel operation.
 type ParallelInfo struct {
+	Name         string
 	File         string
 	Line, Column int
 }

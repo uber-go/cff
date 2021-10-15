@@ -46,7 +46,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			flowEmitter = emitter.FlowInit(flowInfo)
 
 			schedInfo = &cff.SchedulerInfo{
-				FlowInfo: flowInfo,
+				Name:      flowInfo.Name,
+				Directive: cff.FlowDirective,
+				File:      flowInfo.File,
+				Line:      flowInfo.Line,
+				Column:    flowInfo.Column,
 			}
 
 			// possibly unused
@@ -419,7 +423,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 
 			schedInfo = &cff.SchedulerInfo{
-				ParallelInfo: parallelInfo,
+				Name:      parallelInfo.Name,
+				Directive: cff.ParallelDirective,
+				File:      parallelInfo.File,
+				Line:      parallelInfo.Line,
+				Column:    parallelInfo.Column,
 			}
 
 			// possibly unused

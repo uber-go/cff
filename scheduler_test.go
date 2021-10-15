@@ -9,7 +9,7 @@ import (
 func TestAdaptSchedulerEmitter(t *testing.T) {
 	t.Parallel()
 
-	schedInfo := &SchedulerInfo{FlowInfo: &FlowInfo{}}
+	schedInfo := &SchedulerInfo{}
 
 	t.Run("nil emitter", func(t *testing.T) {
 		assert.Nil(t, adaptSchedulerEmitter(nil))

@@ -147,7 +147,7 @@ func TestLogTaskEmitter_EmitScheduler(t *testing.T) {
 	t.Run("log a scheduler emission", func(t *testing.T) {
 		em := LogEmitter(
 			zap.New(core),
-		).SchedulerInit(&SchedulerInfo{FlowInfo: &FlowInfo{Name: "myflow"}})
+		).SchedulerInit(&SchedulerInfo{Name: "myflow", Directive: FlowDirective})
 
 		em.EmitScheduler(SchedulerState{})
 		logs := observed.TakeAll()
@@ -163,7 +163,7 @@ func TestLogTaskEmitter_EmitScheduler(t *testing.T) {
 	t.Run("empty flow is skipped", func(t *testing.T) {
 		em := LogEmitter(
 			zap.New(core),
-		).SchedulerInit(&SchedulerInfo{FlowInfo: &FlowInfo{}})
+		).SchedulerInit(&SchedulerInfo{})
 
 		em.EmitScheduler(SchedulerState{})
 		logs := observed.TakeAll()

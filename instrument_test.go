@@ -46,7 +46,11 @@ func TestInstrumentEmitter(t *testing.T) {
 
 	emitter.EXPECT().SchedulerInit(
 		&cff.SchedulerInfo{
-			FlowInfo: flowInfo,
+			Name:      flowInfo.Name,
+			Directive: cff.FlowDirective,
+			File:      flowInfo.File,
+			Line:      flowInfo.Line,
+			Column:    flowInfo.Column,
 		}).Return(schedEmitter)
 
 	// 2 in the tasks for loop inside defer() and twice after.

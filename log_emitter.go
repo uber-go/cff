@@ -185,25 +185,25 @@ func (e *logTaskEmitter) TaskDone(ctx context.Context, _ time.Duration) {
 
 // SchedulerInit constructs a logging scheduler emitter.
 func (e *logEmitter) SchedulerInit(info *SchedulerInfo) SchedulerEmitter {
-	flow := zap.Skip()
-	if info.FlowInfo.Name != "" {
-		flow = zap.String("flow", info.FlowInfo.Name)
+	directive := zap.Skip()
+	if info.Name != "" && info.Directive != UnknownDirective {
+		directive = zap.String(info.Directive.String(), info.Name)
 	}
 	return &logSchedulerEmitter{
-		flow:   flow,
-		logger: e.logger,
+		directive: directive,
+		logger:    e.logger,
 	}
 }
 
 type logSchedulerEmitter struct {
-	flow   zap.Field
-	logger *zap.Logger
+	directive zap.Field
+	logger    *zap.Logger
 }
 
 func (e *logSchedulerEmitter) EmitScheduler(s SchedulerState) {
 	e.logger.Debug(
 		"scheduler state",
-		e.flow,
+		e.directive,
 		zap.Int("pending", s.Pending),
 		zap.Int("ready", s.Ready),
 		zap.Int("waiting", s.Waiting),
