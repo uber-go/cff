@@ -112,6 +112,38 @@ func (e *logFlowEmitter) FlowDone(ctx context.Context, d time.Duration) {
 	e.logger.Debug("flow done", e.flow)
 }
 
+type logParallelEmitter struct {
+	// Field holding the parallel name.
+	parallel zap.Field
+
+	logger   *zap.Logger
+	errLevel zapcore.Level
+}
+
+func (logParallelEmitter) parallelEmitter() {}
+
+func (e *logEmitter) ParallelInit(info *ParallelInfo) ParallelEmitter {
+	return &logParallelEmitter{
+		parallel: zap.String("parallel", info.Name),
+		logger:   e.logger,
+		errLevel: e.errLevel,
+	}
+}
+
+func (e *logParallelEmitter) ParallelSuccess(context.Context) {
+	e.logger.Debug("parallel success", e.parallel)
+}
+
+func (e *logParallelEmitter) ParallelError(ctx context.Context, err error) {
+	if ce := e.logger.Check(e.errLevel, "parallel error"); ce != nil {
+		ce.Write(e.parallel, zap.Error(err))
+	}
+}
+
+func (e *logParallelEmitter) ParallelDone(ctx context.Context, d time.Duration) {
+	e.logger.Debug("parallel done", e.parallel)
+}
+
 type logTaskEmitter struct {
 	// Fields holding the flow and task name.
 	flow, task zap.Field

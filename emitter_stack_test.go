@@ -50,19 +50,23 @@ func TestEmitterStackConstruction(t *testing.T) {
 			e := EmitterStack(tt.give...)
 			e.FlowInit(&FlowInfo{Name: "foo"}).
 				FlowDone(ctx, time.Second)
+			e.ParallelInit(&ParallelInfo{Name: "bar"}).
+				ParallelDone(ctx, time.Second)
 		})
 	}
 }
 
 type testStructs struct {
-	ctrl     *gomock.Controller
-	task1    *MockTaskEmitter
-	flow1    *MockFlowEmitter
-	emitter1 *MockEmitter
-	task2    *MockTaskEmitter
-	flow2    *MockFlowEmitter
-	emitter2 *MockEmitter
-	stack    Emitter
+	ctrl      *gomock.Controller
+	task1     *MockTaskEmitter
+	flow1     *MockFlowEmitter
+	emitter1  *MockEmitter
+	task2     *MockTaskEmitter
+	flow2     *MockFlowEmitter
+	emitter2  *MockEmitter
+	parallel1 *MockParallelEmitter
+	parallel2 *MockParallelEmitter
+	stack     Emitter
 }
 
 func mocks(t *testing.T) testStructs {
@@ -74,6 +78,8 @@ func mocks(t *testing.T) testStructs {
 	m.task2 = NewMockTaskEmitter(m.ctrl)
 	m.flow2 = NewMockFlowEmitter(m.ctrl)
 	m.emitter2 = NewMockEmitter(m.ctrl)
+	m.parallel1 = NewMockParallelEmitter(m.ctrl)
+	m.parallel2 = NewMockParallelEmitter(m.ctrl)
 	m.stack = EmitterStack(
 		m.emitter1,
 		m.emitter2,
@@ -129,6 +135,55 @@ func TestEmitterStack(t *testing.T) {
 			m.flow1.EXPECT().FlowDone(ctx, time.Duration(1))
 			m.flow2.EXPECT().FlowDone(ctx, time.Duration(1))
 			m.stack.FlowInit(&FlowInfo{"foo", "foo.go", 0, 0}).FlowDone(ctx, time.Duration(1))
+		})
+	})
+
+	t.Run("Parallel", func(t *testing.T) {
+		t.Run("Init", func(t *testing.T) {
+			m := mocks(t)
+			defer m.ctrl.Finish()
+
+			m.emitter1.EXPECT().ParallelInit(&ParallelInfo{"foo", "foo.go", 0, 0}).Times(1)
+			m.emitter2.EXPECT().ParallelInit(&ParallelInfo{"foo", "foo.go", 0, 0}).Times(1)
+			m.stack.ParallelInit(&ParallelInfo{"foo", "foo.go", 0, 0})
+		})
+
+		t.Run("ParallelSuccess", func(t *testing.T) {
+			ctx := context.Background()
+			m := mocks(t)
+			defer m.ctrl.Finish()
+
+			m.emitter1.EXPECT().ParallelInit(&ParallelInfo{"foo", "foo.go", 0, 0}).Return(m.parallel1)
+			m.emitter2.EXPECT().ParallelInit(&ParallelInfo{"foo", "foo.go", 0, 0}).Return(m.parallel2)
+
+			m.parallel1.EXPECT().ParallelSuccess(ctx)
+			m.parallel2.EXPECT().ParallelSuccess(ctx)
+			m.stack.ParallelInit(&ParallelInfo{"foo", "foo.go", 0, 0}).ParallelSuccess(ctx)
+		})
+		t.Run("ParallelError", func(t *testing.T) {
+			ctx := context.Background()
+			m := mocks(t)
+			defer m.ctrl.Finish()
+
+			m.emitter1.EXPECT().ParallelInit(&ParallelInfo{"foo", "foo.go", 0, 0}).Return(m.parallel1)
+			m.emitter2.EXPECT().ParallelInit(&ParallelInfo{"foo", "foo.go", 0, 0}).Return(m.parallel2)
+
+			err := errors.New("foobar")
+			m.parallel1.EXPECT().ParallelError(ctx, err)
+			m.parallel2.EXPECT().ParallelError(ctx, err)
+			m.stack.ParallelInit(&ParallelInfo{"foo", "foo.go", 0, 0}).ParallelError(ctx, err)
+		})
+		t.Run("ParallelDone", func(t *testing.T) {
+			ctx := context.Background()
+			m := mocks(t)
+			defer m.ctrl.Finish()
+
+			m.emitter1.EXPECT().ParallelInit(&ParallelInfo{"foo", "foo.go", 0, 0}).Return(m.parallel1)
+			m.emitter2.EXPECT().ParallelInit(&ParallelInfo{"foo", "foo.go", 0, 0}).Return(m.parallel2)
+
+			m.parallel1.EXPECT().ParallelDone(ctx, time.Duration(1))
+			m.parallel2.EXPECT().ParallelDone(ctx, time.Duration(1))
+			m.stack.ParallelInit(&ParallelInfo{"foo", "foo.go", 0, 0}).ParallelDone(ctx, time.Duration(1))
 		})
 	})
 

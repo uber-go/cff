@@ -41,6 +41,38 @@ func TestLogFloWEmitter_ErrorLevelChange(t *testing.T) {
 	assert.Equal(t, "great sadness", logs[0].ContextMap()["error"])
 }
 
+func TestLogParallelEmitter_IncludesParallelName(t *testing.T) {
+	core, observed := observer.New(zapcore.DebugLevel)
+
+	em := LogEmitter(zap.New(core)).ParallelInit(&ParallelInfo{Name: "myparallel"})
+	em.ParallelSuccess(context.Background())
+	em.ParallelError(context.Background(), errors.New("foo"))
+
+	logs := observed.TakeAll()
+	require.Len(t, logs, 2)
+
+	for _, logEntry := range logs {
+		fields := logEntry.ContextMap()
+		assert.Equalf(t, "myparallel", fields["parallel"],
+			"parallel name expected in %#v", fields)
+	}
+}
+
+func TestLogParallelEmitter_ErrorLevelChange(t *testing.T) {
+	core, observed := observer.New(zapcore.DebugLevel)
+
+	LogEmitter(
+		zap.New(core),
+		LogErrors(zapcore.WarnLevel),
+	).ParallelInit(&ParallelInfo{Name: "myparallel"}).
+		ParallelError(context.Background(), errors.New("great sadness"))
+
+	logs := observed.TakeAll()
+	require.Len(t, logs, 1)
+	logs[0].Level = zapcore.WarnLevel
+	assert.Equal(t, "great sadness", logs[0].ContextMap()["error"])
+}
+
 func TestLogTaskEmitter(t *testing.T) {
 	ctx := context.Background()
 	core, observed := observer.New(zapcore.DebugLevel)

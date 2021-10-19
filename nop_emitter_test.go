@@ -21,6 +21,15 @@ func TestNopEmitter(t *testing.T) {
 		e.FlowDone(ctx, 3*time.Second)
 	})
 
+	t.Run("parallel", func(t *testing.T) {
+		e := e.ParallelInit(&ParallelInfo{Name: "foo"})
+
+		e.ParallelSuccess(ctx)
+		e.ParallelError(ctx, errors.New("great sadness"))
+
+		e.ParallelDone(ctx, 3*time.Second)
+	})
+
 	t.Run("task", func(t *testing.T) {
 		e := e.TaskInit(&TaskInfo{Name: "foo"}, &FlowInfo{Name: "bar"})
 

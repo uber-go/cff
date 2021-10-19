@@ -33,6 +33,27 @@ func TestTallyEmitter_CacheFlow(t *testing.T) {
 	})
 }
 
+// TestTallyEmitter_CacheParallel verifies that we get back an initial cached object.
+func TestTallyEmitter_CacheParallel(t *testing.T) {
+	t.Run("same object", func(t *testing.T) {
+		scope := tally.NewTestScope("", nil)
+		e := TallyEmitter(scope)
+		pe := e.ParallelInit(&ParallelInfo{
+			Name:   "parallel",
+			File:   "location/parallel.go",
+			Line:   42,
+			Column: 84,
+		})
+		pe2 := e.ParallelInit(&ParallelInfo{
+			Name:   "parallel",
+			File:   "location/parallel.go",
+			Line:   42,
+			Column: 84,
+		})
+		assert.True(t, pe == pe2)
+	})
+}
+
 // TestTallyEmitter_CacheTask verifies that we get back an initial cached object.
 func TestTallyEmitter_CacheTask(t *testing.T) {
 	t.Run("same object", func(t *testing.T) {
@@ -170,6 +191,24 @@ func TestTallyEmitter_EmitFlow(t *testing.T) {
 	t.Run("emit timers", func(t *testing.T) {
 		require.Zero(t, len(scope.Snapshot().Timers()))
 		fe.FlowDone(context.Background(), time.Nanosecond)
+		assert.NotZero(t, len(scope.Snapshot().Timers()))
+	})
+}
+
+func TestTallyEmitter_EmitParallel(t *testing.T) {
+	scope := tally.NewTestScope("", nil)
+	e := TallyEmitter(scope)
+	pe := e.ParallelInit(&ParallelInfo{})
+
+	t.Run("emit counters", func(t *testing.T) {
+		require.Zero(t, len(scope.Snapshot().Counters()))
+		pe.ParallelError(context.Background(), errors.New("great sadness"))
+		assert.NotZero(t, len(scope.Snapshot().Counters()))
+	})
+
+	t.Run("emit timers", func(t *testing.T) {
+		require.Zero(t, len(scope.Snapshot().Timers()))
+		pe.ParallelDone(context.Background(), time.Nanosecond)
 		assert.NotZero(t, len(scope.Snapshot().Timers()))
 	})
 }

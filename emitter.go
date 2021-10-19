@@ -7,7 +7,7 @@ import (
 	"go.uber.org/cff/scheduler"
 )
 
-// Emitter initializes Task and Flow emitters.
+// Emitter initializes Task, Flow, and Parallel emitters.
 //
 // WARNING: This interface is not stable and may change in the future.
 type Emitter interface {
@@ -15,6 +15,9 @@ type Emitter interface {
 	TaskInit(*TaskInfo, *FlowInfo) TaskEmitter
 	// FlowInit returns a FlowEmitter which could be memoized based on flow name.
 	FlowInit(*FlowInfo) FlowEmitter
+	// ParallelInit returns a ParallelEmitter which could be memoized based on
+	// parallel name.
+	ParallelInit(*ParallelInfo) ParallelEmitter
 	// SchedulerInit returns an emitter for the CFF scheduler.
 	SchedulerInit(s *SchedulerInfo) SchedulerEmitter
 
@@ -79,6 +82,21 @@ type FlowEmitter interface {
 	FlowDone(context.Context, time.Duration)
 
 	flowEmitter() // private interface (GO-258).
+}
+
+// ParallelEmitter receives events for when parallel events occur, for the
+// purpose of emitting metrics.
+//
+// WARNING: This interface is not stable and may change in the future.
+type ParallelEmitter interface {
+	// ParallelSuccess is called when a parallel runs successfully.
+	ParallelSuccess(context.Context)
+	// ParallelError is called when a parallel fails due to a task error.
+	ParallelError(context.Context, error)
+	// ParallelDone is called when a parallel finishes.
+	ParallelDone(context.Context, time.Duration)
+
+	parallelEmitter() // private interface (GO-258).
 }
 
 // TaskEmitter receives events for when task events occur, for the purpose of

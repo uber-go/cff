@@ -132,6 +132,40 @@ func (fs flowEmitterStack) FlowDone(ctx context.Context, d time.Duration) {
 	}
 }
 
+type parallelEmitterStack []ParallelEmitter
+
+func (parallelEmitterStack) parallelEmitter() {}
+
+// ParallelInit returns a ParallelEmitter which could be memoized based on parallel name.
+func (es emitterStack) ParallelInit(info *ParallelInfo) ParallelEmitter {
+	emitters := make(parallelEmitterStack, 0, len(es))
+	for _, e := range es {
+		emitters = append(emitters, e.ParallelInit(info))
+	}
+	return emitters
+}
+
+// ParallelSuccess is called when a parallel runs successfully.
+func (ps parallelEmitterStack) ParallelSuccess(ctx context.Context) {
+	for _, e := range ps {
+		e.ParallelSuccess(ctx)
+	}
+}
+
+// ParallelError is called when a parallel fails due to a task error.
+func (ps parallelEmitterStack) ParallelError(ctx context.Context, err error) {
+	for _, e := range ps {
+		e.ParallelError(ctx, err)
+	}
+}
+
+// ParallelDone is called when a parallel finishes.
+func (ps parallelEmitterStack) ParallelDone(ctx context.Context, d time.Duration) {
+	for _, e := range ps {
+		e.ParallelDone(ctx, d)
+	}
+}
+
 // SchedulerInit builds a SchedulerEmitter backed by the SchedulerEmitters of
 // the underlying Emitters.
 func (es emitterStack) SchedulerInit(info *SchedulerInfo) SchedulerEmitter {

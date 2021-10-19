@@ -19,6 +19,11 @@ func NopFlowEmitter() FlowEmitter {
 	return &nopEmitter{}
 }
 
+// NopParallelEmitter is a Parallel emitter that does not do anything.
+func NopParallelEmitter() ParallelEmitter {
+	return &nopEmitter{}
+}
+
 // NopTaskEmitter is a Task emitter that does not do anything.
 func NopTaskEmitter() TaskEmitter {
 	return &nopEmitter{}
@@ -28,6 +33,7 @@ type nopEmitter struct{}
 
 func (*nopEmitter) emitter()          {}
 func (*nopEmitter) flowEmitter()      {}
+func (*nopEmitter) parallelEmitter()  {}
 func (*nopEmitter) taskEmitter()      {}
 func (*nopEmitter) schedulerEmitter() {}
 
@@ -38,6 +44,14 @@ func (*nopEmitter) FlowSuccess(context.Context) {}
 func (*nopEmitter) FlowError(context.Context, error) {}
 
 func (*nopEmitter) FlowDone(context.Context, time.Duration) {}
+
+func (e *nopEmitter) ParallelInit(*ParallelInfo) ParallelEmitter { return e }
+
+func (*nopEmitter) ParallelSuccess(context.Context) {}
+
+func (*nopEmitter) ParallelError(context.Context, error) {}
+
+func (*nopEmitter) ParallelDone(context.Context, time.Duration) {}
 
 func (e *nopEmitter) TaskInit(*TaskInfo, *FlowInfo) TaskEmitter { return e }
 
