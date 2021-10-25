@@ -107,9 +107,9 @@ func (c *compiler) compileParallelTask(p *parallel, arg ast.Expr) *parallelTask 
 func checkParallelTask(fn *compiledFunc) error {
 	switch {
 	case len(fn.Inputs) != 0:
-		return errors.New("the only allowed argument is a single context parameter")
+		return errors.New("the only allowed argument is a single context.Context parameter")
 	case len(fn.Outputs) != 0:
-		return errors.New("the only allowed return value is a single error")
+		return errors.New("the only allowed return value is an error")
 	default:
 		return nil
 	}

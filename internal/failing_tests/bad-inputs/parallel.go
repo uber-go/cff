@@ -6,7 +6,8 @@ import (
 	"go.uber.org/cff"
 )
 
-// ParallelInvalidParamsType is a Parallel with an invalid task parameters type.
+// ParallelInvalidParamsType is a Parallel task with an invalid parameters
+// type.
 func ParallelInvalidParamsType() {
 	cff.Parallel(
 		context.Background(),
@@ -18,8 +19,8 @@ func ParallelInvalidParamsType() {
 	)
 }
 
-// ParallelInvalidParamsMultiple is a Parallel with more than one task
-// parameters.
+// ParallelInvalidParamsMultiple is a Parallel task with more than one
+// parameter.
 func ParallelInvalidParamsMultiple() {
 	cff.Parallel(
 		context.Background(),
@@ -31,7 +32,7 @@ func ParallelInvalidParamsMultiple() {
 	)
 }
 
-// ParallelInvalidReturnType is a Parallel with a non-error task return value.
+// ParallelInvalidReturnType is a Parallel task with a non-error return value.
 func ParallelInvalidReturnType() {
 	cff.Parallel(
 		context.Background(),
@@ -43,7 +44,8 @@ func ParallelInvalidReturnType() {
 	)
 }
 
-// ParallelInvalidReturnMultiple is a Parallel with more than one return value.
+// ParallelInvalidReturnMultiple is a Parallel task with more than one
+// return value.
 func ParallelInvalidReturnMultiple() {
 	cff.Parallel(
 		context.Background(),
@@ -55,8 +57,8 @@ func ParallelInvalidReturnMultiple() {
 	)
 }
 
-// ParallelInvalidFuncVar is a Parallel with an invalid function
-// variable.
+// ParallelInvalidFuncVar is a Parallel task with a function reference that
+// does not comply with CFF's Tasks function validation.
 func ParallelInvalidFuncVar() {
 	cff.Parallel(
 		context.Background(),

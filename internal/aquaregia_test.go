@@ -170,6 +170,26 @@ func TestCodeGenerateFails(t *testing.T) {
 				File:         "nonpointer-result.go",
 				ErrorMatches: "invalid parameter to cff.Results: expected pointer, got bool",
 			},
+			// ParallelInvalidParamsType
+			{
+				File:         "parallel.go",
+				ErrorMatches: "the only allowed argument is a single context.Context parameter",
+			},
+			// ParallelInvalidParamsMultiple
+			{
+				File:         "parallel.go",
+				ErrorMatches: "the only allowed argument is a single context.Context parameter",
+			},
+			// ParallelInvalidReturnType
+			{
+				File:         "parallel.go",
+				ErrorMatches: "the only allowed return value is an error",
+			},
+			// ParallelInvalidFuncVar
+			{
+				File:         "parallel.go",
+				ErrorMatches: "the only allowed argument is a single context.Context parameter",
+			},
 			{
 				File:         "predicate.go",
 				ErrorMatches: "the function must return a single boolean result",
