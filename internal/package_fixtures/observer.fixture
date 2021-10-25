@@ -1,0 +1,17 @@
+package observer
+
+// packages.Load with packagestest requires all imports to be provided as
+// packagestest.Modules. This fixture provides go file contents for a
+// packagestest.Module that emulates the observer package. The contents of this
+// file correspond to exported objects of the observer package that are consumed by
+// packages.Load with packagestest. Currently, it seems that only the used
+// exported contents are required and the file contents do not need to type
+// check, but still must be valid go.
+
+func New(enab zapcore.LevelEnabler) (zapcore.Core, *ObservedLogs) {
+	ol := &ObservedLogs{}
+	return &contextObserver{
+		LevelEnabler: enab,
+		logs:         ol,
+	}, ol
+}

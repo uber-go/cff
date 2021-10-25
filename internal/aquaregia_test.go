@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"embed"
 	"fmt"
 	"go/token"
 	"os"
@@ -19,6 +20,9 @@ const (
 	aquaregiaTestDir = "failing_tests"
 	internalTests    = "go.uber.org/cff/internal"
 )
+
+//go:embed package_fixtures/*
+var pkgFixtures embed.FS
 
 type errorCase struct {
 	File         string
@@ -313,26 +317,52 @@ func loadAquaregiaPackages(p *loadParams) ([]*packages.Package, error) {
 		Name:  "go.uber.org/cff",
 		Files: packagestest.MustCopyFileTree("./.."),
 	}
-	// Adding fake tally and zap packages to cause `go list` not to error and swallow useful output.
+	tallyContent, err := pkgFixtures.ReadFile("package_fixtures/tally.fixture")
+	require.NoError(p.t, err)
+
 	tallyModule := packagestest.Module{
 		Name: "github.com/uber-go/tally",
 		Files: map[string]interface{}{
 			// This needs to be a valid Go file.
-			"tally.go": "package tally",
-		},
-		Overlay: nil,
-	}
-	zapModule := packagestest.Module{
-		Name: "go.uber.org/zap",
-		Files: map[string]interface{}{
-			// This needs to be a valid Go file.
-			"zap.go": "package zap",
+			"tally.go": string(tallyContent),
 		},
 		Overlay: nil,
 	}
 
-	exp := packagestest.Export(p.t, packagestest.Modules,
-		[]packagestest.Module{cffModule, tallyModule, zapModule})
+	zapContent, err := pkgFixtures.ReadFile("package_fixtures/zap.fixture")
+	require.NoError(p.t, err)
+
+	zapModule := packagestest.Module{
+		Name: "go.uber.org/zap",
+		Files: map[string]interface{}{
+			// This needs to be a valid Go file.
+			"zap.go": string(zapContent),
+		},
+		Overlay: nil,
+	}
+
+	observerContent, err := pkgFixtures.ReadFile("package_fixtures/observer.fixture")
+	require.NoError(p.t, err)
+
+	zapTestObserverModule := packagestest.Module{
+		Name: "go.uber.org/zap/zaptest/observer",
+		Files: map[string]interface{}{
+			// This needs to be a valid Go file.
+			"observer.go": string(observerContent),
+		},
+		Overlay: nil,
+	}
+
+	exp := packagestest.Export(
+		p.t,
+		packagestest.Modules,
+		[]packagestest.Module{
+			cffModule,
+			tallyModule,
+			zapModule,
+			zapTestObserverModule,
+		},
+	)
 
 	cfg := exp.Config
 	cfg.BuildFlags = []string{"-tags=cff"}
@@ -350,6 +380,27 @@ func loadAquaregiaPackages(p *loadParams) ([]*packages.Package, error) {
 	defer exp.Cleanup()
 	pkgs, err := packages.Load(exp.Config, p.pattern)
 	return pkgs, err
+}
+
+func TestCasesGoCompile(t *testing.T) {
+	for testDirectoryName := range codeGenerateFailCases {
+		t.Run(fmt.Sprintf("test cases for directory %s", testDirectoryName), func(t *testing.T) {
+			fset := token.NewFileSet()
+			pkgs, err := loadAquaregiaPackages(
+				&loadParams{
+					pattern: "pattern=" + filepath.Join(internalTests, aquaregiaTestDir, testDirectoryName, "..."),
+					fset:    fset,
+					t:       t,
+				},
+			)
+			require.NoError(t, err, "could not load packages")
+			require.NotEmpty(t, pkgs, "didn't find any packages")
+
+			for _, gopkg := range pkgs {
+				assert.Len(t, gopkg.Errors, 0, "unexpected errors while loading packages")
+			}
+		})
+	}
 }
 
 // Tests requiring Go SDK in runtime need testutil.RunWithGoSDK due to

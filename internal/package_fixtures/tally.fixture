@@ -1,0 +1,19 @@
+package tally
+
+// packages.Load with packagestest requires all imports to be provided as
+// packagestest.Modules. This fixture provides go file contents for a
+// packagestest.Module that emulates the tally package. The contents of this
+// file correspond to exported objects of the tally package that are consumed by
+// packages.Load with packagestest. Currently, it seems that only the used
+// exported contents are required and the file contents do not need to type
+// check, but still must be valid go.
+
+// NewTestScope creates a new Scope without a stats reporter with the
+// given prefix and adds the ability to take snapshots of metrics emitted
+// to it.
+func NewTestScope(
+	prefix string,
+	tags map[string]string,
+) TestScope {
+	return newRootScope(ScopeOptions{Prefix: prefix, Tags: tags}, 0)
+}

@@ -1,0 +1,33 @@
+package zap
+
+// packages.Load with packagestest requires all imports to be provided as
+// packagestest.Modules. This fixture provides go file contents for a
+// packagestest.Module that emulates the zap package. The contents of this
+// file correspond to exported objects of the zap package that are consumed by
+// packages.Load with packagestest. Currently, it seems that only the used
+// exported contents are required and the file contents do not need to type
+// check, but still must be valid go.
+
+import (
+	"go.uber.org/zap/zapcore"
+)
+
+const (
+	// DebugLevel logs are typically voluminous, and are usually disabled in
+	// production.
+	DebugLevel = zapcore.DebugLevel
+)
+
+// For sample code, see the package-level AdvancedConfiguration example.
+func New(core zapcore.Core, options ...Option) *Logger {
+	if core == nil {
+		return NewNop()
+	}
+	log := &Logger{
+		core:        core,
+		errorOutput: zapcore.Lock(os.Stderr),
+		addStack:    zapcore.FatalLevel + 1,
+		clock:       zapcore.DefaultClock,
+	}
+	return log.WithOptions(options...)
+}
