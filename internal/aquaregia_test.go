@@ -25,228 +25,228 @@ type errorCase struct {
 	ErrorMatches string
 }
 
+var codeGenerateFailCases = map[string][]errorCase{
+	// map [directory name] -> list of test cases
+	"bad-inputs": {
+		{
+			File:         "already-provided.go",
+			ErrorMatches: "type string already provided at",
+		},
+		{
+			File:         "cff-flow-arguments.go",
+			ErrorMatches: "cff.Flow expects at least one function",
+		},
+		{
+			File:         "cff-flow-arguments.go",
+			ErrorMatches: "expected cff call but got <nil>",
+		},
+		{
+			File:         "cff-flow-arguments.go",
+			ErrorMatches: "expected cff call but got field ProvidesBad func\\(\\) go.uber.org/cff.Option",
+		},
+		{
+			File:         "cff-flow-arguments.go",
+			ErrorMatches: "expected a function call, got identifier",
+		},
+		// ExpectsFunctionCallExpression
+		{
+			File:         "cff-task-arguments.go",
+			ErrorMatches: "expected function, got bool",
+		},
+		// ExpectedFlowArgumentsSelectorExpression.
+		{
+			File:         "cff-task-arguments.go",
+			ErrorMatches: "only cff functions may be passed as task options",
+		},
+		// ExpectedFlowArgumentsCallExpressions
+		{
+			File:         "cff-task-arguments.go",
+			ErrorMatches: "expected a function call, got identifier",
+		},
+		// ExpectedFlowArgumentsCallExpressions
+		{
+			File:         "cff-task-arguments.go",
+			ErrorMatches: `unexpected code generation directive "Instrument": only cff.Flow or cff.Parallel may be called at the top-level`,
+		},
+		// ExpectedFlowArgumentsNotCFF
+		{
+			File:         "cff-task-arguments.go",
+			ErrorMatches: "only cff functions may be passed as task options: found package \"go.uber.org/cff/internal/failing_tests/bad-inputs\"",
+		},
+		// ExpectedTasksBad
+		{
+			File:         "cff-task-arguments.go",
+			ErrorMatches: "expected function, got untyped nil",
+		},
+		// ExpectedTasksBadCallExpr
+		{
+			File:         "cff-task-arguments.go",
+			ErrorMatches: "expected function, got go.uber.org/cff.Option",
+		},
+		// ExpectedTasksBadCallExprNotCFF
+		{
+			File:         "cff-task-arguments.go",
+			ErrorMatches: "expected function, got int",
+		},
+
+		{
+			File:         "context-predicate.go",
+			ErrorMatches: "only the first argument may be context.Context",
+		},
+		{
+			File:         "context-task.go",
+			ErrorMatches: "only the first argument may be context.Context",
+		},
+		{
+			File:         "earlyresult.go",
+			ErrorMatches: "unused output type string",
+		},
+		{
+			File:         "earlyresult.go",
+			ErrorMatches: "unused output type int32",
+		},
+		// EarlyResultMultipleFlows
+		{
+			File:         "earlyresult.go",
+			ErrorMatches: "unused output type \\*go.uber.org/cff/internal/failing_tests/bad-inputs.quuz",
+		},
+		// EarlyResultMultipleFlows
+		{
+			File:         "earlyresult.go",
+			ErrorMatches: "unused output type \\*go.uber.org/cff/internal/failing_tests/bad-inputs.corge",
+		},
+		// EarlyResultMultipleFlows
+		{
+			File:         "earlyresult.go",
+			ErrorMatches: "unused output type \\*go.uber.org/cff/internal/failing_tests/bad-inputs.grault",
+		},
+		{
+			File:         "error-task.go",
+			ErrorMatches: "only the last result may be an error",
+		},
+		{
+			File:         "fallback-with.go",
+			ErrorMatches: "cff.FallbackWith result at position 1 of type string cannot be used as bool",
+		},
+		{
+			File:         "fallback-with.go",
+			ErrorMatches: "cff.FallbackWith result at position 2 of type bool cannot be used as string",
+		},
+		{
+			File:         "fallback-with.go",
+			ErrorMatches: "cff.FallbackWith must produce the same number of results as the task: expected 2, got 1",
+		},
+		{
+			File:         "fallback-with.go",
+			ErrorMatches: "Task must return an error for FallbackWith to be used",
+		},
+		// MissingCFFMetrics
+		{
+			File:         "instrument.go",
+			ErrorMatches: "cff.Instrument requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
+		},
+		// MissingCFFLogger and MissingCFFLoggerME
+		{
+			File:         "instrument.go",
+			ErrorMatches: "cff.Instrument requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
+		},
+		// MissingCFFLoggerAndMetrics
+		{
+			File:         "instrument.go",
+			ErrorMatches: "cff.Instrument requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
+		},
+
+		{
+			File:         "missing-provider.go",
+			ErrorMatches: "no provider found for float64",
+		},
+		{
+			File:         "nonpointer-result.go",
+			ErrorMatches: "invalid parameter to cff.Results: expected pointer, got bool",
+		},
+		// ParallelInvalidParamsType
+		{
+			File:         "parallel.go",
+			ErrorMatches: "the only allowed argument is a single context.Context parameter",
+		},
+		// ParallelInvalidParamsMultiple
+		{
+			File:         "parallel.go",
+			ErrorMatches: "the only allowed argument is a single context.Context parameter",
+		},
+		// ParallelInvalidReturnType
+		{
+			File:         "parallel.go",
+			ErrorMatches: "the only allowed return value is an error",
+		},
+		// ParallelInvalidFuncVar
+		{
+			File:         "parallel.go",
+			ErrorMatches: "the only allowed argument is a single context.Context parameter",
+		},
+		{
+			File:         "predicate.go",
+			ErrorMatches: "the function must return a single boolean result",
+		},
+		{
+			File:         "predicate-params.go",
+			ErrorMatches: "cff.Predicate expected a function but received",
+		},
+		{
+			File:         "unused-outputs.go",
+			ErrorMatches: "unused output type bool",
+		},
+		{
+			File:         "unused-outputs.go",
+			ErrorMatches: "unused output type uint32",
+		},
+		{
+			File:         "top-level-flow.go",
+			ErrorMatches: "unexpected code generation directive \"Predicate\"",
+		},
+		{
+			File:         "unused-inputs.go",
+			ErrorMatches: "unused input type string",
+		},
+		// UnsupportedInvoke
+		{
+			File:         "unused-task.go",
+			ErrorMatches: "cff\\.Invoke cannot be provided on a Task that produces values besides errors",
+		},
+		// NoInvokeNoResults
+		{
+			File:         "unused-task.go",
+			ErrorMatches: "task must return at least one non-error value but currently produces zero.",
+		},
+		// NoInvokeWithError
+		{
+			File:         "unused-task-error.go",
+			ErrorMatches: "task must return at least one non-error value but currently produces zero.",
+		},
+		{
+			File:         "variadic.go",
+			ErrorMatches: "variadic functions are not yet supported",
+		},
+	},
+	"cycles": {
+		{
+			File:         "easy-cycle.go",
+			ErrorMatches: "cycle detected: need to run \\[func\\(int64\\) string\\] to provide string",
+		},
+		{
+			File:         "no-output.go",
+			ErrorMatches: "cycle detected: need to run \\[func\\(int32\\) string\\] to provide string",
+		},
+	},
+}
+
 // This works by trying to transpile all of the files in the directory/package,
 // accumulating all of the errors, and then checking if in a file there is an
 // instance of the error we are looking for.
 // Note: error accumulation is per-package so at the moment state is kept
 // when running transpiler across many flows expected to fail.
 func TestCodeGenerateFails(t *testing.T) {
-	// map [directory name] -> list of test cases
-	errorCasesByDirectory := map[string][]errorCase{
-		"bad-inputs": {
-			{
-				File:         "already-provided.go",
-				ErrorMatches: "type string already provided at",
-			},
-			{
-				File:         "cff-flow-arguments.go",
-				ErrorMatches: "cff.Flow expects at least one function",
-			},
-			{
-				File:         "cff-flow-arguments.go",
-				ErrorMatches: "expected cff call but got <nil>",
-			},
-			{
-				File:         "cff-flow-arguments.go",
-				ErrorMatches: "expected cff call but got field ProvidesBad func\\(\\) go.uber.org/cff.Option",
-			},
-			{
-				File:         "cff-flow-arguments.go",
-				ErrorMatches: "expected a function call, got identifier",
-			},
-			// ExpectsFunctionCallExpression
-			{
-				File:         "cff-task-arguments.go",
-				ErrorMatches: "expected function, got bool",
-			},
-			// ExpectedFlowArgumentsSelectorExpression.
-			{
-				File:         "cff-task-arguments.go",
-				ErrorMatches: "only cff functions may be passed as task options",
-			},
-			// ExpectedFlowArgumentsCallExpressions
-			{
-				File:         "cff-task-arguments.go",
-				ErrorMatches: "expected a function call, got identifier",
-			},
-			// ExpectedFlowArgumentsCallExpressions
-			{
-				File:         "cff-task-arguments.go",
-				ErrorMatches: `unexpected code generation directive "Instrument": only cff.Flow or cff.Parallel may be called at the top-level`,
-			},
-			// ExpectedFlowArgumentsNotCFF
-			{
-				File:         "cff-task-arguments.go",
-				ErrorMatches: "only cff functions may be passed as task options: found package \"go.uber.org/cff/internal/failing_tests/bad-inputs\"",
-			},
-			// ExpectedTasksBad
-			{
-				File:         "cff-task-arguments.go",
-				ErrorMatches: "expected function, got untyped nil",
-			},
-			// ExpectedTasksBadCallExpr
-			{
-				File:         "cff-task-arguments.go",
-				ErrorMatches: "expected function, got go.uber.org/cff.Option",
-			},
-			// ExpectedTasksBadCallExprNotCFF
-			{
-				File:         "cff-task-arguments.go",
-				ErrorMatches: "expected function, got int",
-			},
-
-			{
-				File:         "context-predicate.go",
-				ErrorMatches: "only the first argument may be context.Context",
-			},
-			{
-				File:         "context-task.go",
-				ErrorMatches: "only the first argument may be context.Context",
-			},
-			{
-				File:         "earlyresult.go",
-				ErrorMatches: "unused output type string",
-			},
-			{
-				File:         "earlyresult.go",
-				ErrorMatches: "unused output type int32",
-			},
-			// EarlyResultMultipleFlows
-			{
-				File:         "earlyresult.go",
-				ErrorMatches: "unused output type \\*go.uber.org/cff/internal/failing_tests/bad-inputs.quuz",
-			},
-			// EarlyResultMultipleFlows
-			{
-				File:         "earlyresult.go",
-				ErrorMatches: "unused output type \\*go.uber.org/cff/internal/failing_tests/bad-inputs.corge",
-			},
-			// EarlyResultMultipleFlows
-			{
-				File:         "earlyresult.go",
-				ErrorMatches: "unused output type \\*go.uber.org/cff/internal/failing_tests/bad-inputs.grault",
-			},
-			{
-				File:         "error-task.go",
-				ErrorMatches: "only the last result may be an error",
-			},
-			{
-				File:         "fallback-with.go",
-				ErrorMatches: "cff.FallbackWith result at position 1 of type string cannot be used as bool",
-			},
-			{
-				File:         "fallback-with.go",
-				ErrorMatches: "cff.FallbackWith result at position 2 of type bool cannot be used as string",
-			},
-			{
-				File:         "fallback-with.go",
-				ErrorMatches: "cff.FallbackWith must produce the same number of results as the task: expected 2, got 1",
-			},
-			{
-				File:         "fallback-with.go",
-				ErrorMatches: "Task must return an error for FallbackWith to be used",
-			},
-			// MissingCFFMetrics
-			{
-				File:         "instrument.go",
-				ErrorMatches: "cff.Instrument requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
-			},
-			// MissingCFFLogger and MissingCFFLoggerME
-			{
-				File:         "instrument.go",
-				ErrorMatches: "cff.Instrument requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
-			},
-			// MissingCFFLoggerAndMetrics
-			{
-				File:         "instrument.go",
-				ErrorMatches: "cff.Instrument requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
-			},
-
-			{
-				File:         "missing-provider.go",
-				ErrorMatches: "no provider found for float64",
-			},
-			{
-				File:         "nonpointer-result.go",
-				ErrorMatches: "invalid parameter to cff.Results: expected pointer, got bool",
-			},
-			// ParallelInvalidParamsType
-			{
-				File:         "parallel.go",
-				ErrorMatches: "the only allowed argument is a single context.Context parameter",
-			},
-			// ParallelInvalidParamsMultiple
-			{
-				File:         "parallel.go",
-				ErrorMatches: "the only allowed argument is a single context.Context parameter",
-			},
-			// ParallelInvalidReturnType
-			{
-				File:         "parallel.go",
-				ErrorMatches: "the only allowed return value is an error",
-			},
-			// ParallelInvalidFuncVar
-			{
-				File:         "parallel.go",
-				ErrorMatches: "the only allowed argument is a single context.Context parameter",
-			},
-			{
-				File:         "predicate.go",
-				ErrorMatches: "the function must return a single boolean result",
-			},
-			{
-				File:         "predicate-params.go",
-				ErrorMatches: "cff.Predicate expected a function but received",
-			},
-			{
-				File:         "unused-outputs.go",
-				ErrorMatches: "unused output type bool",
-			},
-			{
-				File:         "unused-outputs.go",
-				ErrorMatches: "unused output type uint32",
-			},
-			{
-				File:         "top-level-flow.go",
-				ErrorMatches: "unexpected code generation directive \"Predicate\"",
-			},
-			{
-				File:         "unused-inputs.go",
-				ErrorMatches: "unused input type string",
-			},
-			// UnsupportedInvoke
-			{
-				File:         "unused-task.go",
-				ErrorMatches: "cff\\.Invoke cannot be provided on a Task that produces values besides errors",
-			},
-			// NoInvokeNoResults
-			{
-				File:         "unused-task.go",
-				ErrorMatches: "task must return at least one non-error value but currently produces zero.",
-			},
-			// NoInvokeWithError
-			{
-				File:         "unused-task-error.go",
-				ErrorMatches: "task must return at least one non-error value but currently produces zero.",
-			},
-			{
-				File:         "variadic.go",
-				ErrorMatches: "variadic functions are not yet supported",
-			},
-		},
-		"cycles": {
-			{
-				File:         "easy-cycle.go",
-				ErrorMatches: "cycle detected: need to run \\[func\\(int64\\) string\\] to provide string",
-			},
-			{
-				File:         "no-output.go",
-				ErrorMatches: "cycle detected: need to run \\[func\\(int32\\) string\\] to provide string",
-			},
-		},
-	}
-
-	for testDirectoryName, errCases := range errorCasesByDirectory {
+	for testDirectoryName, errCases := range codeGenerateFailCases {
 		t.Run(fmt.Sprintf("test cases for directory %s", testDirectoryName), func(t *testing.T) {
 			fset := token.NewFileSet()
 			pkgs, err := loadAquaregiaPackages(
