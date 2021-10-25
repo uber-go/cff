@@ -26,7 +26,7 @@ func ParallelInvalidParamsMultiple() {
 		context.Background(),
 		cff.Tasks(
 			func(_ context.Context, _ context.Context) bool {
-				return s == "goal"
+				return "some" == "goal"
 			},
 		),
 	)
@@ -51,7 +51,7 @@ func ParallelInvalidReturnMultiple() {
 		context.Background(),
 		cff.Tasks(
 			func(_ context.Context) (error, error) {
-				return true
+				return nil, nil
 			},
 		),
 	)
