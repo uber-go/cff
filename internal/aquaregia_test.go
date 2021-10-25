@@ -246,62 +246,16 @@ func TestCodeGenerateFails(t *testing.T) {
 		},
 	}
 
-	_ = os.Setenv("PATH", os.ExpandEnv("$TEST_SRCDIR/__main__/external/go_sdk/bin:$PATH"))
-	// See if we are in Bazel environment as `go test` doesn't need GOCACHE to be set manually.
-	if file, err := os.Stat(os.Getenv("TEST_TMPDIR")); err == nil {
-		if file.IsDir() {
-			// Go executable requires a GOCACHE to be set after go1.12.
-			_ = os.Setenv("GOCACHE", filepath.Join(os.Getenv("TEST_TMPDIR"), "/cache"))
-		}
-	}
-
-	// packages.Load expects to find the import when parsing files.
-	cffModule := packagestest.Module{
-		Name:  "go.uber.org/cff",
-		Files: packagestest.MustCopyFileTree("./.."),
-	}
-	// Adding fake tally and zap packages to cause `go list` not to error and swallow useful output.
-	tallyModule := packagestest.Module{
-		Name: "github.com/uber-go/tally",
-		Files: map[string]interface{}{
-			// This needs to be a valid Go file.
-			"tally.go": "package tally",
-		},
-		Overlay: nil,
-	}
-	zapModule := packagestest.Module{
-		Name: "go.uber.org/zap",
-		Files: map[string]interface{}{
-			// This needs to be a valid Go file.
-			"zap.go": "package zap",
-		},
-		Overlay: nil,
-	}
-
 	for testDirectoryName, errCases := range errorCasesByDirectory {
 		t.Run(fmt.Sprintf("test cases for directory %s", testDirectoryName), func(t *testing.T) {
-			exp := packagestest.Export(t, packagestest.Modules,
-				[]packagestest.Module{cffModule, tallyModule, zapModule})
 			fset := token.NewFileSet()
-
-			cfg := exp.Config
-			cfg.BuildFlags = []string{"-tags=cff"}
-			cfg.Fset = fset
-			cfg.Tests = false
-			cfg.Mode = packages.NeedName |
-				packages.NeedFiles |
-				packages.NeedCompiledGoFiles |
-				packages.NeedImports |
-				packages.NeedDeps |
-				packages.NeedTypes |
-				packages.NeedSyntax |
-				packages.NeedTypesInfo |
-				packages.NeedTypesSizes
-			defer exp.Cleanup()
-			pattern := "pattern=" + filepath.Join(internalTests, aquaregiaTestDir, testDirectoryName, "...")
-			pkgs, err := packages.Load(
-				exp.Config,
-				pattern)
+			pkgs, err := loadAquaregiaPackages(
+				&loadParams{
+					pattern: "pattern=" + filepath.Join(internalTests, aquaregiaTestDir, testDirectoryName, "..."),
+					fset:    fset,
+					t:       t,
+				},
+			)
 			require.NoError(t, err, "could not load packages")
 			require.NotEmpty(t, pkgs, "didn't find any packages")
 
@@ -336,6 +290,66 @@ func TestCodeGenerateFails(t *testing.T) {
 			}
 		})
 	}
+}
+
+type loadParams struct {
+	pattern string
+	fset    *token.FileSet
+	t       *testing.T
+}
+
+func loadAquaregiaPackages(p *loadParams) ([]*packages.Package, error) {
+	_ = os.Setenv("PATH", os.ExpandEnv("$TEST_SRCDIR/__main__/external/go_sdk/bin:$PATH"))
+	// See if we are in Bazel environment as `go test` doesn't need GOCACHE to be set manually.
+	if file, err := os.Stat(os.Getenv("TEST_TMPDIR")); err == nil {
+		if file.IsDir() {
+			// Go executable requires a GOCACHE to be set after go1.12.
+			_ = os.Setenv("GOCACHE", filepath.Join(os.Getenv("TEST_TMPDIR"), "/cache"))
+		}
+	}
+
+	// packages.Load expects to find the import when parsing files.
+	cffModule := packagestest.Module{
+		Name:  "go.uber.org/cff",
+		Files: packagestest.MustCopyFileTree("./.."),
+	}
+	// Adding fake tally and zap packages to cause `go list` not to error and swallow useful output.
+	tallyModule := packagestest.Module{
+		Name: "github.com/uber-go/tally",
+		Files: map[string]interface{}{
+			// This needs to be a valid Go file.
+			"tally.go": "package tally",
+		},
+		Overlay: nil,
+	}
+	zapModule := packagestest.Module{
+		Name: "go.uber.org/zap",
+		Files: map[string]interface{}{
+			// This needs to be a valid Go file.
+			"zap.go": "package zap",
+		},
+		Overlay: nil,
+	}
+
+	exp := packagestest.Export(p.t, packagestest.Modules,
+		[]packagestest.Module{cffModule, tallyModule, zapModule})
+
+	cfg := exp.Config
+	cfg.BuildFlags = []string{"-tags=cff"}
+	cfg.Fset = p.fset
+	cfg.Tests = false
+	cfg.Mode = packages.NeedName |
+		packages.NeedFiles |
+		packages.NeedCompiledGoFiles |
+		packages.NeedImports |
+		packages.NeedDeps |
+		packages.NeedTypes |
+		packages.NeedSyntax |
+		packages.NeedTypesInfo |
+		packages.NeedTypesSizes
+	defer exp.Cleanup()
+	pkgs, err := packages.Load(exp.Config, p.pattern)
+	return pkgs, err
 }
 
 // Tests requiring Go SDK in runtime need testutil.RunWithGoSDK due to
