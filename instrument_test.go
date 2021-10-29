@@ -16,9 +16,9 @@ import (
 	"go.uber.org/zap/zaptest/observer"
 )
 
-// TestInstrumentEmitter verifies that new Emitter interface gets called if
+// TestInstrumentFlowEmitter verifies that new Emitter interface gets called if
 // it's passed in.
-func TestInstrumentEmitter(t *testing.T) {
+func TestInstrumentFlowEmitter(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
 
@@ -38,7 +38,7 @@ func TestInstrumentEmitter(t *testing.T) {
 	flowInfo := &cff.FlowInfo{
 		Name:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   225,
+		Line:   226,
 		Column: 8,
 	}
 
@@ -67,13 +67,13 @@ func TestInstrumentEmitter(t *testing.T) {
 		Scope:   scope,
 		Emitter: emitter,
 	}
-	v, err := g.Run(ctx, "1")
+	v, err := g.RunFlow(ctx, "1")
 
 	assert.NoError(t, err)
 	assert.Equal(t, uint8(1), v)
 }
 
-func TestInstrumentErrorME(t *testing.T) {
+func TestInstrumentFlowErrorME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
 
@@ -106,7 +106,7 @@ func TestInstrumentErrorME(t *testing.T) {
 		Logger:  logger,
 		Emitter: emitter,
 	}
-	_, err := h.Run(ctx, "NaN")
+	_, err := h.RunFlow(ctx, "NaN")
 
 	assert.Error(t, err)
 }
@@ -133,13 +133,13 @@ func TestInstrumentTaskButNotFlowME(t *testing.T) {
 		Logger:  logger,
 		Emitter: emitter,
 	}
-	v, err := g.Work(ctx, "1")
+	v, err := g.FlowOnlyInstrumentTask(ctx, "1")
 
 	assert.NoError(t, err)
 	assert.Equal(t, 1, v)
 }
 
-func TestInstrumentCancelledContextME(t *testing.T) {
+func TestInstrumentFlowCancelledContextME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
 	scope := tally.NewTestScope("", nil)
@@ -172,11 +172,11 @@ func TestInstrumentCancelledContextME(t *testing.T) {
 		Emitter: emitter,
 	}
 
-	_, err := g.Run(ctx, "1")
+	_, err := g.RunFlow(ctx, "1")
 	assert.Error(t, err)
 }
 
-func TestInstrumentRecoverME(t *testing.T) {
+func TestInstrumentFlowRecoverME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
 
@@ -200,7 +200,7 @@ func TestInstrumentRecoverME(t *testing.T) {
 	emitter.EXPECT().FlowInit(&cff.FlowInfo{
 		Name:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   225,
+		Line:   226,
 		Column: 8,
 	}).Return(flowEmitter)
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
@@ -212,7 +212,7 @@ func TestInstrumentRecoverME(t *testing.T) {
 		Emitter: emitter,
 	}
 
-	v, err := g.Run(ctx, "300")
+	v, err := g.RunFlow(ctx, "300")
 
 	assert.NoError(t, err)
 	assert.Equal(t, uint8(0), v)
@@ -348,7 +348,7 @@ func TestT3795761ME(t *testing.T) {
 	})
 }
 
-func TestPanic(t *testing.T) {
+func TestFlowPanic(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
 
@@ -366,13 +366,13 @@ func TestPanic(t *testing.T) {
 		&cff.TaskInfo{
 			Name:   "Atoi",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   347,
+			Line:   349,
 			Column: 12,
 		},
 		&cff.FlowInfo{
 			Name:   "",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   344,
+			Line:   346,
 			Column: 9,
 		}).Return(taskEmitter)
 	emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
@@ -404,7 +404,7 @@ func TestConcurrentFlow(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			benchmark.MetricsMemoized1000(logger, builder)
+			benchmark.FlowMetricsMemoized1000(logger, builder)
 		}()
 	}
 	wg.Wait()

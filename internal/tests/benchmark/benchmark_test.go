@@ -34,7 +34,7 @@ func BenchmarkMetrics(b *testing.B) {
 	builder := cff.TallyEmitter(scope)
 
 	metricsMemoized := func(logger *zap.Logger, scope tally.Scope) float64 {
-		return MetricsMemoized1000(logger, builder)
+		return FlowMetricsMemoized1000(logger, builder)
 	}
 	metricsFailedMemoized := func(logger *zap.Logger, scope tally.Scope) float64 {
 		return Metrics1000FailedMemoized(logger, builder)

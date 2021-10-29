@@ -25,7 +25,7 @@ func main() {
 		Logger: logger,
 	}
 	ctx := context.Background()
-	res, err := h.Run(ctx, os.Args[1])
+	res, err := h.RunFlow(ctx, os.Args[1])
 	if err != nil {
 		panic(err)
 	}
@@ -38,8 +38,8 @@ type DefaultEmitter struct {
 	Logger *zap.Logger
 }
 
-// Run executes a flow to test instrumentation.
-func (h *DefaultEmitter) Run(ctx context.Context, req string) (res uint8, err error) {
+// RunFlow executes a flow to test instrumentation.
+func (h *DefaultEmitter) RunFlow(ctx context.Context, req string) (res uint8, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
@@ -82,8 +82,8 @@ func (h *DefaultEmitter) ExplicitListOfFields(ctx context.Context, req string) (
 	return
 }
 
-// Do executes a flow to test instrumentation.
-func (h *DefaultEmitter) Do(ctx context.Context, req string) (res int, err error) {
+// InstrumentFlowAndTask executes a flow to test instrumentation.
+func (h *DefaultEmitter) InstrumentFlowAndTask(ctx context.Context, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
@@ -98,8 +98,8 @@ func (h *DefaultEmitter) Do(ctx context.Context, req string) (res int, err error
 	return
 }
 
-// Work executes a flow to test instrumentation.
-func (h *DefaultEmitter) Work(ctx context.Context, req string) (res int, err error) {
+// FlowOnlyInstrumentTask executes a flow to test instrumentation.
+func (h *DefaultEmitter) FlowOnlyInstrumentTask(ctx context.Context, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
@@ -192,8 +192,8 @@ func (h *DefaultEmitter) TaskLatencySkipped(ctx context.Context, shouldRun bool)
 	return
 }
 
-// AlwaysPanics tests a task which always panics.
-func (h *DefaultEmitter) AlwaysPanics(ctx context.Context) {
+// FlowAlwaysPanics tests a flow with a task that always panics.
+func (h *DefaultEmitter) FlowAlwaysPanics(ctx context.Context) {
 	var s string
 	_ = cff.Flow(ctx,
 		cff.Results(&s),
@@ -220,8 +220,9 @@ type CustomEmitter struct {
 	Emitter cff.Emitter
 }
 
-// Run executes a flow to test instrumentation.
-func (h *CustomEmitter) Run(ctx context.Context, req string) (res uint8, err error) {
+// RunFlow executes a flow that instruments the top-level flow and tasks,
+// of which one task can error.
+func (h *CustomEmitter) RunFlow(ctx context.Context, req string) (res uint8, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
@@ -246,8 +247,9 @@ func (h *CustomEmitter) Run(ctx context.Context, req string) (res uint8, err err
 	return
 }
 
-// Do executes a flow to test instrumentation.
-func (h *CustomEmitter) Do(ctx context.Context, req string) (res int, err error) {
+// InstrumentFlowAndTask executes a flow that instruments the top-level flow and
+// the task.
+func (h *CustomEmitter) InstrumentFlowAndTask(ctx context.Context, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
@@ -262,8 +264,8 @@ func (h *CustomEmitter) Do(ctx context.Context, req string) (res int, err error)
 	return
 }
 
-// Work executes a flow to test instrumentation.
-func (h *CustomEmitter) Work(ctx context.Context, req string) (res int, err error) {
+// FlowOnlyInstrumentTask executes a flow that instruments only the task.
+func (h *CustomEmitter) FlowOnlyInstrumentTask(ctx context.Context, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
@@ -353,8 +355,8 @@ func (h *CustomEmitter) FlowAlwaysPanics(ctx context.Context) error {
 	)
 }
 
-// AtoiWithTwoEmitters is a flow that uses WithEmitter multiple tipes.
-func AtoiWithTwoEmitters(ctx context.Context, e1, e2 cff.Emitter, req string) (res int, err error) {
+// FlowWithTwoEmitters is a flow that uses WithEmitter multiple times.
+func FlowWithTwoEmitters(ctx context.Context, e1, e2 cff.Emitter, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),

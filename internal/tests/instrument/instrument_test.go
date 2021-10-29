@@ -14,13 +14,13 @@ import (
 	"go.uber.org/zap/zaptest/observer"
 )
 
-func TestInstrument(t *testing.T) {
+func TestInstrumentFlow(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 	h := &DefaultEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
-	v, err := h.Run(ctx, "1")
+	v, err := h.RunFlow(ctx, "1")
 
 	assert.NoError(t, err)
 	assert.Equal(t, uint8(1), v)
@@ -60,13 +60,13 @@ func TestInstrument(t *testing.T) {
 	}
 }
 
-func TestInstrumentError(t *testing.T) {
+func TestInstrumentFlowError(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 	h := &DefaultEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
-	_, err := h.Run(ctx, "NaN")
+	_, err := h.RunFlow(ctx, "NaN")
 
 	assert.Error(t, err)
 
@@ -107,7 +107,7 @@ func TestInstrumentError(t *testing.T) {
 	}
 }
 
-func TestInstrumentCancelledContext(t *testing.T) {
+func TestInstrumentFlowCancelledContext(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
@@ -116,7 +116,7 @@ func TestInstrumentCancelledContext(t *testing.T) {
 	cancel()
 
 	h := &DefaultEmitter{Scope: scope, Logger: logger}
-	_, err := h.Run(ctx, "1")
+	_, err := h.RunFlow(ctx, "1")
 	assert.Error(t, err)
 
 	// metrics
@@ -144,13 +144,13 @@ func TestInstrumentCancelledContext(t *testing.T) {
 	}
 }
 
-func TestInstrumentRecover(t *testing.T) {
+func TestInstrumentFlowRecover(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 	h := &DefaultEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
-	v, err := h.Run(ctx, "300")
+	v, err := h.RunFlow(ctx, "300")
 
 	assert.NoError(t, err)
 	assert.Equal(t, uint8(0), v)
@@ -185,11 +185,11 @@ func TestInstrumentRecover(t *testing.T) {
 	}
 }
 
-func TestInstrumentPanic(t *testing.T) {
+func TestInstrumentFlowPanic(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	h := &DefaultEmitter{Scope: scope}
 	ctx := context.Background()
-	h.AlwaysPanics(ctx)
+	h.FlowAlwaysPanics(ctx)
 
 	counters := scope.Snapshot().Counters()
 	for k := range counters {
@@ -204,13 +204,13 @@ func TestInstrumentPanic(t *testing.T) {
 	assert.NotNil(t, timers["task.timing+flow=Flow,task=Task"])
 }
 
-func TestInstrumentAnnotationOrder(t *testing.T) {
+func TestInstrumentFlowAnnotationOrder(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 	h := &DefaultEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
-	v, err := h.Do(ctx, "1")
+	v, err := h.InstrumentFlowAndTask(ctx, "1")
 
 	assert.NoError(t, err)
 	assert.Equal(t, 1, v)
@@ -246,7 +246,7 @@ func TestInstrumentTaskButNotFlow(t *testing.T) {
 	logger := zap.New(core)
 	h := &DefaultEmitter{Scope: scope, Logger: logger}
 	ctx := context.Background()
-	v, err := h.Work(ctx, "1")
+	v, err := h.FlowOnlyInstrumentTask(ctx, "1")
 
 	assert.NoError(t, err)
 	assert.Equal(t, 1, v)
@@ -380,11 +380,11 @@ func TestT3795761(t *testing.T) {
 	})
 }
 
-func TestWithMultipleEmitters(t *testing.T) {
+func TestFlowWithMultipleEmitters(t *testing.T) {
 	core1, logs1 := observer.New(zapcore.DebugLevel)
 	core2, logs2 := observer.New(zapcore.DebugLevel)
 
-	n, err := AtoiWithTwoEmitters(context.Background(),
+	n, err := FlowWithTwoEmitters(context.Background(),
 		cff.LogEmitter(zap.New(core1)),
 		cff.LogEmitter(zap.New(core2)),
 		"42",
