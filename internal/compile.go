@@ -730,7 +730,7 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 
 		sel, ok := call.Fun.(*ast.SelectorExpr)
 		if !ok {
-			c.errf(c.nodePosition(opt), "only cff functions may be passed as task options")
+			c.errf(c.nodePosition(opt), "only cff functions can be passed as task options")
 			continue
 		}
 

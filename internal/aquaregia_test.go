@@ -12,6 +12,7 @@ import (
 	"code.uber.internal/devexp/bazel/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/multierr"
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/packages/packagestest"
 )
@@ -60,7 +61,7 @@ var codeGenerateFailCases = map[string][]errorCase{
 		// ExpectedFlowArgumentsSelectorExpression.
 		{
 			File:         "cff-task-arguments.go",
-			ErrorMatches: "only cff functions may be passed as task options",
+			ErrorMatches: "only cff functions can be passed as task options",
 		},
 		// ExpectedFlowArgumentsCallExpressions
 		{
@@ -68,6 +69,11 @@ var codeGenerateFailCases = map[string][]errorCase{
 			ErrorMatches: "expected a function call, got identifier",
 		},
 		// ExpectedFlowArgumentsCallExpressions
+		{
+			File:         "cff-task-arguments.go",
+			ErrorMatches: `unexpected code generation directive "Instrument": only cff.Flow or cff.Parallel may be called at the top-level`,
+		},
+		// ExpectedFlowArgumentsNotCFF
 		{
 			File:         "cff-task-arguments.go",
 			ErrorMatches: `unexpected code generation directive "Instrument": only cff.Flow or cff.Parallel may be called at the top-level`,
@@ -144,16 +150,6 @@ var codeGenerateFailCases = map[string][]errorCase{
 			File:         "fallback-with.go",
 			ErrorMatches: "Task must return an error for FallbackWith to be used",
 		},
-		// MissingCFFMetrics
-		{
-			File:         "instrument.go",
-			ErrorMatches: "cff.Instrument requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
-		},
-		// MissingCFFLogger and MissingCFFLoggerME
-		{
-			File:         "instrument.go",
-			ErrorMatches: "cff.Instrument requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
-		},
 		// MissingCFFLoggerAndMetrics
 		{
 			File:         "instrument.go",
@@ -176,7 +172,7 @@ var codeGenerateFailCases = map[string][]errorCase{
 		// ParallelInvalidParamsMultiple
 		{
 			File:         "parallel.go",
-			ErrorMatches: "the only allowed argument is a single context.Context parameter",
+			ErrorMatches: "only the first argument may be context.Context",
 		},
 		// ParallelInvalidReturnType
 		{
@@ -188,6 +184,12 @@ var codeGenerateFailCases = map[string][]errorCase{
 			File:         "parallel.go",
 			ErrorMatches: "the only allowed argument is a single context.Context parameter",
 		},
+		// PredicateReturnsNonbool
+		{
+			File:         "predicate.go",
+			ErrorMatches: "the function must return a single boolean result",
+		},
+		// PredicateReturnsMultipleValues
 		{
 			File:         "predicate.go",
 			ErrorMatches: "the function must return a single boolean result",
@@ -231,6 +233,10 @@ var codeGenerateFailCases = map[string][]errorCase{
 			File:         "variadic.go",
 			ErrorMatches: "variadic functions are not yet supported",
 		},
+		{
+			File:         "variadic.go",
+			ErrorMatches: "variadic functions are not yet supported",
+		},
 	},
 	"cycles": {
 		{
@@ -250,6 +256,12 @@ var codeGenerateFailCases = map[string][]errorCase{
 // Note: error accumulation is per-package so at the moment state is kept
 // when running transpiler across many flows expected to fail.
 func TestCodeGenerateFails(t *testing.T) {
+	// fileError hashes a file and errMatch for map lookups.
+	type fileError struct {
+		file     string
+		errMatch string
+	}
+
 	for testDirectoryName, errCases := range codeGenerateFailCases {
 		t.Run(fmt.Sprintf("test cases for directory %s", testDirectoryName), func(t *testing.T) {
 			fset := token.NewFileSet()
@@ -272,24 +284,45 @@ func TestCodeGenerateFails(t *testing.T) {
 				var errors []error
 				for i := range pkg.CompiledGoFiles {
 					if err := processor.Process(pkg, pkg.Syntax[i], ""); err != nil {
-						errors = append(errors, err)
+						errors = append(errors, multierr.Errors(err)...)
 					}
 				}
 				for _, err := range errors {
 					t.Logf("found error %q", err.Error())
 				}
+
+				// Track error expectations and compare them to the errors
+				// observed by the CFF compiler.
+				expectedErrors := make(map[fileError]int)
 				for _, errCase := range errCases {
-					found := false
-					regexpError := regexp.MustCompile(fmt.Sprintf("%s.*%s", errCase.File, errCase.ErrorMatches))
-					// TODO: verify exactly how many times we match the error in a file.
+					expectedErrors[fileError{
+						file:     errCase.File,
+						errMatch: errCase.ErrorMatches,
+					}]++
+				}
+				observedErrors := make(map[fileError]int)
+				for match := range expectedErrors {
+					regexpError := regexp.MustCompile(fmt.Sprintf("%s.*%s", match.file, match.errMatch))
 					for _, err := range errors {
+						// Unwrap combined errors produced by the cff
+						// compiler.
 						if ok := regexpError.MatchString(err.Error()); ok {
-							found = true
-							break
+							observedErrors[fileError{
+								file:     match.file,
+								errMatch: match.errMatch,
+							}]++
 						}
 					}
-
-					assert.True(t, found, "expected to find error matching %q in %q", errCase.ErrorMatches, errCase.File)
+				}
+				for k, v := range expectedErrors {
+					assert.Equal(
+						t,
+						v,
+						observedErrors[k],
+						"incorrect matches for %q in file %q",
+						k.errMatch,
+						k.file,
+					)
 				}
 			}
 		})
