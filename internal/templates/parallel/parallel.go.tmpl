@@ -8,10 +8,18 @@ func(
 ) (err error) {
 	var (
 		parallelInfo = &{{ $cff }}.ParallelInfo{
+			{{ with $parallel.Instrument -}}
+				Name: {{ expr .Name }},
+			{{ end -}}
 			File: {{ quote $parallel.PosInfo.File}},
 			Line: {{ $parallel.PosInfo.Line }},
 			Column: {{ $parallel.PosInfo.Column}},
 		}
+		{{ with $parallel.Instrument -}}
+			parallelEmitter = emitter.ParallelInit(parallelInfo)
+		{{- else -}}
+			parallelEmitter = {{ $cff }}.NopParallelEmitter()
+		{{- end }}
 
 		schedInfo = &{{ $cff }}.SchedulerInfo{
 			Name: parallelInfo.Name,
@@ -24,6 +32,9 @@ func(
 		// possibly unused
 		_ = parallelInfo
 	)
+
+	startTime := {{ import "time" }}.Now()
+	defer func() { parallelEmitter.ParallelDone(ctx, time.Since(startTime)) }()
 
 	schedEmitter := emitter.SchedulerInit(schedInfo)
 
@@ -45,8 +56,10 @@ func(
 	{{ end }}
 
 	if err := sched.Wait(ctx); err != nil {
+		parallelEmitter.ParallelError(ctx, err)
 		return err
 	}
+	parallelEmitter.ParallelSuccess(ctx)
 	return nil
 }(
 	{{ expr .Ctx }},

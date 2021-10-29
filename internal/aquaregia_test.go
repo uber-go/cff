@@ -195,6 +195,11 @@ var codeGenerateFailCases = map[string][]errorCase{
 			TestFuncs:    []string{"ParallelInvalidReturnType"},
 		},
 		{
+			File:         "parallel.go",
+			ErrorMatches: "cff.InstrumentParallel requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
+			TestFuncs:    []string{"InstrumentParallelInvalid"},
+		},
+		{
 			File:         "predicate.go",
 			ErrorMatches: "the function must return a single boolean result",
 			TestFuncs:    []string{"PredicateReturnsNonbool", "PredicateReturnsMultipleValues"},

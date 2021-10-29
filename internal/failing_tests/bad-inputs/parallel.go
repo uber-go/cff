@@ -68,6 +68,20 @@ func ParallelInvalidFuncVar() {
 	)
 }
 
+// InstrumentParallelInvalid is a Parallel that provides an InstrumentParallel
+// without an emitter.
+func InstrumentParallelInvalid() {
+	cff.Parallel(
+		context.Background(),
+		cff.InstrumentParallel("some instrument"),
+		cff.Task(
+			func() error {
+				return nil
+			},
+		),
+	)
+}
+
 func chanSend(s string, c chan<- string) {
 	c <- s
 }

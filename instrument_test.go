@@ -38,7 +38,7 @@ func TestInstrumentFlowEmitter(t *testing.T) {
 	flowInfo := &cff.FlowInfo{
 		Name:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   226,
+		Line:   259,
 		Column: 8,
 	}
 
@@ -71,6 +71,52 @@ func TestInstrumentFlowEmitter(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, uint8(1), v)
+}
+
+// TestInstrumentParallelEmitter verifies that new Emitter interface gets called if
+// it's passed in.
+func TestInstrumentParallelEmitter(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+
+	emitter := cff.NewMockEmitter(mockCtrl)
+
+	parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
+	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+
+	parallelsucc := parallelEmitter.EXPECT().ParallelSuccess(ctx)
+	parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any()).After(parallelsucc)
+
+	parallelInfo := &cff.ParallelInfo{
+		Name:   "RunParallelTasks",
+		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
+		Line:   286,
+		Column: 9,
+	}
+
+	emitter.EXPECT().ParallelInit(parallelInfo).Return(parallelEmitter)
+
+	emitter.EXPECT().SchedulerInit(
+		&cff.SchedulerInfo{
+			Name:      parallelInfo.Name,
+			Directive: cff.ParallelDirective,
+			File:      parallelInfo.File,
+			Line:      parallelInfo.Line,
+			Column:    parallelInfo.Column,
+		}).Return(schedEmitter)
+
+	scope := tally.NewTestScope("", nil)
+	// Logging
+	core, _ := observer.New(zap.DebugLevel)
+	logger := zap.New(core)
+
+	// CustomEmitter Unit
+	g := &instrument.CustomEmitter{
+		Logger:  logger,
+		Scope:   scope,
+		Emitter: emitter,
+	}
+	assert.NoError(t, g.RunParallelTasks(ctx, "1"))
 }
 
 func TestInstrumentFlowErrorME(t *testing.T) {
@@ -111,6 +157,34 @@ func TestInstrumentFlowErrorME(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestInstrumentParallelErrorME(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+
+	emitter := cff.NewMockEmitter(mockCtrl)
+
+	parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
+	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+
+	parallelEmitter.EXPECT().ParallelError(ctx, gomock.Any())
+	parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any())
+
+	emitter.EXPECT().ParallelInit(gomock.Any()).Return(parallelEmitter)
+	emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
+
+	scope := tally.NewTestScope("", nil)
+	core, _ := observer.New(zap.DebugLevel)
+	logger := zap.New(core)
+
+	h := &instrument.CustomEmitter{
+		Scope:   scope,
+		Logger:  logger,
+		Emitter: emitter,
+	}
+	err := h.RunParallelTasks(ctx, "NaN")
+	assert.Error(t, err)
+}
+
 func TestInstrumentTaskButNotFlowME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
@@ -145,8 +219,7 @@ func TestInstrumentFlowCancelledContextME(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
 	flowCancelledErr := ctx.Err()
@@ -176,6 +249,38 @@ func TestInstrumentFlowCancelledContextME(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestInstrumentParallelCancelledContextME(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+
+	scope := tally.NewTestScope("", nil)
+	core, _ := observer.New(zap.DebugLevel)
+	logger := zap.New(core)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	parallelCancelledError := ctx.Err()
+
+	emitter := cff.NewMockEmitter(mockCtrl)
+
+	parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
+	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+
+	parallelEmitter.EXPECT().ParallelError(ctx, parallelCancelledError)
+	parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any())
+
+	emitter.EXPECT().ParallelInit(gomock.Any()).Return(parallelEmitter)
+	emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
+
+	g := &instrument.CustomEmitter{
+		Scope:   scope,
+		Logger:  logger,
+		Emitter: emitter,
+	}
+
+	err := g.RunParallelTasks(ctx, "1")
+	assert.Error(t, err)
+}
+
 func TestInstrumentFlowRecoverME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
@@ -200,7 +305,7 @@ func TestInstrumentFlowRecoverME(t *testing.T) {
 	emitter.EXPECT().FlowInit(&cff.FlowInfo{
 		Name:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   226,
+		Line:   259,
 		Column: 8,
 	}).Return(flowEmitter)
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
@@ -366,13 +471,13 @@ func TestFlowPanic(t *testing.T) {
 		&cff.TaskInfo{
 			Name:   "Atoi",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   349,
+			Line:   401,
 			Column: 12,
 		},
 		&cff.FlowInfo{
 			Name:   "",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   346,
+			Line:   398,
 			Column: 9,
 		}).Return(taskEmitter)
 	emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
@@ -387,6 +492,34 @@ func TestFlowPanic(t *testing.T) {
 		Emitter: emitter,
 	}
 	err := g.FlowAlwaysPanics(ctx)
+	require.Error(t, err)
+}
+
+func TestParallelPanic(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+
+	emitter := cff.NewMockEmitter(mockCtrl)
+
+	parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
+	emitter.EXPECT().ParallelInit(gomock.Any()).AnyTimes().Return(parallelEmitter)
+
+	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
+
+	parallelEmitter.EXPECT().ParallelError(gomock.Any(), gomock.Any())
+	parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any()).Times(1)
+
+	scope := tally.NewTestScope("", nil)
+	core, _ := observer.New(zap.DebugLevel)
+	logger := zap.New(core)
+
+	g := &instrument.CustomEmitter{
+		Scope:   scope,
+		Logger:  logger,
+		Emitter: emitter,
+	}
+	err := g.ParallelAlwaysPanics(ctx)
 	require.Error(t, err)
 }
 
@@ -408,5 +541,4 @@ func TestConcurrentFlow(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-
 }

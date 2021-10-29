@@ -14,6 +14,7 @@ import (
 
 	"go.uber.org/cff"
 	"github.com/uber-go/tally"
+	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )
 
@@ -64,6 +65,24 @@ func (h *DefaultEmitter) RunFlow(ctx context.Context, req string) (res uint8, er
 		),
 	)
 	return
+}
+
+// RunParallelTasks executes a parallel to test instrumentation.
+func (h *DefaultEmitter) RunParallelTasks(ctx context.Context, req string) error {
+	return cff.Parallel(ctx,
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
+		cff.WithEmitter(cff.LogEmitter(h.Logger)),
+		cff.InstrumentParallel("RunParallelTasks"),
+		cff.Tasks(
+			func() error {
+				_, err := strconv.Atoi(req)
+				return err
+			},
+			func() error {
+				return nil
+			},
+		),
+	)
 }
 
 // ExplicitListOfFields is a flow with an explicit list of log fields.
@@ -210,6 +229,20 @@ func (h *DefaultEmitter) FlowAlwaysPanics(ctx context.Context) {
 	return
 }
 
+// ParallelAlwaysPanics tests a task which always panics.
+func (h *DefaultEmitter) ParallelAlwaysPanics(ctx context.Context) {
+	_ = cff.Parallel(ctx,
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
+		cff.InstrumentParallel("Parallel"),
+		cff.Tasks(
+			func() {
+				panic("panic value")
+			},
+		),
+	)
+	return
+}
+
 // These tests replicate the ones written for instrumentation to verify that
 // custom Emitter will trigger similarly to default implementation.
 
@@ -245,6 +278,25 @@ func (h *CustomEmitter) RunFlow(ctx context.Context, req string) (res uint8, err
 		),
 	)
 	return
+}
+
+// RunParallelTasks executes a parallel that instruments the top-level
+// parallel and tasks, of which one can error.
+func (h *CustomEmitter) RunParallelTasks(ctx context.Context, req string) error {
+	return cff.Parallel(ctx,
+		cff.WithEmitter(cff.LogEmitter(h.Logger)),
+		cff.WithEmitter(h.Emitter),
+		cff.InstrumentParallel("RunParallelTasks"),
+		cff.Tasks(
+			func() error {
+				_, err := strconv.Atoi(req)
+				return err
+			},
+			func() error {
+				return nil
+			},
+		),
+	)
 }
 
 // InstrumentFlowAndTask executes a flow that instruments the top-level flow and
@@ -341,7 +393,7 @@ func (h *CustomEmitter) T3795761(ctx context.Context, shouldRun bool,
 	return s
 }
 
-// FlowAlwaysPanics is a flow that tests Metrics Emitter
+// FlowAlwaysPanics is a flow that tests Metrics Emitter.
 func (h *CustomEmitter) FlowAlwaysPanics(ctx context.Context) error {
 	return cff.Flow(ctx,
 		cff.WithEmitter(cff.LogEmitter(h.Logger)),
@@ -351,6 +403,21 @@ func (h *CustomEmitter) FlowAlwaysPanics(ctx context.Context) error {
 		},
 			cff.Invoke(true),
 			cff.Instrument("Atoi"),
+		),
+	)
+}
+
+// ParallelAlwaysPanics tests instrumentation for a parallel that always
+// panics.
+func (h *CustomEmitter) ParallelAlwaysPanics(ctx context.Context) error {
+	return cff.Parallel(ctx,
+		cff.WithEmitter(cff.LogEmitter(h.Logger)),
+		cff.WithEmitter(h.Emitter),
+		cff.InstrumentParallel("AlwaysPanic"),
+		cff.Tasks(
+			func() {
+				panic("always")
+			},
 		),
 	)
 }
@@ -365,5 +432,25 @@ func FlowWithTwoEmitters(ctx context.Context, e1, e2 cff.Emitter, req string) (r
 		cff.InstrumentFlow("AtoiDo"),
 		cff.Task(strconv.Atoi, cff.Instrument("Atoi")),
 	)
+	return
+}
+
+// ParallelWithTwoEmitters is a flow that uses WithEmitter multiple types.
+func ParallelWithTwoEmitters(ctx context.Context, e1, e2 cff.Emitter, req string) (res int, err error) {
+	var a atomic.Int64
+
+	err = cff.Parallel(ctx,
+		cff.WithEmitter(e1),
+		cff.WithEmitter(e2),
+		cff.InstrumentFlow("AtoiDo"),
+		cff.Tasks(
+			func() error {
+				v, err := strconv.Atoi(req)
+				a.Store(int64(v))
+				return err
+			},
+		),
+	)
+	res = int(a.Load())
 	return
 }

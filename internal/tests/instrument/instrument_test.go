@@ -60,6 +60,43 @@ func TestInstrumentFlow(t *testing.T) {
 	}
 }
 
+func TestInstrumentParallel(t *testing.T) {
+	scope := tally.NewTestScope("", nil)
+	core, observedLogs := observer.New(zap.DebugLevel)
+	logger := zap.New(core)
+	h := &DefaultEmitter{Scope: scope, Logger: logger}
+	ctx := context.Background()
+	require.NoError(t, h.RunParallelTasks(ctx, "1"))
+
+	metrics := scope.Snapshot()
+	counters := metrics.Counters()
+	for k := range counters {
+		t.Logf("got counter with key %q", k)
+	}
+	v, ok := counters["taskparallel.success+parallel=RunParallelTasks"]
+	require.True(t, ok)
+	assert.Equal(t, int64(1), v.Value())
+
+	timers := metrics.Timers()
+	assert.NotNil(t, timers["taskparallel.timing+parallel=RunParallelTasks"])
+
+	// logs
+	expectedLevel := zap.DebugLevel
+	expectedMessages := []string{
+		"parallel success",
+		"parallel done",
+	}
+	logEntries := observedLogs.All()
+	assert.Equal(t, len(expectedMessages), len(logEntries))
+	for _, entry := range logEntries {
+		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.ContextMap())
+	}
+	for i, entry := range logEntries {
+		assert.Equal(t, expectedLevel, entry.Level)
+		assert.Equal(t, expectedMessages[i], entry.Message)
+	}
+}
+
 func TestInstrumentFlowError(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
@@ -107,6 +144,49 @@ func TestInstrumentFlowError(t *testing.T) {
 	}
 }
 
+func TestInstrumentParallelError(t *testing.T) {
+	scope := tally.NewTestScope("", nil)
+	core, observedLogs := observer.New(zap.DebugLevel)
+	logger := zap.New(core)
+	h := &DefaultEmitter{Scope: scope, Logger: logger}
+	ctx := context.Background()
+	err := h.RunParallelTasks(ctx, "NaN")
+	assert.Error(t, err)
+
+	// metrics
+	metrics := scope.Snapshot()
+	counters := metrics.Counters()
+	for k, v := range counters {
+		t.Logf("got counter with key %q val %v", k, v.Value())
+	}
+	v, ok := counters["taskparallel.error+parallel=RunParallelTasks"]
+	require.True(t, ok)
+	assert.Equal(t, int64(1), v.Value())
+
+	timers := metrics.Timers()
+	assert.NotNil(t, timers["taskparallel.timing+parallel=RunParallelTasks"])
+
+	expected := []struct {
+		level   zapcore.Level
+		message string
+		fields  map[string]interface{}
+	}{
+		{zap.DebugLevel, "parallel error", nil},
+		{zap.DebugLevel, "parallel done", nil},
+	}
+
+	// logs
+	logEntries := observedLogs.All()
+	for _, entry := range logEntries {
+		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.ContextMap())
+	}
+	assert.Equal(t, len(expected), len(logEntries))
+	for i, entry := range logEntries {
+		assert.Equal(t, expected[i].level, entry.Level)
+		assert.Equal(t, expected[i].message, entry.Message)
+	}
+}
+
 func TestInstrumentFlowCancelledContext(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	core, observedLogs := observer.New(zap.DebugLevel)
@@ -134,6 +214,45 @@ func TestInstrumentFlowCancelledContext(t *testing.T) {
 		"task skipped",
 		"task skipped",
 		"flow done",
+	}
+	logEntries := observedLogs.All()
+	assert.Equal(t, len(expectedMessages), len(logEntries))
+	for i, entry := range logEntries {
+		t.Logf("log entry - level: %q, message: %q, fields: %v", entry.Level, entry.Message, entry.Context)
+		assert.Equal(t, expectedLevel, entry.Level)
+		assert.Equal(t, expectedMessages[i], entry.Message)
+	}
+}
+
+func TestInstrumentParallelCancelledContext(t *testing.T) {
+	scope := tally.NewTestScope("", nil)
+	core, observedLogs := observer.New(zap.DebugLevel)
+	logger := zap.New(core)
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	cancel()
+
+	h := &DefaultEmitter{Scope: scope, Logger: logger}
+	assert.Error(t, h.RunParallelTasks(ctx, "1"))
+
+	// metrics
+	metrics := scope.Snapshot()
+	counters := metrics.Counters()
+	for k, v := range counters {
+		t.Logf("got counter with key %q val %v", k, v.Value())
+	}
+	v, ok := counters["taskparallel.error+parallel=RunParallelTasks"]
+	require.True(t, ok)
+	assert.Equal(t, int64(1), v.Value())
+
+	timers := metrics.Timers()
+	assert.NotNil(t, timers["taskparallel.timing+parallel=RunParallelTasks"])
+
+	// logs
+	expectedLevel := zap.DebugLevel
+	expectedMessages := []string{
+		"parallel error",
+		"parallel done",
 	}
 	logEntries := observedLogs.All()
 	assert.Equal(t, len(expectedMessages), len(logEntries))
@@ -202,6 +321,27 @@ func TestInstrumentFlowPanic(t *testing.T) {
 	timers := scope.Snapshot().Timers()
 
 	assert.NotNil(t, timers["task.timing+flow=Flow,task=Task"])
+}
+
+func TestInstrumentParallelPanic(t *testing.T) {
+	scope := tally.NewTestScope("", nil)
+	h := &DefaultEmitter{Scope: scope}
+	ctx := context.Background()
+	h.ParallelAlwaysPanics(ctx)
+
+	metrics := scope.Snapshot()
+	counters := metrics.Counters()
+	for k := range counters {
+		t.Logf("got counter with key %q", k)
+	}
+
+	v, ok := counters["taskparallel.error+parallel=Parallel"]
+	require.True(t, ok)
+	assert.Equal(t, int64(1), v.Value())
+
+	timers := metrics.Timers()
+	_, ok = timers["taskparallel.timing+parallel=Parallel"]
+	require.True(t, ok)
 }
 
 func TestInstrumentFlowAnnotationOrder(t *testing.T) {
@@ -385,6 +525,21 @@ func TestFlowWithMultipleEmitters(t *testing.T) {
 	core2, logs2 := observer.New(zapcore.DebugLevel)
 
 	n, err := FlowWithTwoEmitters(context.Background(),
+		cff.LogEmitter(zap.New(core1)),
+		cff.LogEmitter(zap.New(core2)),
+		"42",
+	)
+	require.NoError(t, err)
+	assert.Equal(t, 42, n)
+
+	assert.Equal(t, logs1.AllUntimed(), logs2.AllUntimed(), "logs did not match")
+}
+
+func TestParallelWithMultipleEmitters(t *testing.T) {
+	core1, logs1 := observer.New(zapcore.DebugLevel)
+	core2, logs2 := observer.New(zapcore.DebugLevel)
+
+	n, err := ParallelWithTwoEmitters(context.Background(),
 		cff.LogEmitter(zap.New(core1)),
 		cff.LogEmitter(zap.New(core2)),
 		"42",

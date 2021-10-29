@@ -229,6 +229,15 @@ func Parallel(ctx context.Context, opts ...Option) error {
 	panic(_noGenMsg)
 }
 
+// InstrumentParallel specifies that this Parallel should be instrumented for
+// observability. The provided name will be used in emitted metrics, logs, and
+// spans, if any.
+//
+// This is a code generation directive.
+func InstrumentParallel(name string) Option {
+	panic(_noGenMsg)
+}
+
 // Tasks specifies functions for execution with Parallel. Tasks are any
 // executable function or bound method available in the scope when cff.Parallel
 // is called.

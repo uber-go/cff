@@ -18,6 +18,8 @@ type parallel struct {
 
 	Tasks []*parallelTask
 
+	Instrument *instrument
+
 	PosInfo *PosInfo // Used to pass information to uniquely identify a task.
 }
 
@@ -60,11 +62,28 @@ func (c *compiler) compileParallel(file *ast.File, call *ast.CallExpr) *parallel
 			parallel.Tasks = append(parallel.Tasks, c.compileParallelTasks(parallel, ce)...)
 		case "Concurrency":
 			parallel.Concurrency = ce.Args[0]
+		case "InstrumentParallel":
+			parallel.Instrument = c.compileInstrument(ce)
+		case "WithEmitter":
+			parallel.Emitters = append(parallel.Emitters, ce.Args[0])
 		}
-		// TODO(GO-84): WithEmitter, Instrument, Task, ContinueOnError,
-		// Map, Slice.
+		// TODO(GO-84): Task, ContinueOnError, Map, Slice.
 	}
+	c.validateParallelInstrument(parallel)
+
 	return parallel
+}
+
+func (c *compiler) validateParallelInstrument(p *parallel) {
+	// If the directive, or any task in the directive were instrumented, we require
+	// at least one emitter to be provided.
+	if p.Instrument == nil {
+		return
+	}
+
+	if len(p.Emitters) == 0 {
+		c.errf(c.nodePosition(p.Node), "cff.InstrumentParallel requires a cff.Emitter to be provided: use cff.WithEmitter")
+	}
 }
 
 func (c *compiler) compileParallelTasks(p *parallel, call *ast.CallExpr) []*parallelTask {

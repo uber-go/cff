@@ -417,10 +417,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 	) (err error) {
 		var (
 			parallelInfo = &cff.ParallelInfo{
+				Name:   "SendParallel",
 				File:   "go.uber.org/cff/examples/magic.go",
 				Line:   82,
 				Column: 8,
 			}
+			parallelEmitter = emitter.ParallelInit(parallelInfo)
 
 			schedInfo = &cff.SchedulerInfo{
 				Name:      parallelInfo.Name,
@@ -434,6 +436,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			_ = parallelInfo
 		)
 
+		startTime := time.Now()
+		defer func() { parallelEmitter.ParallelDone(ctx, time.Since(startTime)) }()
+
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
 		sched := cff.BeginFlow(2, schedEmitter)
@@ -443,7 +448,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			job *cff.ScheduledJob
 		}
 
-		// go.uber.org/cff/examples/magic.go:86:4
+		// go.uber.org/cff/examples/magic.go:89:4
 		func6 := new(task)
 		func6.run = func(ctx context.Context) (err error) {
 			defer func() {
@@ -463,7 +468,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			Run: func6.run,
 		})
 
-		// go.uber.org/cff/examples/magic.go:89:4
+		// go.uber.org/cff/examples/magic.go:92:4
 		func7 := new(task)
 		func7.run = func(ctx context.Context) (err error) {
 			defer func() {
@@ -482,12 +487,14 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 
 		if err := sched.Wait(ctx); err != nil {
+			parallelEmitter.ParallelError(ctx, err)
 			return err
 		}
+		parallelEmitter.ParallelSuccess(ctx)
 		return nil
 	}(
 		ctx,
-		cff.NopEmitter(),
+		cff.EmitterStack(cff.TallyEmitter(h.scope), cff.LogEmitter(h.logger)),
 	)
 	return res, err
 }
