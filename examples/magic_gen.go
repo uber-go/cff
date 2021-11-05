@@ -187,7 +187,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				Line:   61,
 				Column: 4,
 			},
-			flowInfo,
+			&cff.DirectiveInfo{
+				Name:      flowInfo.Name,
+				Directive: cff.FlowDirective,
+				File:      flowInfo.File,
+				Line:      flowInfo.Line,
+				Column:    flowInfo.Column,
+			},
 		)
 		task4.run = func(ctx context.Context) (err error) {
 			taskEmitter := task4.emitter
@@ -257,7 +263,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				Line:   66,
 				Column: 4,
 			},
-			flowInfo,
+			&cff.DirectiveInfo{
+				Name:      flowInfo.Name,
+				Directive: cff.FlowDirective,
+				File:      flowInfo.File,
+				Line:      flowInfo.Line,
+				Column:    flowInfo.Column,
+			},
 		)
 		task5.run = func(ctx context.Context) (err error) {
 			taskEmitter := task5.emitter

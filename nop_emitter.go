@@ -53,7 +53,7 @@ func (*nopEmitter) ParallelError(context.Context, error) {}
 
 func (*nopEmitter) ParallelDone(context.Context, time.Duration) {}
 
-func (e *nopEmitter) TaskInit(*TaskInfo, *FlowInfo) TaskEmitter { return e }
+func (e *nopEmitter) TaskInit(*TaskInfo, *DirectiveInfo) TaskEmitter { return e }
 
 func (*nopEmitter) TaskSuccess(context.Context) {}
 

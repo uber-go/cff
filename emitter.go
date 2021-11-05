@@ -12,7 +12,7 @@ import (
 // WARNING: This interface is not stable and may change in the future.
 type Emitter interface {
 	// TaskInit returns a TaskEmitter which could be memoized based on task name.
-	TaskInit(*TaskInfo, *FlowInfo) TaskEmitter
+	TaskInit(*TaskInfo, *DirectiveInfo) TaskEmitter
 	// FlowInit returns a FlowEmitter which could be memoized based on flow name.
 	FlowInit(*FlowInfo) FlowEmitter
 	// ParallelInit returns a ParallelEmitter which could be memoized based on
@@ -51,6 +51,15 @@ type SchedulerInfo struct {
 // FlowInfo provides information to uniquely identify a flow.
 type FlowInfo struct {
 	Name         string
+	File         string
+	Line, Column int
+}
+
+// DirectiveInfo provides information to uniquely identify a CFF Directive.
+type DirectiveInfo struct {
+	Name string
+	// Directive is the type of directive (e.g flow or parallel)
+	Directive    DirectiveType
 	File         string
 	Line, Column int
 }

@@ -20,7 +20,13 @@
 				Line: {{ .PosInfo.Line }},
 				Column: {{ .PosInfo.Column}},
 			},
-			flowInfo,
+			&{{ $cff }}.DirectiveInfo{
+			   Name: flowInfo.Name,
+			   Directive: {{ $cff }}.FlowDirective,
+			   File: flowInfo.File,
+			   Line: flowInfo.Line,
+			   Column: flowInfo.Column,
+			},
 		)
 	{{- else -}}
 		{{ $cff }}.NopTaskEmitter()

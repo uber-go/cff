@@ -474,11 +474,12 @@ func TestFlowPanic(t *testing.T) {
 			Line:   401,
 			Column: 12,
 		},
-		&cff.FlowInfo{
-			Name:   "",
-			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   398,
-			Column: 9,
+		&cff.DirectiveInfo{
+			Name:      "",
+			Directive: cff.FlowDirective,
+			File:      "go.uber.org/cff/internal/tests/instrument/instrument.go",
+			Line:      398,
+			Column:    9,
 		}).Return(taskEmitter)
 	emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
 

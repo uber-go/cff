@@ -77,7 +77,10 @@ func TestLogTaskEmitter(t *testing.T) {
 	ctx := context.Background()
 	core, observed := observer.New(zapcore.DebugLevel)
 	emitter := LogEmitter(zap.New(core))
-	tem := emitter.TaskInit(&TaskInfo{Name: "mytask"}, &FlowInfo{Name: "myflow"})
+	tem := emitter.TaskInit(
+		&TaskInfo{Name: "mytask"},
+		&DirectiveInfo{Name: "myflow", Directive: FlowDirective},
+	)
 
 	t.Run("includes task and flow name", func(t *testing.T) {
 		tem.TaskSuccess(ctx)
@@ -132,7 +135,10 @@ func TestLogTaskEmitter_CustomizeLevels(t *testing.T) {
 		LogErrors(zapcore.WarnLevel),
 		LogPanics(zapcore.InfoLevel),
 		LogRecovers(zapcore.DebugLevel),
-	).TaskInit(&TaskInfo{Name: "mytask"}, &FlowInfo{Name: "myflow"})
+	).TaskInit(
+		&TaskInfo{Name: "mytask"},
+		&DirectiveInfo{Name: "myflow", Directive: FlowDirective},
+	)
 
 	t.Run("error level", func(t *testing.T) {
 		em.TaskError(ctx, errors.New("great sadness"))

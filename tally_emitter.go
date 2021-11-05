@@ -43,16 +43,16 @@ func TallyEmitter(scope tally.Scope) Emitter {
 	}
 }
 
-func (e *tallyEmitter) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmitter {
+func (e *tallyEmitter) TaskInit(taskInfo *TaskInfo, dInfo *DirectiveInfo) TaskEmitter {
 	cacheKey := cacheKey{
 		TaskName:        taskInfo.Name,
 		TaskFile:        taskInfo.File,
 		TaskLine:        taskInfo.Line,
 		TaskColumn:      taskInfo.Column,
-		DirectiveName:   flowInfo.Name,
-		DirectiveFile:   flowInfo.File,
-		DirectiveLine:   flowInfo.Line,
-		DirectiveColumn: flowInfo.Column,
+		DirectiveName:   dInfo.Name,
+		DirectiveFile:   dInfo.File,
+		DirectiveLine:   dInfo.Line,
+		DirectiveColumn: dInfo.Column,
 	}
 	// Note: this lookup is an optimization to avoid the expensive Tagged call.
 	if v, ok := e.tasks.Load(cacheKey); ok {
@@ -61,8 +61,8 @@ func (e *tallyEmitter) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmit
 	tags := map[string]string{
 		"task": taskInfo.Name,
 	}
-	if flowInfo.Name != "" {
-		tags["flow"] = flowInfo.Name
+	if dInfo.Name != "" {
+		tags[dInfo.Directive.String()] = dInfo.Name
 	}
 
 	scope := e.scope.Tagged(tags)

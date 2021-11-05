@@ -38,10 +38,10 @@ type taskEmitterStack []TaskEmitter
 func (taskEmitterStack) taskEmitter() {}
 
 // TaskInit returns a TaskEmitter which could be memoized based on task name.
-func (es emitterStack) TaskInit(taskInfo *TaskInfo, flowInfo *FlowInfo) TaskEmitter {
+func (es emitterStack) TaskInit(taskInfo *TaskInfo, dInfo *DirectiveInfo) TaskEmitter {
 	emitters := make(taskEmitterStack, 0, len(es))
 	for _, e := range es {
-		emitters = append(emitters, e.TaskInit(taskInfo, flowInfo))
+		emitters = append(emitters, e.TaskInit(taskInfo, dInfo))
 	}
 	return emitters
 }

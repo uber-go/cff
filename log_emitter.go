@@ -145,8 +145,8 @@ func (e *logParallelEmitter) ParallelDone(ctx context.Context, d time.Duration) 
 }
 
 type logTaskEmitter struct {
-	// Fields holding the flow and task name.
-	flow, task zap.Field
+	// Fields holding the directive name.
+	directive, task zap.Field
 
 	logger       *zap.Logger
 	errLevel     zapcore.Level
@@ -156,9 +156,9 @@ type logTaskEmitter struct {
 
 func (logTaskEmitter) taskEmitter() {}
 
-func (e *logEmitter) TaskInit(task *TaskInfo, flow *FlowInfo) TaskEmitter {
+func (e *logEmitter) TaskInit(task *TaskInfo, d *DirectiveInfo) TaskEmitter {
 	return &logTaskEmitter{
-		flow:         zap.String("flow", flow.Name),
+		directive:    zap.String(d.Directive.String(), d.Name),
 		task:         zap.String("task", task.Name),
 		logger:       e.logger,
 		errLevel:     e.errLevel,
@@ -168,29 +168,29 @@ func (e *logEmitter) TaskInit(task *TaskInfo, flow *FlowInfo) TaskEmitter {
 }
 
 func (e *logTaskEmitter) TaskSuccess(context.Context) {
-	e.logger.Debug("task success", e.flow, e.task)
+	e.logger.Debug("task success", e.directive, e.task)
 }
 
 func (e *logTaskEmitter) TaskError(ctx context.Context, err error) {
 	if ce := e.logger.Check(e.errLevel, "task error"); ce != nil {
-		ce.Write(e.flow, e.task, zap.Error(err))
+		ce.Write(e.directive, e.task, zap.Error(err))
 	}
 }
 
 func (e *logTaskEmitter) TaskErrorRecovered(ctx context.Context, err error) {
 	if ce := e.logger.Check(e.recoverLevel, "task error recovered"); ce != nil {
-		ce.Write(e.flow, e.task, zap.Error(err))
+		ce.Write(e.directive, e.task, zap.Error(err))
 	}
 }
 
 func (e *logTaskEmitter) TaskSkipped(ctx context.Context, err error) {
-	e.logger.Debug("task skipped", e.flow, e.task, zap.Error(err))
+	e.logger.Debug("task skipped", e.directive, e.task, zap.Error(err))
 }
 
 func (e *logTaskEmitter) TaskPanic(ctx context.Context, pv interface{}) {
 	if ce := e.logger.Check(e.panicLevel, "task panic"); ce != nil {
 		ce.Write(
-			e.flow,
+			e.directive,
 			e.task,
 			zap.Stack("stack"),
 			zap.Any("panic-value", pv),
@@ -202,7 +202,7 @@ func (e *logTaskEmitter) TaskPanic(ctx context.Context, pv interface{}) {
 func (e *logTaskEmitter) TaskPanicRecovered(ctx context.Context, pv interface{}) {
 	if ce := e.logger.Check(e.recoverLevel, "task panic recovered"); ce != nil {
 		ce.Write(
-			e.flow,
+			e.directive,
 			e.task,
 			zap.Stack("stack"),
 			zap.Any("panic-value", pv),
@@ -212,7 +212,7 @@ func (e *logTaskEmitter) TaskPanicRecovered(ctx context.Context, pv interface{})
 }
 
 func (e *logTaskEmitter) TaskDone(ctx context.Context, _ time.Duration) {
-	e.logger.Debug("task done", e.flow, e.task)
+	e.logger.Debug("task done", e.directive, e.task)
 }
 
 // SchedulerInit constructs a logging scheduler emitter.

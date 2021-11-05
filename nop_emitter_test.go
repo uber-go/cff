@@ -31,7 +31,13 @@ func TestNopEmitter(t *testing.T) {
 	})
 
 	t.Run("task", func(t *testing.T) {
-		e := e.TaskInit(&TaskInfo{Name: "foo"}, &FlowInfo{Name: "bar"})
+		e := e.TaskInit(
+			&TaskInfo{Name: "foo"},
+			&DirectiveInfo{
+				Name:      "bar",
+				Directive: FlowDirective,
+			},
+		)
 
 		e.TaskSuccess(ctx)
 		e.TaskError(ctx, errors.New("great sadness"))

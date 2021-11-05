@@ -66,11 +66,12 @@ func TestTallyEmitter_CacheTask(t *testing.T) {
 				Line:   42,
 				Column: 84,
 			},
-			&FlowInfo{
-				Name:   "flow",
-				File:   "location/flow.go",
-				Line:   42,
-				Column: 84,
+			&DirectiveInfo{
+				Name:      "flow",
+				Directive: FlowDirective,
+				File:      "location/flow.go",
+				Line:      42,
+				Column:    84,
 			})
 		te2 := e.TaskInit(
 			&TaskInfo{
@@ -79,11 +80,12 @@ func TestTallyEmitter_CacheTask(t *testing.T) {
 				Line:   42,
 				Column: 84,
 			},
-			&FlowInfo{
-				Name:   "flow",
-				File:   "location/flow.go",
-				Line:   42,
-				Column: 84,
+			&DirectiveInfo{
+				Name:      "flow",
+				Directive: FlowDirective,
+				File:      "location/flow.go",
+				Line:      42,
+				Column:    84,
 			})
 		te2same := e.TaskInit(
 			&TaskInfo{
@@ -92,11 +94,12 @@ func TestTallyEmitter_CacheTask(t *testing.T) {
 				Line:   42,
 				Column: 84,
 			},
-			&FlowInfo{
-				Name:   "flow",
-				File:   "location/flow.go",
-				Line:   42,
-				Column: 84,
+			&DirectiveInfo{
+				Name:      "flow",
+				Directive: FlowDirective,
+				File:      "location/flow.go",
+				Line:      42,
+				Column:    84,
 			})
 
 		assert.True(t, te == te2same)
@@ -125,11 +128,12 @@ func TestTallyEmitter_CacheTaskReadRace(t *testing.T) {
 					Line:   42,
 					Column: 84,
 				},
-				&FlowInfo{
-					Name:   "flow",
-					File:   "location/flow.go",
-					Line:   42,
-					Column: 84,
+				&DirectiveInfo{
+					Name:      "flow",
+					Directive: FlowDirective,
+					File:      "location/flow.go",
+					Line:      42,
+					Column:    84,
 				})
 			// Don't need a lock because we're filling in independent indexes of
 			// a pre-allocated slice.
@@ -216,7 +220,7 @@ func TestTallyEmitter_EmitParallel(t *testing.T) {
 func TestTallyEmitter_EmitTask(t *testing.T) {
 	scope := tally.NewTestScope("", nil)
 	e := TallyEmitter(scope)
-	te := e.TaskInit(&TaskInfo{}, &FlowInfo{})
+	te := e.TaskInit(&TaskInfo{}, &DirectiveInfo{})
 
 	t.Run("emit counters", func(t *testing.T) {
 		require.Zero(t, len(scope.Snapshot().Counters()))

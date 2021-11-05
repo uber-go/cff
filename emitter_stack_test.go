@@ -194,15 +194,15 @@ func TestEmitterStack(t *testing.T) {
 
 			m.emitter1.EXPECT().TaskInit(
 				&TaskInfo{"foo", "foo.go", 14, 16},
-				&FlowInfo{"fooFlow", "foo.go", 10, 12},
+				&DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12},
 			).Times(1)
 			m.emitter2.EXPECT().TaskInit(
 				&TaskInfo{"foo", "foo.go", 14, 16},
-				&FlowInfo{"fooFlow", "foo.go", 10, 12},
+				&DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12},
 			).Times(1)
 			m.stack.TaskInit(
 				&TaskInfo{"foo", "foo.go", 14, 16},
-				&FlowInfo{"fooFlow", "foo.go", 10, 12},
+				&DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12},
 			)
 		})
 
@@ -212,14 +212,14 @@ func TestEmitterStack(t *testing.T) {
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task1)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task1)
 			m.emitter2.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task2)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task2)
 
 			m.task1.EXPECT().TaskSuccess(ctx)
 			m.task2.EXPECT().TaskSuccess(ctx)
 			m.stack.TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).TaskSuccess(ctx)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).TaskSuccess(ctx)
 		})
 		t.Run("TaskError", func(t *testing.T) {
 			ctx := context.Background()
@@ -227,16 +227,16 @@ func TestEmitterStack(t *testing.T) {
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task1)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task1)
 			m.emitter2.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task2)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task2)
 
 			err := errors.New("foobar")
 
 			m.task1.EXPECT().TaskError(ctx, err)
 			m.task2.EXPECT().TaskError(ctx, err)
 			m.stack.TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).TaskError(ctx, err)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).TaskError(ctx, err)
 		})
 		t.Run("TaskErrorRecovered", func(t *testing.T) {
 			ctx := context.Background()
@@ -244,16 +244,16 @@ func TestEmitterStack(t *testing.T) {
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task1)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task1)
 			m.emitter2.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task2)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task2)
 
 			err := errors.New("great sadness")
 
 			m.task1.EXPECT().TaskErrorRecovered(ctx, err)
 			m.task2.EXPECT().TaskErrorRecovered(ctx, err)
 			m.stack.TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).TaskErrorRecovered(ctx, err)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).TaskErrorRecovered(ctx, err)
 		})
 		t.Run("TaskSkipped", func(t *testing.T) {
 			ctx := context.Background()
@@ -261,16 +261,16 @@ func TestEmitterStack(t *testing.T) {
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task1)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task1)
 			m.emitter2.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task2)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task2)
 
 			err := errors.New("foobar")
 
 			m.task1.EXPECT().TaskSkipped(ctx, err)
 			m.task2.EXPECT().TaskSkipped(ctx, err)
 			m.stack.TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).TaskSkipped(ctx, err)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).TaskSkipped(ctx, err)
 		})
 		t.Run("TaskPanic", func(t *testing.T) {
 			ctx := context.Background()
@@ -278,16 +278,16 @@ func TestEmitterStack(t *testing.T) {
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task1)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task1)
 			m.emitter2.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task2)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task2)
 
 			pv := int(1)
 
 			m.task1.EXPECT().TaskPanic(ctx, pv)
 			m.task2.EXPECT().TaskPanic(ctx, pv)
 			m.stack.TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).TaskPanic(ctx, pv)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).TaskPanic(ctx, pv)
 		})
 		t.Run("TaskPanicRecovered", func(t *testing.T) {
 			ctx := context.Background()
@@ -295,16 +295,16 @@ func TestEmitterStack(t *testing.T) {
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task1)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task1)
 			m.emitter2.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task2)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task2)
 
 			pv := int(1)
 
 			m.task1.EXPECT().TaskPanicRecovered(ctx, pv)
 			m.task2.EXPECT().TaskPanicRecovered(ctx, pv)
 			m.stack.TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).TaskPanicRecovered(ctx, pv)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).TaskPanicRecovered(ctx, pv)
 		})
 		t.Run("TaskDone", func(t *testing.T) {
 			ctx := context.Background()
@@ -312,14 +312,14 @@ func TestEmitterStack(t *testing.T) {
 			defer m.ctrl.Finish()
 
 			m.emitter1.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task1)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task1)
 			m.emitter2.EXPECT().TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).Return(m.task2)
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).Return(m.task2)
 
 			m.task1.EXPECT().TaskDone(ctx, time.Duration(1))
 			m.task2.EXPECT().TaskDone(ctx, time.Duration(1))
 			m.stack.TaskInit(
-				&TaskInfo{"foo", "foo.go", 14, 16}, &FlowInfo{"fooFlow", "foo.go", 10, 12}).TaskDone(ctx, time.Duration(1))
+				&TaskInfo{"foo", "foo.go", 14, 16}, &DirectiveInfo{"fooFlow", FlowDirective, "foo.go", 10, 12}).TaskDone(ctx, time.Duration(1))
 		})
 	})
 }
