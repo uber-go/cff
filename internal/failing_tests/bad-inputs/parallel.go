@@ -74,7 +74,7 @@ func InstrumentParallelInvalid() {
 	cff.Parallel(
 		context.Background(),
 		cff.InstrumentParallel("some instrument"),
-		cff.Task(
+		cff.Tasks(
 			func() error {
 				return nil
 			},
