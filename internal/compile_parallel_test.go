@@ -34,6 +34,7 @@ func TestCompileParallel(t *testing.T) {
 					assert.Empty(t, task.Function.DependsOn)
 				})
 			}
+			assert.Len(t, p.Tasks, 3)
 		}
 	}
 }

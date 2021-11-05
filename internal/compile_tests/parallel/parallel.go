@@ -23,6 +23,11 @@ func ExampleParallel(m *sync.Map, c chan<- string) error {
 			},
 			sendFn,
 		),
+		cff.Task(
+			func(ctx context.Context) error {
+				return ctx.Err()
+			},
+		),
 	)
 	if err != nil {
 		return err
@@ -42,6 +47,11 @@ func ExampleParallel(m *sync.Map, c chan<- string) error {
 				m.Store("bar", "complete")
 			},
 			sendFnCtxErr,
+		),
+		cff.Task(
+			func() {
+				m.Store("bar", "finished")
+			},
 		),
 	)
 	if err != nil {

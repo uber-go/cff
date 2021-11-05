@@ -9,25 +9,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSimpleParallel(t *testing.T) {
+func TestTasksAndTask(t *testing.T) {
 	var m sync.Map
-	require.NoError(t, Simple(&m))
+	require.NoError(t, TasksAndTask(&m))
 	var count int
 	m.Range(func(_, v_ interface{}) bool {
 		count++
 		return true
 	})
-	assert.Equal(t, 2, count)
+	assert.Equal(t, 3, count)
 }
 
-func TestSimpleParallelWithError(t *testing.T) {
-	ch := make(chan<- string, 1)
-	require.Error(t, SimpleWithError(ch))
-	assert.LessOrEqual(t, len(ch), 1)
+func TestTasksWithError(t *testing.T) {
+	require.Error(t, TasksWithError())
 }
 
-func TestSimpleParallelWithPanic(t *testing.T) {
-	err := SimpleWithPanic()
+func TestTasksWithPanic(t *testing.T) {
+	err := TasksWithPanic()
 	require.Error(t, err)
 	assert.Equal(t, "parallel function panic: sad times", err.Error())
 }
@@ -59,4 +57,22 @@ func TestContextErrorInFlight(t *testing.T) {
 
 	require.Error(t, ContextErrorInFlight(ctx, cFn, src, target))
 	assert.NotEqual(t, src, target)
+}
+
+func TestTaskWithError(t *testing.T) {
+	require.Error(t, TaskWithError())
+}
+
+func TestTaskWithPanic(t *testing.T) {
+	err := TaskWithPanic()
+	require.Error(t, err)
+	assert.Equal(t, "parallel function panic: sad times", err.Error())
+}
+
+func TestMultipleTask(t *testing.T) {
+	// Verifies that tasks are executed.
+	src := []int{1, 2}
+	target := make([]int, 2, 2)
+	require.NoError(t, MultipleTask(src, target))
+	assert.Equal(t, src, target)
 }

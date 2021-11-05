@@ -74,10 +74,70 @@ func InstrumentParallelInvalid() {
 	cff.Parallel(
 		context.Background(),
 		cff.InstrumentParallel("some instrument"),
-		cff.Tasks(
+		cff.Task(
 			func() error {
 				return nil
 			},
+		),
+	)
+}
+
+// ParallelTaskInvalidParamsType is a Parallel with an invalid task parameters type.
+func ParallelTaskInvalidParamsType() {
+	cff.Parallel(
+		context.Background(),
+		cff.Task(
+			func(s string) bool {
+				return s == "goal"
+			},
+		),
+	)
+}
+
+// ParallelTaskInvalidParamsMultiple is a Parallel with more than one task
+// parameters.
+func ParallelTaskInvalidParamsMultiple() {
+	cff.Parallel(
+		context.Background(),
+		cff.Task(
+			func(_ context.Context, _ context.Context) bool {
+				return "some" == "goal"
+			},
+		),
+	)
+}
+
+// ParallelTaskInvalidReturnType is a Parallel with a non-error task return value.
+func ParallelTaskInvalidReturnType() {
+	cff.Parallel(
+		context.Background(),
+		cff.Task(
+			func(_ context.Context) bool {
+				return true
+			},
+		),
+	)
+}
+
+// ParallelTaskInvalidReturnMultiple is a Parallel with more than one return value.
+func ParallelTaskInvalidReturnMultiple() {
+	cff.Parallel(
+		context.Background(),
+		cff.Task(
+			func(_ context.Context) (error, error) {
+				return nil, nil
+			},
+		),
+	)
+}
+
+// ParallelTaskInvalidFuncVar is a Parallel with an invalid function
+// variable.
+func ParallelTaskInvalidFuncVar() {
+	cff.Parallel(
+		context.Background(),
+		cff.Task(
+			chanSend,
 		),
 	)
 }

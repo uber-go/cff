@@ -61,11 +61,17 @@ func WithEmitter(Emitter) Option {
 	panic(_noGenMsg)
 }
 
-// Task specifies a task for execution with a flow. A Task is any executable
-// function or bound method available in the scope when cff.Flow is called.
+// Task specifies a task for execution with a cff.Flow or cff.Parallel. A Task
+// is any executable function or bound method available in the scope when
+// cff.Flow or cff.Parallel is called.
 //
-//  cff.Flow(ctx,
-//    ...
+// A Task's usage and constraints change between its usage in a cff.Flow or
+// cff.Parallel.
+//
+// Within a cff.Flow,
+//
+//  cff.Flow(
+//    ctx,
 //    cff.Task(h.client.GetUser),
 //    cff.Task(bindUser),
 //    cff.Task(h.processRequest),
@@ -94,6 +100,25 @@ func WithEmitter(Emitter) Option {
 //  func(context.Context, I1, I2, ...) (R1, R2, ..., error)
 //
 // Task behavior may further be customized with TaskOptions.
+//
+// Within a cff.Parallel, a Task is a function executed in parallel.
+//
+// Task can request the context for the current execution scope by optionally
+// adding a context.Context as the only argument.
+//
+// Additionally, Tasks that may fail can do so by optionally adding an error
+// as the only return value.
+//
+//  cff.Parallel(
+//    ctx,
+//    cff.Task(func() {...}),
+//    cff.Task(func() error {...}),
+//    cff.Task(func(ctx context.Context) {...}),
+//    cff.Task(func(ctx context.Context) error {...}),
+//  )
+//
+// Task functions under cff.Parallel cannot accept other arguments
+// or return other values.
 //
 // This is a code generation directive.
 func Task(fn interface{}, opts ...TaskOption) Option {

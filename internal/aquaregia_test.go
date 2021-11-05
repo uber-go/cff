@@ -182,17 +182,36 @@ var codeGenerateFailCases = map[string][]errorCase{
 		{
 			File:         "parallel.go",
 			ErrorMatches: "the only allowed argument is a single context.Context parameter",
-			TestFuncs:    []string{"ParallelInvalidParamsType", "ParallelInvalidFuncVar"},
+			TestFuncs: []string{
+				"ParallelInvalidParamsType",
+				"ParallelInvalidFuncVar",
+				"ParallelTaskInvalidParamsType",
+				"ParallelTaskInvalidParamsMultiple",
+			},
 		},
 		{
 			File:         "parallel.go",
 			ErrorMatches: "only the first argument may be context.Context",
-			TestFuncs:    []string{"ParallelInvalidParamsMultiple"},
+			TestFuncs: []string{
+				"ParallelInvalidParamsMultiple",
+				"ParallelTaskInvalidFuncVar",
+			},
 		},
 		{
 			File:         "parallel.go",
 			ErrorMatches: "the only allowed return value is an error",
-			TestFuncs:    []string{"ParallelInvalidReturnType"},
+			TestFuncs: []string{
+				"ParallelInvalidReturnType",
+				"ParallelTaskInvalidReturnType",
+			},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: "only the last result may be an error",
+			TestFuncs: []string{
+				"ParallelInvalidReturnTypeMultiple",
+				"ParallelTaskInvalidReturnMultiple",
+			},
 		},
 		{
 			File:         "parallel.go",

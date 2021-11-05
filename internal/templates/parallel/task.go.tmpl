@@ -1,6 +1,6 @@
 {{- $context := import "context" -}}
 {{- $cff := import "go.uber.org/cff" -}}
-{{- $t := printf "func%d" .Serial -}}
+{{- $t := printf "task%d" .Serial -}}
 
 // {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
 {{ $t }} := new(task)
@@ -17,7 +17,7 @@
 }
 
 sched.Enqueue(ctx, {{ $cff }}.Job{
-    Run: func{{ .Serial }}.run,
+	Run: task{{ .Serial }}.run,
 })
 
 {{- define "callFunc" -}}

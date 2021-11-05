@@ -8,8 +8,9 @@ import (
 	"go.uber.org/cff"
 )
 
-// Simple runs tasks in parallel to populate the provided map.
-func Simple(m *sync.Map) error {
+// TasksAndTask runs cff.Tasks and cff.Task in parallel to populate the
+// provided map.
+func TasksAndTask(m *sync.Map) error {
 	return cff.Parallel(
 		context.Background(),
 		cff.Concurrency(2),
@@ -21,11 +22,16 @@ func Simple(m *sync.Map) error {
 				m.Store("fiz", "buzz")
 			},
 		),
+		cff.Task(
+			func(_ context.Context) {
+				m.Store("go", "lang")
+			},
+		),
 	)
 }
 
-// SimpleWithError runs tasks in parallel to populate the provided channel.
-func SimpleWithError(c chan<- string) error {
+// TasksWithError runs a parallel cff.Tasks that errors.
+func TasksWithError() error {
 	return cff.Parallel(
 		context.Background(),
 		cff.Concurrency(2),
@@ -33,15 +39,12 @@ func SimpleWithError(c chan<- string) error {
 			func() error {
 				return errors.New("sad times")
 			},
-			func(_ context.Context) {
-				c <- "work"
-			},
 		),
 	)
 }
 
-// SimpleWithPanic runs a parallel task that panics.
-func SimpleWithPanic() error {
+// TasksWithPanic runs a parallel cff.Tasks that panics.
+func TasksWithPanic() error {
 	return cff.Parallel(
 		context.Background(),
 		cff.Concurrency(2),
@@ -108,6 +111,54 @@ func ContextErrorInFlight(ctx context.Context, cancel func(), src, target []int)
 			func() {
 				target[0] = src[0]
 			},
+		),
+	)
+}
+
+// TaskWithError runs a parallel cff.Task that errors.
+func TaskWithError() error {
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Task(
+			func() error {
+				return errors.New("sad times")
+			},
+		),
+	)
+}
+
+// TaskWithPanic runs a parallel cff.task that panics.
+func TaskWithPanic() error {
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Task(
+			func() {
+				panic("sad times")
+			},
+		),
+	)
+}
+
+// MultipleTask runs multiple cff.Task in parallel to populate the provided
+// slice.
+func MultipleTask(src, target []int) error {
+	send := func(ctx context.Context) error {
+		_, _ = ctx.Deadline()
+		target[1] = src[1]
+		return nil
+	}
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Task(
+			func() {
+				target[0] = src[0]
+			},
+		),
+		cff.Task(
+			send,
 		),
 	)
 }

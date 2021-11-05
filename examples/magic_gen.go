@@ -460,8 +460,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		}
 
 		// go.uber.org/cff/examples/magic.go:89:4
-		func6 := new(task)
-		func6.run = func(ctx context.Context) (err error) {
+		task6 := new(task)
+		task6.run = func(ctx context.Context) (err error) {
 			defer func() {
 				recovered := recover()
 				if recovered != nil {
@@ -476,12 +476,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		}
 
 		sched.Enqueue(ctx, cff.Job{
-			Run: func6.run,
+			Run: task6.run,
 		})
 
 		// go.uber.org/cff/examples/magic.go:92:4
-		func7 := new(task)
-		func7.run = func(ctx context.Context) (err error) {
+		task7 := new(task)
+		task7.run = func(ctx context.Context) (err error) {
 			defer func() {
 				recovered := recover()
 				if recovered != nil {
@@ -494,7 +494,27 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		}
 
 		sched.Enqueue(ctx, cff.Job{
-			Run: func7.run,
+			Run: task7.run,
+		})
+
+		// go.uber.org/cff/examples/magic.go:95:4
+		task8 := new(task)
+		task8.run = func(ctx context.Context) (err error) {
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					err = fmt.Errorf("parallel function panic: %v", recovered)
+				}
+			}()
+
+			err = func() error {
+				return SendMessage()
+			}()
+			return
+		}
+
+		sched.Enqueue(ctx, cff.Job{
+			Run: task8.run,
 		})
 
 		if err := sched.Wait(ctx); err != nil {
