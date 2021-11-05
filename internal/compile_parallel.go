@@ -89,7 +89,7 @@ func (c *compiler) validateParallelInstrument(p *parallel) {
 func (c *compiler) compileParallelTasks(p *parallel, call *ast.CallExpr) []*parallelTask {
 	var tasks []*parallelTask
 	for _, arg := range call.Args {
-		t := c.compileParallelTask(p, arg)
+		t := c.compileParallelTaskFn(p, arg)
 		if t != nil {
 			tasks = append(tasks, t)
 		}
@@ -97,7 +97,7 @@ func (c *compiler) compileParallelTasks(p *parallel, call *ast.CallExpr) []*para
 	return tasks
 }
 
-func (c *compiler) compileParallelTask(p *parallel, arg ast.Expr) *parallelTask {
+func (c *compiler) compileParallelTaskFn(p *parallel, arg ast.Expr) *parallelTask {
 	taskF := c.compileFunction(arg)
 	if taskF == nil {
 		c.errf(c.nodePosition(arg), "parallel tasks function failed to compile")

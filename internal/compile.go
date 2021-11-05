@@ -721,27 +721,9 @@ func (c *compiler) getPosInfo(n ast.Node) *PosInfo {
 
 func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 	for _, opt := range opts {
-		// All options are function calls right now.
-		call, ok := opt.(*ast.CallExpr)
-		if !ok {
-			c.errf(c.nodePosition(opt), "expected a function call, got %v", astutil.NodeDescription(opt))
-			continue
-		}
-
-		sel, ok := call.Fun.(*ast.SelectorExpr)
-		if !ok {
-			c.errf(c.nodePosition(opt), "only cff functions can be passed as task options")
-			continue
-		}
-
-		fn, ok := c.info.Uses[sel.Sel]
-		if !ok {
-			c.errf(c.nodePosition(opt), "unresolvable reference in call: %v", sel.Sel.String())
-			continue
-		}
-
-		if !isPackagePathEquivalent(fn.Pkg(), cffImportPath) {
-			c.errf(c.nodePosition(opt), "only cff functions may be passed as task options: "+"found package %q", fn.Pkg().Path())
+		call, fn, err := c.identifyOption(opt)
+		if err != nil {
+			c.errf(c.nodePosition(opt), err.Error())
 			continue
 		}
 
@@ -788,6 +770,29 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 			t.invokeType = c.compileInvoke(flow, call)
 		}
 	}
+}
+
+func (c *compiler) identifyOption(opt ast.Expr) (*ast.CallExpr, types.Object, error) {
+	// All options are function calls right now.
+	call, ok := opt.(*ast.CallExpr)
+	if !ok {
+		return nil, nil, fmt.Errorf("expected a function call, got %v", astutil.NodeDescription(opt))
+	}
+
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return nil, nil, errors.New("only cff functions can be passed as task options")
+	}
+
+	fn, ok := c.info.Uses[sel.Sel]
+	if !ok {
+		return nil, nil, fmt.Errorf("unresolvable reference in call: %v", sel.Sel.String())
+	}
+
+	if !isPackagePathEquivalent(fn.Pkg(), cffImportPath) {
+		return nil, nil, fmt.Errorf("only cff functions may be passed as task options: "+"found package %q", fn.Pkg().Path())
+	}
+	return call, fn, nil
 }
 
 type predicate struct {
