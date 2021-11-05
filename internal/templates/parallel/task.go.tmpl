@@ -16,7 +16,7 @@
 	return
 }
 
-{{ $t }}.job = sched.Enqueue(ctx, {{ $cff }}.Job{
+sched.Enqueue(ctx, {{ $cff }}.Job{
     Run: func{{ .Serial }}.run,
 })
 

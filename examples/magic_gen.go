@@ -457,7 +457,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		type task struct {
 			run func(context.Context) error
-			job *cff.ScheduledJob
 		}
 
 		// go.uber.org/cff/examples/magic.go:89:4
@@ -476,7 +475,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return
 		}
 
-		func6.job = sched.Enqueue(ctx, cff.Job{
+		sched.Enqueue(ctx, cff.Job{
 			Run: func6.run,
 		})
 
@@ -494,7 +493,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return
 		}
 
-		func7.job = sched.Enqueue(ctx, cff.Job{
+		sched.Enqueue(ctx, cff.Job{
 			Run: func7.run,
 		})
 

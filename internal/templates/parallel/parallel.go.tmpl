@@ -48,7 +48,6 @@ func(
 
 	type task struct {
 		run func({{ $context }}.Context) error
-		job *{{ $cff }}.ScheduledJob
 	}
 
 	{{ range $parallel.Tasks }}
