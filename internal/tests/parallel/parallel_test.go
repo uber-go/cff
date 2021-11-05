@@ -1,6 +1,7 @@
 package parallel
 
 import (
+	"context"
 	"sync"
 	"testing"
 
@@ -35,4 +36,27 @@ func TestMultipleTasks(t *testing.T) {
 	ch := make(chan<- string, 2)
 	require.NoError(t, MultipleTasks(ch))
 	assert.Len(t, ch, 2)
+}
+
+func TestContextErrorBefore(t *testing.T) {
+	src := []int{1}
+	target := make([]int, 1, 1)
+	require.NotEqual(t, src, target)
+
+	ctx, cFn := context.WithCancel(context.Background())
+	cFn()
+
+	require.Error(t, ContextErrorBefore(ctx, src, target))
+	assert.NotEqual(t, src, target)
+}
+
+func TestContextErrorInFlight(t *testing.T) {
+	src := []int{1}
+	target := make([]int, 1, 1)
+	require.NotEqual(t, src, target)
+
+	ctx, cFn := context.WithCancel(context.Background())
+
+	require.Error(t, ContextErrorInFlight(ctx, cFn, src, target))
+	assert.NotEqual(t, src, target)
 }

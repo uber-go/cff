@@ -29,9 +29,7 @@ func ExampleParallel(m *sync.Map, c chan<- string) error {
 	}
 
 	sendFnCtxErr := func(ctx context.Context) error {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
+		_, _ = ctx.Deadline()
 		c <- "send"
 		return nil
 	}
