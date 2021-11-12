@@ -248,8 +248,7 @@ func Invoke(enable bool) TaskOption {
 // Parallel declared tasks. If any of the tasks fail, Parallel stops
 // processsing outstanding tasks and an error is returned.
 //
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
+// This is a code generation directive.
 func Parallel(ctx context.Context, opts ...Option) error {
 	panic(_noGenMsg)
 }
@@ -275,8 +274,7 @@ func InstrumentParallel(name string) Option {
 //
 // Tasks functions do not accept other arguments or return values.
 //
-// This is a code generation directive. Files using this must have the "cff"
-// build tag.
+// This is a code generation directive.
 func Tasks(fn ...interface{}) Option {
 	panic(_noGenMsg)
 }
