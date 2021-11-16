@@ -28,6 +28,8 @@ type parallelTask struct {
 	// Serial is a unique serially incrementing number for each task.
 	Serial int
 
+	Instrument *instrument
+
 	PosInfo *PosInfo // Used to pass information to uniquely identify a task.
 }
 
@@ -79,12 +81,20 @@ func (c *compiler) compileParallel(file *ast.File, call *ast.CallExpr) *parallel
 }
 
 func (c *compiler) validateParallelInstrument(p *parallel) {
-	if p.Instrument == nil {
+	// If the directive, or any task in the directive were instrumented, we require
+	// at least one emitter to be provided.
+	if len(p.Emitters) > 0 {
 		return
 	}
 
-	if len(p.Emitters) == 0 {
+	if p.Instrument != nil {
 		c.errf(c.nodePosition(p.Node), "cff.InstrumentParallel requires a cff.Emitter to be provided: use cff.WithEmitter")
+	}
+
+	for _, t := range p.Tasks {
+		if t.Instrument != nil {
+			c.errf(c.nodePosition(p.Node), "cff.Instrument requires a cff.Emitter to be provided: use cff.WithEmitter")
+		}
 	}
 }
 
@@ -93,6 +103,17 @@ func (c *compiler) compileParallelTask(p *parallel, call ast.Expr, opts []ast.Ex
 	if t == nil {
 		c.errf(c.nodePosition(call), "parallel task failed to compile")
 		return nil
+	}
+	for _, opt := range opts {
+		call, fn, err := c.identifyOption(opt)
+		if err != nil {
+			c.errf(c.nodePosition(opt), err.Error())
+			continue
+		}
+		switch fn.Name() {
+		case "Instrument":
+			t.Instrument = c.compileInstrument(call)
+		}
 	}
 	return t
 }

@@ -434,6 +434,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				Line:   82,
 				Column: 8,
 			}
+			directiveInfo = &cff.DirectiveInfo{
+				Name:      parallelInfo.Name,
+				Directive: cff.ParallelDirective,
+				File:      parallelInfo.File,
+				Line:      parallelInfo.Line,
+				Column:    parallelInfo.Column,
+			}
 			parallelEmitter = emitter.ParallelInit(parallelInfo)
 
 			schedInfo = &cff.SchedulerInfo{
@@ -446,6 +453,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			// possibly unused
 			_ = parallelInfo
+			_ = directiveInfo
 		)
 
 		startTime := time.Now()
@@ -456,66 +464,142 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		sched := cff.BeginFlow(2, schedEmitter)
 
 		type task struct {
-			run func(context.Context) error
+			emitter cff.TaskEmitter
+			fn      func(context.Context) error
+			ran     cff.AtomicBool
 		}
+
+		var tasks []*task
+		defer func() {
+			for _, t := range tasks {
+				if !t.ran.Load() {
+					t.emitter.TaskSkipped(ctx, err)
+				}
+			}
+		}()
 
 		// go.uber.org/cff/examples/magic.go:89:4
 		task6 := new(task)
-		task6.run = func(ctx context.Context) (err error) {
+		task6.emitter = cff.NopTaskEmitter()
+		task6.fn = func(ctx context.Context) (err error) {
+			taskEmitter := task6.emitter
+			startTime := time.Now()
+			defer func() {
+				if task6.ran.Load() {
+					taskEmitter.TaskDone(ctx, time.Since(startTime))
+				}
+			}()
+
 			defer func() {
 				recovered := recover()
 				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
 					err = fmt.Errorf("parallel function panic: %v", recovered)
 				}
 			}()
+
+			defer task6.ran.Store(true)
 
 			err = func(_ context.Context) error {
 				return SendMessage()
 			}(ctx)
+
+			if err != nil {
+				taskEmitter.TaskError(ctx, err)
+				return
+			}
+			taskEmitter.TaskSuccess(ctx)
 			return
 		}
 
 		sched.Enqueue(ctx, cff.Job{
-			Run: task6.run,
+			Run: task6.fn,
 		})
+		tasks = append(tasks, task6)
 
 		// go.uber.org/cff/examples/magic.go:92:4
 		task7 := new(task)
-		task7.run = func(ctx context.Context) (err error) {
+		task7.emitter = cff.NopTaskEmitter()
+		task7.fn = func(ctx context.Context) (err error) {
+			taskEmitter := task7.emitter
+			startTime := time.Now()
+			defer func() {
+				if task7.ran.Load() {
+					taskEmitter.TaskDone(ctx, time.Since(startTime))
+				}
+			}()
+
 			defer func() {
 				recovered := recover()
 				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
 					err = fmt.Errorf("parallel function panic: %v", recovered)
 				}
 			}()
 
+			defer task7.ran.Store(true)
+
 			err = SendMessage()
+
+			if err != nil {
+				taskEmitter.TaskError(ctx, err)
+				return
+			}
+			taskEmitter.TaskSuccess(ctx)
 			return
 		}
 
 		sched.Enqueue(ctx, cff.Job{
-			Run: task7.run,
+			Run: task7.fn,
 		})
+		tasks = append(tasks, task7)
 
 		// go.uber.org/cff/examples/magic.go:95:4
 		task8 := new(task)
-		task8.run = func(ctx context.Context) (err error) {
+		task8.emitter = emitter.TaskInit(
+			&cff.TaskInfo{
+				Name:   "SendMsg",
+				File:   "go.uber.org/cff/examples/magic.go",
+				Line:   95,
+				Column: 4,
+			},
+			directiveInfo,
+		)
+		task8.fn = func(ctx context.Context) (err error) {
+			taskEmitter := task8.emitter
+			startTime := time.Now()
+			defer func() {
+				if task8.ran.Load() {
+					taskEmitter.TaskDone(ctx, time.Since(startTime))
+				}
+			}()
+
 			defer func() {
 				recovered := recover()
 				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
 					err = fmt.Errorf("parallel function panic: %v", recovered)
 				}
 			}()
+
+			defer task8.ran.Store(true)
 
 			err = func() error {
 				return SendMessage()
 			}()
+
+			if err != nil {
+				taskEmitter.TaskError(ctx, err)
+				return
+			}
+			taskEmitter.TaskSuccess(ctx)
 			return
 		}
 
 		sched.Enqueue(ctx, cff.Job{
-			Run: task8.run,
+			Run: task8.fn,
 		})
+		tasks = append(tasks, task8)
 
 		if err := sched.Wait(ctx); err != nil {
 			parallelEmitter.ParallelError(ctx, err)

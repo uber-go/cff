@@ -68,7 +68,7 @@ func ParallelInvalidFuncVar() {
 	)
 }
 
-// InstrumentParallelInvalid is a Parallel that provides an InstrumentParallel
+// InstrumentParallelInvalid is a Parallel that provides a cff.InstrumentParallel
 // without an emitter.
 func InstrumentParallelInvalid() {
 	cff.Parallel(
@@ -138,6 +138,20 @@ func ParallelTaskInvalidFuncVar() {
 		context.Background(),
 		cff.Task(
 			chanSend,
+		),
+	)
+}
+
+// InstrumentParallelTaskInvalid is a Parallel that instruments a cff.Task
+// without an emitter.
+func InstrumentParallelTaskInvalid() {
+	cff.Parallel(
+		context.Background(),
+		cff.Task(
+			func() error {
+				return nil
+			},
+			cff.Instrument("BadTask"),
 		),
 	)
 }

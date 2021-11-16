@@ -10,7 +10,6 @@ import (
 	"go.uber.org/cff/internal/tests/instrument"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/uber-go/tally"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest/observer"
@@ -38,7 +37,7 @@ func TestInstrumentFlowEmitter(t *testing.T) {
 	flowInfo := &cff.FlowInfo{
 		Name:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   259,
+		Line:   328,
 		Column: 8,
 	}
 
@@ -82,19 +81,24 @@ func TestInstrumentParallelEmitter(t *testing.T) {
 	emitter := cff.NewMockEmitter(mockCtrl)
 
 	parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
+	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+
+	tasksucc := taskEmitter.EXPECT().TaskSuccess(ctx)
+	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).After(tasksucc)
 
 	parallelsucc := parallelEmitter.EXPECT().ParallelSuccess(ctx)
 	parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any()).After(parallelsucc)
 
 	parallelInfo := &cff.ParallelInfo{
-		Name:   "RunParallelTasks",
+		Name:   "RunParallelTasksAndTask",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   286,
+		Line:   359,
 		Column: 9,
 	}
 
 	emitter.EXPECT().ParallelInit(parallelInfo).Return(parallelEmitter)
+	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(1).Return(taskEmitter)
 
 	emitter.EXPECT().SchedulerInit(
 		&cff.SchedulerInfo{
@@ -116,7 +120,7 @@ func TestInstrumentParallelEmitter(t *testing.T) {
 		Scope:   scope,
 		Emitter: emitter,
 	}
-	assert.NoError(t, g.RunParallelTasks(ctx, "1"))
+	assert.NoError(t, g.RunParallelTasksAndTask(ctx, "1"))
 }
 
 func TestInstrumentFlowErrorME(t *testing.T) {
@@ -158,31 +162,64 @@ func TestInstrumentFlowErrorME(t *testing.T) {
 }
 
 func TestInstrumentParallelErrorME(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	ctx := context.Background()
+	t.Run("cff.Tasks error", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		ctx := context.Background()
 
-	emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := cff.NewMockEmitter(mockCtrl)
 
-	parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
-	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
+		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
 
-	parallelEmitter.EXPECT().ParallelError(ctx, gomock.Any())
-	parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any())
+		parallelEmitter.EXPECT().ParallelError(ctx, gomock.Any())
+		parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any())
 
-	emitter.EXPECT().ParallelInit(gomock.Any()).Return(parallelEmitter)
-	emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
+		emitter.EXPECT().ParallelInit(gomock.Any()).Return(parallelEmitter)
+		emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
 
-	scope := tally.NewTestScope("", nil)
-	core, _ := observer.New(zap.DebugLevel)
-	logger := zap.New(core)
+		scope := tally.NewTestScope("", nil)
+		core, _ := observer.New(zap.DebugLevel)
+		logger := zap.New(core)
 
-	h := &instrument.CustomEmitter{
-		Scope:   scope,
-		Logger:  logger,
-		Emitter: emitter,
-	}
-	err := h.RunParallelTasks(ctx, "NaN")
-	assert.Error(t, err)
+		h := &instrument.CustomEmitter{
+			Scope:   scope,
+			Logger:  logger,
+			Emitter: emitter,
+		}
+		assert.Error(t, h.RunParallelTasks(ctx, "NaN"))
+	})
+
+	t.Run("cff.Task error", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		ctx := context.Background()
+
+		emitter := cff.NewMockEmitter(mockCtrl)
+
+		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
+		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+
+		taskEmitter.EXPECT().TaskError(ctx, gomock.Any())
+		taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
+
+		parallelEmitter.EXPECT().ParallelError(ctx, gomock.Any())
+		parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any())
+
+		emitter.EXPECT().ParallelInit(gomock.Any()).Return(parallelEmitter)
+		emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
+		emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(1).Return(taskEmitter)
+
+		scope := tally.NewTestScope("", nil)
+		core, _ := observer.New(zap.DebugLevel)
+		logger := zap.New(core)
+
+		h := &instrument.CustomEmitter{
+			Scope:   scope,
+			Logger:  logger,
+			Emitter: emitter,
+		}
+		assert.Error(t, h.RunParallelTask(ctx, "NaN"))
+	})
 }
 
 func TestInstrumentTaskButNotFlowME(t *testing.T) {
@@ -211,6 +248,32 @@ func TestInstrumentTaskButNotFlowME(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 1, v)
+}
+
+func TestInstrumentTaskButNotParallelME(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+
+	emitter := cff.NewMockEmitter(mockCtrl)
+
+	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+
+	taskEmitter.EXPECT().TaskSuccess(ctx)
+	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
+
+	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Return(taskEmitter)
+	emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
+
+	scope := tally.NewTestScope("", nil)
+	core, _ := observer.New(zap.DebugLevel)
+	logger := zap.New(core)
+	g := &instrument.CustomEmitter{
+		Scope:   scope,
+		Logger:  logger,
+		Emitter: emitter,
+	}
+	assert.NoError(t, g.ParallelOnlyInstrumentTask(ctx, "1"))
 }
 
 func TestInstrumentFlowCancelledContextME(t *testing.T) {
@@ -250,35 +313,72 @@ func TestInstrumentFlowCancelledContextME(t *testing.T) {
 }
 
 func TestInstrumentParallelCancelledContextME(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
+	t.Run("cff.Tasks", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
 
-	scope := tally.NewTestScope("", nil)
-	core, _ := observer.New(zap.DebugLevel)
-	logger := zap.New(core)
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
+		scope := tally.NewTestScope("", nil)
+		core, _ := observer.New(zap.DebugLevel)
+		logger := zap.New(core)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
 
-	parallelCancelledError := ctx.Err()
+		parallelCancelledError := ctx.Err()
 
-	emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := cff.NewMockEmitter(mockCtrl)
 
-	parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
-	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
+		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
 
-	parallelEmitter.EXPECT().ParallelError(ctx, parallelCancelledError)
-	parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any())
+		parallelEmitter.EXPECT().ParallelError(ctx, parallelCancelledError)
+		parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any())
 
-	emitter.EXPECT().ParallelInit(gomock.Any()).Return(parallelEmitter)
-	emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
+		emitter.EXPECT().ParallelInit(gomock.Any()).Return(parallelEmitter)
+		emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
 
-	g := &instrument.CustomEmitter{
-		Scope:   scope,
-		Logger:  logger,
-		Emitter: emitter,
-	}
+		g := &instrument.CustomEmitter{
+			Scope:   scope,
+			Logger:  logger,
+			Emitter: emitter,
+		}
 
-	err := g.RunParallelTasks(ctx, "1")
-	assert.Error(t, err)
+		assert.Error(t, g.RunParallelTasks(ctx, "1"))
+	})
+
+	t.Run("cff.Task", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+
+		scope := tally.NewTestScope("", nil)
+		core, _ := observer.New(zap.DebugLevel)
+		logger := zap.New(core)
+		ctx := context.Background()
+		ctx, cancel := context.WithCancel(ctx)
+		cancel()
+
+		parallelCancelledError := ctx.Err()
+
+		emitter := cff.NewMockEmitter(mockCtrl)
+
+		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
+		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+
+		taskEmitter.EXPECT().TaskSkipped(ctx, parallelCancelledError)
+
+		parallelEmitter.EXPECT().ParallelError(ctx, parallelCancelledError)
+		parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any())
+
+		emitter.EXPECT().SchedulerInit(gomock.Any()).AnyTimes().Return(schedEmitter)
+		emitter.EXPECT().ParallelInit(gomock.Any()).Return(parallelEmitter)
+		emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(1).Return(taskEmitter)
+
+		g := &instrument.CustomEmitter{
+			Scope:   scope,
+			Logger:  logger,
+			Emitter: emitter,
+		}
+
+		assert.Error(t, g.RunParallelTask(ctx, "1"))
+	})
 }
 
 func TestInstrumentFlowRecoverME(t *testing.T) {
@@ -305,7 +405,7 @@ func TestInstrumentFlowRecoverME(t *testing.T) {
 	emitter.EXPECT().FlowInit(&cff.FlowInfo{
 		Name:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   259,
+		Line:   328,
 		Column: 8,
 	}).Return(flowEmitter)
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
@@ -471,14 +571,14 @@ func TestFlowPanic(t *testing.T) {
 		&cff.TaskInfo{
 			Name:   "Atoi",
 			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   401,
+			Line:   501,
 			Column: 12,
 		},
 		&cff.DirectiveInfo{
 			Name:      "",
 			Directive: cff.FlowDirective,
 			File:      "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:      398,
+			Line:      498,
 			Column:    9,
 		}).Return(taskEmitter)
 	emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
@@ -492,36 +592,68 @@ func TestFlowPanic(t *testing.T) {
 		Logger:  logger,
 		Emitter: emitter,
 	}
-	err := g.FlowAlwaysPanics(ctx)
-	require.Error(t, err)
+	assert.Error(t, g.FlowAlwaysPanics(ctx))
 }
 
 func TestParallelPanic(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	ctx := context.Background()
+	t.Run("cff.Tasks panic", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		ctx := context.Background()
 
-	emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := cff.NewMockEmitter(mockCtrl)
 
-	parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
-	emitter.EXPECT().ParallelInit(gomock.Any()).AnyTimes().Return(parallelEmitter)
+		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
+		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
 
-	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
-	emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
+		parallelEmitter.EXPECT().ParallelError(gomock.Any(), gomock.Any())
+		parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any()).Times(1)
 
-	parallelEmitter.EXPECT().ParallelError(gomock.Any(), gomock.Any())
-	parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any()).Times(1)
+		emitter.EXPECT().ParallelInit(gomock.Any()).AnyTimes().Return(parallelEmitter)
+		emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
 
-	scope := tally.NewTestScope("", nil)
-	core, _ := observer.New(zap.DebugLevel)
-	logger := zap.New(core)
+		scope := tally.NewTestScope("", nil)
+		core, _ := observer.New(zap.DebugLevel)
+		logger := zap.New(core)
 
-	g := &instrument.CustomEmitter{
-		Scope:   scope,
-		Logger:  logger,
-		Emitter: emitter,
-	}
-	err := g.ParallelAlwaysPanics(ctx)
-	require.Error(t, err)
+		g := &instrument.CustomEmitter{
+			Scope:   scope,
+			Logger:  logger,
+			Emitter: emitter,
+		}
+		assert.Error(t, g.ParallelAlwaysPanics(ctx))
+	})
+
+	t.Run("cff.Task panic", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		ctx := context.Background()
+
+		emitter := cff.NewMockEmitter(mockCtrl)
+
+		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
+		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+
+		parallelEmitter.EXPECT().ParallelError(gomock.Any(), gomock.Any())
+		parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any()).Times(1)
+
+		taskEmitter.EXPECT().TaskPanic(ctx, gomock.Any())
+		taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
+
+		emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
+		emitter.EXPECT().ParallelInit(gomock.Any()).AnyTimes().Return(parallelEmitter)
+		emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(1).Return(taskEmitter)
+
+		scope := tally.NewTestScope("", nil)
+		core, _ := observer.New(zap.DebugLevel)
+		logger := zap.New(core)
+
+		g := &instrument.CustomEmitter{
+			Scope:   scope,
+			Logger:  logger,
+			Emitter: emitter,
+		}
+		assert.Error(t, g.ParallelTaskAlwaysPanics(ctx))
+	})
 }
 
 // TestConcurrentFlow detects data races when multiple flows share the same

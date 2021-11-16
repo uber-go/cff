@@ -67,7 +67,27 @@ func (h *DefaultEmitter) RunFlow(ctx context.Context, req string) (res uint8, er
 	return
 }
 
-// RunParallelTasks executes a parallel to test instrumentation.
+// RunParallelTasksAndTask executes parallel cff.Tasks and cff.Task with
+// directive-level instrumentation.
+func (h *DefaultEmitter) RunParallelTasksAndTask(ctx context.Context, req string) error {
+	fn := func() error {
+		_, err := strconv.Atoi(req)
+		return err
+	}
+	return cff.Parallel(ctx,
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
+		cff.WithEmitter(cff.LogEmitter(h.Logger)),
+		cff.InstrumentParallel("RunParallelTasksAndTask"),
+		cff.Tasks(fn),
+		cff.Task(
+			fn,
+			cff.Instrument("Atoi"),
+		),
+	)
+}
+
+// RunParallelTasks executes a parallel cff.Task with directive-level
+// instrumentation.
 func (h *DefaultEmitter) RunParallelTasks(ctx context.Context, req string) error {
 	return cff.Parallel(ctx,
 		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
@@ -78,9 +98,23 @@ func (h *DefaultEmitter) RunParallelTasks(ctx context.Context, req string) error
 				_, err := strconv.Atoi(req)
 				return err
 			},
+		),
+	)
+}
+
+// RunParallelTask executes a parallel with directive-level and task level
+// instrumentation.
+func (h *DefaultEmitter) RunParallelTask(ctx context.Context, req string) error {
+	return cff.Parallel(ctx,
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
+		cff.WithEmitter(cff.LogEmitter(h.Logger)),
+		cff.InstrumentParallel("RunParallelTask"),
+		cff.Task(
 			func() error {
-				return nil
+				_, err := strconv.Atoi(req)
+				return err
 			},
+			cff.Instrument("Atoi"),
 		),
 	)
 }
@@ -117,7 +151,8 @@ func (h *DefaultEmitter) InstrumentFlowAndTask(ctx context.Context, req string) 
 	return
 }
 
-// FlowOnlyInstrumentTask executes a flow to test instrumentation.
+// FlowOnlyInstrumentTask executes a flow that only instruments a task, but
+// not the flow directive.
 func (h *DefaultEmitter) FlowOnlyInstrumentTask(ctx context.Context, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
@@ -130,6 +165,23 @@ func (h *DefaultEmitter) FlowOnlyInstrumentTask(ctx context.Context, req string)
 		),
 	)
 	return
+}
+
+// ParallelOnlyInstrumentTask executes a parallel that only instruments the
+// cff.Task.
+func (h *DefaultEmitter) ParallelOnlyInstrumentTask(ctx context.Context, req string) error {
+	return cff.Parallel(ctx,
+		cff.Params(req),
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
+		cff.WithEmitter(cff.LogEmitter(h.Logger)),
+		cff.Task(
+			func() error {
+				_, err := strconv.Atoi(req)
+				return err
+			},
+			cff.Instrument("Atoi"),
+		),
+	)
 }
 
 // T3630161 reproduces T3630161 by executing a flow that runs a task that failed, recovers, and then runs another task.
@@ -234,10 +286,27 @@ func (h *DefaultEmitter) ParallelAlwaysPanics(ctx context.Context) {
 	_ = cff.Parallel(ctx,
 		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
 		cff.InstrumentParallel("Parallel"),
-		cff.Tasks(
+		cff.Task(
 			func() {
 				panic("panic value")
 			},
+			cff.Instrument("Trouble"),
+		),
+	)
+	return
+}
+
+// ParallelTaskAlwaysPanics executes an instrumented cff.Task that always
+// panics.
+func (h *DefaultEmitter) ParallelTaskAlwaysPanics(ctx context.Context) {
+	_ = cff.Parallel(ctx,
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
+		cff.InstrumentParallel("Parallel"),
+		cff.Task(
+			func() {
+				panic("panic value")
+			},
+			cff.Instrument("AlwaysPanic"),
 		),
 	)
 	return
@@ -280,8 +349,26 @@ func (h *CustomEmitter) RunFlow(ctx context.Context, req string) (res uint8, err
 	return
 }
 
-// RunParallelTasks executes a parallel that instruments the top-level
-// parallel and tasks, of which one can error.
+// RunParallelTasksAndTask executes parallel cff.Tasks and cff.Task with
+// directive-level instrumentation.
+func (h *CustomEmitter) RunParallelTasksAndTask(ctx context.Context, req string) error {
+	fn := func() error {
+		_, err := strconv.Atoi(req)
+		return err
+	}
+	return cff.Parallel(ctx,
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
+		cff.WithEmitter(h.Emitter),
+		cff.InstrumentParallel("RunParallelTasksAndTask"),
+		cff.Tasks(fn),
+		cff.Task(
+			fn,
+			cff.Instrument("Atoi"),
+		),
+	)
+}
+
+// RunParallelTasks executes parallel cff.Tasks with directive-level instrumentation.
 func (h *CustomEmitter) RunParallelTasks(ctx context.Context, req string) error {
 	return cff.Parallel(ctx,
 		cff.WithEmitter(cff.LogEmitter(h.Logger)),
@@ -292,31 +379,28 @@ func (h *CustomEmitter) RunParallelTasks(ctx context.Context, req string) error 
 				_, err := strconv.Atoi(req)
 				return err
 			},
-			func() error {
-				return nil
-			},
 		),
 	)
 }
 
-// InstrumentFlowAndTask executes a flow that instruments the top-level flow and
-// the task.
-func (h *CustomEmitter) InstrumentFlowAndTask(ctx context.Context, req string) (res int, err error) {
-	err = cff.Flow(ctx,
-		cff.Params(req),
-		cff.Results(&res),
-		cff.InstrumentFlow("AtoiDo"),
+// RunParallelTask executes a parallel to test instrumentation.
+func (h *CustomEmitter) RunParallelTask(ctx context.Context, req string) error {
+	return cff.Parallel(ctx,
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
 		cff.WithEmitter(h.Emitter),
-		cff.WithEmitter(cff.LogEmitter(h.Logger)),
+		cff.InstrumentParallel("RunParallelTask"),
 		cff.Task(
-			strconv.Atoi,
+			func() error {
+				_, err := strconv.Atoi(req)
+				return err
+			},
 			cff.Instrument("Atoi"),
 		),
 	)
-	return
 }
 
-// FlowOnlyInstrumentTask executes a flow that instruments only the task.
+// FlowOnlyInstrumentTask executes a flow that instruments the directive-level flow and
+// the task.
 func (h *CustomEmitter) FlowOnlyInstrumentTask(ctx context.Context, req string) (res int, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(req),
@@ -329,6 +413,22 @@ func (h *CustomEmitter) FlowOnlyInstrumentTask(ctx context.Context, req string) 
 		),
 	)
 	return
+}
+
+// ParallelOnlyInstrumentTask executes a parallel that only instruments the
+// individual task.
+func (h *CustomEmitter) ParallelOnlyInstrumentTask(ctx context.Context, req string) error {
+	return cff.Parallel(ctx,
+		cff.WithEmitter(h.Emitter),
+		cff.WithEmitter(cff.LogEmitter(h.Logger)),
+		cff.Task(
+			func() error {
+				_, err := strconv.Atoi(req)
+				return err
+			},
+			cff.Instrument("Atoi"),
+		),
+	)
 }
 
 // T3630161 reproduces T3630161 by executing a flow that runs a task that failed,
@@ -407,8 +507,8 @@ func (h *CustomEmitter) FlowAlwaysPanics(ctx context.Context) error {
 	)
 }
 
-// ParallelAlwaysPanics tests instrumentation for a parallel that always
-// panics.
+// ParallelAlwaysPanics executes a directive-level instrument parallel with a
+// cff.Tasks that panics.
 func (h *CustomEmitter) ParallelAlwaysPanics(ctx context.Context) error {
 	return cff.Parallel(ctx,
 		cff.WithEmitter(cff.LogEmitter(h.Logger)),
@@ -418,6 +518,22 @@ func (h *CustomEmitter) ParallelAlwaysPanics(ctx context.Context) error {
 			func() {
 				panic("always")
 			},
+		),
+	)
+}
+
+// ParallelTaskAlwaysPanics executes an instrument cff.Task that always
+// panics.
+func (h *CustomEmitter) ParallelTaskAlwaysPanics(ctx context.Context) error {
+	return cff.Parallel(ctx,
+		cff.WithEmitter(cff.LogEmitter(h.Logger)),
+		cff.WithEmitter(h.Emitter),
+		cff.InstrumentParallel("AlwaysPanic"),
+		cff.Task(
+			func() {
+				panic("always")
+			},
+			cff.Instrument("Panic"),
 		),
 	)
 }

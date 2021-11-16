@@ -15,6 +15,13 @@ func(
 			Line: {{ $parallel.PosInfo.Line }},
 			Column: {{ $parallel.PosInfo.Column}},
 		}
+		directiveInfo = &{{ $cff }}.DirectiveInfo{
+			Name: parallelInfo.Name,
+			Directive: cff.ParallelDirective,
+			File: parallelInfo.File,
+			Line: parallelInfo.Line,
+			Column: parallelInfo.Column,
+		}
 		{{ with $parallel.Instrument -}}
 			parallelEmitter = emitter.ParallelInit(parallelInfo)
 		{{- else -}}
@@ -31,6 +38,7 @@ func(
 
 		// possibly unused
 		_ = parallelInfo
+		_ = directiveInfo
 	)
 
 	startTime := {{ import "time" }}.Now()
@@ -47,8 +55,19 @@ func(
 	)
 
 	type task struct {
-		run func({{ $context }}.Context) error
+		emitter {{ $cff }}.TaskEmitter
+		fn func({{ $context }}.Context) error
+		ran {{ $cff }}.AtomicBool
 	}
+
+	var tasks []*task
+	defer func() {
+		for _, t := range tasks {
+			if !t.ran.Load() {
+				t.emitter.TaskSkipped(ctx, err)
+			}
+		}
+	}()
 
 	{{ range $parallel.Tasks }}
 		{{ template "task.go.tmpl" . }}

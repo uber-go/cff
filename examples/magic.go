@@ -95,6 +95,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			func() error {
 				return SendMessage()
 			},
+			cff.Instrument("SendMsg"),
 		),
 	)
 	return res, err

@@ -207,6 +207,11 @@ var codeGenerateFailCases = map[string][]errorCase{
 		},
 		{
 			File:         "parallel.go",
+			ErrorMatches: `cff.InstrumentParallel requires a cff.Emitter to be provided: use cff.WithEmitter`,
+			TestFuncs:    []string{"InstrumentParallelInvalid"},
+		},
+		{
+			File:         "parallel.go",
 			ErrorMatches: "only the last result may be an error",
 			TestFuncs: []string{
 				"ParallelInvalidReturnTypeMultiple",
@@ -215,8 +220,8 @@ var codeGenerateFailCases = map[string][]errorCase{
 		},
 		{
 			File:         "parallel.go",
-			ErrorMatches: "cff.InstrumentParallel requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
-			TestFuncs:    []string{"InstrumentParallelInvalid"},
+			ErrorMatches: `cff.Instrument requires a cff.Emitter to be provided: use cff.WithEmitter`,
+			TestFuncs:    []string{"InstrumentParallelTaskInvalid"},
 		},
 		{
 			File:         "predicate.go",

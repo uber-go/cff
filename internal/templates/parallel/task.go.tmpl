@@ -4,21 +4,54 @@
 
 // {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
 {{ $t }} := new(task)
-{{ $t }}.run = func(ctx {{ $context }}.Context) (err error) {
+{{ $t }}.emitter =
+	{{- if .Instrument -}}
+		emitter.TaskInit(
+			&{{ $cff }}.TaskInfo{
+				Name: {{ expr .Instrument.Name }},
+				File: {{ quote .PosInfo.File}},
+				Line: {{ .PosInfo.Line }},
+				Column: {{ .PosInfo.Column}},
+			},
+			directiveInfo,
+		)
+	{{- else -}}
+		{{ $cff }}.NopTaskEmitter()
+	{{- end }}
+{{ $t }}.fn = func(ctx {{ $context }}.Context) (err error) {
+	taskEmitter := {{ $t }}.emitter
+	startTime := {{ import "time" }}.Now()
+	defer func() {
+		if {{ $t }}.ran.Load() {
+			taskEmitter.TaskDone(ctx, time.Since(startTime))
+		}
+	}()
+
 	defer func() {
 		recovered := recover()
 		if recovered != nil {
+			taskEmitter.TaskPanic(ctx, recovered)
 			err = {{ import "fmt" }}.Errorf("parallel function panic: %v", recovered)
 		}
 	}()
 
+	defer {{ $t }}.ran.Store(true)
+
 	{{ if .Function.HasError }} err = {{ end }}{{ template "callFunc" . }}
+	{{ if .Function.HasError }}
+		if err != nil {
+			taskEmitter.TaskError(ctx, err)
+			return
+		}
+	{{- end }}
+	taskEmitter.TaskSuccess(ctx)
 	return
 }
 
 sched.Enqueue(ctx, {{ $cff }}.Job{
-	Run: task{{ .Serial }}.run,
+	Run: task{{ .Serial }}.fn,
 })
+tasks = append(tasks, task{{ .Serial }})
 
 {{- define "callFunc" -}}
 	{{- expr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }})
