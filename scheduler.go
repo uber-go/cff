@@ -18,6 +18,24 @@ type AtomicBool = atomic.Bool
 // scheduler.
 type ScheduledJob = scheduler.ScheduledJob
 
+// SchedulerParams configures the CFF scheduler.
+type SchedulerParams struct {
+	// Concurrency specifies the number of concurrent workers
+	// used by the scheduler to run jobs.
+	//
+	// See cff.Concurrency for more details.
+	Concurrency int
+	// Emitter provides an emitter for the scheduler.
+	//
+	// See cff.SchedulerEmitter for more details.
+	Emitter SchedulerEmitter
+	// ContinueOnError when true directs the scheduler to continue running
+	// through job errors.
+	//
+	// See cff.ContinueOnError for more details.
+	ContinueOnError bool
+}
+
 // BeginFlow begins execution of a flow with a maximum of n workers. Enqueue
 // jobs into the returned scheduler in topological order using the Enqueue
 // method, and wait for results with Wait.
@@ -27,10 +45,11 @@ type ScheduledJob = scheduler.ScheduledJob
 //  j2 := sched.Enqueue(cff.Job{..., Dependencies: []*cff.ScheduledJob{j1}}
 //  // ...
 //  err := sched.Wait()
-func BeginFlow(n int, e SchedulerEmitter) *scheduler.Scheduler {
+func BeginFlow(p SchedulerParams) *scheduler.Scheduler {
 	cfg := scheduler.Config{
-		Concurrency: n,
-		Emitter:     adaptSchedulerEmitter(e),
+		Concurrency:     p.Concurrency,
+		Emitter:         adaptSchedulerEmitter(p.Emitter),
+		ContinueOnError: p.ContinueOnError,
 	}
 	return cfg.New()
 }

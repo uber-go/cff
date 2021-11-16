@@ -62,7 +62,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(8, schedEmitter)
+		sched := cff.BeginFlow(
+			cff.SchedulerParams{
+				Concurrency: 8, Emitter: schedEmitter,
+			},
+		)
 
 		type task struct {
 			emitter cff.TaskEmitter
@@ -461,7 +465,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(2, schedEmitter)
+		sched := cff.BeginFlow(
+			cff.SchedulerParams{
+				Concurrency: 2, Emitter: schedEmitter,
+			},
+		)
 
 		type task struct {
 			emitter cff.TaskEmitter

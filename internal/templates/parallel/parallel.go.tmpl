@@ -47,11 +47,10 @@ func(
 	schedEmitter := emitter.SchedulerInit(schedInfo)
 
 	sched := {{ $cff }}.BeginFlow(
-		{{- with .Concurrency -}}
-			{{ expr . }}
-		{{- else -}}
-			0
-		{{- end -}}, schedEmitter,
+		{{ $cff }}.SchedulerParams{
+			{{ with .Concurrency -}} Concurrency:  {{ expr . }}, {{- end -}}
+			Emitter: schedEmitter,
+		},
 	)
 
 	type task struct {
