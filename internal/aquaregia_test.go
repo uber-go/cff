@@ -65,8 +65,13 @@ var codeGenerateFailCases = map[string][]errorCase{
 		},
 		{
 			File:         "cff-flow-arguments.go",
-			ErrorMatches: "cff.ContinueOnError is an invalid cff.Flow Option",
+			ErrorMatches: `"ContinueOnError" is an invalid cff.Flow Option`,
 			TestFuncs:    []string{"DisallowContinueOnError"},
+		},
+		{
+			File:         "cff-flow-arguments.go",
+			ErrorMatches: `"Slice" is an invalid cff.Flow Option`,
+			TestFuncs:    []string{"DisallowSlice"},
 		},
 		{
 			File:         "cff-task-arguments.go",
@@ -200,6 +205,7 @@ var codeGenerateFailCases = map[string][]errorCase{
 			TestFuncs: []string{
 				"ParallelInvalidParamsMultiple",
 				"ParallelTaskInvalidFuncVar",
+				"ParallelSliceBadContextPosition",
 			},
 		},
 		{
@@ -208,6 +214,8 @@ var codeGenerateFailCases = map[string][]errorCase{
 			TestFuncs: []string{
 				"ParallelInvalidReturnType",
 				"ParallelTaskInvalidReturnType",
+				"ParallelSliceTooManyReturn",
+				"ParallelSliceNonErrorReturn",
 			},
 		},
 		{
@@ -221,12 +229,37 @@ var codeGenerateFailCases = map[string][]errorCase{
 			TestFuncs: []string{
 				"ParallelInvalidReturnTypeMultiple",
 				"ParallelTaskInvalidReturnMultiple",
+				"ParallelSliceNonLastError",
 			},
 		},
 		{
 			File:         "parallel.go",
 			ErrorMatches: `cff.Instrument requires a cff.Emitter to be provided: use cff.WithEmitter`,
 			TestFuncs:    []string{"InstrumentParallelTaskInvalid"},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: "slice function expects two non-context arguments: slice index and slice element",
+			TestFuncs: []string{
+				"ParallelSliceMissingIndex",
+				"ParallelSliceMissingValue",
+				"ParallelSliceFuncTooManyArgs",
+			},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: "the first non-context argument of the slice function must be an int",
+			TestFuncs:    []string{"ParallelSliceMissingIndex"},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: "the second argument to cff.Slice must be a slice",
+			TestFuncs:    []string{"ParallelSliceWithMap"},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: `slice element of type string cannot be passed as a parameter to function expecting bool`,
+			TestFuncs:    []string{"ParallelSliceElemTypeMismatch"},
 		},
 		{
 			File:         "predicate.go",

@@ -285,3 +285,99 @@ func ContinueOnErrorCancelledDuring(ctx context.Context, cancel func(), src []in
 		),
 	)
 }
+
+// Slice runs a cff.Slice to populate the provided slice.
+// Slice will panic if len(target) < len(src).
+func Slice(src, target []int) error {
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Slice(
+			func(_ context.Context, idx int, val int) error {
+				target[idx] = val
+				return nil
+			},
+			src,
+		),
+	)
+}
+
+// SliceMultiple runs multiple cff.Slices to populate the provided slice.
+// Slice will panic if len(target) < len(src).
+func SliceMultiple(srcA, srcB, targetA, targetB []int) error {
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Slice(
+			func(idx int, val int) error {
+				targetA[idx] = val
+				return nil
+			},
+			srcA,
+		),
+		cff.Slice(
+			func(_ context.Context, idx int, val int) {
+				targetB[idx] = val
+			},
+			srcB,
+		),
+	)
+}
+
+// SliceError runs a cff.Slice where one of the tasks errors.
+func SliceError(src, target []int) error {
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Slice(
+			func(idx int, val int) error {
+				if idx == 0 {
+					return errors.New("sad times")
+				}
+				target[idx] = val
+				return nil
+			},
+			src,
+		),
+	)
+}
+
+// SlicePanic runs a cff.Slice where one of the tasks panics.
+func SlicePanic(src, target []int) error {
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Slice(
+			func(_ context.Context, idx int, val int) {
+				if idx == 0 {
+					panic("sad times")
+				}
+				target[idx] = val
+			},
+			src,
+		),
+	)
+}
+
+// SliceContinueOnError runs the through errors and panics.
+func SliceContinueOnError(src, target []string) error {
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.ContinueOnError(true),
+		cff.Slice(
+			func(idx int, val string) error {
+				switch val {
+				case "error":
+					return errors.New("sad times")
+				case "panic":
+					panic("sadder times")
+				default:
+					target[idx] = val
+					return nil
+				}
+			},
+			src,
+		),
+	)
+}

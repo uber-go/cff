@@ -133,3 +133,64 @@ func TestContinueOnError_CancelledDuring(t *testing.T) {
 	// run by the scheduler.
 	assert.NotEqual(t, src, target)
 }
+
+func TestSlice(t *testing.T) {
+	src := []int{1, 2}
+	target := make([]int, 2, 2)
+	assert.NotEqual(t, src, target)
+
+	require.NoError(t, Slice(src, target))
+
+	assert.Equal(t, src, target)
+}
+
+func TestMultiple(t *testing.T) {
+	src := []int{1, 2}
+	targetA := make([]int, 2, 2)
+	targetB := make([]int, 2, 2)
+	assert.NotEqual(t, src, targetA)
+	assert.NotEqual(t, src, targetB)
+
+	require.NoError(t, SliceMultiple(src, src, targetA, targetB))
+
+	assert.Equal(t, src, targetA)
+	assert.Equal(t, src, targetB)
+}
+
+func TestSliceError(t *testing.T) {
+	src := []int{1, 2}
+	target := make([]int, 2)
+	assert.NotEqual(t, src, target)
+
+	err := SliceError(src, target)
+	require.Error(t, err)
+
+	assert.Equal(t, "sad times", err.Error())
+	assert.NotEqual(t, src, target)
+}
+
+func TestSlicePanic(t *testing.T) {
+	src := []int{1, 2}
+	target := make([]int, 2, 2)
+	assert.NotEqual(t, src, target)
+
+	err := SlicePanic(src, target)
+	require.Error(t, err)
+
+	assert.Equal(t, "parallel function panic: sad times", err.Error())
+	assert.NotEqual(t, src, target)
+}
+
+func TestSliceContinueOnError(t *testing.T) {
+	src := []string{"copy", "error", "panic", "me"}
+	target := make([]string, 4, 4)
+	assert.NotEqual(t, src, target)
+
+	err := SliceContinueOnError(src, target)
+	require.Error(t, err)
+
+	assert.Contains(t, err.Error(), "sad times")
+	assert.Contains(t, err.Error(), "parallel function panic: sadder times")
+
+	assert.Equal(t, []string{"copy", "", "", "me"}, target)
+}

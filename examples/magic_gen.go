@@ -40,7 +40,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			flowInfo = &cff.FlowInfo{
 				Name:   "HandleFoo",
 				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   32,
+				Line:   33,
 				Column: 9,
 			}
 			flowEmitter = emitter.FlowInit(flowInfo)
@@ -90,7 +90,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 		}()
 
-		// go.uber.org/cff/examples/magic.go:41:4
+		// go.uber.org/cff/examples/magic.go:42:4
 		var (
 			v2 *GetManagerRequest
 			v3 *ListUsersRequest
@@ -134,7 +134,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task0)
 
-		// go.uber.org/cff/examples/magic.go:49:4
+		// go.uber.org/cff/examples/magic.go:50:4
 		var (
 			v4 *GetManagerResponse
 		)
@@ -179,7 +179,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task1)
 
-		// go.uber.org/cff/examples/magic.go:61:4
+		// go.uber.org/cff/examples/magic.go:62:4
 		var (
 			v5 *ListUsersResponse
 		)
@@ -188,7 +188,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			&cff.TaskInfo{
 				Name:   "FormSendEmailRequest",
 				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   61,
+				Line:   62,
 				Column: 4,
 			},
 			&cff.DirectiveInfo{
@@ -238,7 +238,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task4)
 
-		// go.uber.org/cff/examples/magic.go:74:4
+		// go.uber.org/cff/examples/magic.go:75:4
 		var p0 bool
 		pred1 := new(predicate)
 		pred1.run = func(ctx context.Context) (err error) {
@@ -255,7 +255,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			},
 		})
 
-		// go.uber.org/cff/examples/magic.go:66:4
+		// go.uber.org/cff/examples/magic.go:67:4
 		var (
 			v6 []*SendEmailRequest
 		)
@@ -264,7 +264,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			&cff.TaskInfo{
 				Name:   "FormSendEmailRequest",
 				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   66,
+				Line:   67,
 				Column: 4,
 			},
 			&cff.DirectiveInfo{
@@ -321,7 +321,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task5)
 
-		// go.uber.org/cff/examples/magic.go:50:12
+		// go.uber.org/cff/examples/magic.go:51:12
 		var (
 			v7 []*SendEmailResponse
 		)
@@ -366,7 +366,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task2)
 
-		// go.uber.org/cff/examples/magic.go:52:4
+		// go.uber.org/cff/examples/magic.go:53:4
 		var (
 			v8 *Response
 		)
@@ -435,7 +435,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			parallelInfo = &cff.ParallelInfo{
 				Name:   "SendParallel",
 				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   82,
+				Line:   83,
 				Column: 8,
 			}
 			directiveInfo = &cff.DirectiveInfo{
@@ -487,7 +487,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 		}()
 
-		// go.uber.org/cff/examples/magic.go:90:4
+		// go.uber.org/cff/examples/magic.go:91:4
 		task6 := new(task)
 		task6.emitter = cff.NopTaskEmitter()
 		task6.fn = func(ctx context.Context) (err error) {
@@ -526,7 +526,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task6)
 
-		// go.uber.org/cff/examples/magic.go:93:4
+		// go.uber.org/cff/examples/magic.go:94:4
 		task7 := new(task)
 		task7.emitter = cff.NopTaskEmitter()
 		task7.fn = func(ctx context.Context) (err error) {
@@ -563,13 +563,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task7)
 
-		// go.uber.org/cff/examples/magic.go:96:4
+		// go.uber.org/cff/examples/magic.go:97:4
 		task8 := new(task)
 		task8.emitter = emitter.TaskInit(
 			&cff.TaskInfo{
 				Name:   "SendMsg",
 				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   96,
+				Line:   97,
 				Column: 4,
 			},
 			directiveInfo,
@@ -609,6 +609,32 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			Run: task8.fn,
 		})
 		tasks = append(tasks, task8)
+
+		// go.uber.org/cff/examples/magic.go:102:3
+		for idx, val := range []string{"message", "to", "send"} {
+			idx := idx
+			val := val
+			sliceTask9 := new(task)
+			sliceTask9.fn = func(ctx context.Context) (err error) {
+				defer func() {
+					recovered := recover()
+					if recovered != nil {
+						err = fmt.Errorf("parallel function panic: %v", recovered)
+					}
+				}()
+
+				err = func(ctx context.Context, idx int, s string) error {
+					_ = fmt.Sprintf("%d and %q", idx, s)
+					_, _ = ctx.Deadline()
+					return nil
+				}(ctx, idx, val)
+				return
+			}
+
+			sched.Enqueue(ctx, cff.Job{
+				Run: sliceTask9.fn,
+			})
+		}
 
 		if err := sched.Wait(ctx); err != nil {
 			parallelEmitter.ParallelError(ctx, err)

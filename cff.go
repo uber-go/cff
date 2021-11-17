@@ -298,3 +298,37 @@ func InstrumentParallel(name string) Option {
 func Tasks(fn ...interface{}) Option {
 	panic(_noGenMsg)
 }
+
+// Slice executes a parallel operation on the elements of the provided slice.
+//
+// The fn parameter is function that is invoked on each element of the slice
+// parameter.
+//
+// The fn parameter's first non-context argument is a slice index of type int
+// followed by a value of same type as the slice parameter's elements.
+//
+//  cff.Parallel(
+//  	ctx,
+//  	cff.Concurrency(...),
+//  	cff.Slice(func(idx int, elem someType) { ... }, []someType{...})
+//  )
+//
+// Optionally, a context.Context can be provided as a first argument to the
+// execution function.
+//
+//  func(ctx context.Context, idx int, item someType) { ... }
+//
+// Optionally, an error can be returned as the execution function's sole
+// return value.
+//
+//  func(idx int, item someType) error { ... }
+//
+// The second argument to Slice is a slice on which the execution function
+// is invoked.
+//
+// cff.Slice is only an option for cff.Parallel.
+//
+// This is a code generation directive.
+func Slice(fn interface{}, slice interface{}) Option {
+	panic(_noGenMsg)
+}

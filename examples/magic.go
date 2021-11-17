@@ -2,6 +2,7 @@ package example
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"go.uber.org/cff"
@@ -97,6 +98,14 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				return SendMessage()
 			},
 			cff.Instrument("SendMsg"),
+		),
+		cff.Slice(
+			func(ctx context.Context, idx int, s string) error {
+				_ = fmt.Sprintf("%d and %q", idx, s)
+				_, _ = ctx.Deadline()
+				return nil
+			},
+			[]string{"message", "to", "send"},
 		),
 	)
 	return res, err

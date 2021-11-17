@@ -2,6 +2,7 @@ package parallel
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"go.uber.org/cff"
@@ -28,6 +29,14 @@ func ExampleParallel(m *sync.Map, c chan<- string) error {
 				return ctx.Err()
 			},
 		),
+		cff.Slice(
+			func(ctx context.Context, idx int, s string) error {
+				_ = fmt.Sprintf("%d and %q", idx, s)
+				_, _ = ctx.Deadline()
+				return nil
+			},
+			[]string{"some", "thing"},
+		),
 	)
 	if err != nil {
 		return err
@@ -38,6 +47,9 @@ func ExampleParallel(m *sync.Map, c chan<- string) error {
 		c <- "send"
 		return nil
 	}
+
+	someSlice := []string{"some", "slice"}
+	sliceFunc := func(_ int, _ string) {}
 
 	err = cff.Parallel(
 		context.Background(),
@@ -52,6 +64,10 @@ func ExampleParallel(m *sync.Map, c chan<- string) error {
 			func() {
 				m.Store("bar", "finished")
 			},
+		),
+		cff.Slice(
+			sliceFunc,
+			someSlice,
 		),
 	)
 	if err != nil {

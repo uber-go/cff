@@ -18,23 +18,58 @@ func TestCompileParallel(t *testing.T) {
 	setups := setupCompilers(t, filepath.Join(internalTests, "compile_tests/parallel"), modules)
 	require.Len(t, setups, 1)
 
+	tt := []struct {
+		desc         string
+		numTask      int
+		numSliceTask int
+	}{
+		{
+			desc:         "first parallel",
+			numTask:      3,
+			numSliceTask: 1,
+		},
+		{
+			desc:         "second parallel",
+			numTask:      3,
+			numSliceTask: 1,
+		},
+	}
+
 	for _, setup := range setups {
 		compiled := setup.compiler.compileFile(setup.file, setup.pkg)
 		require.Len(t, compiled.Parallels, 2)
-		set := make(map[int]struct{})
-		for _, p := range compiled.Parallels {
-			for _, task := range p.Tasks {
-				t.Run("serial incremented", func(t *testing.T) {
-					_, ok := set[task.Serial]
+
+		t.Run("task serial incremented", func(t *testing.T) {
+			for i, p := range compiled.Parallels {
+				serialSet := make(map[int]struct{})
+				for _, task := range p.Tasks {
+					_, ok := serialSet[task.Serial]
 					assert.False(t, ok)
-					set[task.Serial] = struct{}{}
-				})
-				t.Run("parallel tasks are independent", func(t *testing.T) {
+					serialSet[task.Serial] = struct{}{}
+				}
+				assert.Len(t, p.Tasks, tt[i].numTask)
+			}
+		})
+
+		t.Run("parallel tasks are independent", func(t *testing.T) {
+			for _, p := range compiled.Parallels {
+				for _, task := range p.Tasks {
 					assert.Empty(t, task.Function.Dependencies)
 					assert.Empty(t, task.Function.DependsOn)
-				})
+				}
 			}
-			assert.Len(t, p.Tasks, 3)
-		}
+		})
+
+		t.Run("slice serial incremented", func(t *testing.T) {
+			for i, p := range compiled.Parallels {
+				serialSet := make(map[int]struct{})
+				for _, task := range p.SliceTasks {
+					_, ok := serialSet[task.Serial]
+					assert.False(t, ok)
+					serialSet[task.Serial] = struct{}{}
+				}
+				assert.Len(t, p.SliceTasks, tt[i].numSliceTask)
+			}
+		})
 	}
 }

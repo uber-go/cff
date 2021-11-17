@@ -3,6 +3,7 @@ package internal
 import (
 	"errors"
 	"go/ast"
+	"go/types"
 
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/types/typeutil"
@@ -19,6 +20,8 @@ type parallel struct {
 	Emitters []ast.Expr // zero or more expressions of the type cff.Emitter.
 
 	Tasks []*parallelTask
+
+	SliceTasks []*sliceTask
 
 	Instrument *instrument
 
@@ -74,10 +77,14 @@ func (c *compiler) compileParallel(file *ast.File, call *ast.CallExpr) *parallel
 			parallel.ContinueOnError = ce.Args[0]
 		case "InstrumentParallel":
 			parallel.Instrument = c.compileInstrument(ce)
+		case "Slice":
+			if st := c.compileSlice(parallel, ce); st != nil {
+				parallel.SliceTasks = append(parallel.SliceTasks, st)
+			}
 		case "WithEmitter":
 			parallel.Emitters = append(parallel.Emitters, ce.Args[0])
 		}
-		// TODO(GO-84): Map, Slice.
+		// TODO(GO-84): Map.
 	}
 	c.validateParallelInstrument(parallel)
 
@@ -168,4 +175,66 @@ func checkParallelTask(fn *compiledFunc) error {
 	default:
 		return nil
 	}
+}
+
+type sliceTask struct {
+	Function *compiledFunc
+	Slice    ast.Expr
+	ElemType types.Type
+
+	// Serial is a unique serially incrementing number for each sliceTask.
+	Serial int
+
+	PosInfo *PosInfo // Used to pass information to uniquely identify a task.
+}
+
+func (c *compiler) compileSlice(p *parallel, ce *ast.CallExpr) *sliceTask {
+	sliceFn, slce := ce.Args[0], ce.Args[1]
+	fn := c.compileFunction(sliceFn)
+	if fn == nil {
+		c.errf(c.nodePosition(sliceFn), "slice function failed to compile")
+		return nil
+	}
+
+	if len(fn.Outputs) != 0 {
+		c.errf(c.nodePosition(sliceFn), "the only allowed return value is an error")
+		return nil
+	}
+
+	if len(fn.Inputs) != 2 {
+		c.errf(c.nodePosition(slce), "slice function expects two non-context arguments: slice index and slice element")
+		return nil
+	}
+
+	if t, ok := fn.Inputs[0].(*types.Basic); !ok || t.Kind() != types.Int {
+		c.errf(c.nodePosition(slce), "the first non-context argument of the slice function must be an int, got %v", fn.Inputs[0])
+		return nil
+	}
+
+	typ := c.info.TypeOf(slce)
+	if typ == nil {
+		c.errf(c.nodePosition(slce), "type of the slice argument is not found")
+		return nil
+	}
+
+	slc, ok := typ.(*types.Slice)
+	if !ok {
+		c.errf(c.nodePosition(slce), "the second argument to cff.Slice must be a slice, got %v", typ)
+		return nil
+	}
+
+	if !types.AssignableTo(fn.Inputs[1], slc.Elem()) {
+		c.errf(c.nodePosition(slce), "slice element of type %v cannot be passed as a parameter to function expecting %v", fn.Inputs[1], slc.Elem())
+		return nil
+	}
+
+	s := &sliceTask{
+		Function: fn,
+		Slice:    slce,
+		ElemType: slc.Elem(),
+		Serial:   c.taskSerial,
+		PosInfo:  c.getPosInfo(ce),
+	}
+	c.taskSerial++
+	return s
 }

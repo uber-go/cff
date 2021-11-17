@@ -45,3 +45,14 @@ func DisallowContinueOnError() {
 		),
 	)
 }
+
+// DisallowSlice is a function that provides cff.Slice
+// to cff.Flow.
+func DisallowSlice() {
+	cff.Flow(context.Background(),
+		cff.Slice(
+			func(_ int, elem string) error { return nil },
+			[]string{"sad", "times"},
+		),
+	)
+}

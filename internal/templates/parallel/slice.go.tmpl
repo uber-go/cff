@@ -1,0 +1,31 @@
+{{- $context := import "context" -}}
+{{- $cff := import "go.uber.org/cff" -}}
+{{- $t := printf "sliceTask%d" .Serial -}}
+
+// {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
+for idx, val := range {{ expr .Slice }} {
+	idx := idx
+	val := val
+	{{ $t }} := new(task)
+	{{ $t }}.fn = func(ctx {{ $context }}.Context) (err error) {
+		defer func() {
+			recovered := recover()
+			if recovered != nil {
+				err = {{ import "fmt" }}.Errorf("parallel function panic: %v", recovered)
+			}
+		}()
+
+	{{ if .Function.HasError }} err = {{ end }}{{ template "callSlice" . }}
+		return
+	}
+
+	sched.Enqueue(ctx, {{ $cff }}.Job{
+		Run: {{ $t }}.fn,
+	})
+}
+
+{{- define "callSlice" -}}
+	{{- expr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }} idx, val)
+{{- end -}}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}

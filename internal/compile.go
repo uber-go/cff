@@ -289,8 +289,8 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 		}
 
 		switch f.Name() {
-		case "ContinueOnError":
-			c.errf(c.nodePosition(arg), "cff.ContinueOnError is an invalid cff.Flow Option")
+		case "ContinueOnError", "Slice":
+			c.errf(c.nodePosition(arg), "%q is an invalid cff.Flow Option", f.Name())
 			continue
 		case "Params":
 			for _, i := range ce.Args {

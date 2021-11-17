@@ -156,6 +156,138 @@ func InstrumentParallelTaskInvalid() {
 	)
 }
 
+// ParallelSliceBadContextPosition has a context.Context outside of the first
+// argument of the cff.Slice execution function.
+func ParallelSliceBadContextPosition() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(_ int, c context.Context, _ string) error {
+				return nil
+			},
+			[]string{"some", "thing"},
+		),
+	)
+}
+
+// ParallelSliceFirstArgNotIndex is a cff.Slice where the first non-context
+// argument is not an index.
+func ParallelSliceFirstArgNotIndex() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(_ context.Context, _ string, _ int) {},
+			[]string{"some", "thing"},
+		),
+	)
+}
+
+// ParallelSliceMissingIndex is a cff.Slice execution function that is missing
+// the argument for slice index.
+func ParallelSliceMissingIndex() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(_ context.Context, _ string) error {
+				return nil
+			},
+			[]string{"some", "thing"},
+		),
+	)
+}
+
+// ParallelSliceMissingValue is a cff.Slice execution function that is missing
+// the argument for slice value.
+func ParallelSliceMissingValue() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(_ context.Context, _ int) {},
+			[]string{"some", "thing"},
+		),
+	)
+}
+
+// ParallelSliceWithMap is a cff.Slice that is given a map to iterate over.
+func ParallelSliceWithMap() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(_ int, _ string) error {
+				return nil
+			},
+			map[string]struct{}{},
+		),
+	)
+}
+
+// ParallelSliceFuncTooManyArgs is a cff.Slice function that has too many arguments.
+func ParallelSliceFuncTooManyArgs() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(_ int, _ string, _ bool) {},
+			[]string{"some", "thing"},
+		),
+	)
+}
+
+// ParallelSliceElemTypeMismatch is a cff.Slice function whose value argument type
+// does not match the type of the slice elements provided to cff.Slice.
+func ParallelSliceElemTypeMismatch() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(_ int, _ string) error {
+				return nil
+			},
+			[]bool{true, false},
+		),
+	)
+}
+
+// ParallelSliceNonErrorReturn is a cff.Slice function that has a non-error
+// return.
+func ParallelSliceNonErrorReturn() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(_ int, _ string) int {
+				return 1
+			},
+			[]string{"some", "thing"},
+		),
+	)
+}
+
+// ParallelSliceTooManyReturn is a cff.Slice function that has too many
+// return arguments.
+func ParallelSliceTooManyReturn() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(_ int, _ string) (int, error) {
+				return 1, nil
+			},
+			[]string{"some", "thing"},
+		),
+	)
+}
+
+// ParallelSliceNonLastError is a cff.Slice function that has an error as a
+// outside of the last return value.
+func ParallelSliceNonLastError() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(_ int, _ string) (error, int) {
+				return nil, 1
+			},
+			[]string{"some", "thing"},
+		),
+	)
+}
+
 func chanSend(s string, c chan<- string) {
 	c <- s
 }
