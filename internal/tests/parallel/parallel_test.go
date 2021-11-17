@@ -29,7 +29,7 @@ func TestTasksWithError(t *testing.T) {
 func TestTasksWithPanic(t *testing.T) {
 	err := TasksWithPanic()
 	require.Error(t, err)
-	assert.Equal(t, "parallel function panic: sad times", err.Error())
+	assert.Equal(t, "panic: sad times", err.Error())
 }
 
 func TestMultipleTasks(t *testing.T) {
@@ -68,7 +68,7 @@ func TestTaskWithError(t *testing.T) {
 func TestTaskWithPanic(t *testing.T) {
 	err := TaskWithPanic()
 	require.Error(t, err)
-	assert.Equal(t, "parallel function panic: sad times", err.Error())
+	assert.Equal(t, "panic: sad times", err.Error())
 }
 
 func TestMultipleTask(t *testing.T) {
@@ -88,7 +88,7 @@ func TestContinueOnError(t *testing.T) {
 
 	// Contains is used instead to verify non-deterministic ordering.
 	assert.Contains(t, err.Error(), "sad times")
-	assert.Contains(t, err.Error(), "parallel function panic: sadder times")
+	assert.Contains(t, err.Error(), "panic: sadder times")
 
 	assert.Equal(t, src, target)
 }
@@ -177,7 +177,7 @@ func TestSlicePanic(t *testing.T) {
 	err := SlicePanic(src, target)
 	require.Error(t, err)
 
-	assert.Equal(t, "parallel function panic: sad times", err.Error())
+	assert.Equal(t, "panic: sad times", err.Error())
 	assert.NotEqual(t, src, target)
 }
 
@@ -190,7 +190,7 @@ func TestSliceContinueOnError(t *testing.T) {
 	require.Error(t, err)
 
 	assert.Contains(t, err.Error(), "sad times")
-	assert.Contains(t, err.Error(), "parallel function panic: sadder times")
+	assert.Contains(t, err.Error(), "panic: sadder times")
 
 	assert.Equal(t, []string{"copy", "", "", "me"}, target)
 }

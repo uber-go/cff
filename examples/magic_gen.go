@@ -503,7 +503,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("parallel function panic: %v", recovered)
+					err = fmt.Errorf("panic: %v", recovered)
 				}
 			}()
 
@@ -542,7 +542,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("parallel function panic: %v", recovered)
+					err = fmt.Errorf("panic: %v", recovered)
 				}
 			}()
 
@@ -587,7 +587,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("parallel function panic: %v", recovered)
+					err = fmt.Errorf("panic: %v", recovered)
 				}
 			}()
 
@@ -619,7 +619,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				defer func() {
 					recovered := recover()
 					if recovered != nil {
-						err = fmt.Errorf("parallel function panic: %v", recovered)
+						err = fmt.Errorf("panic: %v", recovered)
 					}
 				}()
 

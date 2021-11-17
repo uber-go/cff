@@ -11,7 +11,7 @@ for idx, val := range {{ expr .Slice }} {
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = {{ import "fmt" }}.Errorf("parallel function panic: %v", recovered)
+				err = {{ import "fmt" }}.Errorf("panic: %v", recovered)
 			}
 		}()
 
