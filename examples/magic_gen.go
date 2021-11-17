@@ -468,6 +468,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		sched := cff.BeginFlow(
 			cff.SchedulerParams{
 				Concurrency: 2, Emitter: schedEmitter,
+				ContinueOnError: true,
 			},
 		)
 
@@ -486,7 +487,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 		}()
 
-		// go.uber.org/cff/examples/magic.go:89:4
+		// go.uber.org/cff/examples/magic.go:90:4
 		task6 := new(task)
 		task6.emitter = cff.NopTaskEmitter()
 		task6.fn = func(ctx context.Context) (err error) {
@@ -525,7 +526,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task6)
 
-		// go.uber.org/cff/examples/magic.go:92:4
+		// go.uber.org/cff/examples/magic.go:93:4
 		task7 := new(task)
 		task7.emitter = cff.NopTaskEmitter()
 		task7.fn = func(ctx context.Context) (err error) {
@@ -562,13 +563,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task7)
 
-		// go.uber.org/cff/examples/magic.go:95:4
+		// go.uber.org/cff/examples/magic.go:96:4
 		task8 := new(task)
 		task8.emitter = emitter.TaskInit(
 			&cff.TaskInfo{
 				Name:   "SendMsg",
 				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   95,
+				Line:   96,
 				Column: 4,
 			},
 			directiveInfo,

@@ -14,6 +14,8 @@ type parallel struct {
 	Ctx         ast.Expr // initial ctx argument to cff.Parallel(...)
 	Concurrency ast.Expr // argument to cff.Concurrency, if any.
 
+	ContinueOnError ast.Expr // argument to cff.ContinueOnError.
+
 	Emitters []ast.Expr // zero or more expressions of the type cff.Emitter.
 
 	Tasks []*parallelTask
@@ -68,12 +70,14 @@ func (c *compiler) compileParallel(file *ast.File, call *ast.CallExpr) *parallel
 			parallel.Tasks = append(parallel.Tasks, c.compileParallelTasks(parallel, ce)...)
 		case "Concurrency":
 			parallel.Concurrency = ce.Args[0]
+		case "ContinueOnError":
+			parallel.ContinueOnError = ce.Args[0]
 		case "InstrumentParallel":
 			parallel.Instrument = c.compileInstrument(ce)
 		case "WithEmitter":
 			parallel.Emitters = append(parallel.Emitters, ce.Args[0])
 		}
-		// TODO(GO-84): ContinueOnError, Map, Slice.
+		// TODO(GO-84): Map, Slice.
 	}
 	c.validateParallelInstrument(parallel)
 

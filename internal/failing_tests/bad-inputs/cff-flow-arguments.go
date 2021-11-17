@@ -2,6 +2,7 @@ package badinputs
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/cff"
 )
@@ -31,5 +32,16 @@ func FlowArgumentNonCFF() {
 	badProvider := struct{ ProvidesBad func() cff.Option }{ProvidesBad: func() cff.Option { return cff.Params() }}
 	cff.Flow(context.Background(),
 		badProvider.ProvidesBad(),
+	)
+}
+
+// DisallowContinueOnError is a function that provides cff.ContinueOnError
+// to cff.Flow.
+func DisallowContinueOnError() {
+	cff.Flow(context.Background(),
+		cff.ContinueOnError(true),
+		cff.Task(
+			func() error { return errors.New("sad times") },
+		),
 	)
 }

@@ -64,6 +64,11 @@ var codeGenerateFailCases = map[string][]errorCase{
 			TestFuncs:    []string{"FlowArgumentsCallExpression"},
 		},
 		{
+			File:         "cff-flow-arguments.go",
+			ErrorMatches: "cff.ContinueOnError is an invalid cff.Flow Option",
+			TestFuncs:    []string{"DisallowContinueOnError"},
+		},
+		{
 			File:         "cff-task-arguments.go",
 			ErrorMatches: "expected function, got bool",
 			TestFuncs:    []string{"ExpectsFunctionCallExpression"},

@@ -85,6 +85,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		cff.WithEmitter(cff.TallyEmitter(h.scope)),
 		cff.WithEmitter(cff.LogEmitter(h.logger)),
 		cff.InstrumentParallel("SendParallel"),
+		cff.ContinueOnError(true),
 		cff.Tasks(
 			func(_ context.Context) error {
 				return SendMessage()

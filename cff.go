@@ -144,6 +144,26 @@ func Concurrency(n int) Option {
 	panic(_noGenMsg)
 }
 
+// ContinueOnError configures a Parallel to run through any errors returned
+// by tasks over the course of its execution and continue executing remaining
+// tasks when it would have otherwise stopped at the first error.
+//
+// err := cff.Parallel(ctx,
+//     cff.Tasks(
+//         func() error { ... },
+//     ),
+//     cff.ContinueOnError(true),
+// )
+//
+// If one or more errors are encountered during when ContinueOnError is
+// configured to true, the Parallel will return an error that accumulates the
+// messages of all encountered errors after executing all remaining tasks.
+//
+// This is a code generation directive.
+func ContinueOnError(bool) Option {
+	panic(_noGenMsg)
+}
+
 // Flow specifies a single Flow for execution with CFF. The provided context
 // is made available to all tasks in the Flow.
 //

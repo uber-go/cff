@@ -3,6 +3,7 @@ package parallel
 import (
 	"context"
 	"errors"
+	"os"
 	"sync"
 
 	"go.uber.org/cff"
@@ -159,6 +160,128 @@ func MultipleTask(src, target []int) error {
 		),
 		cff.Task(
 			send,
+		),
+	)
+}
+
+// ContinueOnError runs multiple parallel tasks through errors in the
+// scheduler. Despite tasks that error, the contents of the src slice should
+// be copied into the target slice.
+func ContinueOnError(src []int, target []int) error {
+	blockerA := make(chan struct{})
+	blockerB := make(chan struct{})
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.ContinueOnError(true),
+		cff.Tasks(
+			func(_ context.Context) error {
+				close(blockerA)
+				return errors.New("sad times")
+			},
+			func() {
+				// Ensure erroring task has run before unblocking this copying
+				// task.
+				<-blockerA
+				target[0] = src[0]
+			},
+		),
+		cff.Task(
+			func() {
+				// Don't panic until after the error task is run.
+				<-blockerA
+				close(blockerB)
+				panic("sadder times")
+			},
+		),
+		cff.Task(
+			func() {
+				// Ensure panicing task has run before unblocking this copying
+				// task.
+				<-blockerB
+				target[1] = src[1]
+			},
+		),
+	)
+}
+
+// ContinueOnErrorBoolExpr parameterizes the ContinueOnError Option
+// with a boolean expression. Despite tasks that error, the contents of
+// the src slice should be copied into the target slice. The error returned
+// by this function is checked to verify that it's underlying type is
+// unchanged.
+func ContinueOnErrorBoolExpr(src, target []int, fn func() bool) error {
+	blockerA := make(chan struct{})
+	blockerB := make(chan struct{})
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.ContinueOnError(fn()),
+		cff.Tasks(
+			func(_ context.Context) error {
+				close(blockerA)
+				// Use the error from os.Open so we can also assert with
+				// errors.Is for fs.ErrNotExist.
+				_, err := os.Open("non-existing")
+				return err
+			},
+			func() {
+				// Ensure erroring task has run before unblocking this copying
+				// task.
+				<-blockerA
+				target[0] = src[0]
+				close(blockerB)
+			},
+		),
+		cff.Task(
+			func() {
+				// Given 2 workers and blocking on two earlier declared tasks,
+				// this copying task runs after the error task has been
+				// processed by the scheduler.
+				<-blockerB
+				target[1] = src[1]
+			},
+		),
+	)
+}
+
+// ContinueOnErrorCancelled runs a Parallel with a cancelled context.
+func ContinueOnErrorCancelled(ctx context.Context, src []int, target []int) error {
+	return cff.Parallel(
+		ctx,
+		cff.Concurrency(2),
+		cff.ContinueOnError(true),
+		cff.Task(
+			func() {
+				target[0] = src[0]
+			},
+		),
+	)
+}
+
+// ContinueOnErrorCancelledDuring runs a parallel with a context that is
+// cancelled during scheduler operation.
+func ContinueOnErrorCancelledDuring(ctx context.Context, cancel func(), src []int, target []int) error {
+	blocker := make(chan struct{})
+	return cff.Parallel(
+		ctx,
+		cff.Concurrency(2),
+		cff.ContinueOnError(true),
+		// Busy both workers while the context is cancelled so that the third
+		// function is processed after cancellation.
+		cff.Tasks(
+			func() {
+				cancel()
+				close(blocker)
+			},
+			func() {
+				<-blocker
+			},
+		),
+		cff.Task(
+			func() {
+				target[0] = src[0]
+			},
 		),
 	)
 }

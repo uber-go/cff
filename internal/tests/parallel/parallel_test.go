@@ -2,11 +2,13 @@ package parallel
 
 import (
 	"context"
+	"io/fs"
 	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/multierr"
 )
 
 func TestTasksAndTask(t *testing.T) {
@@ -75,4 +77,59 @@ func TestMultipleTask(t *testing.T) {
 	target := make([]int, 2, 2)
 	require.NoError(t, MultipleTask(src, target))
 	assert.Equal(t, src, target)
+}
+
+func TestContinueOnError(t *testing.T) {
+	// Verifies that non-errored tasks are executed.
+	src := []int{1, 2}
+	target := make([]int, 2, 2)
+	err := ContinueOnError(src, target)
+	require.Error(t, err)
+
+	// Contains is used instead to verify non-deterministic ordering.
+	assert.Contains(t, err.Error(), "sad times")
+	assert.Contains(t, err.Error(), "parallel function panic: sadder times")
+
+	assert.Equal(t, src, target)
+}
+
+func TestContinueOnError_BoolExprAndErrType(t *testing.T) {
+	// Verifies that non-errored tasks are executed.
+	src := []int{1, 2}
+	target := make([]int, 2, 2)
+	err := ContinueOnErrorBoolExpr(src, target, func() bool { return true })
+	require.Error(t, err)
+
+	// Verifies fidelity to task returned error type.
+	errs := multierr.Errors(err)
+	require.Len(t, errs, 1)
+
+	assert.ErrorIs(t, errs[0], fs.ErrNotExist)
+
+	assert.Equal(t, src, target)
+}
+
+func TestContinueOnError_Cancelled(t *testing.T) {
+	src := []int{1}
+	target := make([]int, 1, 1)
+	require.NotEqual(t, src, target)
+
+	ctx, cFn := context.WithCancel(context.Background())
+	cFn()
+
+	require.Error(t, ContinueOnErrorCancelled(ctx, src, target))
+	assert.NotEqual(t, src, target)
+}
+
+func TestContinueOnError_CancelledDuring(t *testing.T) {
+	src := []int{1}
+	target := make([]int, 1, 1)
+	require.NotEqual(t, src, target)
+
+	ctx, cFn := context.WithCancel(context.Background())
+
+	require.Error(t, ContinueOnErrorCancelledDuring(ctx, cFn, src, target))
+	// Even with ContinueOnError tasks with cancelled contexts should not be
+	// run by the scheduler.
+	assert.NotEqual(t, src, target)
 }

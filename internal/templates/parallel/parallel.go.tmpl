@@ -50,6 +50,7 @@ func(
 		{{ $cff }}.SchedulerParams{
 			{{ with .Concurrency -}} Concurrency:  {{ expr . }}, {{- end -}}
 			Emitter: schedEmitter,
+			{{ with .ContinueOnError -}} ContinueOnError: {{ expr . }}, {{ end }}
 		},
 	)
 
