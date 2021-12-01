@@ -265,8 +265,17 @@ func Invoke(enable bool) TaskOption {
 //  )
 //
 // Tasks will run independently with bounded parallelism with all other
-// Parallel declared tasks. If any of the tasks fail, Parallel stops
-// processsing outstanding tasks and an error is returned.
+// Parallel declared tasks. If any of the tasks return an error, Parallel
+// stops processsing outstanding tasks and an error is returned.
+//
+// The cff.ContinueOnError option, when set true, directs cff.Parallel to
+// continue processing pending tasks through errors. In this case, the final
+// error returned by cff.Parallel aggregates the errors returned by all
+// executed tasks.
+//
+// If the context passed to cff.Parallel is cancelled or otherwise errored,
+// cff.Parallel does not run further tasks. This behaviour is not overidden
+// by cff.ContinueOnError.
 //
 // This is a code generation directive.
 func Parallel(ctx context.Context, opts ...Option) error {
