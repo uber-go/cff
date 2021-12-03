@@ -7,7 +7,9 @@ package cff
 
 import "context"
 
-const _noGenMsg = "code not generated; run cff"
+const _noGenMsg = `If you're seeing this error, you probably built code that uses CFF2 without processing it with CFF2.
+Run 'gazelle' to ensure that the code you're running is processed through CFF2, and build/test/run your code
+with 'bazel' instead of the 'go' command.`
 
 // NOTE: All code generation directives must be added to this file. The list
 // of directives is updated automatically based on the contents of this file.
