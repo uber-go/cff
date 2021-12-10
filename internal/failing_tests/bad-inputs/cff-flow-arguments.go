@@ -56,3 +56,14 @@ func DisallowSlice() {
 		),
 	)
 }
+
+// DisallowMap is a function that provides cff.Map
+// to cff.Flow.
+func DisallowMap() {
+	cff.Flow(context.Background(),
+		cff.Map(
+			func(_ int, elem string) error { return nil },
+			map[string]string{"sad": "times"},
+		),
+	)
+}

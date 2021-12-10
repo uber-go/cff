@@ -23,6 +23,8 @@ type parallel struct {
 
 	SliceTasks []*sliceTask
 
+	MapTasks []*mapTask
+
 	Instrument *instrument
 
 	PosInfo *PosInfo // Used to pass information to uniquely identify a task.
@@ -83,8 +85,12 @@ func (c *compiler) compileParallel(file *ast.File, call *ast.CallExpr) *parallel
 			}
 		case "WithEmitter":
 			parallel.Emitters = append(parallel.Emitters, ce.Args[0])
+		case "Map":
+			if mt := c.compileMap(ce); mt != nil {
+				parallel.MapTasks = append(parallel.MapTasks, mt)
+			}
+
 		}
-		// TODO(GO-84): Map.
 	}
 	c.validateParallelInstrument(parallel)
 
@@ -237,4 +243,63 @@ func (c *compiler) compileSlice(p *parallel, ce *ast.CallExpr) *sliceTask {
 	}
 	c.taskSerial++
 	return s
+}
+
+type mapTask struct {
+	Function *compiledFunc
+	Map      ast.Expr
+	KeyType  types.Type
+	ElemType types.Type
+
+	// Serial is a unique serially incrementing number for each mapTask.
+	Serial int
+
+	PosInfo *PosInfo // Used to pass information to uniquely identify a task.
+}
+
+func (c *compiler) compileMap(ce *ast.CallExpr) *mapTask {
+	mapFun, mmap := ce.Args[0], ce.Args[1]
+	fn := c.compileFunction(mapFun)
+	if fn == nil {
+		c.errf(c.nodePosition(mapFun), "map function failed to compile")
+		return nil
+	}
+
+	if len(fn.Outputs) != 0 {
+		c.errf(c.nodePosition(mapFun), "the only allowed return value is an error")
+		return nil
+	}
+
+	if len(fn.Inputs) != 2 {
+		c.errf(c.nodePosition(mmap), "map function expects two non-context arguments: key and value elements from a map")
+		return nil
+	}
+
+	typ := c.info.TypeOf(mmap)
+	mtype, ok := typ.(*types.Map)
+	if !ok {
+		c.errf(c.nodePosition(mmap), "the second argument to cff.Map must be a map, got %v", typ)
+		return nil
+	}
+
+	if !types.AssignableTo(fn.Inputs[0], mtype.Key()) {
+		c.errf(c.nodePosition(mmap), "key element of type %v cannot be passed as a parameter to function expecting %v", mtype.Key(), fn.Inputs[0])
+		return nil
+	}
+
+	if !types.AssignableTo(fn.Inputs[1], mtype.Elem()) {
+		c.errf(c.nodePosition(mmap), "value element of type %v cannot be passed as a parameter to function expecting %v", mtype.Elem(), fn.Inputs[1])
+		return nil
+	}
+
+	m := &mapTask{
+		Function: fn,
+		Map:      mmap,
+		KeyType:  mtype.Key(),
+		ElemType: mtype.Elem(),
+		Serial:   c.taskSerial,
+		PosInfo:  c.getPosInfo(ce),
+	}
+	c.taskSerial++
+	return m
 }

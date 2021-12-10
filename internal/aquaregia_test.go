@@ -74,6 +74,11 @@ var codeGenerateFailCases = map[string][]errorCase{
 			TestFuncs:    []string{"DisallowSlice"},
 		},
 		{
+			File:         "cff-flow-arguments.go",
+			ErrorMatches: `"Map" is an invalid cff.Flow Option`,
+			TestFuncs:    []string{"DisallowMap"},
+		},
+		{
 			File:         "cff-task-arguments.go",
 			ErrorMatches: "expected function, got bool",
 			TestFuncs:    []string{"ExpectsFunctionCallExpression"},
@@ -216,6 +221,8 @@ var codeGenerateFailCases = map[string][]errorCase{
 				"ParallelTaskInvalidReturnType",
 				"ParallelSliceTooManyReturn",
 				"ParallelSliceNonErrorReturn",
+				"ParallelMapInvalidReturnType",
+				"ParallelMapTooManyReturns",
 			},
 		},
 		{
@@ -260,6 +267,31 @@ var codeGenerateFailCases = map[string][]errorCase{
 			File:         "parallel.go",
 			ErrorMatches: `slice element of type string cannot be passed as a parameter to function expecting bool`,
 			TestFuncs:    []string{"ParallelSliceElemTypeMismatch"},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: "map function failed to compile",
+			TestFuncs:    []string{"ParallelMapNilFunction"},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: "map function expects two non-context arguments: key and value elements from a map",
+			TestFuncs:    []string{"ParallelMapNoArguments"},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: "the second argument to cff.Map must be a map",
+			TestFuncs:    []string{"ParallelMapWithSlice"},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: "key element of type bool cannot be passed as a parameter to function expecting string",
+			TestFuncs:    []string{"ParallelMapWithDifferentKeyType"},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: "value element of type bool cannot be passed as a parameter to function expecting string",
+			TestFuncs:    []string{"ParallelMapWithDifferentValueType"},
 		},
 		{
 			File:         "predicate.go",

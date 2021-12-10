@@ -37,6 +37,15 @@ func ExampleParallel(m *sync.Map, c chan<- string) error {
 			},
 			[]string{"some", "thing"},
 		),
+
+		cff.Map(
+			func(ctx context.Context, key string, value string) error {
+				_ = fmt.Sprintf("%q : %q", key, value)
+				_, _ = ctx.Deadline()
+				return nil
+			},
+			map[string]string{"key": "value"},
+		),
 	)
 	if err != nil {
 		return err
@@ -50,6 +59,9 @@ func ExampleParallel(m *sync.Map, c chan<- string) error {
 
 	someSlice := []string{"some", "slice"}
 	sliceFunc := func(_ int, _ string) {}
+
+	someMap := map[string]string{"key": "value"}
+	mapFunc := func(_ string, _ string) {}
 
 	err = cff.Parallel(
 		context.Background(),
@@ -68,6 +80,10 @@ func ExampleParallel(m *sync.Map, c chan<- string) error {
 		cff.Slice(
 			sliceFunc,
 			someSlice,
+		),
+		cff.Map(
+			mapFunc,
+			someMap,
 		),
 	)
 	if err != nil {

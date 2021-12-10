@@ -194,3 +194,63 @@ func TestSliceContinueOnError(t *testing.T) {
 
 	assert.Equal(t, []string{"copy", "", "", "me"}, target)
 }
+
+func TestMap(t *testing.T) {
+	src := map[string]int{
+		"test": 0,
+		"one":  1,
+	}
+	keys, values := make([]string, 2), make([]int, 2)
+	require.NoError(t, AssignMapItems(src, keys, values, false))
+
+	assert.Equal(t, []string{"test", "one"}, keys)
+	assert.Equal(t, []int{0, 1}, values)
+}
+
+func TestMapError(t *testing.T) {
+	src := map[string]int{
+		"error": 0,
+	}
+	var keys []string
+	var values []int
+
+	err := AssignMapItems(src, keys, values, false)
+	require.Error(t, err)
+	assert.Equal(t, "sad times", err.Error())
+}
+
+func TestMapPanic(t *testing.T) {
+	src := map[string]int{
+		"test":  0,
+		"panic": 1,
+	}
+	keys, values := make([]string, 1), make([]int, 1)
+
+	err := AssignMapItems(src, keys, values, false)
+	require.Error(t, err)
+	assert.EqualError(t, err, "panic: sadder times")
+
+	assert.Equal(t, []string{"test"}, keys)
+	assert.Equal(t, []int{0}, values)
+}
+
+func TestMapContinueOnError(t *testing.T) {
+	src := map[string]int{
+		"copy":  0,
+		"error": 2,
+		"panic": 3,
+		"me":    1,
+	}
+
+	keys, values := make([]string, 2), make([]int, 2)
+
+	err := AssignMapItems(src, keys, values, true)
+	require.Error(t, err)
+
+	// Using assert.Contains here because the returned error is non-deterministic.
+	assert.Contains(t, err.Error(), "sad times")
+	assert.Contains(t, err.Error(), "panic: sadder times")
+
+	assert.Equal(t, []string{"copy", "me"}, keys)
+	assert.Equal(t, []int{0, 1}, values)
+}

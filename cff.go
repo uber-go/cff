@@ -343,3 +343,37 @@ func Tasks(fn ...interface{}) Option {
 func Slice(fn interface{}, slice interface{}) Option {
 	panic(_noGenMsg)
 }
+
+// Map executes a parallel operation on the elements of the provided map.
+//
+// The fn parameter is a function that is invoked on each key/value pair
+// of the m parameter.
+//
+// The fn parameter's first non-context argument is the key of the type of the
+// map key provided followed by a value of the type of the map value.
+//
+//  cff.Parallel(
+//  	ctx,
+//  	cff.Concurrency(...),
+//  	cff.Map(func(key someType, value someType) { ... }, map[someType][someType]{...})
+//  )
+//
+// Optionally, a context.Context can be provided as a first argument to the
+// execution function.
+//
+//  func(ctx context.Context, key someType, value someType) { ... }
+//
+// Optionally, an error can be returned as the execution function's sole
+// return value.
+//
+//  func(key someType, value someType) error { ... }
+//
+// The second argument to Map is a map on which the execution function
+// is invoked.
+//
+// cff.Map is only an option for cff.Parallel.
+//
+// This is a code generation directive.
+func Map(fn interface{}, m interface{}) Option {
+	panic(_noGenMsg)
+}

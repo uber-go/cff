@@ -381,3 +381,27 @@ func SliceContinueOnError(src, target []string) error {
 		),
 	)
 }
+
+// AssignMapItems runs cff.Map in parallel to populate the provided slices.
+func AssignMapItems(src map[string]int, keys []string, values []int, keepgoing bool) error {
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.ContinueOnError(keepgoing),
+		cff.Map(
+			func(key string, val int) error {
+				switch key {
+				case "error":
+					return errors.New("sad times")
+				case "panic":
+					panic("sadder times")
+				default:
+					keys[val] = key
+					values[val] = val
+					return nil
+				}
+			},
+			src,
+		),
+	)
+}

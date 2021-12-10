@@ -107,6 +107,14 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			},
 			[]string{"message", "to", "send"},
 		),
+		cff.Map(
+			func(ctx context.Context, key string, value string) error {
+				_ = fmt.Sprintf("%q : %q", key, value)
+				_, _ = ctx.Deadline()
+				return nil
+			},
+			map[string]string{"key": "value"},
+		),
 	)
 	return res, err
 }

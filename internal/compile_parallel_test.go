@@ -22,16 +22,19 @@ func TestCompileParallel(t *testing.T) {
 		desc         string
 		numTask      int
 		numSliceTask int
+		numMapTask   int
 	}{
 		{
 			desc:         "first parallel",
 			numTask:      3,
 			numSliceTask: 1,
+			numMapTask:   1,
 		},
 		{
 			desc:         "second parallel",
 			numTask:      3,
 			numSliceTask: 1,
+			numMapTask:   1,
 		},
 	}
 
@@ -69,6 +72,18 @@ func TestCompileParallel(t *testing.T) {
 					serialSet[task.Serial] = struct{}{}
 				}
 				assert.Len(t, p.SliceTasks, tt[i].numSliceTask)
+			}
+		})
+
+		t.Run("map serial incremented", func(t *testing.T) {
+			for i, p := range compiled.Parallels {
+				serialSet := make(map[int]struct{})
+				for _, task := range p.MapTasks {
+					_, ok := serialSet[task.Serial]
+					assert.False(t, ok)
+					serialSet[task.Serial] = struct{}{}
+				}
+				assert.Len(t, p.MapTasks, tt[i].numMapTask)
 			}
 		})
 	}

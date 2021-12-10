@@ -1,0 +1,31 @@
+{{- $context := import "context" -}}
+{{- $cff := import "go.uber.org/cff" -}}
+{{- $t := printf "mapTask%d" .Serial -}}
+
+// {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
+for key, val := range {{ expr .Map }} {
+	key := key
+	val := val
+	{{ $t }} := new(task)
+	{{ $t }}.fn = func(ctx {{ $context }}.Context) (err error) {
+		defer func() {
+			recovered := recover()
+			if recovered != nil {
+				err = {{ import "fmt" }}.Errorf("panic: %v", recovered)
+			}
+		}()
+
+		{{ if .Function.HasError }} err = {{ end }}{{ template "callMap" . }}
+		return
+	}
+
+	sched.Enqueue(ctx, {{ $cff }}.Job{
+		Run: {{ $t }}.fn,
+	})
+}
+
+{{- define "callMap" -}}
+	{{- expr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }} key, val)
+{{- end -}}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}

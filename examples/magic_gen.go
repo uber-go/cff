@@ -636,6 +636,32 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			})
 		}
 
+		// go.uber.org/cff/examples/magic.go:110:3
+		for key, val := range map[string]string{"key": "value"} {
+			key := key
+			val := val
+			mapTask10 := new(task)
+			mapTask10.fn = func(ctx context.Context) (err error) {
+				defer func() {
+					recovered := recover()
+					if recovered != nil {
+						err = fmt.Errorf("panic: %v", recovered)
+					}
+				}()
+
+				err = func(ctx context.Context, key string, value string) error {
+					_ = fmt.Sprintf("%q : %q", key, value)
+					_, _ = ctx.Deadline()
+					return nil
+				}(ctx, key, val)
+				return
+			}
+
+			sched.Enqueue(ctx, cff.Job{
+				Run: mapTask10.fn,
+			})
+		}
+
 		if err := sched.Wait(ctx); err != nil {
 			parallelEmitter.ParallelError(ctx, err)
 			return err

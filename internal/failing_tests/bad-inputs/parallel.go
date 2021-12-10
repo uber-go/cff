@@ -288,6 +288,83 @@ func ParallelSliceNonLastError() {
 	)
 }
 
+// ParallelMapNilFunction is a cff.Map with a nil value func.
+func ParallelMapNilFunction() {
+	cff.Parallel(
+		context.Background(),
+		cff.Map(
+			nil,
+			map[string]string{"one": "one"},
+		),
+	)
+}
+
+// ParallelMapInvalidReturnType is a cff.Map with an invalid return type.
+func ParallelMapInvalidReturnType() {
+	cff.Parallel(
+		context.Background(),
+		cff.Map(
+			func(k, v string) (s string) { return },
+			map[string]string{"one": "one"},
+		),
+	)
+}
+
+// ParallelMapTooManyReturns is a cff.Map with too many return values.
+func ParallelMapTooManyReturns() {
+	cff.Parallel(
+		context.Background(),
+		cff.Map(
+			func(k, v string) (s string, e error) { return },
+			map[string]string{"one": "one"},
+		),
+	)
+}
+
+// ParallelMapNoArguments is a cff.Map with no arguments.
+func ParallelMapNoArguments() {
+	cff.Parallel(
+		context.Background(),
+		cff.Map(
+			func() (e error) { return },
+			map[string]string{"one": "one"},
+		),
+	)
+}
+
+// ParallelMapWithSlice is a cff.Map with a slice.
+func ParallelMapWithSlice() {
+	cff.Parallel(
+		context.Background(),
+		cff.Map(
+			func(k, v string) (e error) { return },
+			[]string{"test"},
+		),
+	)
+}
+
+// ParallelMapWithDifferentKeyType is a cff.Map with a different key type.
+func ParallelMapWithDifferentKeyType() {
+	cff.Parallel(
+		context.Background(),
+		cff.Map(
+			func(k, v string) (e error) { return },
+			map[bool]string{true: "true"},
+		),
+	)
+}
+
+// ParallelMapWithDifferentValueType is a cff.Map with a different value type.
+func ParallelMapWithDifferentValueType() {
+	cff.Parallel(
+		context.Background(),
+		cff.Map(
+			func(k, v string) (e error) { return },
+			map[string]bool{"true": true},
+		),
+	)
+}
+
 func chanSend(s string, c chan<- string) {
 	c <- s
 }

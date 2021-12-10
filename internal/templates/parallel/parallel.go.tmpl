@@ -77,6 +77,10 @@ func(
 		{{ template "slice.go.tmpl" . }}
 	{{ end }}
 
+	{{ range $parallel.MapTasks }}
+		{{ template "map.go.tmpl" . }}
+	{{ end }}
+
 	if err := sched.Wait(ctx); err != nil {
 		parallelEmitter.ParallelError(ctx, err)
 		return err
