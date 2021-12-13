@@ -135,11 +135,11 @@ func TestContinueOnError_CancelledDuring(t *testing.T) {
 }
 
 func TestSlice(t *testing.T) {
-	src := []int{1, 2}
-	target := make([]int, 2, 2)
+	src := []string{"1", "2"}
+	target := make([]string, 2, 2)
 	assert.NotEqual(t, src, target)
 
-	require.NoError(t, Slice(src, target))
+	require.NoError(t, AssignSliceItems(src, target, false))
 
 	assert.Equal(t, src, target)
 }
@@ -158,11 +158,11 @@ func TestMultiple(t *testing.T) {
 }
 
 func TestSliceError(t *testing.T) {
-	src := []int{1, 2}
-	target := make([]int, 2)
+	src := []string{"1", "error"}
+	target := make([]string, 2)
 	assert.NotEqual(t, src, target)
 
-	err := SliceError(src, target)
+	err := AssignSliceItems(src, target, false)
 	require.Error(t, err)
 
 	assert.Equal(t, "sad times", err.Error())
@@ -170,14 +170,14 @@ func TestSliceError(t *testing.T) {
 }
 
 func TestSlicePanic(t *testing.T) {
-	src := []int{1, 2}
-	target := make([]int, 2, 2)
+	src := []string{"1", "panic"}
+	target := make([]string, 2, 2)
 	assert.NotEqual(t, src, target)
 
-	err := SlicePanic(src, target)
+	err := AssignSliceItems(src, target, false)
 	require.Error(t, err)
 
-	assert.Equal(t, "panic: sad times", err.Error())
+	assert.Equal(t, "panic: sadder times", err.Error())
 	assert.NotEqual(t, src, target)
 }
 
@@ -186,7 +186,7 @@ func TestSliceContinueOnError(t *testing.T) {
 	target := make([]string, 4, 4)
 	assert.NotEqual(t, src, target)
 
-	err := SliceContinueOnError(src, target)
+	err := AssignSliceItems(src, target, true)
 	require.Error(t, err)
 
 	assert.Contains(t, err.Error(), "sad times")
