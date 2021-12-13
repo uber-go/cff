@@ -136,7 +136,7 @@ func TestContinueOnError_CancelledDuring(t *testing.T) {
 
 func TestSlice(t *testing.T) {
 	src := []string{"1", "2"}
-	target := make([]string, 2, 2)
+	target := make([]string, len(src))
 	assert.NotEqual(t, src, target)
 
 	require.NoError(t, AssignSliceItems(src, target, false))
@@ -146,8 +146,8 @@ func TestSlice(t *testing.T) {
 
 func TestMultiple(t *testing.T) {
 	src := []int{1, 2}
-	targetA := make([]int, 2, 2)
-	targetB := make([]int, 2, 2)
+	targetA := make([]int, len(src))
+	targetB := make([]int, len(src))
 	assert.NotEqual(t, src, targetA)
 	assert.NotEqual(t, src, targetB)
 
@@ -159,7 +159,7 @@ func TestMultiple(t *testing.T) {
 
 func TestSliceError(t *testing.T) {
 	src := []string{"1", "error"}
-	target := make([]string, 2)
+	target := make([]string, len(src))
 	assert.NotEqual(t, src, target)
 
 	err := AssignSliceItems(src, target, false)
@@ -171,7 +171,7 @@ func TestSliceError(t *testing.T) {
 
 func TestSlicePanic(t *testing.T) {
 	src := []string{"1", "panic"}
-	target := make([]string, 2, 2)
+	target := make([]string, len(src))
 	assert.NotEqual(t, src, target)
 
 	err := AssignSliceItems(src, target, false)
@@ -183,7 +183,7 @@ func TestSlicePanic(t *testing.T) {
 
 func TestSliceContinueOnError(t *testing.T) {
 	src := []string{"copy", "error", "panic", "me"}
-	target := make([]string, 4, 4)
+	target := make([]string, len(src))
 	assert.NotEqual(t, src, target)
 
 	err := AssignSliceItems(src, target, true)
@@ -200,7 +200,7 @@ func TestMap(t *testing.T) {
 		"test": 0,
 		"one":  1,
 	}
-	keys, values := make([]string, 2), make([]int, 2)
+	keys, values := make([]string, len(src)), make([]int, len(src))
 	require.NoError(t, AssignMapItems(src, keys, values, false))
 
 	assert.Equal(t, []string{"test", "one"}, keys)

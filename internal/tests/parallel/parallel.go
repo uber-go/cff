@@ -309,6 +309,7 @@ func SliceMultiple(srcA, srcB, targetA, targetB []int) error {
 }
 
 // AssignSliceItems runs cff.Slice in parallel to populate the provided slices.
+// AssignSliceItems expects len(target) >= len(src).
 func AssignSliceItems(src, target []string, keepgoing bool) error {
 	return cff.Parallel(
 		context.Background(),
