@@ -25,6 +25,23 @@ func BenchmarkBaselineNative(b *testing.B) {
 	}
 }
 
+// BenchmarkPredicateCombined emulates the state of cff.Flow before
+// https://code.uberinternal.com/D5495165. This serves as the baseline
+// implementation in comparison to BenchmarkPredicateSplit.
+func BenchmarkPredicateCombined(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		PredicateCombined()
+	}
+}
+
+// BenchmarkPredicateSplit is a flow that deploys a cff.Task with a
+// cff.Predicate option.
+func BenchmarkPredicateSplit(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		PredicateSplit()
+	}
+}
+
 type metricsTestFn func(*zap.Logger, tally.Scope) float64
 
 // BenchmarkMetrics is the same flow as Simple but with instrumentation added.
