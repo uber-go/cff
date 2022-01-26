@@ -221,17 +221,16 @@ func TestMapError(t *testing.T) {
 
 func TestMapPanic(t *testing.T) {
 	src := map[string]int{
-		"test":  0,
 		"panic": 1,
 	}
-	keys, values := make([]string, 1), make([]int, 1)
+	var keys []string
+	var values []int
 
 	err := AssignMapItems(src, keys, values, false)
 	require.Error(t, err)
 	assert.EqualError(t, err, "panic: sadder times")
-
-	assert.Equal(t, []string{"test"}, keys)
-	assert.Equal(t, []int{0}, values)
+	assert.Len(t, values, 0)
+	assert.Len(t, keys, 0)
 }
 
 func TestMapContinueOnError(t *testing.T) {
