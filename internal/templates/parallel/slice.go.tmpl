@@ -3,7 +3,7 @@
 {{- $t := printf "sliceTask%d" .Serial -}}
 
 // {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
-for idx, val := range {{ expr .Slice }} {
+for idx, val := range {{ rawExpr .Slice }} {
 	idx := idx
 	val := val
 	{{ $t }} := new(task)
@@ -25,7 +25,7 @@ for idx, val := range {{ expr .Slice }} {
 }
 
 {{- define "callSlice" -}}
-	{{- expr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }} idx, val)
+	{{- rawExpr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }} idx, val)
 {{- end -}}
 
 {{- /* vim:set ft=gotexttmpl noet: */ -}}

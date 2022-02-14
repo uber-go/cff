@@ -639,13 +639,6 @@ func (f *function) outputs() []types.Type {
 	return f.Task.Outputs
 }
 
-// Hash returns a unique identifier for this function.
-func (f *function) Hash() string {
-	// This value is used for variable names in the generated code to avoid
-	// variable collisions.
-	return fmt.Sprintf("_%d_%d", f.PosInfo.Line, f.PosInfo.Column)
-}
-
 // compiledFunc is a compiled function expression.
 type compiledFunc struct {
 	ast.Node

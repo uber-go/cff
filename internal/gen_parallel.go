@@ -20,7 +20,7 @@ func (g *generator) generateParallel(
 	aliases map[string]struct{},
 ) error {
 	t := template.New(_parallelRootTmpl).Funcs(g.parallelFuncMap(file, addImports, aliases))
-	tmpl, err := t.ParseFS(tmplFS, _parallelTmplDir, _sharedTmplDir)
+	tmpl, err := t.ParseFS(tmplFS, _parallelTmplDir)
 	if err != nil {
 		return err
 	}
@@ -31,8 +31,8 @@ func (g *generator) generateParallel(
 
 func (g *generator) parallelFuncMap(file *file, addImports map[string]string, aliases map[string]struct{}) template.FuncMap {
 	return template.FuncMap{
-		"expr":  g.printExpr,
-		"quote": strconv.Quote,
+		"quote":   strconv.Quote,
+		"rawExpr": g.printRawExpr,
 		"import": func(importPath string) string {
 			if names := file.Imports[importPath]; len(names) > 0 {
 				// importPath exists in the file already.

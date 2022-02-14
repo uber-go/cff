@@ -32,6 +32,13 @@ type fooHandler struct {
 func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
 	var res *Response
 	err := func() (err error) {
+		_33_18 := ctx
+		_34_14 := req
+		_35_15 := &res
+		_36_19 := 8
+		_37_19 := cff.TallyEmitter(h.scope)
+		_38_19 := cff.LogEmitter(h.logger)
+		_39_22 := "HandleFoo"
 		_42_4 := func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
 			return &GetManagerRequest{
 					LDAPGroup: req.LDAPGroup,
@@ -49,6 +56,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return &r
 		}
 		_62_4 := h.users.List
+		_63_21 := &ListUsersResponse{}
+		_64_19 := "FormSendEmailRequest"
 		_67_4 := func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest {
 			var reqs []*SendEmailRequest
 			for _, u := range users.Emails {
@@ -59,15 +68,14 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		_75_18 := func(req *GetManagerRequest) bool {
 			return req.LDAPGroup != "everyone"
 		}
-
-		var v1 *Request = req
-
-		ctx := ctx
-		emitter := cff.EmitterStack(cff.TallyEmitter(h.scope), cff.LogEmitter(h.logger))
+		_79_19 := "FormSendEmailRequest"
+		ctx := _33_18
+		var v1 *Request = _34_14
+		emitter := cff.EmitterStack(_37_19, _38_19)
 
 		var (
 			flowInfo = &cff.FlowInfo{
-				Name:   "HandleFoo",
+				Name:   _39_22,
 				File:   "go.uber.org/cff/examples/magic.go",
 				Line:   33,
 				Column: 9,
@@ -93,7 +101,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		sched := cff.BeginFlow(
 			cff.SchedulerParams{
-				Concurrency: 8, Emitter: schedEmitter,
+				Concurrency: _36_19, Emitter: schedEmitter,
 			},
 		)
 
@@ -209,7 +217,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		task4 := new(task)
 		task4.emitter = emitter.TaskInit(
 			&cff.TaskInfo{
-				Name:   "FormSendEmailRequest",
+				Name:   _64_19,
 				File:   "go.uber.org/cff/examples/magic.go",
 				Line:   62,
 				Column: 4,
@@ -235,7 +243,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanicRecovered(ctx, recovered)
-					v5, err = &ListUsersResponse{}, nil
+					v5, err = _63_21, nil
 				}
 			}()
 
@@ -245,7 +253,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			if err != nil {
 				taskEmitter.TaskErrorRecovered(ctx, err)
-				v5, err = &ListUsersResponse{}, nil
+				v5, err = _63_21, nil
 			} else {
 				taskEmitter.TaskSuccess(ctx)
 			}
@@ -283,7 +291,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		task5 := new(task)
 		task5.emitter = emitter.TaskInit(
 			&cff.TaskInfo{
-				Name:   "FormSendEmailRequest",
+				Name:   _79_19,
 				File:   "go.uber.org/cff/examples/magic.go",
 				Line:   67,
 				Column: 4,
@@ -426,7 +434,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return err
 		}
 
-		*(&res) = v8 // *go.uber.org/cff/examples.Response
+		*(_35_15) = v8 // *go.uber.org/cff/examples.Response
 
 		flowEmitter.FlowSuccess(ctx)
 		return nil

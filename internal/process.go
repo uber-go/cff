@@ -29,6 +29,7 @@ func (p *Processor) Process(pkg *importer.Package, file *ast.File, outputPath st
 
 	g := newGenerator(generatorOpts{
 		Fset:       p.Fset,
+		Package:    pkg.Types,
 		OutputPath: outputPath,
 	})
 	if err := g.GenerateFile(f); err != nil {

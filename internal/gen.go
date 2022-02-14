@@ -21,9 +21,11 @@ import (
 )
 
 const (
-	_flowRootTmpl  = "flow.go.tmpl"
-	_flowTmplDir   = "templates/flow/*"
-	_sharedTmplDir = "templates/shared/*"
+	_flowRootTmpl    = "flow.go.tmpl"
+	_flowTmplDir     = "templates/flow/*"
+	_paramExprTmpl   = "param_expr.go.tmpl"
+	_prologueTmplDir = "templates/prologue/*"
+	_sharedTmplDir   = "templates/shared/*"
 )
 
 //go:embed templates/*
@@ -31,6 +33,8 @@ var tmplFS embed.FS
 
 type generator struct {
 	fset *token.FileSet
+
+	pkg *types.Package
 
 	typeIDs    *typeutil.Map // map[types.Type]int
 	nextTypeID int
@@ -44,12 +48,14 @@ type generator struct {
 
 type generatorOpts struct {
 	Fset       *token.FileSet
+	Package    *types.Package
 	OutputPath string
 }
 
 func newGenerator(opts generatorOpts) *generator {
 	return &generator{
 		fset:       opts.Fset,
+		pkg:        opts.Package,
 		typeIDs:    new(typeutil.Map),
 		predIDs:    new(typeutil.Map),
 		nextTypeID: 1,
@@ -147,17 +153,58 @@ func (g *generator) GenerateFile(f *file) error {
 // generateFlow runs the CFF template for the given flow and writes it to w, modifying addImports if the template
 // requires additional imports to be added.
 func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string, aliases map[string]struct{}) error {
-	t := template.New(_flowRootTmpl).Funcs(g.funcMap(file, addImports, aliases))
+	// Tracks user-provided expressions used in the generated code.
+	// We use this to ensure that the expressions are evaluated
+	// in the order they were specified by the user.
+	exprs := make(map[ast.Expr]struct{})
+
+	fnMap := g.funcMap(file, addImports, aliases, exprs)
+
+	t := template.New(_flowRootTmpl).Funcs(fnMap)
 	tmpl, err := t.ParseFS(tmplFS, _flowTmplDir, _sharedTmplDir)
 	if err != nil {
 		return err
 	}
-	return tmpl.ExecuteTemplate(w, _flowRootTmpl, flowTemplateData{
+
+	var b bytes.Buffer
+	// Render the template to a staging buffer to understand how user provided
+	// expressions are applied in generated code before writing the final
+	// result.
+	if err := tmpl.ExecuteTemplate(&b, _flowRootTmpl, flowTemplateData{
 		Flow: f,
-	})
+	}); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, "func() (err error) {"); err != nil {
+		return err
+	}
+
+	// Render variable assignments for user provided parameter expressions in
+	// the order they were provided to cff.Flow.
+	prologueT := template.New(_paramExprTmpl).Funcs(fnMap)
+	prologueTmpl, err := prologueT.ParseFS(tmplFS, _prologueTmplDir)
+	if err != nil {
+		return err
+	}
+	if err := prologueTmpl.ExecuteTemplate(w, _paramExprTmpl, paramExprs(exprs)); err != nil {
+		return err
+	}
+	if _, err := w.Write(b.Bytes()); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, "}()"); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (g *generator) funcMap(file *file, addImports map[string]string, aliases map[string]struct{}) template.FuncMap {
+func (g *generator) funcMap(
+	file *file,
+	addImports map[string]string,
+	aliases map[string]struct{},
+	exprs map[ast.Expr]struct{},
+) template.FuncMap {
+	p := &exprPrinter{exprs: exprs, g: g}
 	return template.FuncMap{
 		"type": g.typePrinter(file, addImports, aliases),
 		"typeName": func(t types.Type) string {
@@ -168,7 +215,8 @@ func (g *generator) funcMap(file *file, addImports map[string]string, aliases ma
 		"typeHash":    g.printTypeHash,
 		"predHash":    g.printPredicateHash,
 		"isPredicate": g.isPredicate,
-		"expr":        g.printExpr,
+		"expr":        p.printExpr,
+		"rawExpr":     g.printRawExpr,
 		"quote":       strconv.Quote,
 		"import": func(importPath string) string {
 			if names := file.Imports[importPath]; len(names) > 0 {
@@ -221,6 +269,16 @@ func (g *generator) printPredicateHash(p *predicate) string {
 	return strconv.Itoa(g.predID(p))
 }
 
+func (g *generator) posInfo(n ast.Node) *PosInfo {
+	pos := g.fset.Position(n.Pos())
+	posInfo := &PosInfo{
+		File:   filepath.Join(g.pkg.Path(), filepath.Base(pos.Filename)),
+		Line:   pos.Line,
+		Column: pos.Column,
+	}
+	return posInfo
+}
+
 func (g *generator) predID(p *predicate) int {
 	t := p.SentinelOutput
 	if i := g.predIDs.At(t); i != nil {
@@ -233,10 +291,80 @@ func (g *generator) predID(p *predicate) int {
 	return id
 }
 
-func (g *generator) printExpr(e ast.Expr) string {
+// printRawExpr prints an ast.Expr.
+//
+// printExpr cannot be used in place of printRawExpr because printExpr prints
+// a variable for user provided expressions. In the prologue template, the
+// initial variables must have raw expressions assigned to them.
+func (g *generator) printRawExpr(e ast.Expr) string {
 	var buff bytes.Buffer
 	format.Node(&buff, g.fset, e)
 	return buff.String()
+}
+
+// exprPrinter is a convenience type to (1) avoid declaring a non-trival
+// function inside funcMap's scope and (2) pass through state from funcMap
+// to printExpr to avoid tracking unecessary state on the global generator
+// object.
+type exprPrinter struct {
+	exprs map[ast.Expr]struct{}
+	g     *generator
+}
+
+// printExpr called on a user provided expression returns a variable name hash
+// for the expression.
+//
+// Expressions called by printExpr are recorded on the generator and assigned
+// to variables at the start of cff.Flow generated code to preserve the order
+// in which they were provided to the flow.
+//
+// When called on a non-user provided expression the expression itself is
+// printed.
+//
+// This is necessary as code generation updates to prevent variable shadowing
+// in cff.Flow changed the order in which user provided expressions were
+// invoked (GO-1098).
+func (p *exprPrinter) printExpr(e ast.Expr) string {
+	if ident, ok := e.(*ast.Ident); ok && ident.Name == "nil" {
+		// In the generated code, we cannot do the following,
+		// because nil is untyped by default.
+		//
+		//   _12_34 := nil
+		//
+		// In lieu of trying to specify a type for it,
+		// we'll use nil expressions as-is.
+		return ident.Name
+	}
+	if !e.Pos().IsValid() {
+		// This expression was not user provided (e.g. implied instrument
+		// names) there is no assigned variable that can be used, print
+		// the expression directly.
+		return p.g.printRawExpr(e)
+	}
+	p.exprs[e] = struct{}{}
+	pos := p.g.posInfo(e)
+	return fmt.Sprintf("_%d_%d", pos.Line, pos.Column)
+}
+
+// paramExprs returns a slice of user provided expressions sorted such that
+// earlier positioned expression appear first.
+func paramExprs(provided map[ast.Expr]struct{}) []ast.Expr {
+	var exprs []ast.Expr
+
+	for expr := range provided {
+		// A user provided expr cannot have a 0 Line nor 0 Column, so filter
+		// these non user provided entries out. CFF implied instrumentation
+		// creates expressions that are not user provided and must be handled.
+		if !expr.Pos().IsValid() {
+			continue
+		}
+		exprs = append(exprs, expr)
+	}
+
+	sort.Slice(exprs, func(i, j int) bool {
+		return exprs[i].Pos() < exprs[j].Pos()
+	})
+	return exprs
 }
 
 func (g *generator) typeID(t types.Type) int {

@@ -9,7 +9,7 @@ func(
 	var (
 		parallelInfo = &{{ $cff }}.ParallelInfo{
 			{{ with $parallel.Instrument -}}
-				Name: {{ expr .Name }},
+				Name: {{ rawExpr .Name }},
 			{{ end -}}
 			File: {{ quote $parallel.PosInfo.File}},
 			Line: {{ $parallel.PosInfo.Line }},
@@ -48,9 +48,9 @@ func(
 
 	sched := {{ $cff }}.BeginFlow(
 		{{ $cff }}.SchedulerParams{
-			{{ with .Concurrency -}} Concurrency:  {{ expr . }}, {{- end -}}
+			{{ with .Concurrency -}} Concurrency:  {{ rawExpr . }}, {{- end -}}
 			Emitter: schedEmitter,
-			{{ with .ContinueOnError -}} ContinueOnError: {{ expr . }}, {{ end }}
+			{{ with .ContinueOnError -}} ContinueOnError: {{ rawExpr . }}, {{ end }}
 		},
 	)
 
@@ -88,7 +88,7 @@ func(
 	parallelEmitter.ParallelSuccess(ctx)
 	return nil
 }(
-	{{ expr .Ctx }},
+	{{ rawExpr .Ctx }},
 	{{ template "buildEmitter" $parallel }},
 )
 {{- end -}}

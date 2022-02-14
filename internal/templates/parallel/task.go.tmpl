@@ -8,7 +8,7 @@
 	{{- if .Instrument -}}
 		emitter.TaskInit(
 			&{{ $cff }}.TaskInfo{
-				Name: {{ expr .Instrument.Name }},
+				Name: {{ rawExpr .Instrument.Name }},
 				File: {{ quote .PosInfo.File}},
 				Line: {{ .PosInfo.Line }},
 				Column: {{ .PosInfo.Column}},
@@ -54,7 +54,7 @@ sched.Enqueue(ctx, {{ $cff }}.Job{
 tasks = append(tasks, task{{ .Serial }})
 
 {{- define "callFunc" -}}
-	{{- expr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }})
+	{{- rawExpr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }})
 {{- end -}}
 
 {{- /* vim:set ft=gotexttmpl noet: */ -}}

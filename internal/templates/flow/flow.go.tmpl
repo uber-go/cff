@@ -2,16 +2,15 @@
 {{- $cff := import "go.uber.org/cff" -}}
 {{- $flow := .Flow -}}
 {{- with .Flow -}}
-func() (err error) {
-	{{- range $flow.Funcs }}
-		{{ .Hash }} := {{ template "callTaskFunc" . }}
-	{{- end }}
-
-	{{ range .Inputs }}
-		var v{{ typeHash .Type }} {{ type .Type }} = {{ expr .Node }}
-	{{- end }}
+	{{- /*
+	   In support of calling user provided expression in the order they were
+	   provided, this partial template will completed after it is rendered.
+	*/ -}}
 
 	ctx := {{ expr .Ctx }}
+	{{- range .Inputs }}
+		var v{{ typeHash .Type }} {{ type .Type }} = {{ expr .Node }}
+	{{- end }}
 	emitter := {{ template "buildEmitter" $flow }}
 
 	var (
@@ -90,7 +89,6 @@ func() (err error) {
 
 	flowEmitter.FlowSuccess(ctx)
 	return nil
-}()
 {{- end -}}
 
 {{- /* vim:set ft=gotexttmpl noet: */ -}}
