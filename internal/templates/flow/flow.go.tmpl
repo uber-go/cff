@@ -2,13 +2,18 @@
 {{- $cff := import "go.uber.org/cff" -}}
 {{- $flow := .Flow -}}
 {{- with .Flow -}}
-func(
-	ctx {{ $context }}.Context,
-	emitter {{ $cff }}.Emitter,
-	{{ range .Inputs -}}
-		v{{ typeHash .Type }} {{ type .Type }},
+func() (err error) {
+	{{- range $flow.Funcs }}
+		{{ .Hash }} := {{ template "callTaskFunc" . }}
 	{{- end }}
-) (err error) {
+
+	{{ range .Inputs }}
+		var v{{ typeHash .Type }} {{ type .Type }} = {{ expr .Node }}
+	{{- end }}
+
+	ctx := {{ expr .Ctx }}
+	emitter := {{ template "buildEmitter" $flow }}
+
 	var (
 		flowInfo = &{{ $cff }}.FlowInfo{
 			{{ with $flow.Instrument -}}
@@ -52,7 +57,7 @@ func(
 		emitter {{ $cff }}.TaskEmitter
 		ran {{ $cff }}.AtomicBool
 		run func({{ $context }}.Context) error
-        job *{{ $cff }}.ScheduledJob
+		job *{{ $cff }}.ScheduledJob
 	}
 
 	type predicate struct {
@@ -74,10 +79,10 @@ func(
 		{{ template "func.go.tmpl" . }}
 	{{ end }}
 
-    if err := sched.Wait(ctx); err != nil {
-        flowEmitter.FlowError(ctx, err)
-        return err
-    }
+	if err := sched.Wait(ctx); err != nil {
+		flowEmitter.FlowError(ctx, err)
+		return err
+	}
 
 	{{ range .Outputs }}
 		*({{ expr .Node }}) = v{{ typeHash .Type }} // {{ typeName .Type }}
@@ -85,13 +90,7 @@ func(
 
 	flowEmitter.FlowSuccess(ctx)
 	return nil
-}(
-	{{ expr .Ctx }},
-	{{ template "buildEmitter" $flow }},
-	{{ range .Inputs -}}
-		{{ expr .Node }},
-	{{ end }}
-)
+}()
 {{- end -}}
 
 {{- /* vim:set ft=gotexttmpl noet: */ -}}

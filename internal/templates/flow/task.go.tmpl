@@ -63,7 +63,7 @@
 
 	defer {{ $t }}.ran.Store(true)
 
-	{{ template "taskResultList" . }}{{ if or .Function.HasError (len .Outputs) }} = {{ end }}{{ template "callTask" . }}
+	{{ template "taskResultList" . }}{{ if or .Function.HasError (len .Outputs) }} = {{ end }}{{ .Function.Hash }}{{ template "callTaskArgs" . }}
 
 	{{ if .Function.HasError -}}
 		if err != nil {

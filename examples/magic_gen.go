@@ -31,11 +31,40 @@ type fooHandler struct {
 
 func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
 	var res *Response
-	err := func(
-		ctx context.Context,
-		emitter cff.Emitter,
-		v1 *Request,
-	) (err error) {
+	err := func() (err error) {
+		_42_4 := func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
+			return &GetManagerRequest{
+					LDAPGroup: req.LDAPGroup,
+				}, &ListUsersRequest{
+					LDAPGroup: req.LDAPGroup,
+				}
+		}
+		_50_4 := h.mgr.Get
+		_51_12 := h.ses.BatchSendEmail
+		_53_4 := func(responses []*SendEmailResponse) *Response {
+			var r Response
+			for _, res := range responses {
+				r.MessageIDs = append(r.MessageIDs, res.MessageID)
+			}
+			return &r
+		}
+		_62_4 := h.users.List
+		_67_4 := func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest {
+			var reqs []*SendEmailRequest
+			for _, u := range users.Emails {
+				reqs = append(reqs, &SendEmailRequest{Address: u})
+			}
+			return reqs
+		}
+		_75_18 := func(req *GetManagerRequest) bool {
+			return req.LDAPGroup != "everyone"
+		}
+
+		var v1 *Request = req
+
+		ctx := ctx
+		emitter := cff.EmitterStack(cff.TallyEmitter(h.scope), cff.LogEmitter(h.logger))
+
 		var (
 			flowInfo = &cff.FlowInfo{
 				Name:   "HandleFoo",
@@ -116,13 +145,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task0.ran.Store(true)
 
-			v2, v3 = func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
-				return &GetManagerRequest{
-						LDAPGroup: req.LDAPGroup,
-					}, &ListUsersRequest{
-						LDAPGroup: req.LDAPGroup,
-					}
-			}(v1)
+			v2, v3 = _42_4(v1)
 
 			taskEmitter.TaskSuccess(ctx)
 
@@ -159,7 +182,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task1.ran.Store(true)
 
-			v4, err = h.mgr.Get(v2)
+			v4, err = _50_4(v2)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -218,7 +241,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task4.ran.Store(true)
 
-			v5, err = h.users.List(v3)
+			v5, err = _62_4(v3)
 
 			if err != nil {
 				taskEmitter.TaskErrorRecovered(ctx, err)
@@ -242,9 +265,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var p0 bool
 		pred1 := new(predicate)
 		pred1.run = func(ctx context.Context) (err error) {
-			p0 = func(req *GetManagerRequest) bool {
-				return req.LDAPGroup != "everyone"
-			}(v2)
+			p0 = _75_18(v2)
 			return nil
 		}
 
@@ -298,13 +319,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task5.ran.Store(true)
 
-			v6 = func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest {
-				var reqs []*SendEmailRequest
-				for _, u := range users.Emails {
-					reqs = append(reqs, &SendEmailRequest{Address: u})
-				}
-				return reqs
-			}(v4, v5)
+			v6 = _67_4(v4, v5)
 
 			taskEmitter.TaskSuccess(ctx)
 
@@ -346,7 +361,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task2.ran.Store(true)
 
-			v7, err = h.ses.BatchSendEmail(v6)
+			v7, err = _51_12(v6)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -391,13 +406,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task3.ran.Store(true)
 
-			v8 = func(responses []*SendEmailResponse) *Response {
-				var r Response
-				for _, res := range responses {
-					r.MessageIDs = append(r.MessageIDs, res.MessageID)
-				}
-				return &r
-			}(v7)
+			v8 = _53_4(v7)
 
 			taskEmitter.TaskSuccess(ctx)
 
@@ -421,11 +430,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		flowEmitter.FlowSuccess(ctx)
 		return nil
-	}(
-		ctx,
-		cff.EmitterStack(cff.TallyEmitter(h.scope), cff.LogEmitter(h.logger)),
-		req,
-	)
+	}()
 
 	err = func(
 		ctx context.Context,

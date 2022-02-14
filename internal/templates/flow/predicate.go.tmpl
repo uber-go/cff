@@ -6,7 +6,7 @@
 var p{{ predHash . }} bool
 {{ $p }} := new(predicate)
 {{ $p }}.run = func(ctx {{ $context }}.Context) (err error) {
-    p{{ predHash . }} = {{ template "callTask" . }}
+    p{{ predHash . }} = {{ .Function.Hash }}{{ template "callTaskArgs" . }}
     return nil
 }
 
