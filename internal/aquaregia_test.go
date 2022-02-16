@@ -41,7 +41,17 @@ var codeGenerateFailCases = map[string][]errorCase{
 		{
 			File:         "already-provided.go",
 			ErrorMatches: "type string already provided at",
-			TestFuncs:    []string{"AlreadyProvided"},
+			TestFuncs:    []string{"AlreadyProvidedTaskParam"},
+		},
+		{
+			File:         "already-provided.go",
+			ErrorMatches: "type int already provided to cff.Params at",
+			TestFuncs:    []string{"AlreadyProvidedFlowParams"},
+		},
+		{
+			File:         "already-provided.go",
+			ErrorMatches: "type bool already provided to cff.Params at",
+			TestFuncs:    []string{"AlreadyProvidedFlowParams"},
 		},
 		{
 			File:         "cff-flow-arguments.go",

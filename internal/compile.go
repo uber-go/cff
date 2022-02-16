@@ -293,8 +293,15 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			c.errf(c.nodePosition(arg), "%q is an invalid cff.Flow Option", f.Name())
 			continue
 		case "Params":
+			provided := new(typeutil.Map) // *type => *input
 			for _, i := range ce.Args {
-				flow.Inputs = append(flow.Inputs, c.compileInput(i))
+				in := c.compileInput(i)
+				if other, _ := provided.At(in.Type).(*input); other != nil {
+					c.errf(c.nodePosition(i), "type %v already provided to cff.Params at %v", other.Type, c.nodePosition(other.Node))
+					continue
+				}
+				flow.Inputs = append(flow.Inputs, in)
+				provided.Set(in.Type, in)
 			}
 		case "Results":
 			for _, o := range ce.Args {

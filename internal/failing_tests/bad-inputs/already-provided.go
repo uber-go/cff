@@ -6,8 +6,8 @@ import (
 	"go.uber.org/cff"
 )
 
-// AlreadyProvided is a function that provides a string type twice.
-func AlreadyProvided() {
+// AlreadyProvidedTaskParam is a function that provides a string type twice.
+func AlreadyProvidedTaskParam() {
 	cff.Flow(context.Background(),
 		cff.Task(
 			func() string {
@@ -16,6 +16,20 @@ func AlreadyProvided() {
 		cff.Task(
 			func() string {
 				return "b"
+			},
+		),
+	)
+}
+
+// AlreadyProvidedFlowParams is a function that provides multiple types multiple
+// times to cff.Params.
+func AlreadyProvidedFlowParams() {
+	cff.Flow(
+		context.Background(),
+		cff.Params(1, 2, true, false),
+		cff.Task(
+			func(i int) int {
+				return i
 			},
 		),
 	)
