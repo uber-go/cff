@@ -141,7 +141,7 @@ func InstrumentFlow(name string) Option {
 //
 // Defaults to max(GOMAXPROCS, 4).
 //
-// This option has effect only if the online_scheduling option is enabled.
+// This is a code generation directive.
 func Concurrency(n int) Option {
 	panic(_noGenMsg)
 }
