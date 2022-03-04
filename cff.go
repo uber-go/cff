@@ -340,7 +340,39 @@ func Tasks(fn ...interface{}) Option {
 // cff.Slice is only an option for cff.Parallel.
 //
 // This is a code generation directive.
-func Slice(fn interface{}, slice interface{}) Option {
+func Slice(fn interface{}, slice interface{}, opts ...SliceOption) Option {
+	panic(_noGenMsg)
+}
+
+// SliceOption customizes the execution behavior of cff.Slice.
+type SliceOption interface {
+	cffSliceOption()
+}
+
+// SliceEnd specifies a function for execution with a cff.Slice.
+// This function will run after all items in the slice have finished.
+//
+// SliceEnd can request the context for the current execution scope by optionally
+// adding a context.Context as the only argument.
+//
+// Additionally, a SliceEnd that may fail can do so by optionally adding an error
+// as the only return value.
+//
+//  cff.Slice(
+// 		func(idx int, elem someType) { ... },
+//		[]someType{...},
+//		cff.SliceEnd(func(ctx context.Context) error {...}),
+//	)
+//
+// SliceEnd cannot be used with cff.ContinueOnError.
+//
+// Here are the list of supported signatures for SliceEnd:
+//    cff.SliceEnd(func() {...}),
+//    cff.SliceEnd(func() error {...}),
+//    cff.SliceEnd(func(ctx context.Context) {...}),
+//    cff.SliceEnd(func(ctx context.Context) error {...}),
+//
+func SliceEnd(fn interface{}) SliceOption {
 	panic(_noGenMsg)
 }
 

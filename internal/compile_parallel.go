@@ -113,6 +113,12 @@ func (c *compiler) validateParallelInstrument(p *parallel) {
 			c.errf(c.nodePosition(p.Node), "cff.Instrument requires a cff.Emitter to be provided: use cff.WithEmitter")
 		}
 	}
+
+	for _, s := range p.SliceTasks {
+		if s.SliceEndFn != nil && p.ContinueOnError != nil {
+			c.errf(c.nodePosition(p.Node), `"cff.SliceEnd" is an invalid option when "ContinueOnError" is used`)
+		}
+	}
 }
 
 func (c *compiler) compileParallelTask(p *parallel, call ast.Expr, opts []ast.Expr) *parallelTask {
@@ -184,14 +190,56 @@ func checkParallelTask(fn *compiledFunc) error {
 }
 
 type sliceTask struct {
-	Function *compiledFunc
-	Slice    ast.Expr
-	ElemType types.Type
+	Function   *compiledFunc
+	Slice      ast.Expr
+	ElemType   types.Type
+	SliceEndFn *compiledFunc
 
 	// Serial is a unique serially incrementing number for each sliceTask.
 	Serial int
 
 	PosInfo *PosInfo // Used to pass information to uniquely identify a task.
+}
+
+func (c *compiler) applySliceOptions(t *sliceTask, opts []ast.Expr) {
+	for _, opt := range opts {
+		ce, fn, err := c.identifyOption(opt)
+		if err != nil {
+			c.errf(c.nodePosition(opt), err.Error())
+			continue
+		}
+
+		switch fn.Name() {
+		case "SliceEnd":
+			sliceEndFn := c.compileSliceEnd(opt, ce)
+			if sliceEndFn == nil {
+				continue
+			}
+			if t.SliceEndFn != nil {
+				c.errf(c.nodePosition(opt), "cff.Slice accepts at most one cff.SliceEnd option")
+				continue
+			}
+			t.SliceEndFn = sliceEndFn
+		}
+	}
+	return
+}
+
+func (c *compiler) compileSliceEnd(opt ast.Expr, ce *ast.CallExpr) *compiledFunc {
+	fn := c.compileFunction(ce.Args[0])
+	switch {
+	case fn == nil:
+		c.errf(c.nodePosition(opt), "SliceEnd function failed to compile")
+		return nil
+	case len(fn.Inputs) != 0:
+		c.errf(c.nodePosition(opt), "the only allowed argument is a single context.Context parameter")
+		return nil
+	case len(fn.Outputs) != 0:
+		c.errf(c.nodePosition(opt), "the only allowed return value is an error")
+		return nil
+	default:
+		return fn
+	}
 }
 
 func (c *compiler) compileSlice(p *parallel, ce *ast.CallExpr) *sliceTask {
@@ -242,6 +290,7 @@ func (c *compiler) compileSlice(p *parallel, ce *ast.CallExpr) *sliceTask {
 		PosInfo:  c.getPosInfo(ce),
 	}
 	c.taskSerial++
+	c.applySliceOptions(s, ce.Args[2:])
 	return s
 }
 

@@ -624,7 +624,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		tasks = append(tasks, task8)
 
 		// go.uber.org/cff/examples/magic.go:102:3
-		for idx, val := range []string{"message", "to", "send"} {
+		sliceTask9Slice := []string{"message", "to", "send"}
+		for idx, val := range sliceTask9Slice {
 			idx := idx
 			val := val
 			sliceTask9 := new(task)
@@ -643,18 +644,61 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}(ctx, idx, val)
 				return
 			}
-
 			sched.Enqueue(ctx, cff.Job{
 				Run: sliceTask9.fn,
 			})
 		}
 
 		// go.uber.org/cff/examples/magic.go:110:3
+		sliceTask10Slice := []string{"message", "to", "send"}
+		sliceTask10Jobs := make([]*cff.ScheduledJob, len(sliceTask10Slice))
+		for idx, val := range sliceTask10Slice {
+			idx := idx
+			val := val
+			sliceTask10 := new(task)
+			sliceTask10.fn = func(ctx context.Context) (err error) {
+				defer func() {
+					recovered := recover()
+					if recovered != nil {
+						err = fmt.Errorf("panic: %v", recovered)
+					}
+				}()
+
+				err = func(ctx context.Context, idx int, s string) error {
+					_ = fmt.Sprintf("%d and %q", idx, s)
+					ctx.Deadline()
+					return nil
+				}(ctx, idx, val)
+				return
+			}
+			sliceTask10Jobs[idx] = sched.Enqueue(ctx, cff.Job{
+				Run: sliceTask10.fn,
+			})
+		}
+
+		sched.Enqueue(ctx, cff.Job{
+			Dependencies: sliceTask10Jobs,
+			Run: func(ctx context.Context) (err error) {
+				defer func() {
+					recovered := recover()
+					if recovered != nil {
+						err = fmt.Errorf("panic: %v", recovered)
+					}
+				}()
+
+				err = func(context.Context) error {
+					return nil
+				}(ctx)
+				return
+			},
+		})
+
+		// go.uber.org/cff/examples/magic.go:121:3
 		for key, val := range map[string]string{"key": "value"} {
 			key := key
 			val := val
-			mapTask10 := new(task)
-			mapTask10.fn = func(ctx context.Context) (err error) {
+			mapTask11 := new(task)
+			mapTask11.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
 					if recovered != nil {
@@ -671,7 +715,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 
 			sched.Enqueue(ctx, cff.Job{
-				Run: mapTask10.fn,
+				Run: mapTask11.fn,
 			})
 		}
 

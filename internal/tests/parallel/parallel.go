@@ -332,6 +332,66 @@ func AssignSliceItems(src, target []string, keepgoing bool) error {
 	)
 }
 
+// SliceEnd runs cff.Slice in parallel and calls sliceEndFn after all items
+// in the slice have finished.
+func SliceEnd(src []int, sliceFn func(idx, val int) error, sliceEndFn func()) (err error) {
+	err = cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Slice(
+			sliceFn,
+			src,
+			cff.SliceEnd(sliceEndFn),
+		),
+	)
+	return err
+}
+
+// SliceEndWithErr runs cff.Slice in parallel and calls an erroring sliceEndFn
+// after all items in the slice have finished.
+func SliceEndWithErr(src []int, sliceFn func(idx, val int) error, sliceEndFn func() error) (err error) {
+	err = cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Slice(
+			sliceFn,
+			src,
+			cff.SliceEnd(sliceEndFn),
+		),
+	)
+	return err
+}
+
+// SliceEndWithCtx runs cff.Slice in parallel and calls sliceEndFn after all items
+// in the slice have finished.
+func SliceEndWithCtx(src []int, sliceFn func(idx, val int) error, sliceEndFn func(context.Context)) (err error) {
+	err = cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Slice(
+			sliceFn,
+			src,
+			cff.SliceEnd(sliceEndFn),
+		),
+	)
+	return err
+}
+
+// SliceEndWithCtxAndErr runs cff.Slice in parallel and calls an erroring sliceEndFn
+// after all items in the slice have finished.
+func SliceEndWithCtxAndErr(src []int, sliceFn func(idx, val int) error, sliceEndFn func(context.Context) error) (err error) {
+	err = cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Slice(
+			sliceFn,
+			src,
+			cff.SliceEnd(sliceEndFn),
+		),
+	)
+	return err
+}
+
 // AssignMapItems runs cff.Map in parallel to populate the provided slices.
 func AssignMapItems(src map[string]int, keys []string, values []int, keepgoing bool) error {
 	return cff.Parallel(

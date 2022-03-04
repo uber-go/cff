@@ -288,6 +288,105 @@ func ParallelSliceNonLastError() {
 	)
 }
 
+// ParallelSliceEndWithContinueOnError is a cff.Slice that uses cff.ContinueOnError
+// and cff.SliceEnd.
+func ParallelSliceEndWithContinueOnError() {
+	cff.Parallel(
+		context.Background(),
+		cff.ContinueOnError(true),
+		cff.Slice(
+			func(int, string) error {
+				return nil
+			},
+			[]string{"some", "thing"},
+			cff.SliceEnd(func(context.Context) {}),
+		),
+	)
+}
+
+// ParallelSliceEndTooManyArguments is a cff.Slice function that has too many arguments.
+func ParallelSliceEndTooManyArguments() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(_ int, _ string) error {
+				return nil
+			},
+			[]string{"some", "thing"},
+			cff.SliceEnd(func(context.Context, int) {}),
+		),
+	)
+}
+
+// ParallelSliceEndWithInvalidArgument is a cff.Slice function that has invalid
+// argument in cff.SliceEnd.
+func ParallelSliceEndWithInvalidArgument() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(int, string) error {
+				return nil
+			},
+			[]string{"some", "thing"},
+			cff.SliceEnd(func(int) {}),
+		),
+	)
+}
+
+// ParallelSliceEndWithMultipleReturns is a cff.Slice function that has multiple
+// returns in cff.SliceEnd.
+func ParallelSliceEndWithMultipleReturns() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(int, string) error {
+				return nil
+			},
+			[]string{"some", "thing"},
+			cff.SliceEnd(func() (error, error) {
+				return nil, nil
+			}),
+		),
+	)
+}
+
+// ParallelSliceEndWithInvalidReturn is a cff.Slice function that has an invalid
+// return in cff.SliceEnd.
+func ParallelSliceEndWithInvalidReturn() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(int, string) error {
+				return nil
+			},
+			[]string{"some", "thing"},
+			cff.SliceEnd(func() int {
+				return 0
+			}),
+		),
+	)
+}
+
+// ParallelSliceWithTwoSliceEnds is a cff.Slice function that has more than
+// one cff.SliceEnd.
+func ParallelSliceWithTwoSliceEnds() {
+	cff.Parallel(
+		context.Background(),
+		cff.Slice(
+			func(int, string) error {
+				return nil
+			},
+			[]string{"some", "thing"},
+			cff.SliceEnd(func() error {
+				return nil
+			}),
+			cff.SliceEnd(func() error {
+				return nil
+			}),
+		),
+	)
+}
+
 // ParallelMapNilFunction is a cff.Map with a nil value func.
 func ParallelMapNilFunction() {
 	cff.Parallel(

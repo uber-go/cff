@@ -3,7 +3,12 @@
 {{- $t := printf "sliceTask%d" .Serial -}}
 
 // {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
-for idx, val := range {{ rawExpr .Slice }} {
+{{ $t }}Slice := {{ rawExpr .Slice }}
+{{ if .SliceEndFn -}}
+{{ $t }}Jobs := make([]*{{ $cff }}.ScheduledJob, len({{ $t }}Slice))
+{{ end -}}
+
+for idx, val := range {{ $t }}Slice {
 	idx := idx
 	val := val
 	{{ $t }} := new(task)
@@ -18,14 +23,37 @@ for idx, val := range {{ rawExpr .Slice }} {
 	{{ if .Function.HasError }} err = {{ end }}{{ template "callSlice" . }}
 		return
 	}
-
-	sched.Enqueue(ctx, {{ $cff }}.Job{
+	{{ if .SliceEndFn -}}
+	 	{{ $t }}Jobs[idx] =
+	{{- end -}}
+	 sched.Enqueue(ctx, {{ $cff }}.Job{
 		Run: {{ $t }}.fn,
 	})
 }
 
+{{ with .SliceEndFn -}}
+	sched.Enqueue(ctx,  {{ $cff }}.Job{
+		Dependencies: {{ $t }}Jobs,
+		Run: func(ctx {{ $context }}.Context) (err error) {
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					err = {{ import "fmt" }}.Errorf("panic: %v", recovered)
+				}
+			}()
+
+			{{ template "callSliceEndFn" . }}
+			return
+		},
+	})
+{{ end }}
+
 {{- define "callSlice" -}}
 	{{- rawExpr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }} idx, val)
+{{- end -}}
+
+{{- define "callSliceEndFn" -}}
+	{{ if .HasError }} err = {{ end }}{{- rawExpr .Node }}({{- if .WantCtx }}ctx,{{ end }})
 {{- end -}}
 
 {{- /* vim:set ft=gotexttmpl noet: */ -}}

@@ -212,6 +212,15 @@ var codeGenerateFailCases = map[string][]errorCase{
 				"ParallelInvalidFuncVar",
 				"ParallelTaskInvalidParamsType",
 				"ParallelTaskInvalidParamsMultiple",
+				"ParallelSliceEndTooManyArguments",
+				"ParallelSliceEndWithInvalidArgument",
+			},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: `"cff.SliceEnd" is an invalid option when "ContinueOnError" is used`,
+			TestFuncs: []string{
+				"ParallelSliceEndWithContinueOnError",
 			},
 		},
 		{
@@ -233,6 +242,7 @@ var codeGenerateFailCases = map[string][]errorCase{
 				"ParallelSliceNonErrorReturn",
 				"ParallelMapInvalidReturnType",
 				"ParallelMapTooManyReturns",
+				"ParallelSliceEndWithInvalidReturn",
 			},
 		},
 		{
@@ -242,11 +252,17 @@ var codeGenerateFailCases = map[string][]errorCase{
 		},
 		{
 			File:         "parallel.go",
+			ErrorMatches: "cff.Slice accepts at most one cff.SliceEnd option",
+			TestFuncs:    []string{"ParallelSliceWithTwoSliceEnds"},
+		},
+		{
+			File:         "parallel.go",
 			ErrorMatches: "only the last result may be an error",
 			TestFuncs: []string{
 				"ParallelInvalidReturnTypeMultiple",
 				"ParallelTaskInvalidReturnMultiple",
 				"ParallelSliceNonLastError",
+				"ParallelSliceEndWithMultipleReturns",
 			},
 		},
 		{

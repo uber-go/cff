@@ -2,6 +2,7 @@ package parallel
 
 import (
 	"context"
+	"errors"
 	"io/fs"
 	"sync"
 	"testing"
@@ -193,6 +194,310 @@ func TestSliceContinueOnError(t *testing.T) {
 	assert.Contains(t, err.Error(), "panic: sadder times")
 
 	assert.Equal(t, []string{"copy", "", "", "me"}, target)
+}
+
+func TestSliceEnd(t *testing.T) {
+	var src, target []int
+	errSadTimes := errors.New("sad times")
+	errSadderTimes := errors.New("panic: sadder times")
+	tests := []struct {
+		desc       string
+		sliceEndFn func()
+		src        []int
+		wantTarget []int
+		wantErr    error
+	}{
+		{
+			desc: "success",
+			sliceEndFn: func() {
+				assert.Equal(t, src, target)
+			},
+			src:        []int{1, 2, 3},
+			wantTarget: []int{1, 2, 3},
+		},
+		{
+			desc: "panic",
+			sliceEndFn: func() {
+				assert.Equal(t, src, target)
+				panic("sadder times")
+			},
+			src:        []int{1, 2, 3},
+			wantTarget: []int{1, 2, 3},
+			wantErr:    errSadderTimes,
+		},
+		{
+			desc: "not called on error",
+			sliceEndFn: func() {
+				t.Fatal("SliceEnd shouldn't run after a error")
+			},
+			src:        []int{-1},
+			wantTarget: []int{},
+			wantErr:    errSadTimes,
+		},
+		{
+			desc: "not called on panic",
+			sliceEndFn: func() {
+				t.Fatal("SliceEnd shouldn't run after a panic")
+			},
+			src:        []int{-2},
+			wantTarget: []int{},
+			wantErr:    errSadderTimes,
+		},
+	}
+
+	assignItemsFn := func(idx, val int) error {
+		switch val {
+		case -1:
+			return errSadTimes
+		case -2:
+			panic("sadder times")
+		}
+		target[idx] = val
+		return nil
+	}
+
+	for _, tt := range tests {
+		t.Run(t.Name(), func(t *testing.T) {
+			src = tt.src
+			target = make([]int, len(tt.wantTarget))
+			err := SliceEnd(src, assignItemsFn, tt.sliceEndFn)
+			assert.Equal(t, tt.wantErr, err)
+			assert.Equal(t, tt.wantTarget, target)
+		})
+	}
+}
+
+func TestSliceEndWithErr(t *testing.T) {
+	var src, target []int
+	errSadTimes := errors.New("sad times")
+	errSadderTimes := errors.New("panic: sadder times")
+	tests := []struct {
+		desc       string
+		sliceEndFn func() error
+		src        []int
+		wantTarget []int
+		wantErr    error
+	}{
+		{
+			desc: "success",
+			sliceEndFn: func() error {
+				assert.Equal(t, src, target)
+				return nil
+			},
+			src:        []int{1, 2, 3},
+			wantTarget: []int{1, 2, 3},
+		},
+		{
+			desc: "error",
+			sliceEndFn: func() error {
+				assert.Equal(t, src, target)
+				return errSadTimes
+			},
+			src:        []int{1, 2, 3},
+			wantTarget: []int{1, 2, 3},
+			wantErr:    errSadTimes,
+		},
+		{
+			desc: "panic",
+			sliceEndFn: func() error {
+				assert.Equal(t, src, target)
+				panic("sadder times")
+				return nil
+			},
+			src:        []int{1, 2, 3},
+			wantTarget: []int{1, 2, 3},
+			wantErr:    errSadderTimes,
+		},
+		{
+			desc: "not called on error",
+			sliceEndFn: func() error {
+				t.Fatal("SliceEnd shouldn't run after a error")
+				return nil
+			},
+			src:        []int{-1},
+			wantTarget: []int{},
+			wantErr:    errSadTimes,
+		},
+		{
+			desc: "not called on panic",
+			sliceEndFn: func() error {
+				t.Fatal("SliceEnd shouldn't run after a panic")
+				return nil
+			},
+			src:        []int{-2},
+			wantTarget: []int{},
+			wantErr:    errSadderTimes,
+		},
+	}
+
+	assignItemsFn := func(idx, val int) error {
+		switch val {
+		case -1:
+			return errSadTimes
+		case -2:
+			panic("sadder times")
+		}
+		target[idx] = val
+		return nil
+	}
+
+	for _, tt := range tests {
+		t.Run(t.Name(), func(t *testing.T) {
+			src = tt.src
+			target = make([]int, len(tt.wantTarget))
+			err := SliceEndWithErr(src, assignItemsFn, tt.sliceEndFn)
+			assert.Equal(t, tt.wantErr, err)
+			assert.Equal(t, tt.wantTarget, target)
+		})
+	}
+}
+
+func TestSliceEndWithCtx(t *testing.T) {
+	var src, target []int
+	errSadTimes := errors.New("sad times")
+	errSadderTimes := errors.New("panic: sadder times")
+	tests := []struct {
+		desc       string
+		sliceEndFn func(ctx context.Context)
+		src        []int
+		wantTarget []int
+		wantErr    error
+	}{
+		{
+			desc: "success",
+			sliceEndFn: func(ctx context.Context) {
+				assert.NotNil(t, ctx)
+				assert.Equal(t, src, target)
+			},
+			src:        []int{1, 2, 3},
+			wantTarget: []int{1, 2, 3},
+		},
+		{
+			desc: "panic",
+			sliceEndFn: func(ctx context.Context) {
+				assert.NotNil(t, ctx)
+				assert.Equal(t, src, target)
+				panic("sadder times")
+			},
+			src:        []int{1, 2, 3},
+			wantTarget: []int{1, 2, 3},
+			wantErr:    errSadderTimes,
+		}, {
+			desc: "not called on error",
+			sliceEndFn: func(context.Context) {
+				t.Fatal("SliceEnd shouldn't run after a error")
+			},
+			src:        []int{-1},
+			wantTarget: []int{},
+			wantErr:    errSadTimes,
+		},
+		{
+			desc: "not called on panic",
+			sliceEndFn: func(context.Context) {
+				t.Fatal("SliceEnd shouldn't run after a panic")
+			},
+			src:        []int{-2},
+			wantTarget: []int{},
+			wantErr:    errSadderTimes,
+		},
+	}
+
+	assignItemsFn := func(idx, val int) error {
+		switch val {
+		case -1:
+			return errSadTimes
+		case -2:
+			panic("sadder times")
+		}
+		target[idx] = val
+		return nil
+	}
+
+	for _, tt := range tests {
+		t.Run(t.Name(), func(t *testing.T) {
+			src = tt.src
+			target = make([]int, len(tt.wantTarget))
+			err := SliceEndWithCtx(src, assignItemsFn, tt.sliceEndFn)
+			assert.Equal(t, tt.wantErr, err)
+			assert.Equal(t, tt.wantTarget, target)
+		})
+	}
+}
+
+func TestSliceEndWithCtxAndErr(t *testing.T) {
+	var src, target []int
+	errSadTimes := errors.New("sad times")
+	errSadderTimes := errors.New("panic: sadder times")
+	tests := []struct {
+		desc       string
+		sliceEndFn func(ctx context.Context) error
+		src        []int
+		wantTarget []int
+		wantErr    error
+	}{
+		{
+			desc: "success",
+			sliceEndFn: func(ctx context.Context) error {
+				assert.NotNil(t, ctx)
+				assert.Equal(t, src, target)
+				return nil
+			},
+			src:        []int{1, 2, 3},
+			wantTarget: []int{1, 2, 3},
+		},
+		{
+			desc: "panic",
+			sliceEndFn: func(ctx context.Context) error {
+				assert.NotNil(t, ctx)
+				assert.Equal(t, src, target)
+				panic("sadder times")
+				return nil
+			},
+			src:        []int{1, 2, 3},
+			wantTarget: []int{1, 2, 3},
+			wantErr:    errSadderTimes,
+		}, {
+			desc: "not called on error",
+			sliceEndFn: func(context.Context) error {
+				t.Fatal("SliceEnd shouldn't run after a error")
+				return nil
+			},
+			src:        []int{-1},
+			wantTarget: []int{},
+			wantErr:    errSadTimes,
+		},
+		{
+			desc: "not called on panic",
+			sliceEndFn: func(context.Context) error {
+				t.Fatal("SliceEnd shouldn't run after a panic")
+				return nil
+			},
+			src:        []int{-2},
+			wantTarget: []int{},
+			wantErr:    errSadderTimes,
+		},
+	}
+
+	assignItemsFn := func(idx, val int) error {
+		switch val {
+		case -1:
+			return errSadTimes
+		case -2:
+			panic("sadder times")
+		}
+		target[idx] = val
+		return nil
+	}
+
+	for _, tt := range tests {
+		t.Run(t.Name(), func(t *testing.T) {
+			src = tt.src
+			target = make([]int, len(tt.wantTarget))
+			err := SliceEndWithCtxAndErr(src, assignItemsFn, tt.sliceEndFn)
+			assert.Equal(t, tt.wantErr, err)
+			assert.Equal(t, tt.wantTarget, target)
+		})
+	}
 }
 
 func TestMap(t *testing.T) {
