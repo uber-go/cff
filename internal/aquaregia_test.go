@@ -89,6 +89,11 @@ var codeGenerateFailCases = map[string][]errorCase{
 			TestFuncs:    []string{"DisallowMap"},
 		},
 		{
+			File:         "cff-flow-arguments.go",
+			ErrorMatches: `"InstrumentParallel" is an invalid cff.Flow Option`,
+			TestFuncs:    []string{"DisallowInstrumentParallel"},
+		},
+		{
 			File:         "cff-task-arguments.go",
 			ErrorMatches: "expected function, got bool",
 			TestFuncs:    []string{"ExpectsFunctionCallExpression"},
@@ -254,6 +259,11 @@ var codeGenerateFailCases = map[string][]errorCase{
 			File:         "parallel.go",
 			ErrorMatches: "cff.Slice accepts at most one cff.SliceEnd option",
 			TestFuncs:    []string{"ParallelSliceWithTwoSliceEnds"},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: `"InstrumentFlow" is an invalid cff.Parallel Option`,
+			TestFuncs:    []string{"DisallowInstrumentFlow"},
 		},
 		{
 			File:         "parallel.go",

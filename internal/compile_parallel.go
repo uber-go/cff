@@ -67,6 +67,9 @@ func (c *compiler) compileParallel(file *ast.File, call *ast.CallExpr) *parallel
 		}
 
 		switch f.Name() {
+		case "InstrumentFlow":
+			c.errf(c.nodePosition(arg), "%q is an invalid cff.Parallel Option", f.Name())
+			continue
 		case "Task":
 			if t := c.compileParallelTask(parallel, ce.Args[0], ce.Args[1:]); t != nil {
 				parallel.Tasks = append(parallel.Tasks, t)

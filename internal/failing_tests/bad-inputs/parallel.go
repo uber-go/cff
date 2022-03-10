@@ -82,6 +82,19 @@ func InstrumentParallelInvalid() {
 	)
 }
 
+// DisallowInstrumentFlow is a Parallel that provides a cff.InstrumentFlow.
+func DisallowInstrumentFlow() {
+	cff.Parallel(
+		context.Background(),
+		cff.InstrumentFlow("sad"),
+		cff.Task(
+			func() error {
+				return nil
+			},
+		),
+	)
+}
+
 // ParallelTaskInvalidParamsType is a Parallel with an invalid task parameters type.
 func ParallelTaskInvalidParamsType() {
 	cff.Parallel(

@@ -67,3 +67,16 @@ func DisallowMap() {
 		),
 	)
 }
+
+// DisallowInstrumentParallel is a Flow that provides a InstrumentParallel.
+func DisallowInstrumentParallel() {
+	cff.Flow(
+		context.Background(),
+		cff.InstrumentParallel("sad"),
+		cff.Task(
+			func() error {
+				return nil
+			},
+		),
+	)
+}

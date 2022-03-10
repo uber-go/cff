@@ -558,7 +558,7 @@ func ParallelWithTwoEmitters(ctx context.Context, e1, e2 cff.Emitter, req string
 	err = cff.Parallel(ctx,
 		cff.WithEmitter(e1),
 		cff.WithEmitter(e2),
-		cff.InstrumentFlow("AtoiDo"),
+		cff.InstrumentParallel("AtoiDo"),
 		cff.Tasks(
 			func() error {
 				v, err := strconv.Atoi(req)
