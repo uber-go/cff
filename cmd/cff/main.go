@@ -208,7 +208,7 @@ func loadPackages(p importer.LoadParams) ([]*importer.Package, error) {
 		packages.NeedTypesInfo |
 		packages.NeedTypesSizes
 
-	return importer.LoadPackage(p, &packages.Config{
+	return importer.LoadPackage(p.ImportPath, &packages.Config{
 		Mode:       mode,
 		Fset:       p.Fset,
 		BuildFlags: []string{"-tags=cff"},
