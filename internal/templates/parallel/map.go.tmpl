@@ -3,7 +3,7 @@
 {{- $t := printf "mapTask%d" .Serial -}}
 
 // {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
-for key, val := range {{ rawExpr .Map }} {
+for key, val := range {{ expr .Map }} {
 	key := key
 	val := val
 	{{ $t }} := new(task)
@@ -25,7 +25,7 @@ for key, val := range {{ rawExpr .Map }} {
 }
 
 {{- define "callMap" -}}
-	{{- rawExpr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }} key, val)
+	{{- expr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }} key, val)
 {{- end -}}
 
 {{- /* vim:set ft=gotexttmpl noet: */ -}}

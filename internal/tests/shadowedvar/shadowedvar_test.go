@@ -4,12 +4,38 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCtxConflict(t *testing.T) {
 	msg, err := CtxConflict("hello")
 	assert.NoError(t, err)
 	assert.Equal(t, "hello", msg)
+}
+
+func TestCtxConflictParallel(t *testing.T) {
+	msg1, msg2, err := CtxConflictParallel("hello")
+	assert.NoError(t, err)
+	assert.Equal(t, "hello", msg1)
+	assert.Equal(t, "hello", msg2)
+}
+
+func TestCtxConflictSlice(t *testing.T) {
+	ctx := "hello"
+	target := []string{"A", "B", "C"}
+	require.NoError(t, CtxConflictSlice(ctx, target))
+	assert.Equal(t, []string{"helloA", "helloB", "helloC"}, target)
+}
+
+func TestCtxConflictMap(t *testing.T) {
+	ctx := "Hello"
+	target := map[string]string{
+		"1": "A",
+		"2": "B",
+	}
+	require.NoError(t, CtxConflictMap(ctx, target))
+	assert.Equal(t, "HelloA", target["1"])
+	assert.Equal(t, "HelloB", target["2"])
 }
 
 func TestPredicateCtxConflict(t *testing.T) {

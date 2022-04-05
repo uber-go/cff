@@ -159,7 +159,6 @@ func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports ma
 	exprs := make(map[ast.Expr]struct{})
 
 	fnMap := g.funcMap(file, addImports, aliases, exprs)
-
 	t := template.New(_flowRootTmpl).Funcs(fnMap)
 	tmpl, err := t.ParseFS(tmplFS, _flowTmplDir, _sharedTmplDir)
 	if err != nil {

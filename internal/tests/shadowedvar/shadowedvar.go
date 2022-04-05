@@ -23,6 +23,54 @@ func CtxConflict(ctx string) (string, error) {
 	return result, err
 }
 
+// CtxConflictParallel introduces a variable conflict with ctx within cff.Parallel Task
+// to demonstrate that CFF2 does not shadow variables.
+func CtxConflictParallel(ctx string) (string, string, error) {
+	var result1 string
+	var result2 string
+	err := cff2.Parallel(
+		context.Background(),
+		cff2.Task(func() {
+			result1 = ctx
+		}),
+		cff2.Task(func() {
+			result2 = ctx
+		}),
+	)
+	return result1, result2, err
+}
+
+// CtxConflictSlice introduces a variable conflict with ctx within cff.Slice function
+// to demonstrate that CFF2 does not shadow variables.
+func CtxConflictSlice(ctx string, target []string) error {
+	return cff2.Parallel(
+		context.Background(),
+		cff2.Concurrency(2),
+		cff2.Slice(
+			func(idx int, val string) error {
+				target[idx] = ctx + val
+				return nil
+			},
+			target,
+		),
+	)
+}
+
+// CtxConflictMap introduces a variable conflict with ctx within cff.Map function
+// to demonstrate that CFF2 does not shadow variables.
+func CtxConflictMap(ctx string, target map[string]string) error {
+	return cff2.Parallel(
+		context.Background(),
+		cff2.Concurrency(2),
+		cff2.Map(
+			func(key string, val string) {
+				target[key] = ctx + val
+			},
+			target,
+		),
+	)
+}
+
 // PredicateCtxConflict runs the provided function in a task flow if the
 // provided boolean is true. This tests if the cff flow works even when the ctx
 // variable is shadowed.

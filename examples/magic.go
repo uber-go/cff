@@ -113,7 +113,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				ctx.Deadline()
 				return nil
 			},
-			[]string{"message", "to", "send"},
+			[]string{"more", "messages", "sent"},
 			cff.SliceEnd(func(context.Context) error {
 				return nil
 			}),

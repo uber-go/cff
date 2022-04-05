@@ -2,14 +2,13 @@
 {{- $cff := import "go.uber.org/cff" -}}
 {{- $parallel := .Parallel -}}
 {{- with .Parallel -}}
-func(
-	ctx {{ $context }}.Context,
-	emitter {{ $cff }}.Emitter,
-) (err error) {
+	ctx := {{ expr .Ctx }}
+	emitter := {{ template "buildEmitter" $parallel }}
+
 	var (
 		parallelInfo = &{{ $cff }}.ParallelInfo{
 			{{ with $parallel.Instrument -}}
-				Name: {{ rawExpr .Name }},
+				Name: {{ expr .Name }},
 			{{ end -}}
 			File: {{ quote $parallel.PosInfo.File}},
 			Line: {{ $parallel.PosInfo.Line }},
@@ -17,7 +16,7 @@ func(
 		}
 		directiveInfo = &{{ $cff }}.DirectiveInfo{
 			Name: parallelInfo.Name,
-			Directive: cff.ParallelDirective,
+			Directive: {{ $cff }}.ParallelDirective,
 			File: parallelInfo.File,
 			Line: parallelInfo.Line,
 			Column: parallelInfo.Column,
@@ -48,9 +47,9 @@ func(
 
 	sched := {{ $cff }}.BeginFlow(
 		{{ $cff }}.SchedulerParams{
-			{{ with .Concurrency -}} Concurrency:  {{ rawExpr . }}, {{- end -}}
+			{{ with .Concurrency -}} Concurrency:  {{ expr . }}, {{- end -}}
 			Emitter: schedEmitter,
-			{{ with .ContinueOnError -}} ContinueOnError: {{ rawExpr . }}, {{ end }}
+			{{ with .ContinueOnError -}} ContinueOnError: {{ expr . }}, {{ end }}
 		},
 	)
 
@@ -87,10 +86,6 @@ func(
 	}
 	parallelEmitter.ParallelSuccess(ctx)
 	return nil
-}(
-	{{ rawExpr .Ctx }},
-	{{ template "buildEmitter" $parallel }},
-)
 {{- end -}}
 
 {{- /* vim:set ft=gotexttmpl noet: */ -}}

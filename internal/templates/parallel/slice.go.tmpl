@@ -3,7 +3,7 @@
 {{- $t := printf "sliceTask%d" .Serial -}}
 
 // {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
-{{ $t }}Slice := {{ rawExpr .Slice }}
+{{ $t }}Slice := {{ expr .Slice }}
 {{ if .SliceEndFn -}}
 {{ $t }}Jobs := make([]*{{ $cff }}.ScheduledJob, len({{ $t }}Slice))
 {{ end -}}
@@ -49,11 +49,11 @@ for idx, val := range {{ $t }}Slice {
 {{ end }}
 
 {{- define "callSlice" -}}
-	{{- rawExpr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }} idx, val)
+	{{- expr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }} idx, val)
 {{- end -}}
 
 {{- define "callSliceEndFn" -}}
-	{{ if .HasError }} err = {{ end }}{{- rawExpr .Node }}({{- if .WantCtx }}ctx,{{ end }})
+	{{ if .HasError }} err = {{ end }}{{- expr .Node }}({{- if .WantCtx }}ctx,{{ end }})
 {{- end -}}
 
 {{- /* vim:set ft=gotexttmpl noet: */ -}}

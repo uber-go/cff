@@ -92,7 +92,6 @@ func (c *compiler) compileParallel(file *ast.File, call *ast.CallExpr) *parallel
 			if mt := c.compileMap(ce); mt != nil {
 				parallel.MapTasks = append(parallel.MapTasks, mt)
 			}
-
 		}
 	}
 	c.validateParallelInstrument(parallel)
