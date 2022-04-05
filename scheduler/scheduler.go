@@ -279,12 +279,6 @@ type ScheduledJob struct {
 	err       error           // the job error, if encountered when the job ran
 	invalid   bool            // whether the job is marked invalid and should not run
 
-	// waitingEl tracks the position of the Job in the waiting queue.
-	// Having a reference to the list node allows efficiently removing
-	// entries from the list.
-	waitingEl *list.Element
-	// TODO(abg): We may be able to do this without a waiting list.
-
 	// NOTE: DO NOT add methods to ScheduledJob. There's danger of using
 	// methods that read or write internal state outside the Scheduler.run
 	// function which, as discussed above, introduces a data race.
@@ -310,18 +304,14 @@ func (s *Scheduler) Enqueue(ctx context.Context, j Job) *ScheduledJob {
 }
 
 // run implements the Scheduler Loop. The Scheduler Loop works by maintaining
-// two lists:
-//
-// ready    jobs ready to be run, with no outstanding dependencies
-// waiting  jobs waiting for dependencies to run before they can be considered
-//          ready
+// the ready list, which contains jobs ready to be run, with no outstanding dependencies.
 //
 // Each tick of the loop runs one of the following branches:
 //
 //  - Attempt to schedule a job if `ready` is non-empty and a worker is
 //    available.
-//  - Process a newly Enqueued job, placing it in `ready` or `waiting`.
-//  - If a job finished running, signal jobs in `waiting` that were awaiting
+//  - Process a newly Enqueued job, placing it in `ready` if it's ready to be executed.
+//  - If a job finished running, signal jobs that were awaiting
 //    its completion. Those that have no more dependencies outstanding are
 //    moved to the `ready` list.
 func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
@@ -356,9 +346,6 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 		tickerC = ticker.C
 	}
 
-	// Jobs waiting for other jobs to finish.
-	waiting := list.New() // []*ScheduledJob
-
 	// Jobs ready to be thrown into the ready channel.
 	ready := list.New() // []*ScheduledJob
 	// TODO(abg): Use a maxheap here based on the number of consumers.
@@ -370,6 +357,9 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 	// Total number of jobs in flight. This includes jobs that are
 	// executing or waiting to be executed.
 	pending := 0
+
+	// Number of jobs waiting for other jobs to finish.
+	waiting := 0
 
 	// Tracks whether we're still expecting new Enqueue calls. After this
 	// is set to nil, we don't expect new Enqueue requests.
@@ -431,7 +421,7 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 			if job.remaining == 0 {
 				ready.PushBack(job)
 			} else {
-				job.waitingEl = waiting.PushBack(job)
+				waiting++
 			}
 
 		case res := <-s.donec:
@@ -460,13 +450,13 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 				}
 			}
 
-			// Notify jobs waiting on this job, moving them to
+			// Notify jobs waiting on this job, adding them to
 			// ready if this was their last outstanding
 			// dependency.
 			for _, consumer := range job.consumers {
 				consumer.remaining--
 				if consumer.remaining == 0 {
-					waiting.Remove(consumer.waitingEl)
+					waiting--
 					ready.PushBack(consumer)
 				}
 			}
@@ -480,7 +470,7 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 				State{
 					Pending:     pending,
 					Ready:       ready.Len(),
-					Waiting:     waiting.Len(),
+					Waiting:     waiting,
 					IdleWorkers: idleWorkers(s.concurrency, ongoing),
 					Concurrency: s.concurrency,
 				},
