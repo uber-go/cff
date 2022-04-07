@@ -759,3 +759,48 @@ func TestPredicateScheduling(t *testing.T) {
 		t.Errorf("unexpected failure from Scheduler.Wait: %v", err)
 	}
 }
+
+func TestWorkerTermination(t *testing.T) {
+	t.Parallel()
+
+	N := 3
+	sched := Config{
+		Concurrency:     N,
+		ContinueOnError: true,
+	}.New()
+
+	failDep := make([]*ScheduledJob, N)
+	// schedule N jobs, each of which that kills the worker goroutine with
+	// runtime.Goexit.
+	for i := 0; i < N; i++ {
+		failDep[i] = sched.Enqueue(context.Background(), Job{
+			Run: func(context.Context) error {
+				runtime.Goexit()
+				return nil
+			},
+		})
+	}
+
+	// This will be blocked indefinitey if worker pool threads are not
+	// recovered upon unexpected exits.
+	var result string
+	sched.Enqueue(context.Background(), Job{
+		Run: func(context.Context) error {
+			result = "ran"
+			return nil
+		},
+	})
+
+	// This depends on terminated jobs, so it shouldn't run.
+	sched.Enqueue(context.Background(), Job{
+		Run: func(context.Context) error {
+			t.Error("this function should not run")
+			return nil
+		},
+		Dependencies: failDep,
+	})
+
+	err := sched.Wait(context.Background())
+	assert.Contains(t, err.Error(), "job exited unexpectedly")
+	assert.Equal(t, "ran", result)
+}

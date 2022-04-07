@@ -124,8 +124,21 @@ var errJobInvalid = errors.New("job invalid")
 // NOTE: If you rename this function, update _workerFunction in
 // internal/tests/setconcurrency/setconcurrency.go.
 func worker(readyc <-chan *ScheduledJob, donec chan<- jobResult) {
+	var (
+		currentJob  *ScheduledJob
+		exitCleanly bool
+	)
+	defer func() {
+		if exitCleanly {
+			return
+		}
+		donec <- jobResult{Job: currentJob, Err: errors.New("job exited unexpectedly")}
+		go worker(readyc, donec)
+	}()
+
 	for j := range readyc {
 		res := jobResult{Job: j}
+		currentJob = j
 
 		if err := j.ctx.Err(); err != nil {
 			// Don't run if context already cancelled.
@@ -136,9 +149,10 @@ func worker(readyc <-chan *ScheduledJob, donec chan<- jobResult) {
 		} else {
 			res.Err = j.run(j.ctx)
 		}
-
+		currentJob = nil
 		donec <- res
 	}
+	exitCleanly = true
 }
 
 // Scheduler schedules jobs for a CFF2 flow based on their dependencies.
