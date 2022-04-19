@@ -158,6 +158,13 @@ func TestMultiple(t *testing.T) {
 	assert.Equal(t, src, targetB)
 }
 
+func TestSliceWrapped(t *testing.T) {
+	src := []int{1, 2}
+	target := make([]int, len(src))
+	require.NoError(t, SliceWrapped(src, target))
+	assert.Equal(t, src, target)
+}
+
 func TestSliceError(t *testing.T) {
 	src := []string{"1", "error"}
 	target := make([]string, len(src))

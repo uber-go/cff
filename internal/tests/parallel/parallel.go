@@ -308,6 +308,23 @@ func SliceMultiple(srcA, srcB, targetA, targetB []int) error {
 	)
 }
 
+type manyInts []int
+
+// SliceWrapped runs cff.Slice with a wrapped type for a slice.
+func SliceWrapped(src, target manyInts) error {
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Slice(
+			func(idx int, val int) error {
+				target[idx] = val
+				return nil
+			},
+			src,
+		),
+	)
+}
+
 // AssignSliceItems runs cff.Slice in parallel to populate the provided slices.
 // AssignSliceItems expects len(target) >= len(src).
 func AssignSliceItems(src, target []string, keepgoing bool) error {

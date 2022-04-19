@@ -273,9 +273,16 @@ func (c *compiler) compileSlice(p *parallel, ce *ast.CallExpr) *sliceTask {
 		return nil
 	}
 
+	var slc *types.Slice
 	slc, ok := typ.(*types.Slice)
+
+	// If not a slice, check whether it is an alias for a slice.
 	if !ok {
-		c.errf(c.nodePosition(slce), "the second argument to cff.Slice must be a slice, got %v", typ)
+		slc, ok = typ.Underlying().(*types.Slice)
+	}
+
+	if !ok {
+		c.errf(c.nodePosition(slce), "the underlying type of the second argument to cff.Slice must be a slice, got %v", typ)
 		return nil
 	}
 
