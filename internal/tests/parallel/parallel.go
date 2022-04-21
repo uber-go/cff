@@ -334,13 +334,13 @@ func AssignSliceItems(src, target []string, keepgoing bool) error {
 		cff.ContinueOnError(keepgoing),
 		cff.Slice(
 			func(idx int, val string) error {
+				target[idx] = val
 				switch val {
 				case "error":
 					return errors.New("sad times")
 				case "panic":
 					panic("sadder times")
 				default:
-					target[idx] = val
 					return nil
 				}
 			},

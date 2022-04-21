@@ -174,7 +174,7 @@ func TestSliceError(t *testing.T) {
 	require.Error(t, err)
 
 	assert.Equal(t, "sad times", err.Error())
-	assert.NotEqual(t, src, target)
+	assert.Equal(t, "error", target[1])
 }
 
 func TestSlicePanic(t *testing.T) {
@@ -186,7 +186,7 @@ func TestSlicePanic(t *testing.T) {
 	require.Error(t, err)
 
 	assert.Equal(t, "panic: sadder times", err.Error())
-	assert.NotEqual(t, src, target)
+	assert.Equal(t, "panic", target[1])
 }
 
 func TestSliceContinueOnError(t *testing.T) {
@@ -199,8 +199,7 @@ func TestSliceContinueOnError(t *testing.T) {
 
 	assert.Contains(t, err.Error(), "sad times")
 	assert.Contains(t, err.Error(), "panic: sadder times")
-
-	assert.Equal(t, []string{"copy", "", "", "me"}, target)
+	assert.Equal(t, []string{"copy", "error", "panic", "me"}, target)
 }
 
 func TestSliceEnd(t *testing.T) {
