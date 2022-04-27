@@ -53,13 +53,7 @@
 		},
 	)
 
-	type task struct {
-		emitter {{ $cff }}.TaskEmitter
-		fn func({{ $context }}.Context) error
-		ran {{ $cff }}.AtomicBool
-	}
-
-	var tasks []*task
+	var tasks []*{{ template "task" }}
 	defer func() {
 		for _, t := range tasks {
 			if !t.ran.Load() {

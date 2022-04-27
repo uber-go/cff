@@ -6,7 +6,7 @@
 for key, val := range {{ expr .Map }} {
 	key := key
 	val := val
-	{{ $t }} := new(task)
+	{{ $t }} := new({{ template "task" }})
 	{{ $t }}.fn = func(ctx {{ $context }}.Context) (err error) {
 		defer func() {
 			recovered := recover()

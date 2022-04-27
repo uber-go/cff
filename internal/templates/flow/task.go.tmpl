@@ -10,7 +10,7 @@
 		{{ end }}
 	)
 {{ end -}}
-{{ $t }} := new(task)
+{{ $t }} := new({{ template "task" }})
 {{ $t }}.emitter =
 	{{- if .Instrument -}}
 		emitter.TaskInit(

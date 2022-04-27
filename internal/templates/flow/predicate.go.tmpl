@@ -4,7 +4,7 @@
 
 // {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
 var p{{ predHash . }} bool
-{{ $p }} := new(predicate)
+{{ $p }} := new({{ template "predicate" }})
 {{ $p }}.run = func(ctx {{ $context }}.Context) (err error) {
     p{{ predHash . }} = {{ expr .Function.Node }}{{ template "callTaskArgs" . }}
     return nil

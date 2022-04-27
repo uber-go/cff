@@ -1,0 +1,22 @@
+{{- define "task" -}}
+	{{- $context := import "context" -}}
+	{{- $cff := import "go.uber.org/cff" -}}
+
+	struct {
+		emitter {{ $cff }}.TaskEmitter
+		ran     {{ $cff }}.AtomicBool
+		run     func({{ $context }}.Context) error
+		job     *{{ $cff }}.ScheduledJob
+	}
+{{- end -}}
+
+{{- define "predicate" -}}
+	{{- $context := import "context" -}}
+	{{- $cff := import "go.uber.org/cff" -}}
+
+	struct {
+		ran {{ $cff }}.AtomicBool
+		run func({{ $context }}.Context) error
+		job *{{ $cff }}.ScheduledJob
+	}
+{{- end -}}

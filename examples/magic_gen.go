@@ -105,20 +105,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			},
 		)
 
-		type task struct {
+		var tasks []*struct {
 			emitter cff.TaskEmitter
 			ran     cff.AtomicBool
 			run     func(context.Context) error
 			job     *cff.ScheduledJob
 		}
-
-		type predicate struct {
-			ran cff.AtomicBool
-			run func(context.Context) error
-			job *cff.ScheduledJob
-		}
-
-		var tasks []*task
 		defer func() {
 			for _, t := range tasks {
 				if !t.ran.Load() {
@@ -132,7 +124,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			v2 *GetManagerRequest
 			v3 *ListUsersRequest
 		)
-		task0 := new(task)
+		task0 := new(struct {
+			emitter cff.TaskEmitter
+			ran     cff.AtomicBool
+			run     func(context.Context) error
+			job     *cff.ScheduledJob
+		})
 		task0.emitter = cff.NopTaskEmitter()
 		task0.run = func(ctx context.Context) (err error) {
 			taskEmitter := task0.emitter
@@ -169,7 +166,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var (
 			v4 *GetManagerResponse
 		)
-		task1 := new(task)
+		task1 := new(struct {
+			emitter cff.TaskEmitter
+			ran     cff.AtomicBool
+			run     func(context.Context) error
+			job     *cff.ScheduledJob
+		})
 		task1.emitter = cff.NopTaskEmitter()
 		task1.run = func(ctx context.Context) (err error) {
 			taskEmitter := task1.emitter
@@ -214,7 +216,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var (
 			v5 *ListUsersResponse
 		)
-		task4 := new(task)
+		task4 := new(struct {
+			emitter cff.TaskEmitter
+			ran     cff.AtomicBool
+			run     func(context.Context) error
+			job     *cff.ScheduledJob
+		})
 		task4.emitter = emitter.TaskInit(
 			&cff.TaskInfo{
 				Name:   _64_19,
@@ -271,7 +278,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		// go.uber.org/cff/examples/magic.go:75:4
 		var p0 bool
-		pred1 := new(predicate)
+		pred1 := new(struct {
+			ran cff.AtomicBool
+			run func(context.Context) error
+			job *cff.ScheduledJob
+		})
 		pred1.run = func(ctx context.Context) (err error) {
 			p0 = _75_18(v2)
 			return nil
@@ -288,7 +299,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var (
 			v6 []*SendEmailRequest
 		)
-		task5 := new(task)
+		task5 := new(struct {
+			emitter cff.TaskEmitter
+			ran     cff.AtomicBool
+			run     func(context.Context) error
+			job     *cff.ScheduledJob
+		})
 		task5.emitter = emitter.TaskInit(
 			&cff.TaskInfo{
 				Name:   _79_19,
@@ -348,7 +364,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var (
 			v7 []*SendEmailResponse
 		)
-		task2 := new(task)
+		task2 := new(struct {
+			emitter cff.TaskEmitter
+			ran     cff.AtomicBool
+			run     func(context.Context) error
+			job     *cff.ScheduledJob
+		})
 		task2.emitter = cff.NopTaskEmitter()
 		task2.run = func(ctx context.Context) (err error) {
 			taskEmitter := task2.emitter
@@ -393,7 +414,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		var (
 			v8 *Response
 		)
-		task3 := new(task)
+		task3 := new(struct {
+			emitter cff.TaskEmitter
+			ran     cff.AtomicBool
+			run     func(context.Context) error
+			job     *cff.ScheduledJob
+		})
 		task3.emitter = cff.NopTaskEmitter()
 		task3.run = func(ctx context.Context) (err error) {
 			taskEmitter := task3.emitter
@@ -520,13 +546,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			},
 		)
 
-		type task struct {
+		var tasks []*struct {
 			emitter cff.TaskEmitter
 			fn      func(context.Context) error
 			ran     cff.AtomicBool
 		}
-
-		var tasks []*task
 		defer func() {
 			for _, t := range tasks {
 				if !t.ran.Load() {
@@ -536,7 +560,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		}()
 
 		// go.uber.org/cff/examples/magic.go:91:4
-		task6 := new(task)
+		task6 := new(struct {
+			emitter cff.TaskEmitter
+			fn      func(context.Context) error
+			ran     cff.AtomicBool
+		})
 		task6.emitter = cff.NopTaskEmitter()
 		task6.fn = func(ctx context.Context) (err error) {
 			taskEmitter := task6.emitter
@@ -573,7 +601,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		tasks = append(tasks, task6)
 
 		// go.uber.org/cff/examples/magic.go:94:4
-		task7 := new(task)
+		task7 := new(struct {
+			emitter cff.TaskEmitter
+			fn      func(context.Context) error
+			ran     cff.AtomicBool
+		})
 		task7.emitter = cff.NopTaskEmitter()
 		task7.fn = func(ctx context.Context) (err error) {
 			taskEmitter := task7.emitter
@@ -610,7 +642,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		tasks = append(tasks, task7)
 
 		// go.uber.org/cff/examples/magic.go:97:4
-		task8 := new(task)
+		task8 := new(struct {
+			emitter cff.TaskEmitter
+			fn      func(context.Context) error
+			ran     cff.AtomicBool
+		})
 		task8.emitter = emitter.TaskInit(
 			&cff.TaskInfo{
 				Name:   _100_19,
@@ -659,7 +695,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		for idx, val := range sliceTask9Slice {
 			idx := idx
 			val := val
-			sliceTask9 := new(task)
+			sliceTask9 := new(struct {
+				emitter cff.TaskEmitter
+				fn      func(context.Context) error
+				ran     cff.AtomicBool
+			})
 			sliceTask9.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
@@ -682,7 +722,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		for idx, val := range sliceTask10Slice {
 			idx := idx
 			val := val
-			sliceTask10 := new(task)
+			sliceTask10 := new(struct {
+				emitter cff.TaskEmitter
+				fn      func(context.Context) error
+				ran     cff.AtomicBool
+			})
 			sliceTask10.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
@@ -718,7 +762,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		for key, val := range _127_4 {
 			key := key
 			val := val
-			mapTask11 := new(task)
+			mapTask11 := new(struct {
+				emitter cff.TaskEmitter
+				fn      func(context.Context) error
+				ran     cff.AtomicBool
+			})
 			mapTask11.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()

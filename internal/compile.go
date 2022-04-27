@@ -666,7 +666,7 @@ type compiledFunc struct {
 
 func (c *compiler) compileFunction(expr ast.Expr) *compiledFunc {
 	typ := c.info.TypeOf(expr)
-	sig, ok := typ.(*types.Signature)
+	sig, ok := typ.Underlying().(*types.Signature)
 	if !ok {
 		c.errf(c.nodePosition(expr), "expected function, got %v", typ)
 		return nil

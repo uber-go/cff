@@ -52,20 +52,7 @@
 		},
 	)
 
-	type task struct {
-		emitter {{ $cff }}.TaskEmitter
-		ran {{ $cff }}.AtomicBool
-		run func({{ $context }}.Context) error
-		job *{{ $cff }}.ScheduledJob
-	}
-
-	type predicate struct {
-		ran {{ $cff }}.AtomicBool
-		run func({{ $context }}.Context) error
-		job *{{ $cff }}.ScheduledJob
-	}
-
-	var tasks []*task
+	var tasks []*{{ template "task" }}
 	defer func() {
 		for _, t := range tasks {
 			if !t.ran.Load() {

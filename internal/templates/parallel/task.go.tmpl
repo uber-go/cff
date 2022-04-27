@@ -3,7 +3,7 @@
 {{- $t := printf "task%d" .Serial -}}
 
 // {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
-{{ $t }} := new(task)
+{{ $t }} := new({{ template "task" }})
 {{ $t }}.emitter =
 	{{- if .Instrument -}}
 		emitter.TaskInit(

@@ -1,0 +1,10 @@
+{{- define "task" -}}
+	{{- $context := import "context" -}}
+	{{- $cff := import "go.uber.org/cff" -}}
+
+	struct {
+		emitter {{ $cff }}.TaskEmitter
+		fn      func({{ $context }}.Context) error
+		ran     {{ $cff }}.AtomicBool
+	}
+{{- end -}}

@@ -11,7 +11,7 @@
 for idx, val := range {{ $t }}Slice {
 	idx := idx
 	val := val
-	{{ $t }} := new(task)
+	{{ $t }} := new({{ template "task" }})
 	{{ $t }}.fn = func(ctx {{ $context }}.Context) (err error) {
 		defer func() {
 			recovered := recover()
