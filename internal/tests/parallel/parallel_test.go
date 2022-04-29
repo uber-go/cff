@@ -3,13 +3,16 @@ package parallel
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/multierr"
+	"golang.org/x/exp/maps"
 )
 
 func TestTasksAndTask(t *testing.T) {
@@ -556,4 +559,150 @@ func TestMapContinueOnError(t *testing.T) {
 
 	assert.Equal(t, []string{"copy", "me"}, keys)
 	assert.Equal(t, []int{0, 1}, values)
+}
+
+func TestMapEnd(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2, "c": 3, "d": 4}
+
+	t.Run("success", func(t *testing.T) {
+		// Push keys from the map into an unbuffered channel.
+		//
+		// Reading on the channel will deadlock if the end function is
+		// never called.
+		keyc := make(chan string)
+		go ForEachMapItem(m, func(k string, _ int) {
+			keyc <- k
+		}, func() {
+			close(keyc)
+			// If this does not get called,
+			// the range on keyc will deadlock
+			// because the channel is never closed.
+		})
+
+		keys := make([]string, 0, len(m))
+		for k := range keyc {
+			keys = append(keys, k)
+		}
+
+		assert.ElementsMatch(t, maps.Keys(m), keys)
+	})
+
+	t.Run("panic", func(t *testing.T) {
+		called := false
+		defer func() {
+			assert.True(t, called, "MapEnd never called")
+		}()
+
+		err := ForEachMapItem(m, func(string, int) {
+		}, func() {
+			called = true
+			panic("great sadness")
+		})
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "panic")
+	})
+
+	t.Run("skipped on panic", func(t *testing.T) {
+		err := ForEachMapItem(m, func(s string, _ int) {
+			if s == "c" {
+				panic("great sadness")
+			}
+		}, func() {
+			t.Error("This function should not be called")
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "panic")
+	})
+}
+
+func TestMapEnd_ReturnsError(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2, "c": 3, "d": 4}
+
+	t.Run("success", func(t *testing.T) {
+		calledEnd := false
+		defer func() {
+			assert.True(t, calledEnd, "MapEnd not called")
+		}()
+
+		err := ForEachMapItemError(m, func(k string, _ int) error {
+			switch k {
+			case "a", "b", "c", "d":
+				return nil
+			default:
+				return fmt.Errorf("unexpected key %q", k)
+			}
+		}, func() error {
+			calledEnd = true
+			return nil
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("errors", func(t *testing.T) {
+		giveErr := errors.New("great sadness")
+
+		err := ForEachMapItemError(m, func(string, int) error {
+			// doesn't matter
+			return nil
+		}, func() error {
+			return giveErr
+		})
+		assert.ErrorIs(t, err, giveErr)
+	})
+
+	t.Run("skipped on error", func(t *testing.T) {
+		giveErr := errors.New("great sadness")
+
+		err := ForEachMapItemError(m, func(s string, _ int) error {
+			if s == "c" {
+				return giveErr
+			}
+			return nil
+		}, func() error {
+			t.Errorf("this function should not be called")
+			return nil
+		})
+		assert.ErrorIs(t, err, giveErr)
+	})
+}
+
+func TestMapEnd_HasContext(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2, "c": 3, "d": 4}
+
+	t.Run("success", func(t *testing.T) {
+		calledEnd := false
+		defer func() {
+			assert.True(t, calledEnd, "MapEnd not called")
+		}()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		err := ForEachMapItemContext(ctx, m,
+			func(ctx context.Context, k string, _ int) {
+				_, ok := ctx.Deadline()
+				assert.True(t, ok, "task %q received no deadline", k)
+			}, func(ctx context.Context) {
+				_, ok := ctx.Deadline()
+				assert.True(t, ok, "MapEnd received no deadline")
+				calledEnd = true
+			})
+		require.NoError(t, err)
+	})
+
+	t.Run("expired context", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		err := ForEachMapItemContext(ctx, m,
+			func(ctx context.Context, k string, _ int) {
+				if k == "c" {
+					cancel()
+				}
+			}, func(context.Context) {
+				t.Errorf("this function should not be called")
+			})
+		assert.ErrorIs(t, err, context.Canceled)
+	})
 }

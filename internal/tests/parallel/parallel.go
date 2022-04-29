@@ -432,3 +432,47 @@ func AssignMapItems(src map[string]int, keys []string, values []int, keepgoing b
 		),
 	)
 }
+
+// ForEachMapItem runs the given function on all items of the given map
+// concurrently, and then the provided function when all items have been
+// processed.
+func ForEachMapItem[K comparable, V any](
+	src map[K]V,
+	fn func(K, V),
+	after func(),
+) error {
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Map(fn, src, cff.MapEnd(after)),
+	)
+}
+
+// ForEachMapItemError is a variant of ForEachMapItem where all functions
+// can return an error.
+func ForEachMapItemError[K comparable, V any](
+	src map[K]V,
+	fn func(K, V) error,
+	after func() error,
+) error {
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Map(fn, src, cff.MapEnd(after)),
+	)
+}
+
+// ForEachMapItemContext is a variant of ForEachMapItem where all functions
+// accept a context.
+func ForEachMapItemContext[K comparable, V any](
+	ctx context.Context,
+	src map[K]V,
+	fn func(context.Context, K, V),
+	after func(context.Context),
+) error {
+	return cff.Parallel(
+		ctx,
+		cff.Concurrency(2),
+		cff.Map(fn, src, cff.MapEnd(after)),
+	)
+}

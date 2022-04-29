@@ -126,6 +126,16 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			},
 			map[string]string{"key": "value"},
 		),
+		cff.Map(
+			func(ctx context.Context, key string, value int) error {
+				_ = fmt.Sprintf("%q: %v", key, value)
+				return nil
+			},
+			map[string]int{"a": 1, "b": 2, "c": 3},
+			cff.MapEnd(func(context.Context) {
+				_ = fmt.Sprint("}")
+			}),
+		),
 	)
 	return res, err
 }

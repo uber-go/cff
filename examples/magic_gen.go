@@ -502,6 +502,14 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return nil
 		}
 		_127_4 := map[string]string{"key": "value"}
+		_130_4 := func(ctx context.Context, key string, value int) error {
+			_ = fmt.Sprintf("%q: %v", key, value)
+			return nil
+		}
+		_134_4 := map[string]int{"a": 1, "b": 2, "c": 3}
+		_135_15 := func(context.Context) {
+			_ = fmt.Sprint("}")
+		}
 		ctx := _84_3
 		emitter := cff.EmitterStack(_86_19, _87_19)
 
@@ -783,6 +791,47 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				Run: mapTask11.fn,
 			})
 		}
+
+		mapTask12Jobs := make([]*cff.ScheduledJob, 0, len(_134_4))
+		// go.uber.org/cff/examples/magic.go:129:3
+		for key, val := range _134_4 {
+			key := key
+			val := val
+			mapTask12 := new(struct {
+				emitter cff.TaskEmitter
+				fn      func(context.Context) error
+				ran     cff.AtomicBool
+			})
+			mapTask12.fn = func(ctx context.Context) (err error) {
+				defer func() {
+					recovered := recover()
+					if recovered != nil {
+						err = fmt.Errorf("panic: %v", recovered)
+					}
+				}()
+
+				err = _130_4(ctx, key, val)
+				return
+			}
+
+			mapTask12Jobs = append(mapTask12Jobs, sched.Enqueue(ctx, cff.Job{
+				Run: mapTask12.fn,
+			}))
+		}
+
+		sched.Enqueue(ctx, cff.Job{
+			Dependencies: mapTask12Jobs,
+			Run: func(ctx context.Context) (err error) {
+				defer func() {
+					if recovered := recover(); recovered != nil {
+						err = fmt.Errorf("panic: %v", recovered)
+					}
+				}()
+
+				_135_15(ctx)
+				return
+			},
+		})
 
 		if err := sched.Wait(ctx); err != nil {
 			parallelEmitter.ParallelError(ctx, err)

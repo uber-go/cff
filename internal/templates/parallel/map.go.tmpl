@@ -2,6 +2,10 @@
 {{- $cff := import "go.uber.org/cff" -}}
 {{- $t := printf "mapTask%d" .Serial -}}
 
+{{ if .MapEndFn -}}
+{{ $t }}Jobs := make([]*{{ $cff }}.ScheduledJob, 0, len({{ expr .Map }}))
+{{ end -}}
+
 // {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
 for key, val := range {{ expr .Map }} {
 	key := key
@@ -19,10 +23,30 @@ for key, val := range {{ expr .Map }} {
 		return
 	}
 
-	sched.Enqueue(ctx, {{ $cff }}.Job{
-		Run: {{ $t }}.fn,
-	})
+	{{ if .MapEndFn -}}
+		{{ $t }}Jobs = append({{ $t }}Jobs,
+	{{- end -}}
+		sched.Enqueue(ctx, {{ $cff }}.Job{
+			Run: {{ $t }}.fn,
+		})
+	{{- if .MapEndFn }} ) {{ end }}
 }
+
+{{ with .MapEndFn -}}
+	sched.Enqueue(ctx, {{ $cff }}.Job{
+		Dependencies: {{ $t }}Jobs,
+		Run: func(ctx {{ $context }}.Context) (err error) {
+			defer func() {
+				if recovered := recover(); recovered != nil {
+					err = {{ import "fmt" }}.Errorf("panic: %v", recovered)
+				}
+			}()
+
+			{{ if .HasError }} err = {{ end }} {{ template "callFunc" . }}
+			return
+		},
+	})
+{{ end }}
 
 {{- define "callMap" -}}
 	{{- expr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }} key, val)

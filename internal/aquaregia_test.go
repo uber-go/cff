@@ -379,6 +379,26 @@ var codeGenerateFailCases = map[string][]errorCase{
 			ErrorMatches: "variadic functions are not yet supported",
 			TestFuncs:    []string{"Variadic", "VariadicPredicate"},
 		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: "cff.Map accepts at most one cff.MapEnd option",
+			TestFuncs:    []string{"ParallelMapWithMultipleMapEnds"},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: "MapEnd functions should accept at most one context.Context parameter",
+			TestFuncs:    []string{"ParallelMapEndWithNonContextArgument"},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: "MapEnd functions should return an error or nothing",
+			TestFuncs:    []string{"ParallelMapEndWithNonErrorResult"},
+		},
+		{
+			File:         "parallel.go",
+			ErrorMatches: `"cff.MapEnd" is an invalid option when "ContinueOnError" is used`,
+			TestFuncs:    []string{"ParallelMapEndWithContinueOnError"},
+		},
 	},
 	"cycles": {
 		{

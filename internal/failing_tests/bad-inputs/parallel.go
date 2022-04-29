@@ -477,6 +477,60 @@ func ParallelMapWithDifferentValueType() {
 	)
 }
 
+// ParallelMapWithMultipleMapEnds has a cff.Map call with multiple cff.MapEnd
+// options.
+func ParallelMapWithMultipleMapEnds() {
+	cff.Parallel(
+		context.Background(),
+		cff.Map(
+			func(k string, v bool) (e error) { return },
+			map[string]bool{"true": true},
+			cff.MapEnd(func() {}),
+			cff.MapEnd(func(context.Context) {}),
+		),
+	)
+}
+
+// ParallelMapEndWithNonContextArgument has a cff.MapEnd call
+// with a function that accepts a non-context argument.
+func ParallelMapEndWithNonContextArgument() {
+	cff.Parallel(
+		context.Background(),
+		cff.Map(
+			func(k string, v bool) (e error) { return },
+			map[string]bool{"true": true},
+			cff.MapEnd(func(string) {}),
+		),
+	)
+}
+
+// ParallelMapEndWithNonErrorResult has a cff.MapEnd call
+// with a function that returns a non-error result.
+func ParallelMapEndWithNonErrorResult() {
+	cff.Parallel(
+		context.Background(),
+		cff.Map(
+			func(k string, v bool) (e error) { return },
+			map[string]bool{"true": true},
+			cff.MapEnd(func() int { return 0 }),
+		),
+	)
+}
+
+// ParallelMapEndWithContinueOnError has a cff.MapEnd call
+// with a ContinueOnError.
+func ParallelMapEndWithContinueOnError() {
+	cff.Parallel(
+		context.Background(),
+		cff.ContinueOnError(true),
+		cff.Map(
+			func(k string, v bool) (e error) { return },
+			map[string]bool{"true": true},
+			cff.MapEnd(func() {}),
+		),
+	)
+}
+
 func chanSend(s string, c chan<- string) {
 	c <- s
 }

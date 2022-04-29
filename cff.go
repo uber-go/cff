@@ -161,6 +161,8 @@ func Concurrency(n int) Option {
 // configured to true, the Parallel will return an error that accumulates the
 // messages of all encountered errors after executing all remaining tasks.
 //
+// ContinueOnError is incompatible with SliceEnd and MapEnd.
+//
 // This is a code generation directive.
 func ContinueOnError(bool) Option {
 	panic(_noGenMsg)
@@ -406,6 +408,42 @@ func SliceEnd(fn interface{}) SliceOption {
 // cff.Map is only an option for cff.Parallel.
 //
 // This is a code generation directive.
-func Map(fn interface{}, m interface{}) Option {
+func Map(fn interface{}, m interface{}, opts ...MapOption) Option {
+	panic(_noGenMsg)
+}
+
+// MapOption customizes the execution of a cff.Map.
+type MapOption interface {
+	cffMapOption()
+}
+
+// MapEnd specifies a function for execution with a cff.Map.
+// This function will run after all items in the cff.Map have finished.
+//
+//   cff.Map(
+//       func(name string, value *User) {
+//           // ...
+//       },
+//       usersMap,
+//       cff.MapEnd(func() {
+//           // ...
+//       })
+//
+// Functions provided to MapEnd can,
+//
+//  - accept zero arguments
+//  - accept context.Context as an argument
+//  - return no results
+//  - return an error as a result
+//
+// That is, the following are the only valid signatures for a MapEnd function.
+//
+//  func()
+//  func() error
+//  func(context.Context)
+//  func(context.Context) error
+//
+// MapEnd cannot be used with cff.ContinueOnError.
+func MapEnd(fn interface{}) MapOption {
 	panic(_noGenMsg)
 }

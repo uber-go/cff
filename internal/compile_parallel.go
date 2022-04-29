@@ -121,6 +121,12 @@ func (c *compiler) validateParallelInstrument(p *parallel) {
 			c.errf(c.nodePosition(p.Node), `"cff.SliceEnd" is an invalid option when "ContinueOnError" is used`)
 		}
 	}
+
+	for _, m := range p.MapTasks {
+		if m.MapEndFn != nil && p.ContinueOnError != nil {
+			c.errf(c.nodePosition(p.Node), `"cff.MapEnd" is an invalid option when "ContinueOnError" is used`)
+		}
+	}
 }
 
 func (c *compiler) compileParallelTask(p *parallel, call ast.Expr, opts []ast.Expr) *parallelTask {
@@ -308,6 +314,7 @@ type mapTask struct {
 	Map      ast.Expr
 	KeyType  types.Type
 	ElemType types.Type
+	MapEndFn *compiledFunc
 
 	// Serial is a unique serially incrementing number for each mapTask.
 	Serial int
@@ -359,5 +366,49 @@ func (c *compiler) compileMap(ce *ast.CallExpr) *mapTask {
 		PosInfo:  c.getPosInfo(ce),
 	}
 	c.taskSerial++
+
+	// Apply map options, if any.
+	for _, opt := range ce.Args[2:] {
+		ce, fn, err := c.identifyOption(opt)
+		if err != nil {
+			c.errf(c.nodePosition(opt), err.Error())
+			continue
+		}
+
+		switch fn.Name() {
+		case "MapEnd":
+			mapEndFn := c.compileMapEnd(opt, ce)
+			if mapEndFn == nil {
+				continue
+			}
+
+			if m.MapEndFn != nil {
+				c.errf(c.nodePosition(opt), "cff.Map accepts at most one cff.MapEnd option")
+				continue
+			}
+
+			m.MapEndFn = mapEndFn
+		default:
+			c.errf(c.nodePosition(opt), "unrecognized cff.Map option %q", fn.Name())
+		}
+	}
+
 	return m
+}
+
+func (c *compiler) compileMapEnd(opt ast.Expr, ce *ast.CallExpr) *compiledFunc {
+	fn := c.compileFunction(ce.Args[0])
+	switch {
+	case fn == nil:
+		c.errf(c.nodePosition(opt), "MapEnd function failed to compile")
+		return nil
+	case len(fn.Inputs) != 0:
+		c.errf(c.nodePosition(opt), "MapEnd functions should accept at most one context.Context parameter")
+		return nil
+	case len(fn.Outputs) != 0:
+		c.errf(c.nodePosition(opt), "MapEnd functions should return an error or nothing")
+		return nil
+	default:
+		return fn
+	}
 }

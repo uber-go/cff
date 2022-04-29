@@ -37,7 +37,7 @@
 
 	defer {{ $t }}.ran.Store(true)
 
-	{{ if .Function.HasError }} err = {{ end }}{{ template "callFunc" . }}
+	{{ if .Function.HasError }} err = {{ end }}{{ template "callFunc" .Function }}
 	{{ if .Function.HasError }}
 		if err != nil {
 			taskEmitter.TaskError(ctx, err)
@@ -54,7 +54,7 @@ sched.Enqueue(ctx, {{ $cff }}.Job{
 tasks = append(tasks, task{{ .Serial }})
 
 {{- define "callFunc" -}}
-	{{- expr .Function.Node }}({{- if .Function.WantCtx }}ctx,{{ end }})
+	{{- expr .Node }}({{- if .WantCtx }}ctx,{{ end }})
 {{- end -}}
 
 {{- /* vim:set ft=gotexttmpl noet: */ -}}
