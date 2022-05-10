@@ -281,6 +281,53 @@ func (h *DefaultEmitter) FlowAlwaysPanics(ctx context.Context) {
 	return
 }
 
+// PredicatePanics is a flow that runs a panicing task predicate.
+func (h *DefaultEmitter) PredicatePanics(ctx context.Context) error {
+	return cff.Flow(ctx,
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
+		cff.InstrumentFlow("Flow"),
+		cff.Task(func() {},
+			cff.Predicate(
+				func() bool {
+					panic("sad times")
+					return true
+				},
+			),
+			cff.Invoke(true),
+			cff.Instrument("PredicatePanics"),
+		),
+	)
+}
+
+// PredicatePanicsWithFallback is a flow that runs a panicing task predicate
+// with a fallback.
+func (h *DefaultEmitter) PredicatePanicsWithFallback(ctx context.Context) (string, error) {
+	var (
+		s   string
+		err error
+	)
+	err = cff.Flow(
+		ctx,
+		cff.Results(&s),
+		cff.WithEmitter(cff.TallyEmitter(h.Scope)),
+		cff.InstrumentFlow("Flow"),
+		cff.Task(
+			func(context.Context) (string, error) {
+				return "value", nil
+			},
+			cff.Predicate(
+				func() bool {
+					panic("sad times")
+					return true
+				},
+			),
+			cff.FallbackWith("predicate-fallback"),
+			cff.Instrument("PredicatePanicsWithFallback"),
+		),
+	)
+	return s, err
+}
+
 // ParallelAlwaysPanics tests a task which always panics.
 func (h *DefaultEmitter) ParallelAlwaysPanics(ctx context.Context) {
 	_ = cff.Parallel(ctx,
@@ -505,6 +552,51 @@ func (h *CustomEmitter) FlowAlwaysPanics(ctx context.Context) error {
 			cff.Instrument("Atoi"),
 		),
 	)
+}
+
+// PredicatePanics is a flow that runs a panicing task predicate.
+func (h *CustomEmitter) PredicatePanics(ctx context.Context) error {
+	return cff.Flow(ctx,
+		cff.WithEmitter(h.Emitter),
+		cff.Task(func() {},
+			cff.Predicate(
+				func() bool {
+					panic("sad times")
+					return true
+				},
+			),
+			cff.Invoke(true),
+			cff.Instrument("PredicatePanics"),
+		),
+	)
+}
+
+// PredicatePanicsWithFallback is a flow that runs a panicing task predicate
+// with a fallback.
+func (h *CustomEmitter) PredicatePanicsWithFallback(ctx context.Context) (string, error) {
+	var (
+		s   string
+		err error
+	)
+	err = cff.Flow(
+		ctx,
+		cff.Results(&s),
+		cff.WithEmitter(h.Emitter),
+		cff.Task(
+			func(context.Context) (string, error) {
+				return "value", nil
+			},
+			cff.Predicate(
+				func() bool {
+					panic("sad times")
+					return true
+				},
+			),
+			cff.FallbackWith("predicate-fallback"),
+			cff.Instrument("PredicatePanicsWithFallback"),
+		),
+	)
+	return s, err
 }
 
 // ParallelAlwaysPanics executes a directive-level instrument parallel with a

@@ -407,22 +407,48 @@ func TestInstrumentFlowRecover(t *testing.T) {
 }
 
 func TestInstrumentFlowPanic(t *testing.T) {
-	scope := tally.NewTestScope("", nil)
-	h := &DefaultEmitter{Scope: scope}
-	ctx := context.Background()
-	h.FlowAlwaysPanics(ctx)
+	t.Run("cff.Task panic", func(t *testing.T) {
+		scope := tally.NewTestScope("", nil)
+		h := &DefaultEmitter{Scope: scope}
+		ctx := context.Background()
+		h.FlowAlwaysPanics(ctx)
 
-	counters := scope.Snapshot().Counters()
-	for k := range counters {
-		t.Logf("got counter with key %q", k)
-	}
-	assert.Equal(t, int64(1), counters["task.panic+flow=Flow,task=Task"].Value())
-	assert.Equal(t, int64(1), counters["taskflow.error+flow=Flow"].Value())
-	assert.Nil(t, counters["task.skipped+flow=Flow,task=Task"])
+		counters := scope.Snapshot().Counters()
+		for k := range counters {
+			t.Logf("got counter with key %q", k)
+		}
+		assert.Equal(t, int64(1), counters["task.panic+flow=Flow,task=Task"].Value())
+		assert.Equal(t, int64(1), counters["taskflow.error+flow=Flow"].Value())
+		assert.Nil(t, counters["task.skipped+flow=Flow,task=Task"])
 
-	timers := scope.Snapshot().Timers()
+		timers := scope.Snapshot().Timers()
 
-	assert.NotNil(t, timers["task.timing+flow=Flow,task=Task"])
+		assert.NotNil(t, timers["task.timing+flow=Flow,task=Task"])
+	})
+
+	t.Run("cff.Predicate panic", func(t *testing.T) {
+		scope := tally.NewTestScope("", nil)
+		h := &DefaultEmitter{Scope: scope}
+		require.Error(t, h.PredicatePanics(context.Background()))
+		counters := scope.Snapshot().Counters()
+
+		assert.Equal(t, int64(1), counters["task.panic+flow=Flow,task=PredicatePanics"].Value())
+		assert.Equal(t, int64(1), counters["task.skipped+flow=Flow,task=PredicatePanics"].Value())
+		assert.Equal(t, int64(1), counters["taskflow.error+flow=Flow"].Value())
+	})
+
+	t.Run("cff.Predicate panic with fallback", func(t *testing.T) {
+		scope := tally.NewTestScope("", nil)
+		h := &DefaultEmitter{Scope: scope}
+		res, err := h.PredicatePanicsWithFallback(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, res, "predicate-fallback")
+		counters := scope.Snapshot().Counters()
+
+		assert.Equal(t, int64(1), counters["task.recovered+flow=Flow,task=PredicatePanicsWithFallback"].Value())
+		assert.Equal(t, int64(1), counters["task.skipped+flow=Flow,task=PredicatePanicsWithFallback"].Value())
+		assert.Nil(t, counters["taskflow.error+flow=Flow"])
+	})
 }
 
 func TestInstrumentParallelPanic(t *testing.T) {

@@ -42,3 +42,30 @@ func TestExtraDependencies(t *testing.T) {
 func TestMultiplePredicates(t *testing.T) {
 	require.NoError(t, MultiplePredicates())
 }
+
+func TestPanicRecovered(t *testing.T) {
+	var err error
+	require.NotPanics(
+		t,
+		func() {
+			err = Panicked()
+		},
+	)
+	assert.EqualError(t, err, "task panic: sad times")
+}
+
+func TestPanicFallback(t *testing.T) {
+	var (
+		s   string
+		err error
+	)
+	require.NotPanics(
+		t,
+		func() {
+			s, err = PanickedWithFallback()
+		},
+	)
+
+	assert.NoError(t, err)
+	assert.Equal(t, s, "predicate-fallback")
+}

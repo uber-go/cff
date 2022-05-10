@@ -60,6 +60,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		),
 		cff.Task(
 			h.users.List,
+			cff.Predicate(func(req *GetManagerRequest) bool {
+				return req.LDAPGroup != "everyone"
+			}),
 			cff.FallbackWith(&ListUsersResponse{}),
 			cff.Instrument("FormSendEmailRequest"),
 		),
@@ -71,11 +74,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 				return reqs
 			},
-
 			cff.Predicate(func(req *GetManagerRequest) bool {
 				return req.LDAPGroup != "everyone"
 			}),
-
 			cff.Instrument("FormSendEmailRequest"),
 		),
 	)

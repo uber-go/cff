@@ -42,6 +42,11 @@
 
 	defer func() {
 		recovered := recover()
+		{{- if .Predicate }}
+			if recovered == nil && p{{ predHash .Predicate }}PanicRecover != nil {
+				recovered = p{{ predHash .Predicate }}PanicRecover
+			}
+		{{- end }}
 		if recovered != nil {
 		{{ if .FallbackWith -}}
 			taskEmitter.TaskPanicRecovered(ctx, recovered)

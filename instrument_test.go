@@ -10,6 +10,7 @@ import (
 	"go.uber.org/cff/internal/tests/instrument"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/uber-go/tally"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest/observer"
@@ -37,7 +38,7 @@ func TestInstrumentFlowEmitter(t *testing.T) {
 	flowInfo := &cff.FlowInfo{
 		Name:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   328,
+		Line:   375,
 		Column: 8,
 	}
 
@@ -93,7 +94,7 @@ func TestInstrumentParallelEmitter(t *testing.T) {
 	parallelInfo := &cff.ParallelInfo{
 		Name:   "RunParallelTasksAndTask",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   359,
+		Line:   406,
 		Column: 9,
 	}
 
@@ -405,7 +406,7 @@ func TestInstrumentFlowRecoverME(t *testing.T) {
 	emitter.EXPECT().FlowInit(&cff.FlowInfo{
 		Name:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   328,
+		Line:   375,
 		Column: 8,
 	}).Return(flowEmitter)
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
@@ -554,45 +555,125 @@ func TestT3795761ME(t *testing.T) {
 }
 
 func TestFlowPanic(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	ctx := context.Background()
+	t.Run("flow task panic", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		ctx := context.Background()
 
-	emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := cff.NewMockEmitter(mockCtrl)
 
-	// No flow emitter as flow isn't instrumented.
-	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+		// No flow emitter as flow isn't instrumented.
+		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 
-	taskEmitter.EXPECT().TaskPanic(ctx, gomock.Any())
-	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
+		taskEmitter.EXPECT().TaskPanic(ctx, gomock.Any())
+		taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
 
-	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
 
-	emitter.EXPECT().TaskInit(
-		&cff.TaskInfo{
-			Name:   "Atoi",
-			File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:   501,
-			Column: 12,
-		},
-		&cff.DirectiveInfo{
-			Name:      "",
-			Directive: cff.FlowDirective,
-			File:      "go.uber.org/cff/internal/tests/instrument/instrument.go",
-			Line:      498,
-			Column:    9,
-		}).Return(taskEmitter)
-	emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
+		emitter.EXPECT().TaskInit(
+			&cff.TaskInfo{
+				Name:   "Atoi",
+				File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
+				Line:   548,
+				Column: 12,
+			},
+			&cff.DirectiveInfo{
+				Name:      "",
+				Directive: cff.FlowDirective,
+				File:      "go.uber.org/cff/internal/tests/instrument/instrument.go",
+				Line:      545,
+				Column:    9,
+			}).Return(taskEmitter)
+		emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
 
-	scope := tally.NewTestScope("", nil)
-	core, _ := observer.New(zap.DebugLevel)
-	logger := zap.New(core)
+		scope := tally.NewTestScope("", nil)
+		core, _ := observer.New(zap.DebugLevel)
+		logger := zap.New(core)
 
-	g := &instrument.CustomEmitter{
-		Scope:   scope,
-		Logger:  logger,
-		Emitter: emitter,
-	}
-	assert.Error(t, g.FlowAlwaysPanics(ctx))
+		g := &instrument.CustomEmitter{
+			Scope:   scope,
+			Logger:  logger,
+			Emitter: emitter,
+		}
+		assert.Error(t, g.FlowAlwaysPanics(ctx))
+	})
+
+	t.Run("task predicate panic", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		ctx := context.Background()
+
+		emitter := cff.NewMockEmitter(mockCtrl)
+		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+		taskEmitter.EXPECT().TaskPanic(ctx, gomock.Any())
+		taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
+		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+
+		emitter.EXPECT().TaskInit(
+			&cff.TaskInfo{
+				Name:   "PredicatePanics",
+				File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
+				Line:   561,
+				Column: 12,
+			},
+			&cff.DirectiveInfo{
+				Name:      "",
+				Directive: cff.FlowDirective,
+				File:      "go.uber.org/cff/internal/tests/instrument/instrument.go",
+				Line:      559,
+				Column:    9,
+			}).Return(taskEmitter)
+		emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
+
+		scope := tally.NewTestScope("", nil)
+		core, _ := observer.New(zap.DebugLevel)
+		logger := zap.New(core)
+
+		g := &instrument.CustomEmitter{
+			Scope:   scope,
+			Logger:  logger,
+			Emitter: emitter,
+		}
+		assert.Error(t, g.PredicatePanics(ctx))
+	})
+
+	t.Run("task predicate panic with fallback", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		ctx := context.Background()
+
+		emitter := cff.NewMockEmitter(mockCtrl)
+		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+		taskEmitter.EXPECT().TaskPanicRecovered(ctx, gomock.Any())
+		taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
+		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+
+		emitter.EXPECT().TaskInit(
+			&cff.TaskInfo{
+				Name:   "PredicatePanicsWithFallback",
+				File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
+				Line:   586,
+				Column: 4,
+			},
+			&cff.DirectiveInfo{
+				Name:      "",
+				Directive: cff.FlowDirective,
+				File:      "go.uber.org/cff/internal/tests/instrument/instrument.go",
+				Line:      581,
+				Column:    8,
+			}).Return(taskEmitter)
+		emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
+
+		scope := tally.NewTestScope("", nil)
+		core, _ := observer.New(zap.DebugLevel)
+		logger := zap.New(core)
+
+		g := &instrument.CustomEmitter{
+			Scope:   scope,
+			Logger:  logger,
+			Emitter: emitter,
+		}
+		res, err := g.PredicatePanicsWithFallback(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, res, "predicate-fallback")
+	})
 }
 
 func TestParallelPanic(t *testing.T) {

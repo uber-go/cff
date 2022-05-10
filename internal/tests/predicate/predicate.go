@@ -132,3 +132,46 @@ func MultiplePredicates() error {
 		),
 	)
 }
+
+// Panicked is a task flow that contains a task predicate that panics.
+func Panicked() error {
+	var s string
+	return cff.Flow(
+		context.Background(),
+		cff.Results(&s),
+		cff.Task(
+			func(ctx context.Context) string {
+				return "foo"
+			},
+			cff.Predicate(
+				func() bool {
+					panic("sad times")
+					return true
+				},
+			),
+		),
+	)
+}
+
+// PanickedWithFallback is a flow that runs a panicing task predicate with a
+// fallback.
+func PanickedWithFallback() (string, error) {
+	var s string
+	err := cff.Flow(
+		context.Background(),
+		cff.Results(&s),
+		cff.Task(
+			func(ctx context.Context) (string, error) {
+				return "foo", nil
+			},
+			cff.Predicate(
+				func() bool {
+					panic("sad times")
+					return true
+				},
+			),
+			cff.FallbackWith("predicate-fallback"),
+		),
+	)
+	return s, err
+}
