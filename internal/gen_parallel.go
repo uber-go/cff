@@ -2,8 +2,10 @@ package internal
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"io"
+	"path/filepath"
 	"text/template"
 )
 
@@ -40,7 +42,7 @@ func (g *generator) generateParallel(
 		return err
 	}
 
-	if _, err := io.WriteString(w, "func() (err error) {"); err != nil {
+	if _, err := io.WriteString(w, "func() (err error) {\n"); err != nil {
 		return err
 	}
 
@@ -57,6 +59,11 @@ func (g *generator) generateParallel(
 	if _, err := w.Write(b.Bytes()); err != nil {
 		return err
 	}
+	// Annotate with line directives after we're done generating code.
+	// Get the expression's End position and find the associated line.
+	endPos := g.fset.Position(p.End())
+	// -1 because this is a line above the closing }().
+	fmt.Fprintf(w, "/*line %v:%d*/", filepath.Base(p.PosInfo.File), endPos.Line-1)
 	if _, err := io.WriteString(w, "}()"); err != nil {
 		return err
 	}

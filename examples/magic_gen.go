@@ -1,3 +1,4 @@
+//line magic.go:1
 package example
 
 import (
@@ -32,13 +33,21 @@ type fooHandler struct {
 func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
 	var res *Response
 	err := func() (err error) {
+		/*line magic.go:33:18*/
 		_33_18 := ctx
+		/*line magic.go:34:14*/
 		_34_14 := req
+		/*line magic.go:35:15*/
 		_35_15 := &res
+		/*line magic.go:36:19*/
 		_36_19 := 8
+		/*line magic.go:37:19*/
 		_37_19 := cff.TallyEmitter(h.scope)
+		/*line magic.go:38:19*/
 		_38_19 := cff.LogEmitter(h.logger)
+		/*line magic.go:39:22*/
 		_39_22 := "HandleFoo"
+		/*line magic.go:42:4*/
 		_42_4 := func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
 			return &GetManagerRequest{
 					LDAPGroup: req.LDAPGroup,
@@ -46,8 +55,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 					LDAPGroup: req.LDAPGroup,
 				}
 		}
+		/*line magic.go:50:4*/
 		_50_4 := h.mgr.Get
+		/*line magic.go:51:12*/
 		_51_12 := h.ses.BatchSendEmail
+		/*line magic.go:53:4*/
 		_53_4 := func(responses []*SendEmailResponse) *Response {
 			var r Response
 			for _, res := range responses {
@@ -55,12 +67,17 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 			return &r
 		}
+		/*line magic.go:62:4*/
 		_62_4 := h.users.List
+		/*line magic.go:63:18*/
 		_63_18 := func(req *GetManagerRequest) bool {
 			return req.LDAPGroup != "everyone"
 		}
+		/*line magic.go:66:21*/
 		_66_21 := &ListUsersResponse{}
+		/*line magic.go:67:19*/
 		_67_19 := "FormSendEmailRequest"
+		/*line magic.go:70:4*/
 		_70_4 := func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest {
 			var reqs []*SendEmailRequest
 			for _, u := range users.Emails {
@@ -68,10 +85,14 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 			return reqs
 		}
+		/*line magic.go:77:18*/
 		_77_18 := func(req *GetManagerRequest) bool {
 			return req.LDAPGroup != "everyone"
 		}
+		/*line magic.go:80:19*/
 		_80_19 := "FormSendEmailRequest"
+
+		/*line :96*/
 		ctx := _33_18
 		var v1 *Request = _34_14
 		emitter := cff.EmitterStack(_37_19, _38_19)
@@ -508,53 +529,75 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		*(_35_15) = v8 // *go.uber.org/cff/examples.Response
 
 		flowEmitter.FlowSuccess(ctx)
-		return nil
+		return nil /*line magic.go:81*/
 	}()
 
 	err = func() (err error) {
+		/*line magic.go:85:3*/
 		_85_3 := ctx
+		/*line magic.go:86:19*/
 		_86_19 := 2
+		/*line magic.go:87:19*/
 		_87_19 := cff.TallyEmitter(h.scope)
+		/*line magic.go:88:19*/
 		_88_19 := cff.LogEmitter(h.logger)
+		/*line magic.go:89:26*/
 		_89_26 := "SendParallel"
+		/*line magic.go:90:23*/
 		_90_23 := true
+		/*line magic.go:92:4*/
 		_92_4 := func(_ context.Context) error {
 			return SendMessage()
 		}
+		/*line magic.go:95:4*/
 		_95_4 := SendMessage
+		/*line magic.go:98:4*/
 		_98_4 := func() error {
 			return SendMessage()
 		}
+		/*line magic.go:101:19*/
 		_101_19 := "SendMsg"
+		/*line magic.go:104:4*/
 		_104_4 := func(ctx context.Context, idx int, s string) error {
 			_ = fmt.Sprintf("%d and %q", idx, s)
 			_, _ = ctx.Deadline()
 			return nil
 		}
+		/*line magic.go:109:4*/
 		_109_4 := []string{"message", "to", "send"}
+		/*line magic.go:112:4*/
 		_112_4 := func(ctx context.Context, idx int, s string) error {
 			_ = fmt.Sprintf("%d and %q", idx, s)
 			ctx.Deadline()
 			return nil
 		}
+		/*line magic.go:117:4*/
 		_117_4 := []string{"more", "messages", "sent"}
+		/*line magic.go:118:17*/
 		_118_17 := func(context.Context) error {
 			return nil
 		}
+		/*line magic.go:123:4*/
 		_123_4 := func(ctx context.Context, key string, value string) error {
 			_ = fmt.Sprintf("%q : %q", key, value)
 			_, _ = ctx.Deadline()
 			return nil
 		}
+		/*line magic.go:128:4*/
 		_128_4 := map[string]string{"key": "value"}
+		/*line magic.go:131:4*/
 		_131_4 := func(ctx context.Context, key string, value int) error {
 			_ = fmt.Sprintf("%q: %v", key, value)
 			return nil
 		}
+		/*line magic.go:135:4*/
 		_135_4 := map[string]int{"a": 1, "b": 2, "c": 3}
+		/*line magic.go:136:15*/
 		_136_15 := func(context.Context) {
 			_ = fmt.Sprint("}")
 		}
+
+		/*line :601*/
 		ctx := _85_3
 		emitter := cff.EmitterStack(_87_19, _88_19)
 
@@ -883,7 +926,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return err
 		}
 		parallelEmitter.ParallelSuccess(ctx)
-		return nil
+		return nil /*line magic.go:139*/
 	}()
 	return res, err
 }

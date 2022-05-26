@@ -11,6 +11,7 @@ import (
 	"go/types"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -44,15 +45,22 @@ type generator struct {
 
 	// File path to which generated code is written.
 	outputPath string
+
+	// magic token to "reset" line directives.
+	magic string
 }
 
 type generatorOpts struct {
 	Fset       *token.FileSet
 	Package    *types.Package
 	OutputPath string
+	RandSrc    rand.Source
 }
 
 func newGenerator(opts generatorOpts) *generator {
+	if opts.RandSrc == nil {
+		opts.RandSrc = rand.NewSource(rand.Int63())
+	}
 	return &generator{
 		fset:       opts.Fset,
 		pkg:        opts.Package,
@@ -60,6 +68,7 @@ func newGenerator(opts generatorOpts) *generator {
 		predIDs:    new(typeutil.Map),
 		nextTypeID: 1,
 		outputPath: opts.OutputPath,
+		magic:      fmt.Sprintf("CFF_MAGIC_TOKEN=%d\n", rand.New(opts.RandSrc).Int()),
 	}
 }
 
@@ -79,6 +88,9 @@ func (g *generator) GenerateFile(f *file) error {
 
 	// This tracks positioning information for the file.
 	posFile := g.fset.File(f.AST.Pos())
+
+	// Annotate with line directive to original source on top of the file.
+	fmt.Fprintf(&buff, "//line %v:1\n", filepath.Base(posFile.Name()))
 
 	addImports := make(map[string]string) // import path -> name or empty for implicit name
 	aliases := make(map[string]struct{})  // map to record aliases that have been used during in code gen
@@ -118,7 +130,6 @@ func (g *generator) GenerateFile(f *file) error {
 	}
 
 	// Parse the generated file and clean up.
-
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, posFile.Name(), buff.Bytes(), parser.ParseComments)
 	if err != nil {
@@ -133,21 +144,70 @@ func (g *generator) GenerateFile(f *file) error {
 
 		return err
 	}
-
 	newImports := make([]string, 0, len(addImports))
 	for imp := range addImports {
 		newImports = append(newImports, imp)
 	}
 	sort.Strings(newImports)
 
+	// Add the newly added imports to the file first.
 	for _, importPath := range newImports {
 		astutil.AddNamedImport(fset, file, addImports[importPath], importPath)
 	}
 
 	buff.Reset()
-	err = format.Node(&buff, fset, file)
+	// Format the node and write it to the buffer.
+	if err := format.Node(&buff, fset, file); err != nil {
+		return err
+	}
 
-	return ioutil.WriteFile(g.outputPath, buff.Bytes(), 0644)
+	// get new file content with replaced magic tokens.
+	var newBuff bytes.Buffer
+	if err := g.resetMagicTokens(&newBuff, &buff); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(g.outputPath, newBuff.Bytes(), 0644)
+}
+
+func (g *generator) resetMagicTokens(w io.Writer, buff *bytes.Buffer) error {
+	// After formatting, we search the final output for the magic token to replace it with line
+	// directives. We do this after the formatting because the line numbers of the generated
+	// code can change due to formatting, so any line directives that point to the same file
+	// can break after formatting.
+
+	// First write the file to FS.
+	bb := buff.Bytes()
+	if err := ioutil.WriteFile(g.outputPath, bb, 0644); err != nil {
+		return err
+	}
+
+	// Then we need to re-parse this to search for the magic token and
+	// replace it with the line directives to "reset" the line directives
+	// that point back to the original CFF source.
+	// Without these, all the generated code will point to arbitrary and/or
+	// non-existent locations in the original source.
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, g.outputPath, bb, parser.ParseComments)
+	if err != nil {
+		return err
+	}
+
+	var magicList []*ast.CommentGroup
+	for _, cg := range file.Comments {
+		if cg.Text() == g.magic {
+			magicList = append(magicList, cg)
+		}
+	}
+	var offset int
+	for _, magic := range magicList {
+		pos := fset.PositionFor(magic.Pos(), false)
+		w.Write(bb[offset:pos.Offset])
+		fmt.Fprintf(w, "/*line :%d*/", pos.Line+1)
+		offset = fset.PositionFor(magic.End(), false).Offset
+	}
+	// Write remaining code as-is.
+	w.Write(bb[offset:])
+	return nil
 }
 
 // generateFlow runs the CFF template for the given flow and writes it to w, modifying addImports if the template
@@ -174,7 +234,7 @@ func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports ma
 	}); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, "func() (err error) {"); err != nil {
+	if _, err := io.WriteString(w, "func() (err error) {\n"); err != nil {
 		return err
 	}
 
@@ -191,6 +251,11 @@ func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports ma
 	if _, err := w.Write(b.Bytes()); err != nil {
 		return err
 	}
+	// Annotate with line directives after we're done generating code.
+	// Get the expression's End position and find the associated line.
+	endPos := g.fset.Position(f.End())
+	// -1 because this is a line above the closing }().
+	fmt.Fprintf(w, "/*line %v:%d*/", filepath.Base(f.PosInfo.File), endPos.Line-1)
 	if _, err := io.WriteString(w, "}()"); err != nil {
 		return err
 	}
@@ -216,6 +281,8 @@ func (g *generator) funcMap(
 		"isPredicate": g.isPredicate,
 		"expr":        p.printExpr,
 		"rawExpr":     g.printRawExpr,
+		"lineDir":     p.printLineDir,
+		"magic":       g.printMagic,
 		"quote":       strconv.Quote,
 		"import": func(importPath string) string {
 			if names := file.Imports[importPath]; len(names) > 0 {
@@ -225,6 +292,10 @@ func (g *generator) funcMap(
 			return printImportAlias(importPath, filepath.Base(importPath), addImports, aliases)
 		},
 	}
+}
+
+func (g *generator) printMagic() string {
+	return fmt.Sprintf("\n// %v", g.magic)
 }
 
 // typePrinter returns the qualifier for the type to form an identifier using that type, modifying addImports if the
@@ -343,6 +414,14 @@ func (p *exprPrinter) printExpr(e ast.Expr) string {
 	p.exprs[e] = struct{}{}
 	pos := p.g.posInfo(e)
 	return fmt.Sprintf("_%d_%d", pos.Line, pos.Column)
+}
+
+// printLineDir prints a line directive for an ast.Expr. It looks up the
+// position of the expression in the original source, so that the generated
+// code can be mapped back to the original source.
+func (p *exprPrinter) printLineDir(e ast.Expr) string {
+	pos := p.g.posInfo(e)
+	return fmt.Sprintf("/*line %v:%d:%d*/", filepath.Base(pos.File), pos.Line, pos.Column)
 }
 
 // paramExprs returns a slice of user provided expressions sorted such that
