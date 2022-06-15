@@ -80,6 +80,42 @@ func Metrics(logger *zap.Logger, scope tally.Scope) float64 {
 	return res
 }
 
+// MetricsWithSharedEmitter uses the same tasks as Metrics, but defines
+// two flows of the same name and the same tasks. This should measure the
+// performance of any cache optimizations implemented in tally or log
+// emitters.
+func MetricsWithSharedEmitter(logger *zap.Logger, scope tally.Scope) float64 {
+	var res float64
+
+	emitter := cff.TallyEmitter(scope)
+	logemit := cff.LogEmitter(logger)
+	ctx := context.Background()
+
+	cff.Flow(
+		ctx,
+		cff.InstrumentFlow("MetricsWithSharedEmitter"),
+		cff.WithEmitter(emitter),
+		cff.WithEmitter(logemit),
+		cff.Results(&res),
+		cff.Task(a, cff.Instrument("a")),
+		cff.Task(b, cff.Instrument("b")),
+		cff.Task(c, cff.Instrument("c")),
+	)
+
+	cff.Flow(
+		ctx,
+		cff.InstrumentFlow("MetricsWithSharedEmitter"),
+		cff.WithEmitter(emitter),
+		cff.WithEmitter(logemit),
+		cff.Results(&res),
+		cff.Task(a, cff.Instrument("a")),
+		cff.Task(b, cff.Instrument("b")),
+		cff.Task(c, cff.Instrument("c")),
+	)
+
+	return res
+}
+
 // Metrics100 is a flow with 99 dependent tasks
 func Metrics100(logger *zap.Logger, scope tally.Scope) float64 {
 	var res float64

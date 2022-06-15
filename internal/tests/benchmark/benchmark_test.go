@@ -65,6 +65,9 @@ func BenchmarkMetrics(b *testing.B) {
 			"Metrics", Metrics,
 		},
 		{
+			"MetricsWithSharedEmitter", MetricsWithSharedEmitter,
+		},
+		{
 			"Metrics100", Metrics100,
 		},
 		{
