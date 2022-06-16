@@ -10,12 +10,8 @@ import (
 
 // cacheKey uniquely identifies directive and/or task based on the position information.
 type cacheKey struct {
-	TaskName                       string // name of the task
-	TaskFile                       string // file where task is defined
-	TaskLine, TaskColumn           int    // line and column in the file where the task is defined
-	DirectiveName                  string // name of the directive
-	DirectiveFile                  string // file where directive is defined
-	DirectiveLine, DirectiveColumn int    // line and column in the file where the directive is defined
+	TaskName      string // name of the task
+	DirectiveName string // name of the directive
 }
 
 type tallyEmitter struct {
@@ -45,14 +41,8 @@ func TallyEmitter(scope tally.Scope) Emitter {
 
 func (e *tallyEmitter) TaskInit(taskInfo *TaskInfo, dInfo *DirectiveInfo) TaskEmitter {
 	cacheKey := cacheKey{
-		TaskName:        taskInfo.Name,
-		TaskFile:        taskInfo.File,
-		TaskLine:        taskInfo.Line,
-		TaskColumn:      taskInfo.Column,
-		DirectiveName:   dInfo.Name,
-		DirectiveFile:   dInfo.File,
-		DirectiveLine:   dInfo.Line,
-		DirectiveColumn: dInfo.Column,
+		TaskName:      taskInfo.Name,
+		DirectiveName: dInfo.Name,
 	}
 	// Note: this lookup is an optimization to avoid the expensive Tagged call.
 	if v, ok := e.tasks.Load(cacheKey); ok {
@@ -76,10 +66,7 @@ func (e *tallyEmitter) TaskInit(taskInfo *TaskInfo, dInfo *DirectiveInfo) TaskEm
 
 func (e *tallyEmitter) FlowInit(info *FlowInfo) FlowEmitter {
 	cacheKey := cacheKey{
-		DirectiveName:   info.Name,
-		DirectiveFile:   info.File,
-		DirectiveLine:   info.Line,
-		DirectiveColumn: info.Column,
+		DirectiveName: info.Name,
 	}
 	// Note: this lookup is an optimization to avoid the expensive Tagged call.
 	if v, ok := e.flows.Load(cacheKey); ok {
@@ -96,10 +83,7 @@ func (e *tallyEmitter) FlowInit(info *FlowInfo) FlowEmitter {
 
 func (e *tallyEmitter) ParallelInit(info *ParallelInfo) ParallelEmitter {
 	cacheKey := cacheKey{
-		DirectiveName:   info.Name,
-		DirectiveFile:   info.File,
-		DirectiveLine:   info.Line,
-		DirectiveColumn: info.Column,
+		DirectiveName: info.Name,
 	}
 	// Note: this lookup is an optimization to avoid the expensive Tagged call.
 	if v, ok := e.parallels.Load(cacheKey); ok {
@@ -117,10 +101,7 @@ func (e *tallyEmitter) ParallelInit(info *ParallelInfo) ParallelEmitter {
 // SchedulerInit constructs a tally SchedulerEmitter.
 func (e *tallyEmitter) SchedulerInit(info *SchedulerInfo) SchedulerEmitter {
 	cacheKey := cacheKey{
-		DirectiveName:   info.Name,
-		DirectiveFile:   info.File,
-		DirectiveLine:   info.Line,
-		DirectiveColumn: info.Column,
+		DirectiveName: info.Name,
 	}
 	if v, ok := e.scheds.Load(cacheKey); ok {
 		return v.(SchedulerEmitter)
