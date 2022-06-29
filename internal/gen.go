@@ -199,10 +199,11 @@ func (g *generator) resetMagicTokens(w io.Writer, buff *bytes.Buffer) error {
 		}
 	}
 	var offset int
+	outputPath := filepath.Base(g.outputPath)
 	for _, magic := range magicList {
 		pos := fset.PositionFor(magic.Pos(), false)
 		w.Write(bb[offset:pos.Offset])
-		fmt.Fprintf(w, "/*line :%d*/", pos.Line+1)
+		fmt.Fprintf(w, "/*line %v:%d*/", outputPath, pos.Line+1)
 		offset = fset.PositionFor(magic.End(), false).Offset
 	}
 	// Write remaining code as-is.

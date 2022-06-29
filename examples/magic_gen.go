@@ -92,7 +92,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		/*line magic.go:80:19*/
 		_80_19 := "FormSendEmailRequest"
 
-		/*line :96*/
+		/*line magic_gen.go:96*/
 		ctx := _33_18
 		var v1 *Request = _34_14
 		emitter := cff.EmitterStack(_37_19, _38_19)
@@ -597,7 +597,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			_ = fmt.Sprint("}")
 		}
 
-		/*line :601*/
+		/*line magic_gen.go:601*/
 		ctx := _85_3
 		emitter := cff.EmitterStack(_87_19, _88_19)
 
