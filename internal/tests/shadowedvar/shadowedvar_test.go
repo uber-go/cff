@@ -28,14 +28,15 @@ func TestCtxConflictSlice(t *testing.T) {
 }
 
 func TestCtxConflictMap(t *testing.T) {
-	ctx := "Hello"
-	target := map[string]string{
-		"1": "A",
-		"2": "B",
+	ctx := 5
+	input := map[int]int{
+		0: 10,
+		1: 15,
 	}
-	require.NoError(t, CtxConflictMap(ctx, target))
-	assert.Equal(t, "HelloA", target["1"])
-	assert.Equal(t, "HelloB", target["2"])
+	out, err := CtxConflictMap(ctx, input)
+	require.NoError(t, err)
+	assert.Equal(t, 15, out[0])
+	assert.Equal(t, 20, out[1])
 }
 
 func TestPredicateCtxConflict(t *testing.T) {

@@ -58,17 +58,19 @@ func CtxConflictSlice(ctx string, target []string) error {
 
 // CtxConflictMap introduces a variable conflict with ctx within cff.Map function
 // to demonstrate that CFF2 does not shadow variables.
-func CtxConflictMap(ctx string, target map[string]string) error {
-	return cff2.Parallel(
+func CtxConflictMap(ctx int, input map[int]int) ([]int, error) {
+	slice := make([]int, len(input))
+	err := cff2.Parallel(
 		context.Background(),
 		cff2.Concurrency(2),
 		cff2.Map(
-			func(key string, val string) {
-				target[key] = ctx + val
+			func(key int, val int) {
+				slice[key] = ctx + val
 			},
-			target,
+			input,
 		),
 	)
+	return slice, err
 }
 
 // PredicateCtxConflict runs the provided function in a task flow if the
