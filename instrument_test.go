@@ -27,6 +27,7 @@ func TestInstrumentFlowEmitter(t *testing.T) {
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
 	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	flowsucc := flowEmitter.EXPECT().FlowSuccess(ctx)
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any()).After(flowsucc)
@@ -84,6 +85,7 @@ func TestInstrumentParallelEmitter(t *testing.T) {
 	parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	tasksucc := taskEmitter.EXPECT().TaskSuccess(ctx)
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).After(tasksucc)
@@ -133,6 +135,7 @@ func TestInstrumentFlowErrorME(t *testing.T) {
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
 	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	// flowFailedEmitter := cff.NewMockFlowEmitter(mockCtrl)
 
@@ -171,6 +174,7 @@ func TestInstrumentParallelErrorME(t *testing.T) {
 
 		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
 		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		parallelEmitter.EXPECT().ParallelError(ctx, gomock.Any())
 		parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any())
@@ -199,6 +203,7 @@ func TestInstrumentParallelErrorME(t *testing.T) {
 		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
 		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		taskEmitter.EXPECT().TaskError(ctx, gomock.Any())
 		taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
@@ -231,6 +236,7 @@ func TestInstrumentTaskButNotFlowME(t *testing.T) {
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	taskEmitter.EXPECT().TaskSuccess(ctx)
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
@@ -259,6 +265,7 @@ func TestInstrumentTaskButNotParallelME(t *testing.T) {
 
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	taskEmitter.EXPECT().TaskSuccess(ctx)
 	taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
@@ -293,6 +300,7 @@ func TestInstrumentFlowCancelledContextME(t *testing.T) {
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
 	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	flowEmitter.EXPECT().FlowError(ctx, flowCancelledErr)
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
@@ -329,6 +337,7 @@ func TestInstrumentParallelCancelledContextME(t *testing.T) {
 
 		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
 		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		parallelEmitter.EXPECT().ParallelError(ctx, parallelCancelledError)
 		parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any())
@@ -362,6 +371,7 @@ func TestInstrumentParallelCancelledContextME(t *testing.T) {
 		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
 		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		taskEmitter.EXPECT().TaskSkipped(ctx, parallelCancelledError)
 
@@ -395,6 +405,7 @@ func TestInstrumentFlowRecoverME(t *testing.T) {
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
 	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	flowEmitter.EXPECT().FlowSuccess(ctx)
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
@@ -434,6 +445,7 @@ func TestT3630161ME(t *testing.T) {
 	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
 	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	flowEmitter.EXPECT().FlowSuccess(ctx)
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
@@ -477,6 +489,7 @@ func TestT3795761ME(t *testing.T) {
 		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 		flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
 		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		taskEmitter.EXPECT().TaskSuccess(ctx)
 		taskEmitter.EXPECT().TaskError(ctx, gomock.Any())
@@ -505,6 +518,7 @@ func TestT3795761ME(t *testing.T) {
 		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 		flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
 		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		taskEmitter.EXPECT().TaskSuccess(ctx).Times(2)
 		taskEmitter.EXPECT().TaskDone(ctx, gomock.Any()).Times(2)
@@ -532,6 +546,7 @@ func TestT3795761ME(t *testing.T) {
 		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 		flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
 		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		taskEmitter.EXPECT().TaskSuccess(ctx)
 		taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
@@ -568,6 +583,7 @@ func TestFlowPanic(t *testing.T) {
 		taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
 
 		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		emitter.EXPECT().TaskInit(
 			&cff.TaskInfo{
@@ -606,6 +622,7 @@ func TestFlowPanic(t *testing.T) {
 		taskEmitter.EXPECT().TaskPanic(ctx, gomock.Any())
 		taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
 		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		emitter.EXPECT().TaskInit(
 			&cff.TaskInfo{
@@ -644,6 +661,7 @@ func TestFlowPanic(t *testing.T) {
 		taskEmitter.EXPECT().TaskPanicRecovered(ctx, gomock.Any())
 		taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
 		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		emitter.EXPECT().TaskInit(
 			&cff.TaskInfo{
@@ -685,6 +703,7 @@ func TestParallelPanic(t *testing.T) {
 
 		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
 		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		parallelEmitter.EXPECT().ParallelError(gomock.Any(), gomock.Any())
 		parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any()).Times(1)
@@ -713,6 +732,7 @@ func TestParallelPanic(t *testing.T) {
 		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
 		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
 		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		parallelEmitter.EXPECT().ParallelError(gomock.Any(), gomock.Any())
 		parallelEmitter.EXPECT().ParallelDone(ctx, gomock.Any()).Times(1)
