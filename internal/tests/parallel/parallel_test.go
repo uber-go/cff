@@ -161,6 +161,20 @@ func TestMultiple(t *testing.T) {
 	assert.Equal(t, src, targetB)
 }
 
+func TestSliceNoIndex(t *testing.T) {
+	src := []int{0, 1}
+
+	targetA := make([]int, len(src))
+	targetB := make([]int, len(src))
+	assert.NotEqual(t, src, targetA)
+	assert.NotEqual(t, src, targetB)
+
+	require.NoError(t, SliceNoIndex(src, src, targetA, targetB))
+
+	assert.Equal(t, src, targetA)
+	assert.Equal(t, src, targetB)
+}
+
 func TestSliceWrapped(t *testing.T) {
 	src := []int{1, 2}
 	target := make([]int, len(src))

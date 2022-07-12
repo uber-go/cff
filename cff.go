@@ -317,19 +317,24 @@ func Tasks(fn ...interface{}) Option {
 // The fn parameter is function that is invoked on each element of the slice
 // parameter.
 //
-// The fn parameter's first non-context argument is a slice index of type int
-// followed by a value of same type as the slice parameter's elements.
+// The fn parameter's non-context argument is a value of same type as the
+// slice parameter's elements.
 //
 //  cff.Parallel(
 //  	ctx,
 //  	cff.Concurrency(...),
-//  	cff.Slice(func(idx int, elem someType) { ... }, []someType{...})
+//  	cff.Slice(func(elem someType) { ... }, []someType{...})
 //  )
 //
 // Optionally, a context.Context can be provided as a first argument to the
 // execution function.
 //
 //  func(ctx context.Context, idx int, item someType) { ... }
+//
+// Optionally, a slice index of type int can be provided as a first
+// (or second if context.Context is provided) parameter
+//
+//  func(idx int, item SomeType) { ... }
 //
 // Optionally, an error can be returned as the execution function's sole
 // return value.

@@ -109,6 +109,14 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			[]string{"message", "to", "send"},
 		),
 		cff.Slice(
+			func(ctx context.Context, s string) error {
+				_ = fmt.Sprintf("%q", s)
+				_, _ = ctx.Deadline()
+				return nil
+			},
+			[]string{"message", "to", "send"},
+		),
+		cff.Slice(
 			func(ctx context.Context, idx int, s string) error {
 				_ = fmt.Sprintf("%d and %q", idx, s)
 				ctx.Deadline()

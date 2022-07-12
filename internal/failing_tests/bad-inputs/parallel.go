@@ -195,32 +195,6 @@ func ParallelSliceFirstArgNotIndex() {
 	)
 }
 
-// ParallelSliceMissingIndex is a cff.Slice execution function that is missing
-// the argument for slice index.
-func ParallelSliceMissingIndex() {
-	cff.Parallel(
-		context.Background(),
-		cff.Slice(
-			func(_ context.Context, _ string) error {
-				return nil
-			},
-			[]string{"some", "thing"},
-		),
-	)
-}
-
-// ParallelSliceMissingValue is a cff.Slice execution function that is missing
-// the argument for slice value.
-func ParallelSliceMissingValue() {
-	cff.Parallel(
-		context.Background(),
-		cff.Slice(
-			func(_ context.Context, _ int) {},
-			[]string{"some", "thing"},
-		),
-	)
-}
-
 // ParallelSliceWithMap is a cff.Slice that is given a map to iterate over.
 func ParallelSliceWithMap() {
 	cff.Parallel(

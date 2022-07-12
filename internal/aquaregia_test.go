@@ -282,17 +282,10 @@ var codeGenerateFailCases = map[string][]errorCase{
 		},
 		{
 			File:         "parallel.go",
-			ErrorMatches: "slice function expects two non-context arguments: slice index and slice element",
+			ErrorMatches: "slice function expects one or two non-context arguments: slice index \\(optional\\) and slice element",
 			TestFuncs: []string{
-				"ParallelSliceMissingIndex",
-				"ParallelSliceMissingValue",
 				"ParallelSliceFuncTooManyArgs",
 			},
-		},
-		{
-			File:         "parallel.go",
-			ErrorMatches: "the first non-context argument of the slice function must be an int",
-			TestFuncs:    []string{"ParallelSliceMissingIndex"},
 		},
 		{
 			File:         "parallel.go",
@@ -301,7 +294,7 @@ var codeGenerateFailCases = map[string][]errorCase{
 		},
 		{
 			File:         "parallel.go",
-			ErrorMatches: `slice element of type string cannot be passed as a parameter to function expecting bool`,
+			ErrorMatches: `slice element of type bool cannot be passed as a parameter to function expecting string`,
 			TestFuncs:    []string{"ParallelSliceElemTypeMismatch"},
 		},
 		{

@@ -27,7 +27,7 @@ func TestCompileParallel(t *testing.T) {
 		{
 			desc:         "first parallel",
 			numTask:      3,
-			numSliceTask: 1,
+			numSliceTask: 2,
 			numMapTask:   1,
 		},
 		{

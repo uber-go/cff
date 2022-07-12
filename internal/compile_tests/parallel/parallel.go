@@ -37,7 +37,14 @@ func ExampleParallel(m *sync.Map, c chan<- string) error {
 			},
 			[]string{"some", "thing"},
 		),
-
+		cff.Slice(
+			func(ctx context.Context, s string) error {
+				_ = fmt.Sprintf("%q", s)
+				_, _ = ctx.Deadline()
+				return nil
+			},
+			[]string{"sad", "happy"},
+		),
 		cff.Map(
 			func(ctx context.Context, key string, value string) error {
 				_ = fmt.Sprintf("%q : %q", key, value)

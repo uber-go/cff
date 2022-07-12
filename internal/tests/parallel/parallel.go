@@ -308,6 +308,27 @@ func SliceMultiple(srcA, srcB, targetA, targetB []int) error {
 	)
 }
 
+// SliceNoIndex runs multiple cff.Slices to populate the provided slice
+func SliceNoIndex(srcA, srcB, targetA, targetB []int) error {
+	return cff.Parallel(
+		context.Background(),
+		cff.Concurrency(2),
+		cff.Slice(
+			func(val int) error {
+				targetA[val] = val
+				return nil
+			},
+			srcA,
+		),
+		cff.Slice(
+			func(_ context.Context, val int) {
+				targetB[val] = val
+			},
+			srcB,
+		),
+	)
+}
+
 type manyInts []int
 
 // SliceWrapped runs cff.Slice with a wrapped type for a slice.

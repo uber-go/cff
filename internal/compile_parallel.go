@@ -207,6 +207,8 @@ type sliceTask struct {
 	Serial int
 
 	PosInfo *PosInfo // Used to pass information to uniquely identify a task.
+
+	HasIndexParameter bool
 }
 
 func (c *compiler) applySliceOptions(t *sliceTask, opts []ast.Expr) {
@@ -263,14 +265,17 @@ func (c *compiler) compileSlice(p *parallel, ce *ast.CallExpr) *sliceTask {
 		return nil
 	}
 
-	if len(fn.Inputs) != 2 {
-		c.errf(c.nodePosition(slce), "slice function expects two non-context arguments: slice index and slice element")
+	inputsLen := len(fn.Inputs)
+	if inputsLen != 2 && inputsLen != 1 {
+		c.errf(c.nodePosition(slce), "slice function expects one or two non-context arguments: slice index (optional) and slice element")
 		return nil
 	}
 
-	if t, ok := fn.Inputs[0].(*types.Basic); !ok || t.Kind() != types.Int {
-		c.errf(c.nodePosition(slce), "the first non-context argument of the slice function must be an int, got %v", fn.Inputs[0])
-		return nil
+	if inputsLen == 2 {
+		if t, ok := fn.Inputs[0].(*types.Basic); !ok || t.Kind() != types.Int {
+			c.errf(c.nodePosition(slce), "the first non-context argument of the slice function must be an int, got %v", fn.Inputs[0])
+			return nil
+		}
 	}
 
 	typ := c.info.TypeOf(slce)
@@ -292,17 +297,24 @@ func (c *compiler) compileSlice(p *parallel, ce *ast.CallExpr) *sliceTask {
 		return nil
 	}
 
-	if !types.AssignableTo(fn.Inputs[1], slc.Elem()) {
-		c.errf(c.nodePosition(slce), "slice element of type %v cannot be passed as a parameter to function expecting %v", fn.Inputs[1], slc.Elem())
+	elemParamPos := 1
+	elemParamOnly := inputsLen != 2
+	if elemParamOnly {
+		elemParamPos = 0
+	}
+
+	if !types.AssignableTo(fn.Inputs[elemParamPos], slc.Elem()) {
+		c.errf(c.nodePosition(slce), "slice element of type %v cannot be passed as a parameter to function expecting %v", slc.Elem(), fn.Inputs[elemParamPos])
 		return nil
 	}
 
 	s := &sliceTask{
-		Function: fn,
-		Slice:    slce,
-		ElemType: slc.Elem(),
-		Serial:   c.taskSerial,
-		PosInfo:  c.getPosInfo(ce),
+		Function:          fn,
+		Slice:             slce,
+		ElemType:          slc.Elem(),
+		Serial:            c.taskSerial,
+		PosInfo:           c.getPosInfo(ce),
+		HasIndexParameter: !elemParamOnly,
 	}
 	c.taskSerial++
 	c.applySliceOptions(s, ce.Args[2:])
