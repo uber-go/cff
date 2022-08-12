@@ -1,9 +1,8 @@
 package importstmt
 
-import "strconv"
-
 import (
 	"context"
+	"strconv"
 
 	"go.uber.org/cff"
 )

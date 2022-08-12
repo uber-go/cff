@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"code.uber.internal/go/importer"
 	"go.uber.org/cff/internal"
+	"code.uber.internal/go/importer"
 	"github.com/jessevdk/go-flags"
 	"go.uber.org/multierr"
 	"golang.org/x/tools/go/packages"
