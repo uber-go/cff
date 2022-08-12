@@ -8,19 +8,19 @@ import (
 )
 
 const (
-	_workDurationMs = 100 * time.Millisecond
-	_concurrency    = 2
+	_workDuration = 100 * time.Millisecond
+	_concurrency  = 2
 )
 
 // work is a task function that takes a pre-specifed amount of time.
 func work() int {
-	time.Sleep(_workDurationMs)
+	time.Sleep(_workDuration)
 	return 0
 }
 
 // pred is a predicate function that takes a pre-specifed amount of time.
 func pred() bool {
-	time.Sleep(_workDurationMs)
+	time.Sleep(_workDuration)
 	return true
 }
 
