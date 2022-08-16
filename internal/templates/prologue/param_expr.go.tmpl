@@ -1,5 +1,5 @@
 {{ range . -}}
-	{{ lineDir . }}
+	{{ with lineDir . }} {{ . }} {{end}}
 	{{ expr . }} := {{ rawExpr . }}
 {{ end }}
 {{- /* vim:set ft=gotexttmpl noet: */ -}}

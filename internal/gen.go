@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"text/template"
 
+	"go.uber.org/cff/mode"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/types/typeutil"
 )
@@ -48,6 +49,8 @@ type generator struct {
 
 	// magic token to "reset" line directives.
 	magic string
+
+	sourceMapped bool
 }
 
 type generatorOpts struct {
@@ -55,6 +58,7 @@ type generatorOpts struct {
 	Package    *types.Package
 	OutputPath string
 	RandSrc    rand.Source
+	GenMode    mode.GenerationMode
 }
 
 func newGenerator(opts generatorOpts) *generator {
@@ -62,13 +66,14 @@ func newGenerator(opts generatorOpts) *generator {
 		opts.RandSrc = rand.NewSource(rand.Int63())
 	}
 	return &generator{
-		fset:       opts.Fset,
-		pkg:        opts.Package,
-		typeIDs:    new(typeutil.Map),
-		predIDs:    new(typeutil.Map),
-		nextTypeID: 1,
-		outputPath: opts.OutputPath,
-		magic:      fmt.Sprintf("CFF_MAGIC_TOKEN=%d\n", rand.New(opts.RandSrc).Int()),
+		fset:         opts.Fset,
+		pkg:          opts.Package,
+		typeIDs:      new(typeutil.Map),
+		predIDs:      new(typeutil.Map),
+		nextTypeID:   1,
+		outputPath:   opts.OutputPath,
+		magic:        fmt.Sprintf("CFF_MAGIC_TOKEN=%d\n", rand.New(opts.RandSrc).Int()),
+		sourceMapped: opts.GenMode.SourceMap(),
 	}
 }
 
@@ -90,7 +95,9 @@ func (g *generator) GenerateFile(f *file) error {
 	posFile := g.fset.File(f.AST.Pos())
 
 	// Annotate with line directive to original source on top of the file.
-	fmt.Fprintf(&buff, "//line %v:1\n", filepath.Base(posFile.Name()))
+	if g.sourceMapped {
+		fmt.Fprintf(&buff, "//line %v:1\n", filepath.Base(posFile.Name()))
+	}
 
 	addImports := make(map[string]string) // import path -> name or empty for implicit name
 	aliases := make(map[string]struct{})  // map to record aliases that have been used during in code gen
@@ -161,12 +168,15 @@ func (g *generator) GenerateFile(f *file) error {
 		return err
 	}
 
-	// get new file content with replaced magic tokens.
-	var newBuff bytes.Buffer
-	if err := g.resetMagicTokens(&newBuff, &buff); err != nil {
-		return err
+	if g.sourceMapped {
+		// get new file content with replaced magic tokens.
+		var newBuff bytes.Buffer
+		if err := g.resetMagicTokens(&newBuff, &buff); err != nil {
+			return err
+		}
+		return ioutil.WriteFile(g.outputPath, newBuff.Bytes(), 0644)
 	}
-	return ioutil.WriteFile(g.outputPath, newBuff.Bytes(), 0644)
+	return ioutil.WriteFile(g.outputPath, buff.Bytes(), 0644)
 }
 
 func (g *generator) resetMagicTokens(w io.Writer, buff *bytes.Buffer) error {
@@ -252,11 +262,14 @@ func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports ma
 	if _, err := w.Write(b.Bytes()); err != nil {
 		return err
 	}
-	// Annotate with line directives after we're done generating code.
-	// Get the expression's End position and find the associated line.
-	endPos := g.fset.Position(f.End())
-	// -1 because this is a line above the closing }().
-	fmt.Fprintf(w, "/*line %v:%d*/", filepath.Base(f.PosInfo.File), endPos.Line-1)
+	if g.sourceMapped {
+		// Annotate with line directives after we're done generating code.
+		// Get the expression's End position and find the associated line.
+		endPos := g.fset.Position(f.End())
+		// -1 because this is a line above the closing }().
+		fmt.Fprintf(w, "/*line %v:%d*/", filepath.Base(f.PosInfo.File), endPos.Line-1)
+	}
+
 	if _, err := io.WriteString(w, "}()"); err != nil {
 		return err
 	}
@@ -269,7 +282,7 @@ func (g *generator) funcMap(
 	aliases map[string]struct{},
 	exprs map[ast.Expr]struct{},
 ) template.FuncMap {
-	p := &exprPrinter{exprs: exprs, g: g}
+	p := &exprPrinter{exprs: exprs, g: g, sourceMapped: g.sourceMapped}
 	return template.FuncMap{
 		"type": g.typePrinter(file, addImports, aliases),
 		"typeName": func(t types.Type) string {
@@ -296,6 +309,9 @@ func (g *generator) funcMap(
 }
 
 func (g *generator) printMagic() string {
+	if !g.sourceMapped {
+		return ""
+	}
 	return fmt.Sprintf("\n// %v", g.magic)
 }
 
@@ -378,8 +394,9 @@ func (g *generator) printRawExpr(e ast.Expr) string {
 // to printExpr to avoid tracking unecessary state on the global generator
 // object.
 type exprPrinter struct {
-	exprs map[ast.Expr]struct{}
-	g     *generator
+	exprs        map[ast.Expr]struct{}
+	g            *generator
+	sourceMapped bool
 }
 
 // printExpr called on a user provided expression returns a variable name hash
@@ -421,6 +438,9 @@ func (p *exprPrinter) printExpr(e ast.Expr) string {
 // position of the expression in the original source, so that the generated
 // code can be mapped back to the original source.
 func (p *exprPrinter) printLineDir(e ast.Expr) string {
+	if !p.sourceMapped {
+		return ""
+	}
 	pos := p.g.posInfo(e)
 	return fmt.Sprintf("/*line %v:%d:%d*/", filepath.Base(pos.File), pos.Line, pos.Column)
 }

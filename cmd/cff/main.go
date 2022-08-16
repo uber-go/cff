@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"go.uber.org/cff/internal"
+	"go.uber.org/cff/mode"
 	"code.uber.internal/go/importer"
 	"github.com/jessevdk/go-flags"
 	"go.uber.org/multierr"
@@ -22,6 +23,7 @@ type options struct {
 	InstrumentAllTasks bool     `long:"instrument-all-tasks"`
 	Sources            []string `long:"source"`
 	StdlibRoot         string   `long:"stdlibroot"`
+	GenMode            string   `long:"genmode" choice:"base" choice:"source-map" required:"no" default:"base"`
 	Args               struct {
 		ImportPath string `positional-arg-name:"importPath"`
 	} `positional-args:"yes" required:"yes"`
@@ -94,6 +96,8 @@ func newCLIParser() (*flags.Parser, *options) {
 	parser.FindOptionByLongName("stdlibroot").Description =
 		"When using archives to parse the source code, specifies the path containing " +
 			"archive files for the Go standard library."
+	parser.FindOptionByLongName("genmode").Description =
+		"Use the specified CFF code generation mode."
 
 	parser.Args()[0].Description = "Import path of a package containing CFF flows."
 
@@ -151,9 +155,15 @@ func run(args []string) error {
 		return err
 	}
 
+	gm, err := genMode(f.GenMode)
+	if err != nil {
+		return err
+	}
+
 	processor := internal.Processor{
 		Fset:               fset,
 		InstrumentAllTasks: f.InstrumentAllTasks,
+		GenMode:            gm,
 	}
 
 	// If --file was provided, only the requested files will be processed.
@@ -239,4 +249,15 @@ func parseArchive(archive string) (importer.Archive, error) {
 		ImportMap: args[1],
 		File:      args[2],
 	}, nil
+}
+
+// returns the CFF generation mode from the command option.
+func genMode(m string) (mode.GenerationMode, error) {
+	var genMode mode.GenerationMode
+
+	genMode.UnmarshalText([]byte(m))
+	if genMode == mode.Unknown {
+		return genMode, fmt.Errorf("%q is an invalid CFF generation mode. Argument was %q", mode.Unknown, m)
+	}
+	return genMode, nil
 }

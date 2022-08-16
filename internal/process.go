@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/token"
 
+	"go.uber.org/cff/mode"
 	"code.uber.internal/go/importer"
 )
 
@@ -11,6 +12,7 @@ import (
 type Processor struct {
 	Fset               *token.FileSet
 	InstrumentAllTasks bool
+	GenMode            mode.GenerationMode
 }
 
 // Process processes a single CFF2 file.
@@ -31,6 +33,7 @@ func (p *Processor) Process(pkg *importer.Package, file *ast.File, outputPath st
 		Fset:       p.Fset,
 		Package:    pkg.Types,
 		OutputPath: outputPath,
+		GenMode:    p.GenMode,
 	})
 	if err := g.GenerateFile(f); err != nil {
 		return err

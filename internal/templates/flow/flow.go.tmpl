@@ -1,4 +1,4 @@
-{{ magic }}
+{{ with magic }} {{ . }} {{ end }}
 {{- $context := import "context" -}}
 {{- $cff := import "go.uber.org/cff" -}}
 {{- $flow := .Flow -}}
