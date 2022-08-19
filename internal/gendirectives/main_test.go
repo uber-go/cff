@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,7 +10,7 @@ import (
 )
 
 func TestRunErrors(t *testing.T) {
-	dir, err := ioutil.TempDir("", "cff.go")
+	dir, err := os.MkdirTemp("", "cff.go")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
 
@@ -21,7 +20,7 @@ func TestRunErrors(t *testing.T) {
 
 	t.Run("unable to parse", func(t *testing.T) {
 		input := filepath.Join(dir, "bad_syntax.go")
-		require.NoError(t, ioutil.WriteFile(input, []byte("foo"), 0644))
+		require.NoError(t, os.WriteFile(input, []byte("foo"), 0644))
 
 		err := run([]string{input, filepath.Join(dir, "out.go")})
 		require.Error(t, err)
@@ -30,7 +29,7 @@ func TestRunErrors(t *testing.T) {
 
 	t.Run("unable to write", func(t *testing.T) {
 		input := filepath.Join(dir, "cff.go")
-		require.NoError(t, ioutil.WriteFile(input, []byte(_sampleFile), 0644))
+		require.NoError(t, os.WriteFile(input, []byte(_sampleFile), 0644))
 
 		err := run([]string{input, filepath.Join(dir, "does_not_exist", "out.go")})
 		require.Error(t, err)
@@ -49,17 +48,17 @@ func (*Bar) Baz()
 `
 
 func TestRun(t *testing.T) {
-	dir, err := ioutil.TempDir("", "cff.go")
+	dir, err := os.MkdirTemp("", "cff.go")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
 
 	input := filepath.Join(dir, "cff.go")
-	require.NoError(t, ioutil.WriteFile(input, []byte(_sampleFile), 0644))
+	require.NoError(t, os.WriteFile(input, []byte(_sampleFile), 0644))
 
 	output := filepath.Join(dir, "out.go")
 	require.NoError(t, run([]string{input, output}))
 
-	out, err := ioutil.ReadFile(output)
+	out, err := os.ReadFile(output)
 	require.NoError(t, err)
 
 	got := string(out)

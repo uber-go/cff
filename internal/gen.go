@@ -10,8 +10,8 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -83,7 +83,7 @@ func (g *generator) GenerateFile(f *file) error {
 		return nil
 	}
 
-	bs, err := ioutil.ReadFile(f.Filepath)
+	bs, err := os.ReadFile(f.Filepath)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (g *generator) GenerateFile(f *file) error {
 	if err != nil {
 		// When there is a parsing error, we should output the file to a temporary file to help debugging
 		// the template.
-		tmpFile, tmpErr := ioutil.TempFile("", "*.go")
+		tmpFile, tmpErr := os.CreateTemp("", "*.go")
 		if tmpErr == nil {
 			if _, writeErr := buff.WriteTo(tmpFile); writeErr == nil {
 				err = fmt.Errorf("%v\noutputted temporary file to %s", err, tmpFile.Name())
@@ -174,9 +174,9 @@ func (g *generator) GenerateFile(f *file) error {
 		if err := g.resetMagicTokens(&newBuff, &buff); err != nil {
 			return err
 		}
-		return ioutil.WriteFile(g.outputPath, newBuff.Bytes(), 0644)
+		return os.WriteFile(g.outputPath, newBuff.Bytes(), 0644)
 	}
-	return ioutil.WriteFile(g.outputPath, buff.Bytes(), 0644)
+	return os.WriteFile(g.outputPath, buff.Bytes(), 0644)
 }
 
 func (g *generator) resetMagicTokens(w io.Writer, buff *bytes.Buffer) error {
@@ -187,7 +187,7 @@ func (g *generator) resetMagicTokens(w io.Writer, buff *bytes.Buffer) error {
 
 	// First write the file to FS.
 	bb := buff.Bytes()
-	if err := ioutil.WriteFile(g.outputPath, bb, 0644); err != nil {
+	if err := os.WriteFile(g.outputPath, bb, 0644); err != nil {
 		return err
 	}
 

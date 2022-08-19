@@ -3,7 +3,7 @@ package basic
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,7 +20,7 @@ func TestFlowWithoutParameters(t *testing.T) {
 	r, err := NoParamsFlow(context.Background())
 	require.NoError(t, err)
 
-	body, err := ioutil.ReadAll(r)
+	body, err := io.ReadAll(r)
 	require.NoError(t, err)
 
 	assert.Equal(t, "hello world", string(body))

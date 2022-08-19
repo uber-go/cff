@@ -7,7 +7,7 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
-	"io/ioutil"
+	"os"
 	"sort"
 
 	"golang.org/x/tools/go/ast/astutil"
@@ -46,7 +46,7 @@ func (g *generatorv2) GenerateFile(f *file) error {
 		return nil
 	}
 
-	bs, err := ioutil.ReadFile(f.Filepath)
+	bs, err := os.ReadFile(f.Filepath)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (g *generatorv2) GenerateFile(f *file) error {
 	if err != nil {
 		// When there is a parsing error, we should output the file to a temporary file to help debugging
 		// the template.
-		tmpFile, tmpErr := ioutil.TempFile("", "*.go")
+		tmpFile, tmpErr := os.CreateTemp("", "*.go")
 		if tmpErr == nil {
 			if _, writeErr := buff.WriteTo(tmpFile); writeErr == nil {
 				err = fmt.Errorf("%v\noutputted temporary file to %s", err, tmpFile.Name())
@@ -136,5 +136,5 @@ func (g *generatorv2) GenerateFile(f *file) error {
 		return err
 	}
 
-	return ioutil.WriteFile(g.outputPath, buff.Bytes(), 0644)
+	return os.WriteFile(g.outputPath, buff.Bytes(), 0644)
 }
