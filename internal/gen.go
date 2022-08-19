@@ -515,11 +515,12 @@ func printImportAlias(importPath, alias string, addImports map[string]string, al
 }
 
 type genParams struct {
-	generator  *generator
-	file       *file
-	writer     io.Writer
-	addImports map[string]string
-	aliases    map[string]struct{}
+	generator   *generator
+	generatorv2 *generatorv2
+	file        *file
+	writer      io.Writer
+	addImports  map[string]string
+	aliases     map[string]struct{}
 }
 
 // directiveGenerator generates code for top-level CFF constructs.

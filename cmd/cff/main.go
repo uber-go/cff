@@ -27,7 +27,8 @@ type options struct {
 	Args               struct {
 		ImportPath string `positional-arg-name:"importPath"`
 	} `positional-args:"yes" required:"yes"`
-	Quiet bool `long:"quiet"`
+	Quiet        bool `long:"quiet"`
+	UseV2CodeGen bool `long:"use-v2-codegen"`
 }
 
 // file is the value of the --file option.
@@ -164,6 +165,7 @@ func run(args []string) error {
 		Fset:               fset,
 		InstrumentAllTasks: f.InstrumentAllTasks,
 		GenMode:            gm,
+		UseV2Gen:           f.UseV2CodeGen,
 	}
 
 	// If --file was provided, only the requested files will be processed.
