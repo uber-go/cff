@@ -10,6 +10,7 @@ import (
 	"os"
 	"sort"
 
+	"go.uber.org/cff/internal/modifier"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/types/typeutil"
 )
@@ -65,15 +66,15 @@ func (g *generatorv2) GenerateFile(f *file) error {
 		aliases[names[0]] = struct{}{}
 	}
 
-	modifiers := f.modifiers
+	fileModifiers := f.modifiers
 
 	// Before generating code, sort the modifiers in order of appearance in the file.
-	sort.Slice(modifiers, func(i, j int) bool {
-		return modifiers[i].Node().Pos() < modifiers[j].Node().Pos()
+	sort.Slice(fileModifiers, func(i, j int) bool {
+		return fileModifiers[i].Node().Pos() < fileModifiers[j].Node().Pos()
 	})
 
 	var lastOff int
-	for _, mod := range modifiers {
+	for _, mod := range fileModifiers {
 		// safe to ignore err from these because we're writing to bytes.Buffer.
 		buff.Write(bs[lastOff:posFile.Offset(mod.Node().Pos())])
 		// Replace call sites with the function expression.
@@ -89,13 +90,9 @@ func (g *generatorv2) GenerateFile(f *file) error {
 
 	// At the bottom of the file, generate the type definitions and modifier function
 	// bodies.
-	for _, mod := range modifiers {
-		if err := mod.GenImpl(genParams{
-			generatorv2: g,
-			file:        f,
-			writer:      &buff,
-			addImports:  addImports,
-			aliases:     aliases,
+	for _, mod := range fileModifiers {
+		if err := mod.GenImpl(modifier.GenParams{
+			Writer: &buff,
 		}); err != nil {
 			return err
 		}

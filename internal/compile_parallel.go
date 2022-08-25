@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/types"
 
+	"go.uber.org/cff/internal/modifier"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/types/typeutil"
 )
@@ -29,7 +30,7 @@ type parallel struct {
 
 	PosInfo *PosInfo // Used to pass information to uniquely identify a task.
 
-	modifiers []modifier
+	modifiers []modifier.Modifier
 }
 
 type parallelTask struct {
@@ -80,7 +81,7 @@ func (c *compiler) compileParallel(file *ast.File, call *ast.CallExpr) *parallel
 			parallel.Tasks = append(parallel.Tasks, c.compileParallelTasks(parallel, ce)...)
 		case "Concurrency":
 			parallel.Concurrency = ce.Args[0]
-			parallel.modifiers = append(parallel.modifiers, newConcurrencyModifier(ce.Fun, c.nodePosition(ce)))
+			parallel.modifiers = append(parallel.modifiers, modifier.NewConcurrencyModifier(c.fset, ce.Fun))
 		case "ContinueOnError":
 			parallel.ContinueOnError = ce.Args[0]
 		case "InstrumentParallel":

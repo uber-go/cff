@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"go.uber.org/cff/internal/modifier"
 	"code.uber.internal/go/importer"
 	"go.uber.org/multierr"
 	"golang.org/x/tools/go/ast/astutil"
@@ -20,18 +21,6 @@ import (
 
 // funcIndex marks cff.Results outputs.
 type funcIndex int
-
-// A modifier changes the existing code by doing two things.
-// 1. It generates a function that corresponds to what the cff "API"s do by inspecting the
-//    arguments.
-// 2. It inline replaces the cff "API" call with calls to corrresponding generated function.
-// Each call to cff "API" is translates to a modifier.
-type modifier interface {
-	Node() ast.Node            // The ast Node that produced this modifier.
-	FuncExpr() string          // The name of the modifier-generated function.
-	RetExpr() string           // The return signature expression of a modifier
-	GenImpl(p genParams) error // Generates the function body of the modifier-generated function.
-}
 
 const (
 	cffImportPath   = "go.uber.org/cff"
@@ -96,7 +85,7 @@ type file struct {
 	Parallels  []*parallel
 	Generators []directiveGenerator
 
-	modifiers []modifier
+	modifiers []modifier.Modifier
 }
 
 func (c *compiler) CompileFile(file *ast.File, pkg *importer.Package) (*file, error) {
@@ -233,7 +222,7 @@ type flow struct {
 	predicateTypeCnt int                // input to make unique predicateType sentinels.
 	predicateTypes   []*predicateOutput // tracks cff.Predicate sentinel types.
 
-	modifiers []modifier
+	modifiers []modifier.Modifier
 
 	PosInfo *PosInfo // Used to pass information to uniquely identify a task.
 }
@@ -294,7 +283,9 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 		PosInfo:   c.getPosInfo(call),
 		providers: new(typeutil.Map),
 		receivers: new(typeutil.Map),
-		modifiers: []modifier{newFlowModifier(call.Fun, c.nodePosition(call.Fun))},
+		modifiers: []modifier.Modifier{
+			modifier.NewFlowModifier(c.fset, call.Fun),
+		},
 	}
 
 	for _, arg := range call.Args[1:] {
@@ -343,7 +334,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			flow.Emitters = append(flow.Emitters, ce.Args[0])
 		case "Concurrency":
 			flow.Concurrency = ce.Args[0]
-			flow.modifiers = append(flow.modifiers, newConcurrencyModifier(ce.Fun, c.nodePosition(ce)))
+			flow.modifiers = append(flow.modifiers, modifier.NewConcurrencyModifier(c.fset, ce.Fun))
 		case "Task":
 			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
 				flow.Tasks = append(flow.Tasks, task)
