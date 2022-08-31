@@ -23,8 +23,6 @@ type tallyEmitter struct {
 	scheds    *sync.Map // map[cacheKey]SchedulerEmitter
 }
 
-func (tallyEmitter) emitter() {}
-
 // TallyEmitter is a CFF2 emitter that emits metrics to Tally.
 //
 // A full list of metrics published by TallyEmitter can be found at

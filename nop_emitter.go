@@ -31,12 +31,6 @@ func NopTaskEmitter() TaskEmitter {
 
 type nopEmitter struct{}
 
-func (*nopEmitter) emitter()          {}
-func (*nopEmitter) flowEmitter()      {}
-func (*nopEmitter) parallelEmitter()  {}
-func (*nopEmitter) taskEmitter()      {}
-func (*nopEmitter) schedulerEmitter() {}
-
 func (e *nopEmitter) FlowInit(*FlowInfo) FlowEmitter { return e }
 
 func (*nopEmitter) FlowSuccess(context.Context) {}

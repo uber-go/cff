@@ -7,8 +7,6 @@ import (
 
 type emitterStack []Emitter
 
-func (emitterStack) emitter() {}
-
 // EmitterStack allows users to combine multiple Emitters together.
 //
 // Events are sent to the emitters in an unspecified order. Emitters should

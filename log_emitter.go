@@ -63,8 +63,6 @@ type logEmitter struct {
 	recoverLevel zapcore.Level
 }
 
-func (logEmitter) emitter() {}
-
 // LogEmitter builds a CFF2 emitter which writes logs to the provided Zap
 // logger.
 func LogEmitter(log *zap.Logger, opts ...LogEmitterOption) Emitter {

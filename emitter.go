@@ -8,8 +8,6 @@ import (
 )
 
 // Emitter initializes Task, Flow, and Parallel emitters.
-//
-// WARNING: This interface is not stable and may change in the future.
 type Emitter interface {
 	// TaskInit returns a TaskEmitter which could be memoized based on task name.
 	TaskInit(*TaskInfo, *DirectiveInfo) TaskEmitter
@@ -20,8 +18,6 @@ type Emitter interface {
 	ParallelInit(*ParallelInfo) ParallelEmitter
 	// SchedulerInit returns an emitter for the CFF scheduler.
 	SchedulerInit(s *SchedulerInfo) SchedulerEmitter
-
-	emitter() // private interface (GO-258).
 }
 
 // SchedulerState describes the status of jobs managed by the CFF scheduler.
@@ -32,8 +28,6 @@ type SchedulerState = scheduler.State
 type SchedulerEmitter interface {
 	// EmitScheduler emits the state of the CFF scheduler.
 	EmitScheduler(s SchedulerState)
-
-	schedulerEmitter() // private interface (GO-258).
 }
 
 // SchedulerInfo provides information about the context the scheduler
@@ -80,8 +74,6 @@ type ParallelInfo struct {
 
 // FlowEmitter receives events for when flow events occur, for the purpose of
 // emitting metrics.
-//
-// WARNING: This interface is not stable and may change in the future.
 type FlowEmitter interface {
 	// FlowSuccess is called when a flow runs successfully.
 	FlowSuccess(context.Context)
@@ -89,14 +81,10 @@ type FlowEmitter interface {
 	FlowError(context.Context, error)
 	// FlowDone is called when a flow finishes.
 	FlowDone(context.Context, time.Duration)
-
-	flowEmitter() // private interface (GO-258).
 }
 
 // ParallelEmitter receives events for when parallel events occur, for the
 // purpose of emitting metrics.
-//
-// WARNING: This interface is not stable and may change in the future.
 type ParallelEmitter interface {
 	// ParallelSuccess is called when a parallel runs successfully.
 	ParallelSuccess(context.Context)
@@ -104,14 +92,10 @@ type ParallelEmitter interface {
 	ParallelError(context.Context, error)
 	// ParallelDone is called when a parallel finishes.
 	ParallelDone(context.Context, time.Duration)
-
-	parallelEmitter() // private interface (GO-258).
 }
 
 // TaskEmitter receives events for when task events occur, for the purpose of
 // emitting metrics.
-//
-// WARNING: This interface is not stable and may change in the future.
 type TaskEmitter interface {
 	// TaskSuccess is called when a task runs successfully.
 	TaskSuccess(context.Context)
@@ -130,6 +114,4 @@ type TaskEmitter interface {
 	TaskPanicRecovered(context.Context, interface{})
 	// TaskDone is called when a task finishes.
 	TaskDone(context.Context, time.Duration)
-
-	taskEmitter() // private interface (GO-258).
 }
