@@ -23,12 +23,11 @@ type options struct {
 	InstrumentAllTasks bool     `long:"instrument-all-tasks"`
 	Sources            []string `long:"source"`
 	StdlibRoot         string   `long:"stdlibroot"`
-	GenMode            string   `long:"genmode" choice:"base" choice:"source-map" required:"no" default:"base"`
+	GenMode            string   `long:"genmode" choice:"base" choice:"source-map" choice:"modifier" required:"no" default:"base"`
 	Args               struct {
 		ImportPath string `positional-arg-name:"importPath"`
 	} `positional-args:"yes" required:"yes"`
-	Quiet        bool `long:"quiet"`
-	UseV2CodeGen bool `long:"use-v2-codegen"`
+	Quiet bool `long:"quiet"`
 }
 
 // file is the value of the --file option.
@@ -165,7 +164,6 @@ func run(args []string) error {
 		Fset:               fset,
 		InstrumentAllTasks: f.InstrumentAllTasks,
 		GenMode:            gm,
-		UseV2Gen:           f.UseV2CodeGen,
 	}
 
 	// If --file was provided, only the requested files will be processed.

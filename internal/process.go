@@ -13,7 +13,6 @@ type Processor struct {
 	Fset               *token.FileSet
 	InstrumentAllTasks bool
 	GenMode            mode.GenerationMode
-	UseV2Gen           bool
 }
 
 // Process processes a single CFF2 file.
@@ -30,12 +29,11 @@ func (p *Processor) Process(pkg *importer.Package, file *ast.File, outputPath st
 		return err
 	}
 
-	if p.UseV2Gen {
+	if p.GenMode.Modifier() {
 		g := newGeneratorV2(generatorOpts{
 			Fset:       p.Fset,
 			Package:    pkg.Types,
 			OutputPath: outputPath,
-			GenMode:    p.GenMode,
 		})
 		if err := g.GenerateFile(f); err != nil {
 			return err

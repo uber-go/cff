@@ -39,6 +39,6 @@ func TestGoldenMagic2(t *testing.T) {
 
 	assert.Equal(t, string(expected), string(actual), "magic_gen.go is out of date, try running these commands:\n"+
 		os.ExpandEnv("cd $GOPATH/src/go.uber.org/cff/examples\n")+
-		"rm -f magic_v2_gen.go &&  $GOPATH/bin/cff --genmode=source-map --file=magic_v2.go go.uber.org/cff/examples")
+		"rm -f magic_v2_gen.go &&  $GOPATH/bin/cff --genmode=modifier --file=magic_v2.go go.uber.org/cff/examples")
 }
 */
