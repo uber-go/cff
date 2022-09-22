@@ -94,6 +94,11 @@ var codeGenerateFailCases = map[string][]errorCase{
 			TestFuncs:    []string{"DisallowInstrumentParallel"},
 		},
 		{
+			File:         "cff-flow-arguments.go",
+			ErrorMatches: `"Tasks" is an invalid cff.Flow Option`,
+			TestFuncs:    []string{"DisallowTasks"},
+		},
+		{
 			File:         "cff-task-arguments.go",
 			ErrorMatches: "expected function, got bool",
 			TestFuncs:    []string{"ExpectsFunctionCallExpression"},

@@ -298,6 +298,7 @@ func InstrumentParallel(name string) Option {
 // Tasks specifies functions for execution with Parallel. Tasks are any
 // executable function or bound method available in the scope when cff.Parallel
 // is called.
+//
 // Tasks can request the context for the current execution scope by optionally
 // adding a context.Context as the only argument.
 // Additionally, Tasks that may fail can do so by optionally adding an error
@@ -306,6 +307,8 @@ func InstrumentParallel(name string) Option {
 //  func(context.Context) error
 //
 // Tasks functions do not accept other arguments or return values.
+//
+// Tasks should only be used with cff.Parallel.
 //
 // This is a code generation directive.
 func Tasks(fn ...interface{}) Option {

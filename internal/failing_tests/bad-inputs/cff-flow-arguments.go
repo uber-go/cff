@@ -80,3 +80,15 @@ func DisallowInstrumentParallel() {
 		),
 	)
 }
+
+// DisallowTasks is a Flow that provides a cff.Tasks.
+func DisallowTasks() {
+	cff.Flow(
+		context.Background(),
+		cff.Tasks(
+			func() error {
+				return nil
+			},
+		),
+	)
+}
