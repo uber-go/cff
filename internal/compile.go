@@ -152,7 +152,17 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *importer.Package) *file {
 			case fn.Name() == "Flow":
 				flow := c.compileFlow(astFile, n)
 				if flow != nil && len(flow.modifiers) > 0 {
-					file.modifiers = append(file.modifiers, flow.modifiers...)
+					// The modifier for cff.Flow is a root modifier that
+					// depends on the compiled flow object available in this
+					// scope.
+					file.modifiers = append(
+						file.modifiers,
+						NewFlowModifier(c.fset, flow, n.Fun, c.info),
+					)
+					file.modifiers = append(
+						file.modifiers,
+						flow.modifiers...,
+					)
 				}
 				file.Flows = append(file.Flows, flow)
 				file.Generators = append(
@@ -165,7 +175,7 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *importer.Package) *file {
 			case fn.Name() == "Parallel":
 				parallel := c.compileParallel(astFile, n)
 				if parallel != nil && len(parallel.modifiers) > 0 {
-					file.modifiers = append(file.modifiers, parallel.modifiers...)
+					// TODO(rhang): Create cff.Parallel modifiers.
 				}
 				file.Parallels = append(file.Parallels, parallel)
 				file.Generators = append(
@@ -283,9 +293,6 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 		PosInfo:   c.getPosInfo(call),
 		providers: new(typeutil.Map),
 		receivers: new(typeutil.Map),
-		modifiers: []modifier.Modifier{
-			modifier.NewFlowModifier(c.fset, call.Fun),
-		},
 	}
 
 	for _, arg := range call.Args[1:] {
@@ -318,6 +325,7 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 				flow.Inputs = append(flow.Inputs, in)
 				provided.Set(in.Type, in)
 			}
+			flow.modifiers = append(flow.modifiers, modifier.Placeholder(ce))
 		case "Results":
 			for _, o := range ce.Args {
 				if output := c.compileOutput(o); output != nil {
@@ -327,21 +335,29 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 					// We don't care about other values, cff.Results should be the only receiver.
 					flow.receivers.Set(output.Type, []funcIndex{funcIndexResult})
 				}
+				flow.modifiers = append(flow.modifiers, modifier.NewResultsModifier(c.fset, ce.Fun, ce.Args, c.info))
 			}
 		case "InstrumentFlow":
 			flow.Instrument = c.compileInstrument(ce)
+			flow.modifiers = append(flow.modifiers, modifier.Placeholder(ce))
 		case "WithEmitter":
 			flow.Emitters = append(flow.Emitters, ce.Args[0])
+			flow.modifiers = append(flow.modifiers, modifier.Placeholder(ce))
 		case "Concurrency":
 			flow.Concurrency = ce.Args[0]
-			flow.modifiers = append(flow.modifiers, modifier.NewConcurrencyModifier(c.fset, ce.Fun))
+			flow.modifiers = append(
+				flow.modifiers,
+				modifier.NewConcurrencyModifier(c.fset, ce.Fun, flow.Concurrency),
+			)
 		case "Task":
 			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
 				flow.Tasks = append(flow.Tasks, task)
 				flow.Funcs = append(flow.Funcs, task.Function)
+				flow.modifiers = append(flow.modifiers, modifier.NewTaskModifier(c.fset, ce.Fun, ce.Args, c.info))
 				if task.Predicate != nil {
 					flow.Funcs = append(flow.Funcs, task.Predicate.Function)
 					flow.Predicates = append(flow.Predicates, task.Predicate)
+					flow.modifiers = append(flow.modifiers, modifier.Placeholder(ce))
 				}
 			}
 		}

@@ -1,3 +1,3 @@
-func {{ .FuncExpr }}(c int) {{ .RetExpr }} {
-	return c
+func {{ .FuncExpr }}(c int) func() int {
+	return func() int { return c }
 }

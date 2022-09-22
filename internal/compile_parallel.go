@@ -81,7 +81,7 @@ func (c *compiler) compileParallel(file *ast.File, call *ast.CallExpr) *parallel
 			parallel.Tasks = append(parallel.Tasks, c.compileParallelTasks(parallel, ce)...)
 		case "Concurrency":
 			parallel.Concurrency = ce.Args[0]
-			parallel.modifiers = append(parallel.modifiers, modifier.NewConcurrencyModifier(c.fset, ce.Fun))
+			parallel.modifiers = append(parallel.modifiers, modifier.NewConcurrencyModifier(c.fset, ce.Fun, parallel.Concurrency))
 		case "ContinueOnError":
 			parallel.ContinueOnError = ce.Args[0]
 		case "InstrumentParallel":

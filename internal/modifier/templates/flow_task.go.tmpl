@@ -1,0 +1,59 @@
+{{- $context := import "context" -}}
+{{- $cff := import "go.uber.org/cff" -}}
+{{- $t := printf "task%d" .Serial -}}
+
+// {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
+{{ with .Outputs -}}
+	var (
+		{{ range . -}}
+			v{{ typeHash . }} {{ type . }}
+		{{ end }}
+	)
+{{ end -}}
+
+{{ $t }} := new({{ template "task" }})
+
+{{ $t }}.run = func(ctx {{ $context }}.Context) (err error) {
+	defer func() {
+		recovered := recover()
+		if recovered != nil {
+			err = {{ import "fmt" }}.Errorf("task panic: %v", recovered)
+		}
+	}()
+
+	{{ template "taskResultList" . }}{{ if or .Function.HasError (len .Outputs) }} = {{ end }}{{ expr .Function.Node }}{{ template "callTaskArgs" . }}
+	return
+}
+
+{{ $t }}.job = sched.Enqueue(ctx, {{ $cff }}.Job{
+    Run: task{{ .Serial }}.run,
+    {{ if .Function.DependsOn -}}
+        Dependencies: []*{{ $cff }}.ScheduledJob{
+            {{ range .Function.DependsOn -}}
+			    {{ template "dependencies" . }}
+            {{ end -}}
+        },
+    {{- end }}
+})
+
+tasks = append(tasks, task{{ .Serial }})
+
+{{- define "dependencies" -}}
+	{{- if .Predicate -}}
+		pred{{ .Predicate.Serial }}.job,
+	{{- else -}}
+		task{{ .Task.Serial }}.job,
+	{{- end -}}
+{{- end -}}
+
+{{- define "taskResultList" -}}
+	{{- range $i, $t := .Outputs -}}
+		{{ if gt $i 0 }},{{ end }}v{{ typeHash $t }}
+	{{- end }}{{ if .Function.HasError }}{{ if len .Outputs }}, {{ end }}err{{ end }}
+{{- end -}}
+
+{{- define "callTaskArgs" -}}
+	({{- if .Function.WantCtx }}ctx,{{ end }} {{- range .Inputs }}v{{ typeHash . }}, {{- end }})
+{{- end -}}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}

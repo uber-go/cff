@@ -1,0 +1,17 @@
+func {{ .FuncExpr }}({{ template "modifierParams" .FuncArgs }}) {{ template "modifierReturnType" .FuncArgs }} {
+	{{ template "modifierReturnValue" .FuncArgs }}
+}
+
+{{- define "modifierParams" -}}
+	{{ range . }} {{ .Name }} {{ type .Type }} {{ if not .LastIdx }}, {{ end }} {{ end }}
+{{- end -}}
+
+{{- define "modifierReturnType" -}}
+	func() ({{ range . }} {{ type .Type }} {{ if not .LastIdx }}, {{ end }} {{ end }})
+{{- end -}}
+
+{{- define "modifierReturnValue" -}}
+	return {{ template "modifierReturnType" . }} { return {{ range . }} {{ .Name }} {{ if not .LastIdx }}, {{ end }} {{ end }} }
+{{- end -}}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}

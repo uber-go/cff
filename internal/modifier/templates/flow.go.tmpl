@@ -1,0 +1,53 @@
+{{- $context := import "context" -}}
+{{- $cff := import "go.uber.org/cff" -}}
+
+func {{ .FuncExpr }}(
+	{{- with .FuncArgs }}
+		ctx {{ type .CtxType }},
+		{{ template "args" . }}
+	{{- end -}}
+) error {
+	{{ template "modifierProviders" .FuncArgs.Values -}}
+
+	{{ with .Flow }}
+
+	sched := {{ $cff }}.BeginFlow(
+		{{ $cff }}.SchedulerParams{
+			{{ with .Concurrency -}} Concurrency: {{ expr . }}, {{ end -}}
+		},
+	)
+
+	var tasks []*{{ template "task" }}
+
+	{{ range .TopoFuncs }}
+		{{ template "flow_func.go.tmpl" . }}
+	{{ end }}
+
+	if err := sched.Wait(ctx); err != nil {
+		return err
+	}
+
+	{{ range .Outputs }}
+		*({{ expr .Node }}) = v{{ typeHash .Type }} // {{ typeName .Type }}
+	{{ end }}
+
+	return nil
+	{{- end -}}
+}
+
+{{- define "args" -}}
+	{{- $cff := import "go.uber.org/cff" -}}
+	{{ range .Args }}
+		{{- if .Types }} {{ .Name }} func() ({{ range .Types }} {{ type . }}, {{ end }}) {{ else }} _ {{ $cff }}.Option {{ end }},
+	{{ end }}
+{{- end -}}
+
+{{- define "modifierProviders" -}}
+	{{ range . }}
+		{{- $last := .LastIdx -}}
+		{{ range $index, $element := .Exprs }} {{ expr . }} {{ if ne $index $last }}, {{ end }} {{ end }} := {{ .ModifierID }}()
+		{{ range $index, $element := .Exprs }} _ {{ if ne $index $last }}, {{ end }} {{ end }} = {{ range $index, $element := .Exprs }} {{ expr . }} {{ if ne $index $last }}, {{ end }} {{ end }} // possibly unused.
+	{{ end }}
+{{- end -}}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}
