@@ -105,8 +105,8 @@ func (g *generatorv2) GenerateFile(f *file) error {
 			return err
 		}
 
-		// Insert a newline between each modifier generations.
-		buff.Write([]byte("\n"))
+		// Insert a newline and space between each modifier generation.
+		buff.Write([]byte("\n\n"))
 	}
 
 	// Parse the generated file and clean up.

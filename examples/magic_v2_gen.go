@@ -464,6 +464,7 @@ func _cffFlow33_9(
 func _cffResults35_3(m35_15 **Response) func() **Response {
 	return func() **Response { return m35_15 }
 }
+
 func _cffConcurrency36_3(c int) func() int {
 	return func() int { return c }
 }
@@ -471,15 +472,19 @@ func _cffConcurrency36_3(c int) func() int {
 func _cffTask41_3(m42_4 func(req *Request) (*GetManagerRequest, *ListUsersRequest)) func() func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
 	return func() func(req *Request) (*GetManagerRequest, *ListUsersRequest) { return m42_4 }
 }
+
 func _cffTask49_3(m50_4 func(req *GetManagerRequest) (*GetManagerResponse, error)) func() func(req *GetManagerRequest) (*GetManagerResponse, error) {
 	return func() func(req *GetManagerRequest) (*GetManagerResponse, error) { return m50_4 }
 }
+
 func _cffTask51_3(m51_12 func(req []*SendEmailRequest) ([]*SendEmailResponse, error)) func() func(req []*SendEmailRequest) ([]*SendEmailResponse, error) {
 	return func() func(req []*SendEmailRequest) ([]*SendEmailResponse, error) { return m51_12 }
 }
+
 func _cffTask52_3(m53_4 func(responses []*SendEmailResponse) *Response) func() func(responses []*SendEmailResponse) *Response {
 	return func() func(responses []*SendEmailResponse) *Response { return m53_4 }
 }
+
 func _cffTask61_3(m62_4 func(req *ListUsersRequest) (*ListUsersResponse, error), m63_4 cff.TaskOption, m66_4 cff.TaskOption, m67_4 cff.TaskOption) func() (func(req *ListUsersRequest) (*ListUsersResponse, error), cff.TaskOption, cff.TaskOption, cff.TaskOption) {
 	return func() (func(req *ListUsersRequest) (*ListUsersResponse, error), cff.TaskOption, cff.TaskOption, cff.TaskOption) {
 		return m62_4, m63_4, m66_4, m67_4
