@@ -157,6 +157,7 @@ func (g *generatorv2) funcMap(
 			// Useful for comments.
 			return types.TypeString(t, nil)
 		},
+		"quote": strconv.Quote,
 		"import": func(importPath string) string {
 			if names := file.Imports[importPath]; len(names) > 0 {
 				return names[0]

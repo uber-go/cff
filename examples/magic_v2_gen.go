@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"go.uber.org/cff"
 	"github.com/uber-go/tally"
@@ -34,9 +35,9 @@ func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *Request) (*Response, 
 		_cffParams34_3(req),
 		_cffResults35_3(&res),
 		_cffConcurrency36_3(8),
-		cff.WithEmitter(cff.TallyEmitter(h.scope)),
-		cff.WithEmitter(cff.LogEmitter(h.logger)),
-		cff.InstrumentFlow("HandleFoo"),
+		_cffWithEmitter37_3(cff.TallyEmitter(h.scope)),
+		_cffWithEmitter38_3(cff.LogEmitter(h.logger)),
+		_cffInstrumentFlow39_3("HandleFoo"),
 
 		_cffTask41_3(
 			func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
@@ -218,9 +219,9 @@ func _cffFlow33_9(
 	m34_3 func() *Request,
 	m35_3 func() **Response,
 	m36_3 func() int,
-	_ cff.Option,
-	_ cff.Option,
-	_ cff.Option,
+	m37_3 func() cff.Emitter,
+	m38_3 func() cff.Emitter,
+	m39_3 func() string,
 	m41_3 func() func(req *Request) (*GetManagerRequest, *ListUsersRequest),
 	m49_3 func() func(req *GetManagerRequest) (*GetManagerResponse, error),
 	m51_3 func() func(req []*SendEmailRequest) ([]*SendEmailResponse, error),
@@ -236,6 +237,12 @@ func _cffFlow33_9(
 	_ = _35_15 // possibly unused.
 	_36_19 := m36_3()
 	_ = _36_19 // possibly unused.
+	_37_19 := m37_3()
+	_ = _37_19 // possibly unused.
+	_38_19 := m38_3()
+	_ = _38_19 // possibly unused.
+	_39_22 := m39_3()
+	_ = _39_22 // possibly unused.
 	_42_4 := m41_3()
 	_ = _42_4 // possibly unused.
 	_50_4 := m49_3()
@@ -250,10 +257,38 @@ func _cffFlow33_9(
 	_, _, _ = _70_4, _77_4, _80_4 // possibly unused.
 
 	var v1 *Request = _34_14
+	emitter := cff.EmitterStack(_37_19, _38_19)
+
+	var (
+		flowInfo = &cff.FlowInfo{
+			Name:   _39_22,
+			File:   "go.uber.org/cff/examples/magic_v2.go",
+			Line:   33,
+			Column: 9,
+		}
+		flowEmitter = emitter.FlowInit(flowInfo)
+
+		schedInfo = &cff.SchedulerInfo{
+			Name:      flowInfo.Name,
+			Directive: cff.FlowDirective,
+			File:      flowInfo.File,
+			Line:      flowInfo.Line,
+			Column:    flowInfo.Column,
+		}
+
+		// possibly unused
+		_ = flowInfo
+	)
+
+	startTime := time.Now()
+	defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
+
+	schedEmitter := emitter.SchedulerInit(schedInfo)
 
 	sched := cff.BeginFlow(
 		cff.SchedulerParams{
-			Concurrency: _36_19},
+			Concurrency: _36_19, Emitter: schedEmitter,
+		},
 	)
 
 	var tasks []*struct {
@@ -457,11 +492,13 @@ func _cffFlow33_9(
 	tasks = append(tasks, task3)
 
 	if err := sched.Wait(ctx); err != nil {
+		flowEmitter.FlowError(ctx, err)
 		return err
 	}
 
 	*(_35_15) = v8 // *go.uber.org/cff/examples.Response
 
+	flowEmitter.FlowSuccess(ctx)
 	return nil
 }
 
@@ -475,6 +512,18 @@ func _cffResults35_3(m35_15 **Response) func() **Response {
 
 func _cffConcurrency36_3(c int) func() int {
 	return func() int { return c }
+}
+
+func _cffWithEmitter37_3(m37_19 cff.Emitter) func() cff.Emitter {
+	return func() cff.Emitter { return m37_19 }
+}
+
+func _cffWithEmitter38_3(m38_19 cff.Emitter) func() cff.Emitter {
+	return func() cff.Emitter { return m38_19 }
+}
+
+func _cffInstrumentFlow39_3(m39_22 string) func() string {
+	return func() string { return m39_22 }
 }
 
 func _cffTask41_3(m42_4 func(req *Request) (*GetManagerRequest, *ListUsersRequest)) func() func(req *Request) (*GetManagerRequest, *ListUsersRequest) {

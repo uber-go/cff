@@ -26,6 +26,10 @@ const (
 	ResultsName = "_cffResults"
 	// ParamsName is the prefix for the name that replaces a cff.Params.
 	ParamsName = "_cffParams"
+	// WithEmitterName is the prefix for the name that replaces a cff.WithEmitter.
+	WithEmitterName = "_cffWithEmitter"
+	// InstrumentFlowName is the prefix for the name that replaces a cff.InstrumentFlow.
+	InstrumentFlowName = "_cffInstrumentFlow"
 )
 
 var _ Modifier = (*funcModifier)(nil)

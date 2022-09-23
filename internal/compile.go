@@ -355,10 +355,26 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			)
 		case "InstrumentFlow":
 			flow.Instrument = c.compileInstrument(ce)
-			flow.modifiers = append(flow.modifiers, modifier.Placeholder(ce))
+			flow.modifiers = append(flow.modifiers, modifier.NewModifier(
+				modifier.Params{
+					Name:     modifier.InstrumentFlowName,
+					Modified: ce.Fun,
+					Provided: ce.Args,
+					Fset:     c.fset,
+					Info:     c.info,
+				}),
+			)
 		case "WithEmitter":
 			flow.Emitters = append(flow.Emitters, ce.Args[0])
-			flow.modifiers = append(flow.modifiers, modifier.Placeholder(ce))
+			flow.modifiers = append(flow.modifiers, modifier.NewModifier(
+				modifier.Params{
+					Name:     modifier.WithEmitterName,
+					Modified: ce.Fun,
+					Provided: ce.Args,
+					Fset:     c.fset,
+					Info:     c.info,
+				}),
+			)
 		case "Concurrency":
 			flow.Concurrency = ce.Args[0]
 			flow.modifiers = append(
