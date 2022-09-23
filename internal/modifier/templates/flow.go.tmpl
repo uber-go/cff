@@ -11,6 +11,10 @@ func {{ .FuncExpr }}(
 
 	{{ with .Flow }}
 
+	{{- range .Inputs }}
+		var v{{ typeHash .Type }} {{ type .Type }} = {{ expr .Node }}
+	{{- end }}
+
 	sched := {{ $cff }}.BeginFlow(
 		{{ $cff }}.SchedulerParams{
 			{{ with .Concurrency -}} Concurrency: {{ expr . }}, {{ end -}}

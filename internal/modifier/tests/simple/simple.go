@@ -93,3 +93,34 @@ func External() (bool, error) {
 	)
 	return res, err
 }
+
+// Params is a simple cff.Flow that depends on cff.Params.
+func Params() (string, external.A, error) {
+	var (
+		res1 string
+		res2 external.A
+	)
+	err := cff.Flow(context.Background(),
+		cff.Concurrency(2),
+		cff.Params(1, true),
+		cff.Results(&res1, &res2),
+		cff.Task(
+			func(i int) int64 {
+				return int64(i)
+			},
+		),
+		cff.Task(
+			func(i int64) (external.A, error) {
+				return external.A(i), nil
+			}),
+		cff.Task(
+			func(b bool) (string, error) {
+				if b {
+					return "true", nil
+				}
+				return "false", nil
+			},
+		),
+	)
+	return res1, res2, err
+}

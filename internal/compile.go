@@ -325,7 +325,15 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 				flow.Inputs = append(flow.Inputs, in)
 				provided.Set(in.Type, in)
 			}
-			flow.modifiers = append(flow.modifiers, modifier.Placeholder(ce))
+			flow.modifiers = append(flow.modifiers, modifier.NewModifier(
+				modifier.Params{
+					Name:     modifier.ParamsName,
+					Modified: ce.Fun,
+					Provided: ce.Args,
+					Fset:     c.fset,
+					Info:     c.info,
+				}),
+			)
 		case "Results":
 			for _, o := range ce.Args {
 				if output := c.compileOutput(o); output != nil {

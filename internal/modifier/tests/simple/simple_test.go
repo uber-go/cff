@@ -3,6 +3,7 @@ package simple
 import (
 	"testing"
 
+	"go.uber.org/cff/internal/modifier/tests/external"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,4 +25,11 @@ func TestExternal(t *testing.T) {
 	res, err := External()
 	assert.NoError(t, err)
 	assert.Equal(t, res, true)
+}
+
+func TestParams(t *testing.T) {
+	sRes, eRes, err := Params()
+	assert.NoError(t, err)
+	assert.Equal(t, sRes, "true")
+	assert.Equal(t, eRes, external.A(1))
 }

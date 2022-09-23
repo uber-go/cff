@@ -24,6 +24,8 @@ const (
 	TaskName = "_cffTask"
 	// ResultsName is the prefix for the name that replaces a cff.Results.
 	ResultsName = "_cffResults"
+	// ParamsName is the prefix for the name that replaces a cff.Params.
+	ParamsName = "_cffParams"
 )
 
 var _ Modifier = (*funcModifier)(nil)

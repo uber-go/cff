@@ -31,7 +31,7 @@ type fooHandlerV2 struct {
 func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
 	var res *Response
 	err := _cffFlow33_9(ctx,
-		cff.Params(req),
+		_cffParams34_3(req),
 		_cffResults35_3(&res),
 		_cffConcurrency36_3(8),
 		cff.WithEmitter(cff.TallyEmitter(h.scope)),
@@ -215,7 +215,7 @@ func SendMessageV2() error {
 }
 func _cffFlow33_9(
 	ctx context.Context,
-	_ cff.Option,
+	m34_3 func() *Request,
 	m35_3 func() **Response,
 	m36_3 func() int,
 	_ cff.Option,
@@ -230,6 +230,8 @@ func _cffFlow33_9(
 	m69_3 func() (func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest, cff.TaskOption, cff.TaskOption),
 	_ cff.Option,
 ) error {
+	_34_14 := m34_3()
+	_ = _34_14 // possibly unused.
 	_35_15 := m35_3()
 	_ = _35_15 // possibly unused.
 	_36_19 := m36_3()
@@ -247,6 +249,8 @@ func _cffFlow33_9(
 	_70_4, _77_4, _80_4 := m69_3()
 	_, _, _ = _70_4, _77_4, _80_4 // possibly unused.
 
+	var v1 *Request = _34_14
+
 	sched := cff.BeginFlow(
 		cff.SchedulerParams{
 			Concurrency: _36_19},
@@ -261,8 +265,8 @@ func _cffFlow33_9(
 
 	// go.uber.org/cff/examples/magic_v2.go:42:4
 	var (
-		v1 *GetManagerRequest
-		v2 *ListUsersRequest
+		v2 *GetManagerRequest
+		v3 *ListUsersRequest
 	)
 	task0 := new(struct {
 		emitter cff.TaskEmitter
@@ -279,7 +283,7 @@ func _cffFlow33_9(
 			}
 		}()
 
-		v1, v2 = _42_4(v3)
+		v2, v3 = _42_4(v1)
 		return
 	}
 
@@ -308,7 +312,7 @@ func _cffFlow33_9(
 			}
 		}()
 
-		v4, err = _50_4(v1)
+		v4, err = _50_4(v2)
 		return
 	}
 
@@ -340,7 +344,7 @@ func _cffFlow33_9(
 			}
 		}()
 
-		v5, err = _62_4(v2)
+		v5, err = _62_4(v3)
 		return
 	}
 
@@ -459,6 +463,10 @@ func _cffFlow33_9(
 	*(_35_15) = v8 // *go.uber.org/cff/examples.Response
 
 	return nil
+}
+
+func _cffParams34_3(m34_14 *Request) func() *Request {
+	return func() *Request { return m34_14 }
 }
 
 func _cffResults35_3(m35_15 **Response) func() **Response {
