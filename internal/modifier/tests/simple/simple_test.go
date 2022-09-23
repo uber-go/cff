@@ -7,7 +7,8 @@ import (
 )
 
 func TestFlow(t *testing.T) {
-	v, err := Flow()
+	iRes, sRes, err := Flow()
 	assert.NoError(t, err)
-	assert.Equal(t, v, 1)
+	assert.Equal(t, iRes, 1)
+	assert.Equal(t, sRes, "non-zero")
 }

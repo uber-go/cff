@@ -335,8 +335,8 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 					// We don't care about other values, cff.Results should be the only receiver.
 					flow.receivers.Set(output.Type, []funcIndex{funcIndexResult})
 				}
-				flow.modifiers = append(flow.modifiers, modifier.NewResultsModifier(c.fset, ce.Fun, ce.Args, c.info))
 			}
+			flow.modifiers = append(flow.modifiers, modifier.NewResultsModifier(c.fset, ce.Fun, ce.Args, c.info))
 		case "InstrumentFlow":
 			flow.Instrument = c.compileInstrument(ce)
 			flow.modifiers = append(flow.modifiers, modifier.Placeholder(ce))
