@@ -336,7 +336,15 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 					flow.receivers.Set(output.Type, []funcIndex{funcIndexResult})
 				}
 			}
-			flow.modifiers = append(flow.modifiers, modifier.NewResultsModifier(c.fset, ce.Fun, ce.Args, c.info))
+			flow.modifiers = append(flow.modifiers, modifier.NewModifier(
+				modifier.Params{
+					Name:     modifier.ResultsName,
+					Modified: ce.Fun,
+					Provided: ce.Args,
+					Fset:     c.fset,
+					Info:     c.info,
+				}),
+			)
 		case "InstrumentFlow":
 			flow.Instrument = c.compileInstrument(ce)
 			flow.modifiers = append(flow.modifiers, modifier.Placeholder(ce))
@@ -353,7 +361,15 @@ func (c *compiler) compileFlow(file *ast.File, call *ast.CallExpr) *flow {
 			if task := c.compileTask(&flow, ce.Args[0], ce.Args[1:]); task != nil {
 				flow.Tasks = append(flow.Tasks, task)
 				flow.Funcs = append(flow.Funcs, task.Function)
-				flow.modifiers = append(flow.modifiers, modifier.NewTaskModifier(c.fset, ce.Fun, ce.Args, c.info))
+				flow.modifiers = append(flow.modifiers, modifier.NewModifier(
+					modifier.Params{
+						Name:     modifier.TaskName,
+						Modified: ce.Fun,
+						Provided: ce.Args,
+						Fset:     c.fset,
+						Info:     c.info,
+					}),
+				)
 				if task.Predicate != nil {
 					flow.Funcs = append(flow.Funcs, task.Predicate.Function)
 					flow.Predicates = append(flow.Predicates, task.Predicate)
