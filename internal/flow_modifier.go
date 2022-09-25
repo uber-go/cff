@@ -37,7 +37,11 @@ func NewFlowModifier(fset *token.FileSet, f *flow, n ast.Expr, i *types.Info) mo
 }
 
 func (fm *flowModifier) FuncExpr() string {
-	return fmt.Sprintf("_cffFlow%d_%d", fm.Position.Line, fm.Position.Column)
+	return fmt.Sprintf("_cffFlow%v_%d_%d",
+		modifier.TrimFilename(fm.Position.Filename),
+		fm.Position.Line,
+		fm.Position.Column,
+	)
 }
 
 type rootModifierParams struct {

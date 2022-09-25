@@ -32,7 +32,7 @@ func NewConcurrencyModifier(fset *token.FileSet, n ast.Expr, concurrency ast.Exp
 }
 
 func (cm *concurrencyModifier) FuncExpr() string {
-	return fmt.Sprintf("_cffConcurrency%d_%d", cm.Position.Line, cm.Position.Column)
+	return fmt.Sprintf("_cffConcurrency%v_%d_%d", TrimFilename(cm.Position.Filename), cm.Position.Line, cm.Position.Column)
 }
 
 func (cm *concurrencyModifier) GenImpl(p GenParams) error {

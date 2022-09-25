@@ -62,7 +62,7 @@ func NewModifier(p Params) Modifier {
 
 // FuncExpr returns the name of the modifier replacement function.
 func (fm *funcModifier) FuncExpr() string {
-	return fmt.Sprintf("%s%d_%d", fm.name, fm.position.Line, fm.position.Column)
+	return fmt.Sprintf("%s%s_%d_%d", fm.name, TrimFilename(fm.position.Filename), fm.position.Line, fm.position.Column)
 }
 
 func (fm *funcModifier) FuncArgs() []Arg {

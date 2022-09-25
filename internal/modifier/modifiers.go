@@ -7,6 +7,8 @@ import (
 	"go/token"
 	"go/types"
 	"io"
+	"path/filepath"
+	"strings"
 	"text/template"
 )
 
@@ -49,7 +51,7 @@ type Arg struct {
 // ExprHash returns a unique identifier for an Expr.
 func ExprHash(fset *token.FileSet, n ast.Expr) string {
 	pos := fset.Position(n.Pos())
-	return fmt.Sprintf("m%d_%d", pos.Line, pos.Column)
+	return fmt.Sprintf("m%v%d_%d", TrimFilename(pos.Filename), pos.Line, pos.Column)
 }
 
 // Placeholder constructs a placeholder modifier that will be incrementally
@@ -77,4 +79,11 @@ func (p *placeholder) GenImpl(_ GenParams) error {
 
 func (p *placeholder) Provides() []ast.Expr {
 	return nil
+}
+
+// TrimFilename is a utility function used for trimming just the file
+// name without ".go" suffix to guarantee uniqueness of generated cff
+// functions.
+func TrimFilename(path string) string {
+	return strings.ReplaceAll(strings.TrimSuffix(filepath.Base(path), ".go"), "_", "")
 }
