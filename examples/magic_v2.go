@@ -21,15 +21,15 @@ type ResponseV2 struct {
 }
 
 type fooHandlerV2 struct {
-	mgr    *ManagerRepository
-	users  *UserRepository
-	ses    *SESClient
+	mgr    *ManagerRepositoryV2
+	users  *UserRepositoryV2
+	ses    *SESClientV2
 	scope  tally.Scope
 	logger *zap.Logger
 }
 
-func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
-	var res *Response
+func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *RequestV2) (*ResponseV2, error) {
+	var res *ResponseV2
 	err := cff.Flow(ctx,
 		cff.Params(req),
 		cff.Results(&res),
@@ -39,10 +39,10 @@ func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *Request) (*Response, 
 		cff.InstrumentFlow("HandleFoo"),
 
 		cff.Task(
-			func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
-				return &GetManagerRequest{
+			func(req *RequestV2) (*GetManagerRequestV2, *ListUsersRequestV2) {
+				return &GetManagerRequestV2{
 						LDAPGroup: req.LDAPGroup,
-					}, &ListUsersRequest{
+					}, &ListUsersRequestV2{
 						LDAPGroup: req.LDAPGroup,
 					}
 			}),
@@ -50,8 +50,8 @@ func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *Request) (*Response, 
 			h.mgr.Get),
 		cff.Task(h.ses.BatchSendEmail),
 		cff.Task(
-			func(responses []*SendEmailResponse) *Response {
-				var r Response
+			func(responses []*SendEmailResponseV2) *ResponseV2 {
+				var r ResponseV2
 				for _, res := range responses {
 					r.MessageIDs = append(r.MessageIDs, res.MessageID)
 				}
@@ -60,21 +60,21 @@ func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *Request) (*Response, 
 		),
 		cff.Task(
 			h.users.List,
-			cff.Predicate(func(req *GetManagerRequest) bool {
+			cff.Predicate(func(req *GetManagerRequestV2) bool {
 				return req.LDAPGroup != "everyone"
 			}),
-			cff.FallbackWith(&ListUsersResponse{}),
+			cff.FallbackWith(&ListUsersResponseV2{}),
 			cff.Instrument("FormSendEmailRequest"),
 		),
 		cff.Task(
-			func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest {
-				var reqs []*SendEmailRequest
+			func(mgr *GetManagerResponseV2, users *ListUsersResponseV2) []*SendEmailRequestV2 {
+				var reqs []*SendEmailRequestV2
 				for _, u := range users.Emails {
-					reqs = append(reqs, &SendEmailRequest{Address: u})
+					reqs = append(reqs, &SendEmailRequestV2{Address: u})
 				}
 				return reqs
 			},
-			cff.Predicate(func(req *GetManagerRequest) bool {
+			cff.Predicate(func(req *GetManagerRequestV2) bool {
 				return req.LDAPGroup != "everyone"
 			}),
 			cff.Instrument("FormSendEmailRequest"),
@@ -90,13 +90,13 @@ func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *Request) (*Response, 
 		cff.ContinueOnError(true),
 		cff.Tasks(
 			func(_ context.Context) error {
-				return SendMessage()
+				return SendMessageV2()
 			},
-			SendMessage,
+			SendMessageV2,
 		),
 		cff.Task(
 			func() error {
-				return SendMessage()
+				return SendMessageV2()
 			},
 			cff.Instrument("SendMsg"),
 		),
@@ -163,8 +163,8 @@ type GetManagerResponseV2 struct {
 }
 
 // Get TODO
-func (*ManagerRepositoryV2) Get(req *GetManagerRequest) (*GetManagerResponse, error) {
-	return &GetManagerResponse{Email: "boss@example.com"}, nil
+func (*ManagerRepositoryV2) Get(req *GetManagerRequestV2) (*GetManagerResponseV2, error) {
+	return &GetManagerResponseV2{Email: "boss@example.com"}, nil
 }
 
 // UserRepositoryV2 TODO
@@ -181,8 +181,8 @@ type ListUsersResponseV2 struct {
 }
 
 // List TODO
-func (*UserRepositoryV2) List(req *ListUsersRequest) (*ListUsersResponse, error) {
-	return &ListUsersResponse{
+func (*UserRepositoryV2) List(req *ListUsersRequestV2) (*ListUsersResponseV2, error) {
+	return &ListUsersResponseV2{
 		Emails: []string{"a@example.com", "b@example.com"},
 	}, nil
 }
@@ -201,10 +201,10 @@ type SendEmailResponseV2 struct {
 }
 
 // BatchSendEmail TODO
-func (*SESClientV2) BatchSendEmail(req []*SendEmailRequest) ([]*SendEmailResponse, error) {
-	res := make([]*SendEmailResponse, len(req))
+func (*SESClientV2) BatchSendEmail(req []*SendEmailRequestV2) ([]*SendEmailResponseV2, error) {
+	res := make([]*SendEmailResponseV2, len(req))
 	for i := range req {
-		res[i] = &SendEmailResponse{MessageID: strconv.Itoa(i)}
+		res[i] = &SendEmailResponseV2{MessageID: strconv.Itoa(i)}
 	}
 	return res, nil
 }
