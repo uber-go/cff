@@ -77,7 +77,13 @@ func (g *generatorv2) GenerateFile(f *file) error {
 		return fileModifiers[i].Expr().Pos() < fileModifiers[j].Expr().Pos()
 	})
 
-	var lastOff int
+	// Build tags appear before the package clause.
+	// Write those to the output with cff tags inverted.
+	lastOff := posFile.Offset(f.AST.Package)
+	if err := writeInvertedCFFTag(&buff, bs[:lastOff]); err != nil {
+		return err
+	}
+
 	for _, mod := range fileModifiers {
 		if mod.FuncExpr() == "" {
 			continue

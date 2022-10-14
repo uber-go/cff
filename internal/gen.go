@@ -107,7 +107,13 @@ func (g *generator) GenerateFile(f *file) error {
 		aliases[names[0]] = struct{}{}
 	}
 
-	var lastOff int
+	// Build tags appear before the package clause.
+	// Write those to the output with cff tags inverted.
+	lastOff := posFile.Offset(f.AST.Package)
+	if err := writeInvertedCFFTag(&buff, bs[:lastOff]); err != nil {
+		return err
+	}
+
 	for _, gen := range f.Generators {
 		// Everything from previous position up to this cff generator call.
 		if _, err := buff.Write(bs[lastOff:posFile.Offset(gen.Pos())]); err != nil {

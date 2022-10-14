@@ -152,7 +152,7 @@ func run(args []string) error {
 		Archives:   archives,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("load packages: %w", err)
 	}
 
 	gm, err := genMode(f.GenMode)
