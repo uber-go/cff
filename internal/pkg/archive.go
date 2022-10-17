@@ -5,6 +5,7 @@ import (
 	"go/token"
 	"strings"
 
+	"go.uber.org/cff/internal/flag"
 	"code.uber.internal/go/importer"
 )
 
@@ -18,49 +19,33 @@ type ArchiveLoaderFactory struct{}
 var _ LoaderFactory = (*ArchiveLoaderFactory)(nil)
 
 // RegisterFlags registers new flags needed to get archive data.
-func (f *ArchiveLoaderFactory) RegisterFlags(parser Command) (Loader, error) {
-	var opts struct {
-		// Archives is a list of archive paths for
-		// dependencies of the package being loaded.
-		Archives []string `long:"archive" value-name:"IMPORTPATHS=IMPORTMAP=FILE=EXPORT"`
-		// Sources is a list of source files for the package.
-		Sources []string `long:"source"`
-		// StdlibRoot specifies where archive files for
-		// the standard library are stored.
-		StdlibRoot string `long:"stdlibroot"`
-	}
-	if _, err := parser.AddGroup("Archive Data", "", &opts); err != nil {
-		return nil, err
-	}
-
-	parser.FindOptionByLongName("archive").Description =
-		"Use the given archive FILE for import path IMPORTMAP when parsing the " +
-			"source files. IMPORTPATHS is a colon-separated list of import paths; " +
-			"IMPORTMAP is the actual import path of the library this archive " +
-			"holds; FILE is the path to the archive file; EXPORT is the path to " +
-			"the corresponding export file. Currently, IMPORTPATHS and EXPORT " +
-			"arguments are ignored."
-	parser.FindOptionByLongName("source").Description =
-		"When using archives to parse the source code, specifies the filepaths to " +
-			"all Go code in the package, so that CFF can parse the entire " +
-			"package."
-	parser.FindOptionByLongName("stdlibroot").Description =
-		"When using archives to parse the source code, specifies the path containing " +
-			"archive files for the Go standard library."
-
-	return &archiveLoader{
-		archives:    &opts.Archives,
-		srcs:        &opts.Sources,
-		stdlibRoot:  &opts.StdlibRoot,
+func (f *ArchiveLoaderFactory) RegisterFlags(fset *flag.Set) Loader {
+	loader := archiveLoader{
 		loadArchive: importer.LoadArchive,
-	}, nil
+	}
+
+	fset.Var(flag.AsList(&loader.archives), "archive", "A value in the form 'IMPORTPATHS=IMPORTMAP=FILE=EXPORT' where,\n"+
+		"  - IMPORTPATHS is a list of colon-separated import paths\n"+
+		"  - IMPORTMAP is a package import path\n"+
+		"  - FILE is the path to the archive file for the package at IMPORTMAP\n"+
+		"  - EXPORT is the path to the export file for the package at IMPORTMAP\n"+
+		"Pass this zero or more times to specify archives for dependencies of a package.")
+
+	fset.Var(flag.AsList(&loader.srcs), "source",
+		"Path to a Go source file for the package cff is generating code for.\n"+
+			"This flag may be passed multiple times.")
+
+	fset.Var(&loader.stdlibRoot, "stdlibroot",
+		"Specifies the path containing archive files for the Go standard library.")
+
+	return &loader
 }
 
 type archiveLoader struct {
 	// These pointers will be filled when the flags are parsed.
-	archives   *[]string
-	srcs       *[]string
-	stdlibRoot *string
+	archives   []archiveValue
+	srcs       []flag.String
+	stdlibRoot flag.String
 
 	// loadArchive is a reference to importer.LoadArchive
 	// that we can swap out for tests.
@@ -70,21 +55,28 @@ type archiveLoader struct {
 var _ Loader = (*archiveLoader)(nil)
 
 func (l *archiveLoader) Load(fset *token.FileSet, importPath string) ([]*Package, error) {
-	archives := make([]importer.Archive, len(*l.archives))
-	for i, archive := range *l.archives {
-		// TODO(abg): This should happen as part of flag parsing.
-		a, err := parseArchive(archive)
-		if err != nil {
-			return nil, fmt.Errorf("invalid argument --archive=%q: %w", archive, err)
+	archives := make([]importer.Archive, len(l.archives))
+	for i, a := range l.archives {
+		// We're recording all fields, but go/importer ignores
+		// everything except ImportMap and File right now.
+		archives[i] = importer.Archive{
+			ImportPaths: a.ImportPaths,
+			ImportMap:   a.ImportMap,
+			File:        a.File,
+			ExportFile:  a.Export,
 		}
-		archives[i] = a
+	}
+
+	srcs := make([]string, len(l.srcs))
+	for i, s := range l.srcs {
+		srcs[i] = string(s)
 	}
 
 	pkg, err := l.loadArchive(importer.LoadParams{
 		Fset:       fset,
 		ImportPath: importPath,
-		Srcs:       *l.srcs,
-		StdlibRoot: *l.stdlibRoot,
+		Srcs:       srcs,
+		StdlibRoot: string(l.stdlibRoot),
 		Archives:   archives,
 	})
 	if err != nil {
@@ -100,7 +92,7 @@ func (l *archiveLoader) Load(fset *token.FileSet, importPath string) ([]*Package
 	}, nil
 }
 
-// parseArchive parses the archive string to the internal.Archive type.
+// archiveValue is a Go package archive passed as a command line argument.
 //
 // The following is the flag format:
 //
@@ -110,18 +102,37 @@ func (l *archiveLoader) Load(fset *token.FileSet, importPath string) ([]*Package
 //
 //	--archive=github.com/foo/bar:github.com/foo/baz=github.com/foo/bar=bar.go=bar_export.go
 //
-// The flag is structured in this format to closely follow https://github.com/bazelbuild/rules_go/blob/8ea79bbd5e6ea09dc611c245d1dc09ef7ab7118a/go/private/actions/compile.bzl#L20;
-// however, the IMPORTPATHS and EXPORT elements are ignored. There may be future
-// work involved in resolving import aliases, using IMPORTPATHS.
-func parseArchive(archive string) (importer.Archive, error) {
-	args := strings.Split(archive, "=")
+// The flag is structured in this format to closely follow
+// https://github.com/bazelbuild/rules_go/blob/8ea79bbd5e6ea09dc611c245d1dc09ef7ab7118a/go/private/actions/compile.bzl#L20.
+type archiveValue struct {
+	ImportPaths []string
+	ImportMap   string
+	File        string
+	Export      string
+}
+
+var _ flag.Getter = (*archiveValue)(nil)
+
+func (a *archiveValue) String() string {
+	importPaths := strings.Join(a.ImportPaths, ":")
+	return fmt.Sprintf("%v=%v=%v=%v", importPaths, a.ImportMap, a.File, a.Export)
+}
+
+// Set receives a flag value.
+func (a *archiveValue) Set(name string) error {
+	args := strings.Split(name, "=")
 	if len(args) != 4 {
-		return importer.Archive{}, fmt.Errorf("expected 4 elements, got %d", len(args))
+		return fmt.Errorf("expected 4 elements, got %d", len(args))
 	}
 
-	// Currently, we ignore the IMPORTPATHS and EXPORT elements.
-	return importer.Archive{
-		ImportMap: args[1],
-		File:      args[2],
-	}, nil
+	*a = archiveValue{
+		ImportPaths: strings.Split(args[0], ":"),
+		ImportMap:   args[1],
+		File:        args[2],
+		Export:      args[3],
+	}
+	return nil
 }
+
+// Get returns the current value of the archiveValue.
+func (a *archiveValue) Get() any { return a }

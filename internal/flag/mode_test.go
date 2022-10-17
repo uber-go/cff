@@ -29,14 +29,18 @@ func TestMode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var got Mode
+			fset := NewSet("foo")
+			fset.Var(&got, "x", "")
+			require.NoError(t, fset.Parse([]string{"-x", tt.name}))
+			assert.Equal(t, tt.mode, got)
+
 			t.Run("String", func(t *testing.T) {
 				assert.Equal(t, tt.name, tt.mode.String())
 			})
 
-			t.Run("UnmarshalFlag", func(t *testing.T) {
-				var got Mode
-				require.NoError(t, got.UnmarshalFlag(tt.name))
-				assert.Equal(t, tt.mode, got)
+			t.Run("Get", func(t *testing.T) {
+				assert.Equal(t, tt.mode, got.Get())
 			})
 
 			t.Run("UnmarshalText", func(t *testing.T) {
@@ -62,7 +66,7 @@ func TestModeUnknown_Unmarshal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt, func(t *testing.T) {
 			var m Mode
-			assert.ErrorContains(t, m.UnmarshalFlag(tt), "unknown mode")
+			assert.ErrorContains(t, m.Set(tt), "unknown mode")
 		})
 	}
 }

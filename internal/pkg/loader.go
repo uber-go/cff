@@ -5,7 +5,7 @@ import (
 	"go/token"
 	"go/types"
 
-	flags "github.com/jessevdk/go-flags"
+	"go.uber.org/cff/internal/flag"
 )
 
 // Package is a Go package that cff is going to generate code for.
@@ -20,23 +20,14 @@ type Package struct {
 	TypesInfo *types.Info
 }
 
-// Command is a CLI parser command that we can register new options with.
-// This conforms to the go-flags.Command struct's API.
-type Command interface {
-	AddGroup(short, long string, data any) (*flags.Group, error)
-	FindOptionByLongName(longName string) (option *flags.Option)
-}
-
-var _ Command = (*flags.Command)(nil)
-
 // LoaderFactory builds Loaders from command line flags.
 type LoaderFactory interface {
 	// RegisterFlags builds a Loader and registers the flags
-	// necessary for it with the given Command.
+	// necessary for it with the given flag set.
 	//
 	// The returned Loader will not be used until the parser
 	// has finished parsing its arguments.
-	RegisterFlags(Command) (Loader, error)
+	RegisterFlags(*flag.Set) Loader
 }
 
 // Loader loads information about a Go package from its import path.

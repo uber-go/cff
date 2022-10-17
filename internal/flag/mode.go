@@ -2,9 +2,8 @@ package flag
 
 import (
 	"encoding"
+	"flag"
 	"fmt"
-
-	flags "github.com/jessevdk/go-flags"
 )
 
 // Mode specifies the code generation mode for CFF.
@@ -26,7 +25,7 @@ const (
 
 var (
 	_ encoding.TextUnmarshaler = (*Mode)(nil)
-	_ flags.Unmarshaler        = (*Mode)(nil)
+	_ flag.Getter              = (*Mode)(nil)
 )
 
 func (m Mode) String() string {
@@ -44,11 +43,16 @@ func (m Mode) String() string {
 
 // UnmarshalText unmarshals a Mode.
 func (m *Mode) UnmarshalText(text []byte) error {
-	return m.UnmarshalFlag(string(text))
+	return m.Set(string(text))
 }
 
-// UnmarshalFlag unmarshals a CLI flag from go-flags.
-func (m *Mode) UnmarshalFlag(value string) error {
+// Get reports the current value of the flag.
+func (m *Mode) Get() any {
+	return *m
+}
+
+// Set receives a flag value from the flag package.
+func (m *Mode) Set(value string) error {
 	switch value {
 	case "source-map":
 		*m = SourceMapMode

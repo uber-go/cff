@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/token"
 
+	"go.uber.org/cff/internal/flag"
 	"go.uber.org/multierr"
 	"golang.org/x/tools/go/packages"
 )
@@ -26,12 +27,12 @@ type GoPackagesLoaderFactory struct {
 var _ LoaderFactory = (*GoPackagesLoaderFactory)(nil)
 
 // RegisterFlags registers no new flags for GoPackagesLoaderFactory.
-func (f *GoPackagesLoaderFactory) RegisterFlags(cmd Command) (Loader, error) {
+func (f *GoPackagesLoaderFactory) RegisterFlags(*flag.Set) Loader {
 	return &goPackagesLoader{
 		buildFlags: f.BuildFlags,
 		dir:        f.dir,
 		load:       packages.Load,
-	}, nil
+	}
 }
 
 type goPackagesLoader struct {

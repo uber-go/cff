@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go/token"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -12,84 +13,62 @@ import (
 	"go.uber.org/cff/internal"
 	"go.uber.org/cff/internal/flag"
 	"go.uber.org/cff/internal/pkg"
-	"github.com/jessevdk/go-flags"
 	"go.uber.org/multierr"
 )
 
-// options defines the arguments needed to run the cff CLI.
-type options struct {
-	Files              []file    `long:"file" value-name:"FILE[=OUTPUT]"`
-	InstrumentAllTasks bool      `long:"instrument-all-tasks"`
-	GenMode            flag.Mode `long:"genmode" choice:"base" choice:"source-map" choice:"modifier" required:"no" default:"base"`
-	Quiet              bool      `long:"quiet"`
-
-	Args struct {
-		ImportPath string `positional-arg-name:"importPath"`
-	} `positional-args:"yes" required:"yes"`
+type params struct {
+	Files              []flag.InOutPair
+	InstrumentAllTasks bool
+	GenMode            flag.Mode
+	Quiet              bool
+	ImportPath         string
 }
 
-// file is the value of the --file option.
-// Two forms are supported:
-//
-//	--file=NAME
-//	--file=NAME=OUTPUT
-//
-// For example,
-//
-//	--file=foo.go=_gen/foo.go --file=bar.go=_gen/bar.go
-type file struct {
-	Name       string // NAME portion of the argument
-	OutputPath string // OUTPUT portion of the argument
-}
-
-func (f *file) String() string {
-	if len(f.OutputPath) == 0 {
-		return f.Name
+func parseArgs(stderr io.Writer, args []string) (pkg.Loader, *params, error) {
+	opts := params{
+		GenMode: flag.BaseMode,
 	}
-	return f.Name + "=" + f.OutputPath
-}
-
-func (f *file) UnmarshalFlag(name string) error {
-	var output string
-	if i := strings.IndexByte(name, '='); i >= 0 {
-		name, output = name[:i], name[i+1:]
+	fset := flag.NewSet("cff")
+	fset.SetOutput(stderr)
+	fset.Usage = func() {
+		fmt.Fprintln(fset.Output(), "usage: cff [options] importpath")
+		fset.PrintDefaults()
 	}
 
-	if len(name) == 0 {
-		return errors.New("file name cannot be empty")
+	fset.Var(flag.AsList(&opts.Files), "file", "By default, cff will process all Go files found inside the given Go package.\n"+
+		"Pass -file=PATH one or more times to process only specific files and ignore all other files.\n"+
+		"When cff processes a file, it generates sibling files with a _gen suffix next to the original files.\n"+
+		"Use the form -file=PATH=OUTPUT to specify a different path for the output file.")
+
+	fset.Var(&opts.GenMode, "genmode", "Use the specified CFF code generation mode.\n"+
+		"Valid values are: base, modifier, source-map. Defaults to base.")
+
+	fset.BoolVar(&opts.InstrumentAllTasks, "instrument-all-tasks", false,
+		"Infer a name for tasks that do not specify cff.Instrument and opt-in "+
+			"to instrumentation by default.")
+
+	fset.BoolVar(&opts.Quiet, "quiet", false, "Print less output.")
+
+	loader := _loaderFactory.RegisterFlags(fset)
+	if err := fset.Parse(args); err != nil {
+		return nil, nil, err
+	}
+	args = fset.Args()
+	switch len(args) {
+	case 0:
+		return nil, nil, errors.New("please provide an import path")
+	case 1:
+		opts.ImportPath = args[0]
+	default:
+		return nil, nil, fmt.Errorf("too many import paths: %q", args)
 	}
 
-	f.Name = name
-	f.OutputPath = output
-	return nil
-}
-
-func newCLIParser() (*flags.Parser, *options) {
-	var opts options
-	parser := flags.NewParser(&opts, flags.HelpFlag)
-	parser.Name = "cff"
-
-	// This is more readable than embedding the descriptions in the options
-	// above.
-	parser.FindOptionByLongName("file").Description =
-		"Process only the file named NAME inside the package. All other files " +
-			"will be ignored. NAME must be the name of the file, not the full path. " +
-			"Optionally, OUTPUT may be provided as the path to which the generated " +
-			"code for FILE will be written. By default, this defaults to adding a " +
-			"_gen suffix to the file name."
-	parser.FindOptionByLongName("instrument-all-tasks").Description =
-		"Infer a name for tasks that do not specify cff.Instrument and opt-in " +
-			"to instrumentation by default."
-	parser.FindOptionByLongName("genmode").Description =
-		"Use the specified CFF code generation mode."
-	parser.Args()[0].Description = "Import path of a package containing CFF flows."
-
-	return parser, &opts
+	return loader, &opts, nil
 }
 
 func main() {
 	log.SetFlags(0) // don't include timestamps
-	if err := run(os.Args[1:]); err != nil {
+	if err := run(os.Args[1:]); err != nil && !errors.Is(err, flag.ErrHelp) {
 		log.Fatalf("%+v", err)
 	}
 }
@@ -110,28 +89,23 @@ func run(args []string) error {
 		}
 	}()
 
-	parser, f := newCLIParser()
-	loader, err := _loaderFactory.RegisterFlags(parser)
+	loader, f, err := parseArgs(os.Stderr, args)
 	if err != nil {
-		return err
-	}
-
-	if _, err := parser.ParseArgs(args); err != nil {
 		return err
 	}
 
 	// For each --file, this is a mapping from FILE to OUTPUT.
 	outputs := make(map[string]string)
 	for _, file := range f.Files {
-		if _, ok := outputs[file.Name]; ok {
+		if _, ok := outputs[file.Input]; ok {
 			return fmt.Errorf(
 				"invalid argument --file=%v: file already specified before", file)
 		}
-		outputs[file.Name] = file.OutputPath
+		outputs[file.Input] = file.Output
 	}
 
 	fset := token.NewFileSet()
-	pkgs, err := loader.Load(fset, f.Args.ImportPath)
+	pkgs, err := loader.Load(fset, f.ImportPath)
 	if err != nil {
 		return fmt.Errorf("load packages: %w", err)
 	}

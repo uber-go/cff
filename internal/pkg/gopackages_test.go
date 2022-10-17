@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"code.uber.internal/devexp/bazel/testutil"
-	flags "github.com/jessevdk/go-flags"
+	"go.uber.org/cff/internal/flag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/tools/go/packages"
@@ -29,12 +29,9 @@ func TestGoPackagesLoader_Integration(t *testing.T) {
 		dir:        testdata,
 	}
 
-	parser := flags.NewParser(&struct{}{}, 0)
-	loader, err := factory.RegisterFlags(parser)
-	require.NoError(t, err, "register flags")
-
-	_, err = parser.ParseArgs([]string{})
-	require.NoError(t, err, "parse arguments")
+	parser := flag.NewSet("cff")
+	loader := factory.RegisterFlags(parser)
+	require.NoError(t, parser.Parse(nil), "parse arguments")
 
 	fset := token.NewFileSet()
 	pkgs, err := loader.Load(fset, "example.com/foo")
