@@ -17,7 +17,7 @@ import (
 	"strconv"
 	"text/template"
 
-	"go.uber.org/cff/mode"
+	"go.uber.org/cff/internal/flag"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/types/typeutil"
 )
@@ -58,7 +58,7 @@ type generatorOpts struct {
 	Package    *types.Package
 	OutputPath string
 	RandSrc    rand.Source
-	GenMode    mode.GenerationMode
+	GenMode    flag.Mode
 }
 
 func newGenerator(opts generatorOpts) *generator {
@@ -73,7 +73,7 @@ func newGenerator(opts generatorOpts) *generator {
 		nextTypeID:   1,
 		outputPath:   opts.OutputPath,
 		magic:        fmt.Sprintf("CFF_MAGIC_TOKEN=%d\n", rand.New(opts.RandSrc).Int()),
-		sourceMapped: opts.GenMode.SourceMap(),
+		sourceMapped: opts.GenMode == flag.SourceMapMode,
 	}
 }
 

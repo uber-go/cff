@@ -4,15 +4,15 @@ import (
 	"go/ast"
 	"go/token"
 
+	"go.uber.org/cff/internal/flag"
 	"go.uber.org/cff/internal/pkg"
-	"go.uber.org/cff/mode"
 )
 
 // Processor processes CFF2 files.
 type Processor struct {
 	Fset               *token.FileSet
 	InstrumentAllTasks bool
-	GenMode            mode.GenerationMode
+	GenMode            flag.Mode
 }
 
 // Process processes a single CFF2 file.
@@ -29,7 +29,7 @@ func (p *Processor) Process(pkg *pkg.Package, file *ast.File, outputPath string)
 		return err
 	}
 
-	if p.GenMode.Modifier() {
+	if p.GenMode == flag.ModifierMode {
 		g := newGeneratorV2(generatorOpts{
 			Fset:       p.Fset,
 			Package:    pkg.Types,

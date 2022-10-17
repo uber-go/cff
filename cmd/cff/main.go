@@ -10,18 +10,18 @@ import (
 	"strings"
 
 	"go.uber.org/cff/internal"
+	"go.uber.org/cff/internal/flag"
 	"go.uber.org/cff/internal/pkg"
-	"go.uber.org/cff/mode"
 	"github.com/jessevdk/go-flags"
 	"go.uber.org/multierr"
 )
 
 // options defines the arguments needed to run the cff CLI.
 type options struct {
-	Files              []file `long:"file" value-name:"FILE[=OUTPUT]"`
-	InstrumentAllTasks bool   `long:"instrument-all-tasks"`
-	GenMode            string `long:"genmode" choice:"base" choice:"source-map" choice:"modifier" required:"no" default:"base"`
-	Quiet              bool   `long:"quiet"`
+	Files              []file    `long:"file" value-name:"FILE[=OUTPUT]"`
+	InstrumentAllTasks bool      `long:"instrument-all-tasks"`
+	GenMode            flag.Mode `long:"genmode" choice:"base" choice:"source-map" choice:"modifier" required:"no" default:"base"`
+	Quiet              bool      `long:"quiet"`
 
 	Args struct {
 		ImportPath string `positional-arg-name:"importPath"`
@@ -136,15 +136,10 @@ func run(args []string) error {
 		return fmt.Errorf("load packages: %w", err)
 	}
 
-	gm, err := genMode(f.GenMode)
-	if err != nil {
-		return err
-	}
-
 	processor := internal.Processor{
 		Fset:               fset,
 		InstrumentAllTasks: f.InstrumentAllTasks,
-		GenMode:            gm,
+		GenMode:            f.GenMode,
 	}
 
 	// If --file was provided, only the requested files will be processed.
@@ -181,15 +176,4 @@ func run(args []string) error {
 		log.Printf("Processed %d files with %d errors", processed, errored)
 	}
 	return err
-}
-
-// returns the CFF generation mode from the command option.
-func genMode(m string) (mode.GenerationMode, error) {
-	var genMode mode.GenerationMode
-
-	genMode.UnmarshalText([]byte(m))
-	if genMode == mode.Unknown {
-		return genMode, fmt.Errorf("%q is an invalid CFF generation mode. Argument was %q", mode.Unknown, m)
-	}
-	return genMode, nil
 }
