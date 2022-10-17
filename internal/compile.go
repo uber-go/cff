@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"go.uber.org/cff/internal/modifier"
-	"code.uber.internal/go/importer"
+	"go.uber.org/cff/internal/pkg"
 	"go.uber.org/multierr"
 	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/types/typeutil"
@@ -69,7 +69,7 @@ func (c *compiler) nodePosition(n ast.Node) token.Position {
 
 type file struct {
 	AST     *ast.File
-	Package *importer.Package
+	Package *pkg.Package
 
 	// Map from import path to local names of the import. If the import is
 	// unnamed, it will be recorded as the package name.
@@ -88,12 +88,12 @@ type file struct {
 	modifiers []modifier.Modifier
 }
 
-func (c *compiler) CompileFile(file *ast.File, pkg *importer.Package) (*file, error) {
+func (c *compiler) CompileFile(file *ast.File, pkg *pkg.Package) (*file, error) {
 	f := c.compileFile(file, pkg)
 	return f, multierr.Combine(c.errors...)
 }
 
-func (c *compiler) compileFile(astFile *ast.File, pkg *importer.Package) *file {
+func (c *compiler) compileFile(astFile *ast.File, pkg *pkg.Package) *file {
 	file := file{
 		AST:            astFile,
 		Package:        pkg,
@@ -108,9 +108,7 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *importer.Package) *file {
 			// If the user defines a name for an import, we would like to track their name if we use it in the generated
 			// code
 			importPath, _ := strconv.Unquote(n.Path.Value)
-			var (
-				importName string
-			)
+			var importName string
 			if n.Name != nil {
 				importName = n.Name.String()
 			} else {
@@ -818,7 +816,7 @@ func (c *compiler) interpretTaskOptions(flow *flow, t *task, opts []ast.Expr) {
 				continue
 			}
 			// Verify that Task returns an error for FallbackWith to be used.
-			var hasError = false
+			hasError := false
 			results := t.Function.Sig.Results()
 			for i := 0; i < results.Len(); i++ {
 				result := results.At(i)
