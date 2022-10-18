@@ -1,5 +1,5 @@
-//go:build cff
-// +build cff
+//go:build cff && v2
+// +build cff,v2
 
 package example
 
