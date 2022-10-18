@@ -7,6 +7,8 @@ import (
 	"go.uber.org/cff/scheduler"
 )
 
+//go:generate mockgen -destination mock_emitter_test.go -package cff go.uber.org/cff Emitter,TaskEmitter,FlowEmitter,ParallelEmitter,SchedulerEmitter
+
 // Emitter initializes Task, Flow, and Parallel emitters.
 type Emitter interface {
 	// TaskInit returns a TaskEmitter which could be memoized based on task name.

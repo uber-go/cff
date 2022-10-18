@@ -1,3 +1,6 @@
+//go:build cff
+// +build cff
+
 package builtincallexpr
 
 import (
@@ -16,7 +19,6 @@ func Flow(s string, buf io.Writer) {
 		cff.Params(s),
 		cff.Results(&i),
 		cff.Task(func(s string) (int, error) { return strconv.Atoi(s) }))
-
 	if err != nil {
 		buf.Write([]byte(fmt.Sprintf("error: %s", err.Error())))
 	}

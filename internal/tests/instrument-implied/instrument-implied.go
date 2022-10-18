@@ -1,3 +1,6 @@
+//go:build cff
+// +build cff
+
 package instrumentimplied
 
 import (
@@ -8,6 +11,11 @@ import (
 	"go.uber.org/cff"
 	"go.uber.org/zap"
 )
+
+// Parent has already generated a sibling of this file,
+// but we'll do it again with a diferent flag.
+
+//go:generate cff -auto-instrument ./...
 
 // H is used by some tests
 type H struct {

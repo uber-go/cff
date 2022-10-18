@@ -1,3 +1,6 @@
+//go:build cff
+// +build cff
+
 // Package instrument verifies that default and custom Emitter
 // implementations trigger on events.
 // DefaultEmitter tests default emitter.
@@ -510,7 +513,8 @@ func (h *CustomEmitter) T3630161(ctx context.Context) {
 // T3795761 reproduces T3795761 where a task that returns no error should only
 // emit skipped metric if it was not run.
 func (h *CustomEmitter) T3795761(ctx context.Context, shouldRun bool,
-	shouldError bool) string {
+	shouldError bool,
+) string {
 	var s string
 	_ = cff.Flow(ctx,
 		cff.Results(&s),

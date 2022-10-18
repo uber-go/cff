@@ -25,8 +25,8 @@ func TestInstrumentImpliedName(t *testing.T) {
 	for k := range counters {
 		t.Logf("got counter with key %q", k)
 	}
-	assert.Equal(t, int64(1), counters["task.success+flow=ImpliedName,task=instrument-implied.go.30"].Value())
-	assert.Equal(t, int64(1), counters["task.success+flow=ImpliedName,task=instrument-implied.go.34"].Value())
+	assert.Equal(t, int64(1), counters["task.success+flow=ImpliedName,task=instrument-implied.go.38"].Value())
+	assert.Equal(t, int64(1), counters["task.success+flow=ImpliedName,task=instrument-implied.go.42"].Value())
 
 	// logs
 	logEntries := observedLogs.All()
@@ -35,10 +35,10 @@ func TestInstrumentImpliedName(t *testing.T) {
 		message string
 		fields  map[string]interface{}
 	}{
-		{"task success", map[string]interface{}{"flow": "ImpliedName", "task": "instrument-implied.go.30"}},
-		{"task done", map[string]interface{}{"flow": "ImpliedName", "task": "instrument-implied.go.30"}},
-		{"task success", map[string]interface{}{"flow": "ImpliedName", "task": "instrument-implied.go.34"}},
-		{"task done", map[string]interface{}{"flow": "ImpliedName", "task": "instrument-implied.go.34"}},
+		{"task success", map[string]interface{}{"flow": "ImpliedName", "task": "instrument-implied.go.38"}},
+		{"task done", map[string]interface{}{"flow": "ImpliedName", "task": "instrument-implied.go.38"}},
+		{"task success", map[string]interface{}{"flow": "ImpliedName", "task": "instrument-implied.go.42"}},
+		{"task done", map[string]interface{}{"flow": "ImpliedName", "task": "instrument-implied.go.42"}},
 		{"flow success", map[string]interface{}{"flow": "ImpliedName"}},
 		{"flow done", map[string]interface{}{"flow": "ImpliedName"}},
 	}

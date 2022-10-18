@@ -39,7 +39,7 @@ func TestInstrumentFlowEmitter(t *testing.T) {
 	flowInfo := &cff.FlowInfo{
 		Name:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   375,
+		Line:   378,
 		Column: 8,
 	}
 
@@ -96,7 +96,7 @@ func TestInstrumentParallelEmitter(t *testing.T) {
 	parallelInfo := &cff.ParallelInfo{
 		Name:   "RunParallelTasksAndTask",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   406,
+		Line:   409,
 		Column: 9,
 	}
 
@@ -417,7 +417,7 @@ func TestInstrumentFlowRecoverME(t *testing.T) {
 	emitter.EXPECT().FlowInit(&cff.FlowInfo{
 		Name:   "AtoiRun",
 		File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-		Line:   375,
+		Line:   378,
 		Column: 8,
 	}).Return(flowEmitter)
 	emitter.EXPECT().TaskInit(gomock.Any(), gomock.Any()).Times(2).Return(taskEmitter)
@@ -589,14 +589,14 @@ func TestFlowPanic(t *testing.T) {
 			&cff.TaskInfo{
 				Name:   "Atoi",
 				File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-				Line:   548,
+				Line:   552,
 				Column: 12,
 			},
 			&cff.DirectiveInfo{
 				Name:      "",
 				Directive: cff.FlowDirective,
 				File:      "go.uber.org/cff/internal/tests/instrument/instrument.go",
-				Line:      545,
+				Line:      549,
 				Column:    9,
 			}).Return(taskEmitter)
 		emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
@@ -628,14 +628,14 @@ func TestFlowPanic(t *testing.T) {
 			&cff.TaskInfo{
 				Name:   "PredicatePanics",
 				File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-				Line:   561,
+				Line:   565,
 				Column: 12,
 			},
 			&cff.DirectiveInfo{
 				Name:      "",
 				Directive: cff.FlowDirective,
 				File:      "go.uber.org/cff/internal/tests/instrument/instrument.go",
-				Line:      559,
+				Line:      563,
 				Column:    9,
 			}).Return(taskEmitter)
 		emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)
@@ -667,14 +667,14 @@ func TestFlowPanic(t *testing.T) {
 			&cff.TaskInfo{
 				Name:   "PredicatePanicsWithFallback",
 				File:   "go.uber.org/cff/internal/tests/instrument/instrument.go",
-				Line:   586,
+				Line:   590,
 				Column: 4,
 			},
 			&cff.DirectiveInfo{
 				Name:      "",
 				Directive: cff.FlowDirective,
 				File:      "go.uber.org/cff/internal/tests/instrument/instrument.go",
-				Line:      581,
+				Line:      585,
 				Column:    8,
 			}).Return(taskEmitter)
 		emitter.EXPECT().SchedulerInit(gomock.Any()).Return(schedEmitter)

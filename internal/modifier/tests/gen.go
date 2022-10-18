@@ -1,0 +1,3 @@
+package tests
+
+//go:generate cff ./...

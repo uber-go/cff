@@ -1,3 +1,6 @@
+//go:build cff
+// +build cff
+
 package nestedparent
 
 import (
@@ -7,7 +10,7 @@ import (
 
 	// When built under +cff build tag, this refers to the raw flow. After code
 	// generation, this refers to the generated code.
-	"go.uber.org/cff/internal/tests/nested_child"
+	nestedchild "go.uber.org/cff/internal/tests/nested_child"
 )
 
 // Parent is a CFF flow that uses a nested CFF flow.

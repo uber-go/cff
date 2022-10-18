@@ -1,3 +1,6 @@
+//go:build cff
+// +build cff
+
 package noresults
 
 import (
