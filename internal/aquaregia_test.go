@@ -4,7 +4,6 @@ import (
 	"embed"
 	"fmt"
 	"go/token"
-	"os"
 	"path/filepath"
 	"regexp"
 	"testing"
@@ -501,14 +500,8 @@ type loadParams struct {
 }
 
 func loadAquaregiaPackages(p *loadParams) ([]*packages.Package, error) {
-	_ = os.Setenv("PATH", os.ExpandEnv("$TEST_SRCDIR/__main__/external/go_sdk/bin:$PATH"))
-	// See if we are in Bazel environment as `go test` doesn't need GOCACHE to be set manually.
-	if file, err := os.Stat(os.Getenv("TEST_TMPDIR")); err == nil {
-		if file.IsDir() {
-			// Go executable requires a GOCACHE to be set after go1.12.
-			_ = os.Setenv("GOCACHE", filepath.Join(os.Getenv("TEST_TMPDIR"), "/cache"))
-		}
-	}
+	// TODO: We should extract these tests and make them run the "cff"
+	// binary.
 
 	// packages.Load expects to find the import when parsing files.
 	cffModule := packagestest.Module{
@@ -563,7 +556,7 @@ func loadAquaregiaPackages(p *loadParams) ([]*packages.Package, error) {
 	)
 
 	cfg := exp.Config
-	cfg.BuildFlags = []string{"-tags=cff"}
+	cfg.BuildFlags = []string{"-tags=cff,failing"}
 	cfg.Fset = p.fset
 	cfg.Tests = false
 	cfg.Mode = packages.NeedName |

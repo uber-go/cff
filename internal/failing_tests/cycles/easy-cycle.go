@@ -1,3 +1,6 @@
+//go:build cff && failing
+// +build cff,failing
+
 package cycles
 
 import (
