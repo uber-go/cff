@@ -18,13 +18,13 @@ func TestGoPackagesLoader_Integration(t *testing.T) {
 	require.NoError(t, err)
 	testdata := filepath.Join(wd, "testdata/gopackages")
 	factory := GoPackagesLoaderFactory{
-		BuildFlags: []string{"-tags", "foo"},
-		dir:        testdata,
+		dir: testdata,
 	}
 
 	parser := flag.NewSet("cff")
 	loader := factory.RegisterFlags(parser)
-	require.NoError(t, parser.Parse(nil), "parse arguments")
+	require.NoError(t, parser.Parse([]string{"-tag", "foo,cff"}),
+		"parse arguments")
 
 	fset := token.NewFileSet()
 	pkgs, err := loader.Load(fset, "example.com/foo")

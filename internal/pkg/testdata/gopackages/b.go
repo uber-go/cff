@@ -1,5 +1,5 @@
-//go:build foo
-// +build foo
+//go:build foo && cff
+// +build foo,cff
 
 package foo
 

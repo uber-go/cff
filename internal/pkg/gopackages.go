@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"go/token"
+	"sort"
+	"strings"
 
 	"go.uber.org/cff/internal/flag"
 	"go.uber.org/multierr"
@@ -13,31 +15,28 @@ import (
 // GoPackagesLoaderFactory builds a Loader
 // that uses the go/packages to load package information.
 type GoPackagesLoaderFactory struct {
-	// BuildFlags is a list of flags to load packages with.
-	//
-	// For example, the following will enable the "cff" build tag
-	// when loading packages.
-	//
-	//	BuildFlags: []string{"-tags", "cff"},
-	BuildFlags []string
-
 	dir string // used for testing
 }
 
 var _ LoaderFactory = (*GoPackagesLoaderFactory)(nil)
 
 // RegisterFlags registers no new flags for GoPackagesLoaderFactory.
-func (f *GoPackagesLoaderFactory) RegisterFlags(*flag.Set) Loader {
-	return &goPackagesLoader{
-		buildFlags: f.BuildFlags,
-		dir:        f.dir,
-		load:       packages.Load,
+func (f *GoPackagesLoaderFactory) RegisterFlags(fset *flag.Set) Loader {
+	loader := goPackagesLoader{
+		dir:  f.dir,
+		load: packages.Load,
 	}
+
+	fset.Var(flag.AsList(&loader.tags), "tag",
+		"Build tags to load packages with in addition to the 'cff' tag.\n"+
+			"This flag may be provided multiple times.")
+
+	return &loader
 }
 
 type goPackagesLoader struct {
-	buildFlags []string
-	dir        string
+	tags []flag.String
+	dir  string
 
 	// load is a reference to the packages.Load function.
 	// By putting it in a function reference,
@@ -58,10 +57,26 @@ const _goPackagesLoadMode = packages.NeedName |
 	packages.NeedTypesSizes
 
 func (l *goPackagesLoader) Load(fset *token.FileSet, importPath string) ([]*Package, error) {
+	tags := make(map[string]struct{}, len(l.tags)+1)
+	tags["cff"] = struct{}{}
+	for _, tag := range l.tags {
+		// For convenience, split on "," since that's what "go build -tags"
+		// expects.
+		for _, tag := range strings.Split(string(tag), ",") {
+			tags[tag] = struct{}{}
+		}
+	}
+
+	uniqueTags := make([]string, 0, len(tags))
+	for tag := range tags {
+		uniqueTags = append(uniqueTags, tag)
+	}
+	sort.Strings(uniqueTags)
+
 	pkgs, err := l.load(&packages.Config{
 		Mode:       _goPackagesLoadMode,
 		Fset:       fset,
-		BuildFlags: l.buildFlags,
+		BuildFlags: []string{"-tags", strings.Join(uniqueTags, ",")},
 		Dir:        l.dir,
 	}, importPath)
 	if err != nil {
