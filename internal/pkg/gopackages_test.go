@@ -7,18 +7,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"code.uber.internal/devexp/bazel/testutil"
 	"go.uber.org/cff/internal/flag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/tools/go/packages"
 )
-
-// Tests requiring Go SDK in runtime need testutil.RunWithGoSDK due to
-// https://github.com/bazelbuild/rules_go/issues/2370.
-func TestMain(m *testing.M) {
-	testutil.RunWithGoSDK(m)
-}
 
 func TestGoPackagesLoader_Integration(t *testing.T) {
 	wd, err := os.Getwd()

@@ -73,13 +73,9 @@ func main() {
 	}
 }
 
-// The ArchiveLoaderFactory registers new flags with the CLI parser.
-// For non-monorepo cases, we need to use the following as the LoaderFactory:
-//
-//	&pkg.GoPackagesLoaderFactory{
-//	  BuildFlags: []string{"-tags=cff"},
-//	}
-var _loaderFactory pkg.LoaderFactory = new(pkg.ArchiveLoaderFactory)
+var _loaderFactory pkg.LoaderFactory = &pkg.GoPackagesLoaderFactory{
+	BuildFlags: []string{"-tags=cff"},
+}
 
 func run(args []string) error {
 	defer func() {
