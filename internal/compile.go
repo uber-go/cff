@@ -664,7 +664,7 @@ func (c *compiler) compileTask(flow *flow, expr ast.Expr, opts []ast.Expr) *task
 	}
 
 	// Create an implied Instrument(...) annotation for all tasks if the
-	// flow is instrumented and the --instrument-all-tasks flag was
+	// flow is instrumented and the --auto-instrument flag was
 	// passed.
 	if flow.Instrument != nil && c.instrumentAllTasks && t.Instrument == nil {
 		taskPos := c.nodePosition(t)

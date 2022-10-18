@@ -17,11 +17,11 @@ import (
 )
 
 type params struct {
-	Files              []flag.InOutPair
-	InstrumentAllTasks bool
-	GenMode            flag.Mode
-	Quiet              bool
-	ImportPath         string
+	Files          []flag.InOutPair
+	AutoInstrument bool
+	GenMode        flag.Mode
+	Quiet          bool
+	ImportPath     string
 }
 
 func parseArgs(stderr io.Writer, args []string) (pkg.Loader, *params, error) {
@@ -43,7 +43,7 @@ func parseArgs(stderr io.Writer, args []string) (pkg.Loader, *params, error) {
 	fset.Var(&opts.GenMode, "genmode", "Use the specified CFF code generation mode.\n"+
 		"Valid values are: base, modifier, source-map. Defaults to base.")
 
-	fset.BoolVar(&opts.InstrumentAllTasks, "instrument-all-tasks", false,
+	fset.BoolVar(&opts.AutoInstrument, "auto-instrument", false,
 		"Infer a name for tasks that do not specify cff.Instrument and opt-in "+
 			"to instrumentation by default.")
 
@@ -112,7 +112,7 @@ func run(args []string) error {
 
 	processor := internal.Processor{
 		Fset:               fset,
-		InstrumentAllTasks: f.InstrumentAllTasks,
+		InstrumentAllTasks: f.AutoInstrument,
 		GenMode:            f.GenMode,
 	}
 

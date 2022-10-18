@@ -47,11 +47,11 @@ func TestParseArgs(t *testing.T) {
 		},
 		{
 			desc: "instrument all",
-			give: []string{"-instrument-all-tasks", "example.com/foo"},
+			give: []string{"-auto-instrument", "example.com/foo"},
 			want: params{
-				GenMode:            flag.BaseMode,
-				InstrumentAllTasks: true,
-				ImportPath:         "example.com/foo",
+				GenMode:        flag.BaseMode,
+				AutoInstrument: true,
+				ImportPath:     "example.com/foo",
 			},
 		},
 		{
