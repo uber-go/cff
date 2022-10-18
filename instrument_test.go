@@ -5,13 +5,13 @@ import (
 	"sync"
 	"testing"
 
-	"go.uber.org/cff"
-	"go.uber.org/cff/internal/tests/benchmark"
-	"go.uber.org/cff/internal/tests/instrument"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uber-go/tally"
+	"go.uber.org/cff"
+	"go.uber.org/cff/internal/tests/benchmark"
+	"go.uber.org/cff/internal/tests/instrument"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest/observer"
 )

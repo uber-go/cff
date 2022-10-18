@@ -3,8 +3,8 @@ package benchmark
 import (
 	"testing"
 
-	"go.uber.org/cff"
 	"github.com/uber-go/tally"
+	"go.uber.org/cff"
 	"go.uber.org/zap"
 )
 

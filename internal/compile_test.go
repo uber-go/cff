@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"go.uber.org/cff/internal/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/cff/internal/pkg"
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/packages/packagestest"
 	"golang.org/x/tools/go/types/typeutil"

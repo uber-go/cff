@@ -3,8 +3,8 @@ package simple
 import (
 	"testing"
 
-	"go.uber.org/cff/internal/modifier/tests/external"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/cff/internal/modifier/tests/external"
 )
 
 func TestFlow(t *testing.T) {

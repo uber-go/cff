@@ -1,8 +1,8 @@
 package cff
 
 import (
-	"go.uber.org/cff/scheduler"
 	"go.uber.org/atomic"
+	"go.uber.org/cff/scheduler"
 )
 
 // We re-export things here so that users of CFF don't have to add other
@@ -40,11 +40,11 @@ type SchedulerParams struct {
 // jobs into the returned scheduler in topological order using the Enqueue
 // method, and wait for results with Wait.
 //
-//  sched := cff.BeginFlow(..)
-//  j1 := sched.Enqueue(cff.Job{...}
-//  j2 := sched.Enqueue(cff.Job{..., Dependencies: []*cff.ScheduledJob{j1}}
-//  // ...
-//  err := sched.Wait()
+//	sched := cff.BeginFlow(..)
+//	j1 := sched.Enqueue(cff.Job{...}
+//	j2 := sched.Enqueue(cff.Job{..., Dependencies: []*cff.ScheduledJob{j1}}
+//	// ...
+//	err := sched.Wait()
 func BeginFlow(p SchedulerParams) *scheduler.Scheduler {
 	cfg := scheduler.Config{
 		Concurrency:     p.Concurrency,

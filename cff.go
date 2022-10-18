@@ -22,7 +22,7 @@ type Option interface {
 // Params specifies inputs for a Flow that do not come from tasks. These
 // values are made available to the Flow as-is.
 //
-//  cff.Params(request)
+//	cff.Params(request)
 //
 // This is a code generation directive.
 func Params(args ...interface{}) Option {
@@ -31,11 +31,11 @@ func Params(args ...interface{}) Option {
 
 // Results specifies one or more outputs for a Flow as pointers.
 //
-//  var result *Response
-//  err := cff.Flow(ctx,
-//    cff.Results(&result),
-//    cff.Task(...),
-//  )
+//	var result *Response
+//	err := cff.Flow(ctx,
+//	  cff.Results(&result),
+//	  cff.Task(...),
+//	)
 //
 // This is a code generation directive.
 func Results(results ...interface{}) Option {
@@ -45,18 +45,18 @@ func Results(results ...interface{}) Option {
 // WithEmitter provides an optional observer for flow events. Emitters can
 // track metrics, logs, or other observability data.
 //
-//  cff.Flow(ctx,
-//    ...
-//    cff.WithEmitter(cff.TallyEmitter(scope)),
-//  )
+//	cff.Flow(ctx,
+//	  ...
+//	  cff.WithEmitter(cff.TallyEmitter(scope)),
+//	)
 //
 // Provide this option multiple times to connect multiple emitters.
 //
-//  cff.Flow(ctx,
-//    ...
-//    cff.WithEmitter(cff.TallyEmitter(scope)),
-//    cff.WithEmitter(cff.LogEmitter(logger)),
-//  )
+//	cff.Flow(ctx,
+//	  ...
+//	  cff.WithEmitter(cff.TallyEmitter(scope)),
+//	  cff.WithEmitter(cff.LogEmitter(logger)),
+//	)
 //
 // This is a code generation directive.
 func WithEmitter(Emitter) Option {
@@ -72,18 +72,18 @@ func WithEmitter(Emitter) Option {
 //
 // Within a cff.Flow,
 //
-//  cff.Flow(
-//    ctx,
-//    cff.Task(h.client.GetUser),
-//    cff.Task(bindUser),
-//    cff.Task(h.processRequest),
-//  )
+//	cff.Flow(
+//	  ctx,
+//	  cff.Task(h.client.GetUser),
+//	  cff.Task(bindUser),
+//	  cff.Task(h.processRequest),
+//	)
 //
 // Each Task has zero or more inputs, specified by the arguments of the
 // function, and one or more results, specified by the return values of the
 // function.
 //
-//  func(I1, I2, ...) (R1, R2, ...)
+//	func(I1, I2, ...) (R1, R2, ...)
 //
 // Before this function is executed, all the tasks providing the inputs it
 // depends on will have finished executing. Similarly, no task that depends
@@ -93,13 +93,13 @@ func WithEmitter(Emitter) Option {
 // Tasks can request the context for the current execution scope by adding a
 // context.Context as their first argument.
 //
-//  func(context.Context, I1, I2, ...) (R1, R2, ...)
+//	func(context.Context, I1, I2, ...) (R1, R2, ...)
 //
 // Additionally, tasks that may fail can do so by adding an error as their
 // last return value.
 //
-//  func(I1, I2, ...) (R1, R2, ..., error)
-//  func(context.Context, I1, I2, ...) (R1, R2, ..., error)
+//	func(I1, I2, ...) (R1, R2, ..., error)
+//	func(context.Context, I1, I2, ...) (R1, R2, ..., error)
 //
 // Task behavior may further be customized with TaskOptions.
 //
@@ -111,13 +111,13 @@ func WithEmitter(Emitter) Option {
 // Additionally, Tasks that may fail can do so by optionally adding an error
 // as the only return value.
 //
-//  cff.Parallel(
-//    ctx,
-//    cff.Task(func() {...}),
-//    cff.Task(func() error {...}),
-//    cff.Task(func(ctx context.Context) {...}),
-//    cff.Task(func(ctx context.Context) error {...}),
-//  )
+//	cff.Parallel(
+//	  ctx,
+//	  cff.Task(func() {...}),
+//	  cff.Task(func() error {...}),
+//	  cff.Task(func(ctx context.Context) {...}),
+//	  cff.Task(func(ctx context.Context) error {...}),
+//	)
 //
 // Task functions under cff.Parallel cannot accept other arguments
 // or return other values.
@@ -151,10 +151,12 @@ func Concurrency(n int) Option {
 // tasks when it would have otherwise stopped at the first error.
 //
 // err := cff.Parallel(ctx,
-//     cff.Tasks(
-//         func() error { ... },
-//     ),
-//     cff.ContinueOnError(true),
+//
+//	cff.Tasks(
+//	    func() error { ... },
+//	),
+//	cff.ContinueOnError(true),
+//
 // )
 //
 // If one or more errors are encountered during when ContinueOnError is
@@ -174,12 +176,12 @@ func ContinueOnError(bool) Option {
 // A Flow MUST have at least one Task (specified with Task or Tasks), and at
 // least one Results.
 //
-//  cff.Flow(ctx,
-//    cff.Results(&result),
-//    cff.Task(
-//      ...
-//    ),
-//  )
+//	cff.Flow(ctx,
+//	  cff.Results(&result),
+//	  cff.Task(
+//	    ...
+//	  ),
+//	)
 //
 // Tasks may be specified in any order. They will be connected based on their
 // inputs and outputs. If any of the tasks fail, the entire Flow fails and the
@@ -203,7 +205,7 @@ type TaskOption interface {
 // with exactly the same types. This DOES NOT include the error type returned
 // by the Task.
 //
-//   cff.Task(client.ListUsers, cff.FallbackWith(cachedUserList))
+//	cff.Task(client.ListUsers, cff.FallbackWith(cachedUserList))
 //
 // This is a code generation directive.
 func FallbackWith(results ...interface{}) TaskOption {
@@ -215,7 +217,7 @@ func FallbackWith(results ...interface{}) TaskOption {
 //
 // This accepts a function which has the signature,
 //
-//   func(I1, I2, ...) bool
+//	func(I1, I2, ...) bool
 //
 // Where the arguments of the functions are inputs similar to a Task. Any type
 // added here becomes a dependency of the Task if it is not already. This
@@ -258,15 +260,15 @@ func Invoke(enable bool) TaskOption {
 //
 // A Parallel MUST have at least one Tasks function.
 //
-//  cff.Parallel(ctx,
-//    cff.Concurrency(4),
-//    cff.Tasks(
-//      func(ctx context.Context) error {
-//         ...
-//      },
-//      ...
-//    ),
-//  )
+//	cff.Parallel(ctx,
+//	  cff.Concurrency(4),
+//	  cff.Tasks(
+//	    func(ctx context.Context) error {
+//	       ...
+//	    },
+//	    ...
+//	  ),
+//	)
 //
 // Tasks will run independently with bounded parallelism with all other
 // Parallel declared tasks. If any of the tasks return an error, Parallel
@@ -304,7 +306,7 @@ func InstrumentParallel(name string) Option {
 // Additionally, Tasks that may fail can do so by optionally adding an error
 // as the only return value.
 //
-//  func(context.Context) error
+//	func(context.Context) error
 //
 // Tasks functions do not accept other arguments or return values.
 //
@@ -323,26 +325,26 @@ func Tasks(fn ...interface{}) Option {
 // The fn parameter's non-context argument is a value of same type as the
 // slice parameter's elements.
 //
-//  cff.Parallel(
-//  	ctx,
-//  	cff.Concurrency(...),
-//  	cff.Slice(func(elem someType) { ... }, []someType{...})
-//  )
+//	cff.Parallel(
+//		ctx,
+//		cff.Concurrency(...),
+//		cff.Slice(func(elem someType) { ... }, []someType{...})
+//	)
 //
 // Optionally, a context.Context can be provided as a first argument to the
 // execution function.
 //
-//  func(ctx context.Context, idx int, item someType) { ... }
+//	func(ctx context.Context, idx int, item someType) { ... }
 //
 // Optionally, a slice index of type int can be provided as a first
 // (or second if context.Context is provided) parameter
 //
-//  func(idx int, item SomeType) { ... }
+//	func(idx int, item SomeType) { ... }
 //
 // Optionally, an error can be returned as the execution function's sole
 // return value.
 //
-//  func(idx int, item someType) error { ... }
+//	func(idx int, item someType) error { ... }
 //
 // The second argument to Slice is a slice on which the execution function
 // is invoked.
@@ -368,20 +370,20 @@ type SliceOption interface {
 // Additionally, a SliceEnd that may fail can do so by optionally adding an error
 // as the only return value.
 //
-//  cff.Slice(
-// 		func(idx int, elem someType) { ... },
-//		[]someType{...},
-//		cff.SliceEnd(func(ctx context.Context) error {...}),
-//	)
+//	 cff.Slice(
+//			func(idx int, elem someType) { ... },
+//			[]someType{...},
+//			cff.SliceEnd(func(ctx context.Context) error {...}),
+//		)
 //
 // SliceEnd cannot be used with cff.ContinueOnError.
 //
 // Here are the list of supported signatures for SliceEnd:
-//    cff.SliceEnd(func() {...}),
-//    cff.SliceEnd(func() error {...}),
-//    cff.SliceEnd(func(ctx context.Context) {...}),
-//    cff.SliceEnd(func(ctx context.Context) error {...}),
 //
+//	cff.SliceEnd(func() {...}),
+//	cff.SliceEnd(func() error {...}),
+//	cff.SliceEnd(func(ctx context.Context) {...}),
+//	cff.SliceEnd(func(ctx context.Context) error {...}),
 func SliceEnd(fn interface{}) SliceOption {
 	panic(_noGenMsg)
 }
@@ -394,21 +396,21 @@ func SliceEnd(fn interface{}) SliceOption {
 // The fn parameter's first non-context argument is the key of the type of the
 // map key provided followed by a value of the type of the map value.
 //
-//  cff.Parallel(
-//  	ctx,
-//  	cff.Concurrency(...),
-//  	cff.Map(func(key someType, value someType) { ... }, map[someType][someType]{...})
-//  )
+//	cff.Parallel(
+//		ctx,
+//		cff.Concurrency(...),
+//		cff.Map(func(key someType, value someType) { ... }, map[someType][someType]{...})
+//	)
 //
 // Optionally, a context.Context can be provided as a first argument to the
 // execution function.
 //
-//  func(ctx context.Context, key someType, value someType) { ... }
+//	func(ctx context.Context, key someType, value someType) { ... }
 //
 // Optionally, an error can be returned as the execution function's sole
 // return value.
 //
-//  func(key someType, value someType) error { ... }
+//	func(key someType, value someType) error { ... }
 //
 // The second argument to Map is a map on which the execution function
 // is invoked.
@@ -428,28 +430,28 @@ type MapOption interface {
 // MapEnd specifies a function for execution with a cff.Map.
 // This function will run after all items in the cff.Map have finished.
 //
-//   cff.Map(
-//       func(name string, value *User) {
-//           // ...
-//       },
-//       usersMap,
-//       cff.MapEnd(func() {
-//           // ...
-//       })
+//	cff.Map(
+//	    func(name string, value *User) {
+//	        // ...
+//	    },
+//	    usersMap,
+//	    cff.MapEnd(func() {
+//	        // ...
+//	    })
 //
 // Functions provided to MapEnd can,
 //
-//  - accept zero arguments
-//  - accept context.Context as an argument
-//  - return no results
-//  - return an error as a result
+//   - accept zero arguments
+//   - accept context.Context as an argument
+//   - return no results
+//   - return an error as a result
 //
 // That is, the following are the only valid signatures for a MapEnd function.
 //
-//  func()
-//  func() error
-//  func(context.Context)
-//  func(context.Context) error
+//	func()
+//	func() error
+//	func(context.Context)
+//	func(context.Context) error
 //
 // MapEnd cannot be used with cff.ContinueOnError.
 func MapEnd(fn interface{}) MapOption {

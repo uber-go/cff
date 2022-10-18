@@ -13,6 +13,7 @@ import (
 )
 
 // ModifierTmplFS embeds templates for generating modifier implementations.
+//
 //go:embed templates/*
 var ModifierTmplFS embed.FS
 
@@ -23,9 +24,10 @@ const (
 )
 
 // Modifier changes the existing code by doing two things.
-// 1. It generates a function that corresponds to what the cff "API"s do by inspecting the
-//    arguments.
-// 2. It inline replaces the cff "API" call with calls to corrresponding generated function.
+//  1. It generates a function that corresponds to what the cff "API"s do by inspecting the
+//     arguments.
+//  2. It inline replaces the cff "API" call with calls to corrresponding generated function.
+//
 // Each call to cff "API" is translates to a modifier.
 type Modifier interface {
 	Expr() ast.Expr            // The ast Expr that produced this modifier.

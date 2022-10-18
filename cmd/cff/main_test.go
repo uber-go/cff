@@ -4,9 +4,9 @@ import (
 	"io"
 	"testing"
 
-	"go.uber.org/cff/internal/flag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/cff/internal/flag"
 )
 
 func TestParseArgs(t *testing.T) {

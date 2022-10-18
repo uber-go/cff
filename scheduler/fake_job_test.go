@@ -12,10 +12,10 @@ import (
 // fakeJobController provides a customizable mock-like API to build jobs to
 // test the scheduler.
 //
-//  ctrl := newFakeJobController(t)
-//  defer ctrl.Verify()
+//	ctrl := newFakeJobController(t)
+//	defer ctrl.Verify()
 //
-//  job := ctrl.NewJob(...)
+//	job := ctrl.NewJob(...)
 type fakeJobController struct {
 	t    *testing.T
 	jobs []*fakeJob

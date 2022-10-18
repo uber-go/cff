@@ -5,8 +5,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"go.uber.org/cff"
 	"github.com/uber-go/tally"
+	"go.uber.org/cff"
 )
 
 // Panicker is exported to be used by tests.

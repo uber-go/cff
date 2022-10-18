@@ -4,21 +4,21 @@
 // To use the scheduler, build one with New, providing the desired maximum
 // number of goroutines. This defaults to the number of CPUs available.
 //
-//  sched := scheduler.New(n)
+//	sched := scheduler.New(n)
 //
 // With a scheduler available, enqueue jobs into it with the Enqueue method.
 //
-//  j1 := sched.Enqueue(ctx, Job{..})
+//	j1 := sched.Enqueue(ctx, Job{..})
 //
 // The scheduler will begin running this job as soon as a worker is available.
 //
 // Enqueue returns a reference to the scheduled job. Use this reference in
 // other Enqueue calls to specify dependencies for jobs.
 //
-//  j3 := sched.Enqueue(ctx, Job{
-//    ...,
-//    Dependencies: []*scheduler.ScheduledJob{j1, j2},
-//  })
+//	j3 := sched.Enqueue(ctx, Job{
+//	  ...,
+//	  Dependencies: []*scheduler.ScheduledJob{j1, j2},
+//	})
 //
 // j3 will not be run until j1 and j2 have finished successfully.
 //
@@ -28,7 +28,7 @@
 // After enqueuing all jobs, await completion with sched.Wait. This is
 // comparable to WaitGroup.Wait().
 //
-//  err := sched.Wait(ctx)
+//	err := sched.Wait(ctx)
 //
 // If any of the enqueued jobs failed, the remaining jobs will be aborted and
 // sched.Wait will return the error.
@@ -322,12 +322,12 @@ func (s *Scheduler) Enqueue(ctx context.Context, j Job) *ScheduledJob {
 //
 // Each tick of the loop runs one of the following branches:
 //
-//  - Attempt to schedule a job if `ready` is non-empty and a worker is
-//    available.
-//  - Process a newly Enqueued job, placing it in `ready` if it's ready to be executed.
-//  - If a job finished running, signal jobs that were awaiting
-//    its completion. Those that have no more dependencies outstanding are
-//    moved to the `ready` list.
+//   - Attempt to schedule a job if `ready` is non-empty and a worker is
+//     available.
+//   - Process a newly Enqueued job, placing it in `ready` if it's ready to be executed.
+//   - If a job finished running, signal jobs that were awaiting
+//     its completion. Those that have no more dependencies outstanding are
+//     moved to the `ready` list.
 func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 	defer close(s.finishedc) // unblock Wait()
 	defer close(s.readyc)    // kill workers

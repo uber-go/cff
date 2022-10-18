@@ -1,8 +1,8 @@
 // gendirectives generates a file with the following API:
 //
-//   package internal
+//	package internal
 //
-//   func IsCodegenDirective(name string) bool
+//	func IsCodegenDirective(name string) bool
 //
 // The function returns true if the function with the provided name should be
 // considered a code generation directive by CFF.

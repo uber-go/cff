@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"go.uber.org/cff"
 	"github.com/uber-go/tally"
+	"go.uber.org/cff"
 	"go.uber.org/zap"
 )
 

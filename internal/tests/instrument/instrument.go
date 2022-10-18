@@ -12,9 +12,9 @@ import (
 	"os"
 	"strconv"
 
-	"go.uber.org/cff"
 	"github.com/uber-go/tally"
 	"go.uber.org/atomic"
+	"go.uber.org/cff"
 	"go.uber.org/zap"
 )
 

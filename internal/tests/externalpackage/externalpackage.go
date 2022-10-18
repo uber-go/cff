@@ -3,9 +3,9 @@ package externalpackage
 import (
 	"context"
 
+	"github.com/gofrs/uuid"
 	"go.uber.org/cff"
 	"go.uber.org/cff/internal/tests/externalpackage/external"
-	"github.com/gofrs/uuid"
 )
 
 // NestedType is a flow that has a dep on an external struct.

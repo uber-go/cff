@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"go.uber.org/cff"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/cff"
 )
 
 // ParamOrder initializes a cff.Flow to test that the order in which user
