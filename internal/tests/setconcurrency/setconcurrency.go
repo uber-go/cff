@@ -81,7 +81,7 @@ func numWorkersStable(n int, tick time.Duration) (int, error) {
 	return numw, nil
 }
 
-// numWorkers reports the number of goroutines currently running the CFF2
+// numWorkers reports the number of goroutines currently running the CFF
 // scheduler's worker function.
 func numWorkers() (int, error) {
 	scanner := bufio.NewScanner(bytes.NewReader(getStack()))

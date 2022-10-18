@@ -1,5 +1,5 @@
 // Package instrument verifies that default and custom Emitter
-// implementations trigger on events and emit specification in the CFF2 ERD.
+// implementations trigger on events.
 // DefaultEmitter tests default emitter.
 // These tests will be removed in the future as an implementation detail.
 // CustomEmitter tests mocks for custom emitter.

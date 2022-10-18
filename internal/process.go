@@ -8,14 +8,14 @@ import (
 	"go.uber.org/cff/internal/pkg"
 )
 
-// Processor processes CFF2 files.
+// Processor processes CFF files.
 type Processor struct {
 	Fset               *token.FileSet
 	InstrumentAllTasks bool
 	GenMode            flag.Mode
 }
 
-// Process processes a single CFF2 file.
+// Process processes a single CFF file.
 func (p *Processor) Process(pkg *pkg.Package, file *ast.File, outputPath string) error {
 	c := newCompiler(compilerOpts{
 		Fset:               p.Fset,

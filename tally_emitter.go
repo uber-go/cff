@@ -23,10 +23,7 @@ type tallyEmitter struct {
 	scheds    *sync.Map // map[cacheKey]SchedulerEmitter
 }
 
-// TallyEmitter is a CFF2 emitter that emits metrics to Tally.
-//
-// A full list of metrics published by TallyEmitter can be found at
-// https://eng.uberinternal.com/docs/cff2/observability/#metrics.
+// TallyEmitter is a CFF emitter that emits metrics to Tally.
 func TallyEmitter(scope tally.Scope) Emitter {
 	return &tallyEmitter{
 		scope:     scope,

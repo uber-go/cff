@@ -491,7 +491,7 @@ func (c *compiler) validateFuncs(f *flow) {
 
 	// A list of predicateOutput types are not pushed into the queue as they
 	// are an internal book-keeping type not declared as an input or output
-	// by CFF2's public APIs.
+	// by CFF's public APIs.
 
 	for queue.Len() > 0 {
 		t := queue.Remove(queue.Front()).(validateVisitedType)

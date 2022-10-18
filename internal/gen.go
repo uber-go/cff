@@ -120,7 +120,7 @@ func (g *generator) GenerateFile(f *file) error {
 			return err
 		}
 
-		// Generate code for top-level CFF2 constructs and update the
+		// Generate code for top-level CFF constructs and update the
 		// addImports map.
 		if err = gen.generate(
 			genParams{
@@ -180,9 +180,9 @@ func (g *generator) GenerateFile(f *file) error {
 		if err := g.resetMagicTokens(&newBuff, &buff); err != nil {
 			return err
 		}
-		return os.WriteFile(g.outputPath, newBuff.Bytes(), 0644)
+		return os.WriteFile(g.outputPath, newBuff.Bytes(), 0o644)
 	}
-	return os.WriteFile(g.outputPath, buff.Bytes(), 0644)
+	return os.WriteFile(g.outputPath, buff.Bytes(), 0o644)
 }
 
 func (g *generator) resetMagicTokens(w io.Writer, buff *bytes.Buffer) error {
@@ -193,7 +193,7 @@ func (g *generator) resetMagicTokens(w io.Writer, buff *bytes.Buffer) error {
 
 	// First write the file to FS.
 	bb := buff.Bytes()
-	if err := os.WriteFile(g.outputPath, bb, 0644); err != nil {
+	if err := os.WriteFile(g.outputPath, bb, 0o644); err != nil {
 		return err
 	}
 

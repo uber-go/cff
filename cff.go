@@ -7,9 +7,8 @@ package cff
 
 import "context"
 
-const _noGenMsg = `If you're seeing this error, you probably built code that uses CFF2 without processing it with CFF2.
-Run 'gazelle' to ensure that the code you're running is processed through CFF2, and build/test/run your code
-with 'bazel' instead of the 'go' command.`
+const _noGenMsg = `If you're seeing this error, you probably built code that uses CFF without processing it with CFF.
+Run 'cff ./...' to ensure that the code you're running is processed through CFF.`
 
 // NOTE: All code generation directives must be added to this file. The list
 // of directives is updated automatically based on the contents of this file.
@@ -136,7 +135,7 @@ func InstrumentFlow(name string) Option {
 	panic(_noGenMsg)
 }
 
-// Concurrency specifies the maximum number of goroutines CFF2 should use to
+// Concurrency specifies the maximum number of goroutines CFF should use to
 // execute the tasks of this Flow.
 //
 // Defaults to max(GOMAXPROCS, 4).
