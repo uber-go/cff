@@ -42,7 +42,7 @@ func _cffFlowfile1_15_9(
 
 	var (
 		flowInfo = &cff.FlowInfo{
-			File:   "go.uber.org/cff/internal/modifier/tests/collision/file1.go",
+			File:   "go.uber.org/cff/internal/tests/modifier/collision/file1.go",
 			Line:   15,
 			Column: 9,
 		}
@@ -78,7 +78,7 @@ func _cffFlowfile1_15_9(
 		job     *cff.ScheduledJob
 	}
 
-	// go.uber.org/cff/internal/modifier/tests/collision/file1.go:19:4
+	// go.uber.org/cff/internal/tests/modifier/collision/file1.go:19:4
 	var (
 		v1 int
 	)

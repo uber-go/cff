@@ -1,4 +1,4 @@
-package cff
+package cff_test
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/uber-go/tally"
+	. "go.uber.org/cff"
+	"go.uber.org/cff/internal/emittertest"
 	"go.uber.org/zap"
 )
 
@@ -58,28 +60,28 @@ func TestEmitterStackConstruction(t *testing.T) {
 
 type testStructs struct {
 	ctrl      *gomock.Controller
-	task1     *MockTaskEmitter
-	flow1     *MockFlowEmitter
-	emitter1  *MockEmitter
-	task2     *MockTaskEmitter
-	flow2     *MockFlowEmitter
-	emitter2  *MockEmitter
-	parallel1 *MockParallelEmitter
-	parallel2 *MockParallelEmitter
+	task1     *emittertest.MockTaskEmitter
+	flow1     *emittertest.MockFlowEmitter
+	emitter1  *emittertest.MockEmitter
+	task2     *emittertest.MockTaskEmitter
+	flow2     *emittertest.MockFlowEmitter
+	emitter2  *emittertest.MockEmitter
+	parallel1 *emittertest.MockParallelEmitter
+	parallel2 *emittertest.MockParallelEmitter
 	stack     Emitter
 }
 
 func mocks(t *testing.T) testStructs {
 	m := testStructs{}
 	m.ctrl = gomock.NewController(t)
-	m.task1 = NewMockTaskEmitter(m.ctrl)
-	m.flow1 = NewMockFlowEmitter(m.ctrl)
-	m.emitter1 = NewMockEmitter(m.ctrl)
-	m.task2 = NewMockTaskEmitter(m.ctrl)
-	m.flow2 = NewMockFlowEmitter(m.ctrl)
-	m.emitter2 = NewMockEmitter(m.ctrl)
-	m.parallel1 = NewMockParallelEmitter(m.ctrl)
-	m.parallel2 = NewMockParallelEmitter(m.ctrl)
+	m.task1 = emittertest.NewMockTaskEmitter(m.ctrl)
+	m.flow1 = emittertest.NewMockFlowEmitter(m.ctrl)
+	m.emitter1 = emittertest.NewMockEmitter(m.ctrl)
+	m.task2 = emittertest.NewMockTaskEmitter(m.ctrl)
+	m.flow2 = emittertest.NewMockFlowEmitter(m.ctrl)
+	m.emitter2 = emittertest.NewMockEmitter(m.ctrl)
+	m.parallel1 = emittertest.NewMockParallelEmitter(m.ctrl)
+	m.parallel2 = emittertest.NewMockParallelEmitter(m.ctrl)
 	m.stack = EmitterStack(
 		m.emitter1,
 		m.emitter2,

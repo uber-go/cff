@@ -1,4 +1,4 @@
-package cff_test
+package tests
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/uber-go/tally"
 	"go.uber.org/cff"
+	"go.uber.org/cff/internal/emittertest"
 	"go.uber.org/cff/internal/tests/benchmark"
 	"go.uber.org/cff/internal/tests/instrument"
 	"go.uber.org/zap"
@@ -22,11 +23,11 @@ func TestInstrumentFlowEmitter(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
 
-	emitter := cff.NewMockEmitter(mockCtrl)
+	emitter := emittertest.NewMockEmitter(mockCtrl)
 
-	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
-	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+	flowEmitter := emittertest.NewMockFlowEmitter(mockCtrl)
+	schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	flowsucc := flowEmitter.EXPECT().FlowSuccess(ctx)
@@ -80,11 +81,11 @@ func TestInstrumentParallelEmitter(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
 
-	emitter := cff.NewMockEmitter(mockCtrl)
+	emitter := emittertest.NewMockEmitter(mockCtrl)
 
-	parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
-	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	parallelEmitter := emittertest.NewMockParallelEmitter(mockCtrl)
+	taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+	schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	tasksucc := taskEmitter.EXPECT().TaskSuccess(ctx)
@@ -130,14 +131,14 @@ func TestInstrumentFlowErrorME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
 
-	emitter := cff.NewMockEmitter(mockCtrl)
+	emitter := emittertest.NewMockEmitter(mockCtrl)
 
-	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
-	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+	flowEmitter := emittertest.NewMockFlowEmitter(mockCtrl)
+	schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
-	// flowFailedEmitter := cff.NewMockFlowEmitter(mockCtrl)
+	// flowFailedEmitter := emittertest.NewMockFlowEmitter(mockCtrl)
 
 	flowEmitter.EXPECT().FlowError(ctx, gomock.Any())
 	flowEmitter.EXPECT().FlowDone(ctx, gomock.Any())
@@ -170,10 +171,10 @@ func TestInstrumentParallelErrorME(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		ctx := context.Background()
 
-		emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := emittertest.NewMockEmitter(mockCtrl)
 
-		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
-		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		parallelEmitter := emittertest.NewMockParallelEmitter(mockCtrl)
+		schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		parallelEmitter.EXPECT().ParallelError(ctx, gomock.Any())
@@ -198,11 +199,11 @@ func TestInstrumentParallelErrorME(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		ctx := context.Background()
 
-		emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := emittertest.NewMockEmitter(mockCtrl)
 
-		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
-		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		parallelEmitter := emittertest.NewMockParallelEmitter(mockCtrl)
+		taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+		schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		taskEmitter.EXPECT().TaskError(ctx, gomock.Any())
@@ -232,10 +233,10 @@ func TestInstrumentTaskButNotFlowME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
 
-	emitter := cff.NewMockEmitter(mockCtrl)
+	emitter := emittertest.NewMockEmitter(mockCtrl)
 
-	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+	schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	taskEmitter.EXPECT().TaskSuccess(ctx)
@@ -261,10 +262,10 @@ func TestInstrumentTaskButNotParallelME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
 
-	emitter := cff.NewMockEmitter(mockCtrl)
+	emitter := emittertest.NewMockEmitter(mockCtrl)
 
-	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+	schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	taskEmitter.EXPECT().TaskSuccess(ctx)
@@ -295,11 +296,11 @@ func TestInstrumentFlowCancelledContextME(t *testing.T) {
 
 	flowCancelledErr := ctx.Err()
 
-	emitter := cff.NewMockEmitter(mockCtrl)
+	emitter := emittertest.NewMockEmitter(mockCtrl)
 
-	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
-	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+	flowEmitter := emittertest.NewMockFlowEmitter(mockCtrl)
+	schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	flowEmitter.EXPECT().FlowError(ctx, flowCancelledErr)
@@ -333,10 +334,10 @@ func TestInstrumentParallelCancelledContextME(t *testing.T) {
 
 		parallelCancelledError := ctx.Err()
 
-		emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := emittertest.NewMockEmitter(mockCtrl)
 
-		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
-		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		parallelEmitter := emittertest.NewMockParallelEmitter(mockCtrl)
+		schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		parallelEmitter.EXPECT().ParallelError(ctx, parallelCancelledError)
@@ -366,11 +367,11 @@ func TestInstrumentParallelCancelledContextME(t *testing.T) {
 
 		parallelCancelledError := ctx.Err()
 
-		emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := emittertest.NewMockEmitter(mockCtrl)
 
-		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
-		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+		parallelEmitter := emittertest.NewMockParallelEmitter(mockCtrl)
+		schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		taskEmitter.EXPECT().TaskSkipped(ctx, parallelCancelledError)
@@ -400,11 +401,11 @@ func TestInstrumentFlowRecoverME(t *testing.T) {
 	core, _ := observer.New(zap.DebugLevel)
 	logger := zap.New(core)
 
-	emitter := cff.NewMockEmitter(mockCtrl)
+	emitter := emittertest.NewMockEmitter(mockCtrl)
 
-	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
-	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+	flowEmitter := emittertest.NewMockFlowEmitter(mockCtrl)
+	schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	flowEmitter.EXPECT().FlowSuccess(ctx)
@@ -440,11 +441,11 @@ func TestT3630161ME(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
 
-	emitter := cff.NewMockEmitter(mockCtrl)
+	emitter := emittertest.NewMockEmitter(mockCtrl)
 
-	taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-	flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
-	schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+	taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+	flowEmitter := emittertest.NewMockFlowEmitter(mockCtrl)
+	schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 	schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 	flowEmitter.EXPECT().FlowSuccess(ctx)
@@ -484,11 +485,11 @@ func TestT3795761ME(t *testing.T) {
 	t.Run("should run error", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 
-		emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := emittertest.NewMockEmitter(mockCtrl)
 
-		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-		flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
-		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+		flowEmitter := emittertest.NewMockFlowEmitter(mockCtrl)
+		schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		taskEmitter.EXPECT().TaskSuccess(ctx)
@@ -513,11 +514,11 @@ func TestT3795761ME(t *testing.T) {
 	t.Run("should run no error", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 
-		emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := emittertest.NewMockEmitter(mockCtrl)
 
-		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-		flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
-		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+		flowEmitter := emittertest.NewMockFlowEmitter(mockCtrl)
+		schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		taskEmitter.EXPECT().TaskSuccess(ctx).Times(2)
@@ -541,11 +542,11 @@ func TestT3795761ME(t *testing.T) {
 	t.Run("should not run", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 
-		emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := emittertest.NewMockEmitter(mockCtrl)
 
-		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-		flowEmitter := cff.NewMockFlowEmitter(mockCtrl)
-		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+		flowEmitter := emittertest.NewMockFlowEmitter(mockCtrl)
+		schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		taskEmitter.EXPECT().TaskSuccess(ctx)
@@ -574,15 +575,15 @@ func TestFlowPanic(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		ctx := context.Background()
 
-		emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := emittertest.NewMockEmitter(mockCtrl)
 
 		// No flow emitter as flow isn't instrumented.
-		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+		taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
 
 		taskEmitter.EXPECT().TaskPanic(ctx, gomock.Any())
 		taskEmitter.EXPECT().TaskDone(ctx, gomock.Any())
 
-		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		emitter.EXPECT().TaskInit(
@@ -617,11 +618,11 @@ func TestFlowPanic(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		ctx := context.Background()
 
-		emitter := cff.NewMockEmitter(mockCtrl)
-		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+		emitter := emittertest.NewMockEmitter(mockCtrl)
+		taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
 		taskEmitter.EXPECT().TaskPanic(ctx, gomock.Any())
 		taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
-		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		emitter.EXPECT().TaskInit(
@@ -656,11 +657,11 @@ func TestFlowPanic(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		ctx := context.Background()
 
-		emitter := cff.NewMockEmitter(mockCtrl)
-		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
+		emitter := emittertest.NewMockEmitter(mockCtrl)
+		taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
 		taskEmitter.EXPECT().TaskPanicRecovered(ctx, gomock.Any())
 		taskEmitter.EXPECT().TaskSkipped(ctx, gomock.Any())
-		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		emitter.EXPECT().TaskInit(
@@ -699,10 +700,10 @@ func TestParallelPanic(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		ctx := context.Background()
 
-		emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := emittertest.NewMockEmitter(mockCtrl)
 
-		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
-		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		parallelEmitter := emittertest.NewMockParallelEmitter(mockCtrl)
+		schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		parallelEmitter.EXPECT().ParallelError(gomock.Any(), gomock.Any())
@@ -727,11 +728,11 @@ func TestParallelPanic(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		ctx := context.Background()
 
-		emitter := cff.NewMockEmitter(mockCtrl)
+		emitter := emittertest.NewMockEmitter(mockCtrl)
 
-		taskEmitter := cff.NewMockTaskEmitter(mockCtrl)
-		parallelEmitter := cff.NewMockParallelEmitter(mockCtrl)
-		schedEmitter := cff.NewMockSchedulerEmitter(mockCtrl)
+		taskEmitter := emittertest.NewMockTaskEmitter(mockCtrl)
+		parallelEmitter := emittertest.NewMockParallelEmitter(mockCtrl)
+		schedEmitter := emittertest.NewMockSchedulerEmitter(mockCtrl)
 		schedEmitter.EXPECT().EmitScheduler(gomock.Any()).AnyTimes()
 
 		parallelEmitter.EXPECT().ParallelError(gomock.Any(), gomock.Any())

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/cff/internal/modifier/tests/external"
+	"go.uber.org/cff/internal/tests/modifier/external"
 )
 
 func TestFlow(t *testing.T) {

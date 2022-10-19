@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"go.uber.org/cff"
-	"go.uber.org/cff/internal/modifier/tests/external"
+	"go.uber.org/cff/internal/tests/modifier/external"
 )
 
 type bar struct{ i int64 }

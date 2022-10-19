@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"go.uber.org/cff"
-	"go.uber.org/cff/internal/modifier/tests/external"
+	"go.uber.org/cff/internal/tests/modifier/external"
 )
 
 type bar struct{ i int64 }
@@ -155,7 +155,7 @@ func _cffFlowsimple_21_9(
 
 	var (
 		flowInfo = &cff.FlowInfo{
-			File:   "go.uber.org/cff/internal/modifier/tests/simple/simple.go",
+			File:   "go.uber.org/cff/internal/tests/modifier/simple/simple.go",
 			Line:   21,
 			Column: 9,
 		}
@@ -191,7 +191,7 @@ func _cffFlowsimple_21_9(
 		job     *cff.ScheduledJob
 	}
 
-	// go.uber.org/cff/internal/modifier/tests/simple/simple.go:25:4
+	// go.uber.org/cff/internal/tests/modifier/simple/simple.go:25:4
 	var (
 		v1 int64
 	)
@@ -220,7 +220,7 @@ func _cffFlowsimple_21_9(
 
 	tasks = append(tasks, task0)
 
-	// go.uber.org/cff/internal/modifier/tests/simple/simple.go:30:4
+	// go.uber.org/cff/internal/tests/modifier/simple/simple.go:30:4
 	var (
 		v2 *bar
 	)
@@ -252,7 +252,7 @@ func _cffFlowsimple_21_9(
 
 	tasks = append(tasks, task1)
 
-	// go.uber.org/cff/internal/modifier/tests/simple/simple.go:34:4
+	// go.uber.org/cff/internal/tests/modifier/simple/simple.go:34:4
 	var (
 		v3 int
 	)
@@ -284,7 +284,7 @@ func _cffFlowsimple_21_9(
 
 	tasks = append(tasks, task2)
 
-	// go.uber.org/cff/internal/modifier/tests/simple/simple.go:39:4
+	// go.uber.org/cff/internal/tests/modifier/simple/simple.go:39:4
 	var (
 		v4 string
 	)
@@ -376,7 +376,7 @@ func _cffFlowsimple_55_9(
 
 	var (
 		flowInfo = &cff.FlowInfo{
-			File:   "go.uber.org/cff/internal/modifier/tests/simple/simple.go",
+			File:   "go.uber.org/cff/internal/tests/modifier/simple/simple.go",
 			Line:   55,
 			Column: 9,
 		}
@@ -412,7 +412,7 @@ func _cffFlowsimple_55_9(
 		job     *cff.ScheduledJob
 	}
 
-	// go.uber.org/cff/internal/modifier/tests/simple/simple.go:59:4
+	// go.uber.org/cff/internal/tests/modifier/simple/simple.go:59:4
 	var (
 		v1 int64
 	)
@@ -441,7 +441,7 @@ func _cffFlowsimple_55_9(
 
 	tasks = append(tasks, task4)
 
-	// go.uber.org/cff/internal/modifier/tests/simple/simple.go:65:4
+	// go.uber.org/cff/internal/tests/modifier/simple/simple.go:65:4
 	var (
 		v2 *bar
 	)
@@ -473,7 +473,7 @@ func _cffFlowsimple_55_9(
 
 	tasks = append(tasks, task5)
 
-	// go.uber.org/cff/internal/modifier/tests/simple/simple.go:70:4
+	// go.uber.org/cff/internal/tests/modifier/simple/simple.go:70:4
 	var (
 		v5 bool
 	)
@@ -559,7 +559,7 @@ func _cffFlowsimple_82_9(
 
 	var (
 		flowInfo = &cff.FlowInfo{
-			File:   "go.uber.org/cff/internal/modifier/tests/simple/simple.go",
+			File:   "go.uber.org/cff/internal/tests/modifier/simple/simple.go",
 			Line:   82,
 			Column: 9,
 		}
@@ -595,7 +595,7 @@ func _cffFlowsimple_82_9(
 		job     *cff.ScheduledJob
 	}
 
-	// go.uber.org/cff/internal/modifier/tests/simple/simple.go:86:4
+	// go.uber.org/cff/internal/tests/modifier/simple/simple.go:86:4
 	var (
 		v6 external.A
 	)
@@ -624,7 +624,7 @@ func _cffFlowsimple_82_9(
 
 	tasks = append(tasks, task7)
 
-	// go.uber.org/cff/internal/modifier/tests/simple/simple.go:90:12
+	// go.uber.org/cff/internal/tests/modifier/simple/simple.go:90:12
 	var (
 		v7 external.B
 	)
@@ -656,7 +656,7 @@ func _cffFlowsimple_82_9(
 
 	tasks = append(tasks, task8)
 
-	// go.uber.org/cff/internal/modifier/tests/simple/simple.go:92:4
+	// go.uber.org/cff/internal/tests/modifier/simple/simple.go:92:4
 	var (
 		v5 bool
 	)
@@ -747,7 +747,7 @@ func _cffFlowsimple_106_9(
 
 	var (
 		flowInfo = &cff.FlowInfo{
-			File:   "go.uber.org/cff/internal/modifier/tests/simple/simple.go",
+			File:   "go.uber.org/cff/internal/tests/modifier/simple/simple.go",
 			Line:   106,
 			Column: 9,
 		}
@@ -783,7 +783,7 @@ func _cffFlowsimple_106_9(
 		job     *cff.ScheduledJob
 	}
 
-	// go.uber.org/cff/internal/modifier/tests/simple/simple.go:111:4
+	// go.uber.org/cff/internal/tests/modifier/simple/simple.go:111:4
 	var (
 		v1 int64
 	)
@@ -812,7 +812,7 @@ func _cffFlowsimple_106_9(
 
 	tasks = append(tasks, task10)
 
-	// go.uber.org/cff/internal/modifier/tests/simple/simple.go:116:4
+	// go.uber.org/cff/internal/tests/modifier/simple/simple.go:116:4
 	var (
 		v6 external.A
 	)
@@ -844,7 +844,7 @@ func _cffFlowsimple_106_9(
 
 	tasks = append(tasks, task11)
 
-	// go.uber.org/cff/internal/modifier/tests/simple/simple.go:120:4
+	// go.uber.org/cff/internal/tests/modifier/simple/simple.go:120:4
 	var (
 		v4 string
 	)
@@ -880,7 +880,7 @@ func _cffFlowsimple_106_9(
 
 	*(_109_15) = v4 // string
 
-	*(_109_22) = v6 // go.uber.org/cff/internal/modifier/tests/external.A
+	*(_109_22) = v6 // go.uber.org/cff/internal/tests/modifier/external.A
 
 	flowEmitter.FlowSuccess(ctx)
 	return nil

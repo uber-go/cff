@@ -62,7 +62,7 @@ func _cffFlowobservability_17_9(
 	var (
 		flowInfo = &cff.FlowInfo{
 			Name:   _23_22,
-			File:   "go.uber.org/cff/internal/modifier/tests/observability/observability.go",
+			File:   "go.uber.org/cff/internal/tests/modifier/observability/observability.go",
 			Line:   17,
 			Column: 9,
 		}
@@ -98,7 +98,7 @@ func _cffFlowobservability_17_9(
 		job     *cff.ScheduledJob
 	}
 
-	// go.uber.org/cff/internal/modifier/tests/observability/observability.go:25:4
+	// go.uber.org/cff/internal/tests/modifier/observability/observability.go:25:4
 	var (
 		v2 int64
 	)
