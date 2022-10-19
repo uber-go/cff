@@ -37,7 +37,7 @@ func TestGoldenMagic2(t *testing.T) {
 	expectedPath := filepath.Join(t.TempDir(), "magic_v2.go")
 	actualPath := "magic_v2_gen.go"
 
-	cmd := exec.Command("cff", "-genmode=modifier", "-tag=v2", "-file", "magic_v2.go="+expectedPath, ".")
+	cmd := exec.Command("cff", "-genmode=modifier", "-tags=v2", "-file", "magic_v2.go="+expectedPath, ".")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	require.NoError(t, cmd.Run())
