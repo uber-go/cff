@@ -27,8 +27,7 @@ type generatorv2 struct {
 	typeIDs    *typeutil.Map // map[types.Type]int
 	nextTypeID int
 
-	predIDs    *typeutil.Map // map[types.Type]int
-	nextPredID int
+	predIDs *typeutil.Map // map[types.Type]int
 
 	// File path to which generated code is written.
 	outputPath string
@@ -147,7 +146,7 @@ func (g *generatorv2) GenerateFile(f *file) error {
 		return err
 	}
 
-	return os.WriteFile(g.outputPath, buff.Bytes(), 0644)
+	return os.WriteFile(g.outputPath, buff.Bytes(), 0o644)
 }
 
 func (g *generatorv2) funcMap(

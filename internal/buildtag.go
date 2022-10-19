@@ -34,8 +34,6 @@ func invertCFFConstraint(exp *constraint.Expr) {
 	}
 }
 
-var _newline = []byte("\n")
-
 // writeInvertedCFFTag writes the provided byte slice to the io.Writer,
 // accounting for any "cff" build constraints in the byte slice
 // by inverting them.

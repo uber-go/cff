@@ -236,7 +236,6 @@ func (c *compiler) applySliceOptions(t *sliceTask, opts []ast.Expr) {
 			t.SliceEndFn = sliceEndFn
 		}
 	}
-	return
 }
 
 func (c *compiler) compileSliceEnd(opt ast.Expr, ce *ast.CallExpr) *compiledFunc {

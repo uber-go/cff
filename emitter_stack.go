@@ -33,8 +33,6 @@ func EmitterStack(emitters ...Emitter) Emitter {
 
 type taskEmitterStack []TaskEmitter
 
-func (taskEmitterStack) taskEmitter() {}
-
 // TaskInit returns a TaskEmitter which could be memoized based on task name.
 func (es emitterStack) TaskInit(taskInfo *TaskInfo, dInfo *DirectiveInfo) TaskEmitter {
 	emitters := make(taskEmitterStack, 0, len(es))
@@ -97,8 +95,6 @@ func (ts taskEmitterStack) TaskDone(ctx context.Context, d time.Duration) {
 
 type flowEmitterStack []FlowEmitter
 
-func (flowEmitterStack) flowEmitter() {}
-
 // FlowInit returns a FlowEmitter which could be memoized based on flow name.
 func (es emitterStack) FlowInit(info *FlowInfo) FlowEmitter {
 	emitters := make(flowEmitterStack, 0, len(es))
@@ -131,8 +127,6 @@ func (fs flowEmitterStack) FlowDone(ctx context.Context, d time.Duration) {
 }
 
 type parallelEmitterStack []ParallelEmitter
-
-func (parallelEmitterStack) parallelEmitter() {}
 
 // ParallelInit returns a ParallelEmitter which could be memoized based on parallel name.
 func (es emitterStack) ParallelInit(info *ParallelInfo) ParallelEmitter {
@@ -175,8 +169,6 @@ func (es emitterStack) SchedulerInit(info *SchedulerInfo) SchedulerEmitter {
 }
 
 type schedulerEmitterStack []SchedulerEmitter
-
-func (schedulerEmitterStack) schedulerEmitter() {}
 
 // EmitScheduler emits the state of the CFF scheduler.
 func (ses schedulerEmitterStack) EmitScheduler(s SchedulerState) {

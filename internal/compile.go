@@ -172,9 +172,9 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *pkg.Package) *file {
 
 			case fn.Name() == "Parallel":
 				parallel := c.compileParallel(astFile, n)
-				if parallel != nil && len(parallel.modifiers) > 0 {
-					// TODO(rhang): Create cff.Parallel modifiers.
-				}
+				// if parallel != nil && len(parallel.modifiers) > 0 {
+				// 	// TODO(rhang): Create cff.Parallel modifiers.
+				// }
 				file.Parallels = append(file.Parallels, parallel)
 				file.Generators = append(
 					file.Generators,

@@ -86,8 +86,6 @@ type logFlowEmitter struct {
 	errLevel zapcore.Level
 }
 
-func (logFlowEmitter) flowEmitter() {}
-
 func (e *logEmitter) FlowInit(info *FlowInfo) FlowEmitter {
 	return &logFlowEmitter{
 		flow:     zap.String("flow", info.Name),
@@ -117,8 +115,6 @@ type logParallelEmitter struct {
 	logger   *zap.Logger
 	errLevel zapcore.Level
 }
-
-func (logParallelEmitter) parallelEmitter() {}
 
 func (e *logEmitter) ParallelInit(info *ParallelInfo) ParallelEmitter {
 	return &logParallelEmitter{
@@ -151,8 +147,6 @@ type logTaskEmitter struct {
 	panicLevel   zapcore.Level
 	recoverLevel zapcore.Level
 }
-
-func (logTaskEmitter) taskEmitter() {}
 
 func (e *logEmitter) TaskInit(task *TaskInfo, d *DirectiveInfo) TaskEmitter {
 	return &logTaskEmitter{
@@ -241,8 +235,6 @@ func (e *logSchedulerEmitter) EmitScheduler(s SchedulerState) {
 		zap.Int("concurrency", s.Concurrency),
 	)
 }
-
-func (logSchedulerEmitter) schedulerEmitter() {}
 
 func maybeErrorField(pv interface{}) zap.Field {
 	if err, ok := pv.(error); ok {

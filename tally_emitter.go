@@ -116,8 +116,6 @@ type tallyFlowEmitter struct {
 	scope tally.Scope
 }
 
-func (tallyFlowEmitter) flowEmitter() {}
-
 func (e *tallyFlowEmitter) FlowError(context.Context, error) {
 	e.scope.Counter("taskflow.error").Inc(1)
 }
@@ -134,8 +132,6 @@ type tallyParallelEmitter struct {
 	scope tally.Scope
 }
 
-func (tallyParallelEmitter) parallelEmitter() {}
-
 func (e *tallyParallelEmitter) ParallelError(context.Context, error) {
 	e.scope.Counter("taskparallel.error").Inc(1)
 }
@@ -151,8 +147,6 @@ func (e *tallyParallelEmitter) ParallelDone(_ context.Context, d time.Duration) 
 type tallyTaskEmitter struct {
 	scope tally.Scope
 }
-
-func (tallyTaskEmitter) taskEmitter() {}
 
 func (e *tallyTaskEmitter) TaskError(context.Context, error) {
 	e.scope.Counter("task.error").Inc(1)
@@ -185,8 +179,6 @@ func (e *tallyTaskEmitter) TaskDone(_ context.Context, d time.Duration) {
 type tallySchedulerEmitter struct {
 	scope tally.Scope
 }
-
-func (tallySchedulerEmitter) schedulerEmitter() {}
 
 func (e *tallySchedulerEmitter) EmitScheduler(s SchedulerState) {
 	e.scope.Gauge("scheduler.pending").Update(float64(s.Pending))

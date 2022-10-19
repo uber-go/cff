@@ -6,6 +6,7 @@ TEST_FLAGS ?= -race
 
 CFF = $(GOBIN)/cff
 MOCKGEN = $(GOBIN)/mockgen
+STATICCHECK = $(GOBIN)/staticcheck
 
 SRC_FILES = $(shell find . '(' -path '*test*' -o -path '*/examples/*' -prune ')' -o -name '*.go' -print)
 
@@ -47,8 +48,18 @@ tidy:
 		go mod tidy \
 	) &&) true
 
+.PHONY: lint
+lint: staticcheck
+
+.PHONY: staticcheck
+staticcheck: $(STATICCHECK)
+	$(STATICCHECK) ./...
+
 $(CFF): $(SRC_FILES)
 	go install go.uber.org/cff/cmd/cff
 
 $(MOCKGEN): go.mod
 	go install github.com/golang/mock/mockgen
+
+$(STATICCHECK): tools/go.mod
+	cd tools && go install honnef.co/go/tools/cmd/staticcheck
