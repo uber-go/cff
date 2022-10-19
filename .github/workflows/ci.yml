@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: ['*']
+
+jobs:
+
+  # Checks that the generated code is up-to-date.
+  # Runs in parallel with the other job that runs tests.
+  check-generated:
+    name: Check generated code
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19.x
+        cache: true
+
+    - name: Download Dependencies
+      run: go mod download
+
+    - name: Regenerate code
+      run: make generate
+
+    - name: Verify unchanged
+      run: |
+        if ! git diff --quiet; then
+          echo "Code changed after 'make generate'"
+          git diff
+          exit 1
+        fi
+
+  build-test:
+    name: Build and test
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "windows-latest"]
+        go: ["1.18.x", "1.19.x"]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: ${{ matrix.go }}
+        cache: true
+
+    - name: Download Dependencies
+      run: go mod download
+
+    - name: Test
+      run: make cover
+
+    - name: Upload coverage to codecov.io
+      uses: codecov/codecov-action@v1
+      if: false
+      # TODO enable once the repository is open source

@@ -20,6 +20,15 @@ test: build
 		go test $(TEST_FLAGS) ./... \
 	) &&) true
 
+.PHONY: cover
+cover: build
+	@$(foreach dir,$(MODULES),( \
+		cd $(dir) && \
+		echo "--- [cover] $(dir)" && \
+		go test $(TEST_FLAGS) -coverprofile=cover.out -coverpkg=go.uber.org/cff/... ./... && \
+		go tool cover -html=cover.out -o cover.html \
+	) &&) true
+
 # We run 'go generate' with '-tags cff'
 # because build tags can be inside cff-tagged files.
 .PHONY: generate
