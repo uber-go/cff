@@ -8,7 +8,10 @@ CFF = $(GOBIN)/cff
 MOCKGEN = $(GOBIN)/mockgen
 STATICCHECK = $(GOBIN)/staticcheck
 
-SRC_FILES = $(shell find . '(' -path '*test*' -o -path '*/examples/*' -prune ')' -o -name '*.go' -print)
+SRC_FILES = $(shell find . '(' -path './.*' -o -path '*test*' -o -path '*/examples/*' -prune ')' -o -name '*.go' -print)
+
+# All go files are in scope for formatting -- even if they're generated.
+GOFMT_FILES = $(shell find . -path './.*' -prune -o -name '*.go' -print)
 
 .PHONY: build
 build: $(CFF)
@@ -48,12 +51,25 @@ tidy:
 		go mod tidy \
 	) &&) true
 
+.PHONY: fmt
+fmt:
+	@gofmt -w -l $(GOFMT_FILES)
+
 .PHONY: lint
-lint: staticcheck
+lint: staticcheck checkfmt
 
 .PHONY: staticcheck
 staticcheck: $(STATICCHECK)
 	$(STATICCHECK) ./...
+
+.PHONY: checkfmt
+checkfmt:
+	@DIFF=$$(gofmt -d $(GOFMT_FILES)); \
+	if [[ -n "$$DIFF" ]]; then \
+		echo "--- gofmt would cause changes:"; \
+		echo "$$DIFF"; \
+		exit 1; \
+	fi
 
 $(CFF): $(SRC_FILES)
 	go install go.uber.org/cff/cmd/cff
