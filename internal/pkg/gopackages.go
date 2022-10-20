@@ -27,7 +27,7 @@ func (f *GoPackagesLoaderFactory) RegisterFlags(fset *flag.Set) Loader {
 		load: packages.Load,
 	}
 
-	fset.Var(flag.AsList(&loader.tags), "tag",
+	fset.Var(flag.AsList(&loader.tags), "tags",
 		"Build tags to load packages with in addition to the 'cff' tag.\n"+
 			"This flag may be provided multiple times.")
 

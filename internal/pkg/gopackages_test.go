@@ -23,7 +23,7 @@ func TestGoPackagesLoader_Integration(t *testing.T) {
 
 	parser := flag.NewSet("cff")
 	loader := factory.RegisterFlags(parser)
-	require.NoError(t, parser.Parse([]string{"-tag", "foo,cff"}),
+	require.NoError(t, parser.Parse([]string{"-tags", "foo,cff"}),
 		"parse arguments")
 
 	fset := token.NewFileSet()
