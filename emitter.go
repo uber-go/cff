@@ -8,6 +8,9 @@ import (
 )
 
 // Emitter initializes Task, Flow, and Parallel emitters.
+//
+// WARNING: Do not use this API.
+// We intend to replace it in an upcoming release.
 type Emitter interface {
 	// TaskInit returns a TaskEmitter which could be memoized based on task name.
 	TaskInit(*TaskInfo, *DirectiveInfo) TaskEmitter
@@ -25,6 +28,9 @@ type SchedulerState = scheduler.State
 
 // SchedulerEmitter provides observability into the state of the CFF
 // scheduler.
+//
+// WARNING: Do not use this API.
+// We intend to replace it in an upcoming release.
 type SchedulerEmitter interface {
 	// EmitScheduler emits the state of the CFF scheduler.
 	EmitScheduler(s SchedulerState)
@@ -74,6 +80,9 @@ type ParallelInfo struct {
 
 // FlowEmitter receives events for when flow events occur, for the purpose of
 // emitting metrics.
+//
+// WARNING: Do not use this API.
+// We intend to replace it in an upcoming release.
 type FlowEmitter interface {
 	// FlowSuccess is called when a flow runs successfully.
 	FlowSuccess(context.Context)
@@ -85,6 +94,9 @@ type FlowEmitter interface {
 
 // ParallelEmitter receives events for when parallel events occur, for the
 // purpose of emitting metrics.
+//
+// WARNING: Do not use this API.
+// We intend to replace it in an upcoming release.
 type ParallelEmitter interface {
 	// ParallelSuccess is called when a parallel runs successfully.
 	ParallelSuccess(context.Context)
@@ -96,6 +108,9 @@ type ParallelEmitter interface {
 
 // TaskEmitter receives events for when task events occur, for the purpose of
 // emitting metrics.
+//
+// WARNING: Do not use this API.
+// We intend to replace it in an upcoming release.
 type TaskEmitter interface {
 	// TaskSuccess is called when a task runs successfully.
 	TaskSuccess(context.Context)

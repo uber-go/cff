@@ -46,16 +46,11 @@ func Results(results ...interface{}) Option {
 //
 //	cff.Flow(ctx,
 //	  ...
-//	  cff.WithEmitter(cff.TallyEmitter(scope)),
+//	  cff.WithEmitter(em),
 //	)
 //
-// Provide this option multiple times to connect multiple emitters.
-//
-//	cff.Flow(ctx,
-//	  ...
-//	  cff.WithEmitter(cff.TallyEmitter(scope)),
-//	  cff.WithEmitter(cff.LogEmitter(logger)),
-//	)
+// WARNING: Do not use this API.
+// We intend to replace it in an upcoming release.
 //
 // This is a code generation directive.
 func WithEmitter(Emitter) Option {

@@ -6,17 +6,11 @@ package panic
 import (
 	"context"
 
-	"go.uber.org/zap"
-
-	"github.com/uber-go/tally"
 	"go.uber.org/cff"
 )
 
 // Panicker is exported to be used by tests.
-type Panicker struct {
-	Scope  tally.Scope
-	Logger *zap.Logger
-}
+type Panicker struct{}
 
 // FlowPanicsParallel runs tasks in parallel.
 func (p *Panicker) FlowPanicsParallel() error {
@@ -24,15 +18,11 @@ func (p *Panicker) FlowPanicsParallel() error {
 
 	err := cff.Flow(
 		context.Background(),
-		cff.WithEmitter(cff.TallyEmitter(p.Scope)),
-		cff.WithEmitter(cff.LogEmitter(p.Logger)),
-		cff.InstrumentFlow("PanicParallel"),
 		cff.Results(&b),
 		cff.Task(
 			func() string {
 				panic("panic")
 			},
-			cff.Instrument("T1"),
 		),
 		// This task is necessary so that task 1 and 2 are run in parallel, which necessitates running them
 		// in separate goroutines.
@@ -58,14 +48,10 @@ func (p *Panicker) FlowPanicsSerial() error {
 	err := cff.Flow(
 		context.Background(),
 		cff.Results(&r),
-		cff.WithEmitter(cff.TallyEmitter(p.Scope)),
-		cff.WithEmitter(cff.LogEmitter(p.Logger)),
-		cff.InstrumentFlow("FlowPanicsSerial"),
 		cff.Task(
 			func() string {
 				panic("panic")
 			},
-			cff.Instrument("T2"),
 		),
 	)
 

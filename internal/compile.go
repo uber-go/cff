@@ -187,7 +187,7 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *pkg.Package) *file {
 				c.errf(c.nodePosition(n), "unexpected code generation directive %q: "+"only cff.Flow or cff.Parallel may be called at the top-level", fn.Name())
 			default:
 				// Calls to functions that are not code
-				// generation directives (LogEmitter, etc.)
+				// generation directives (EmitterStack, etc.)
 				// are allowed.
 			}
 

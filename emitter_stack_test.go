@@ -7,10 +7,8 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/uber-go/tally"
 	. "go.uber.org/cff"
 	"go.uber.org/cff/internal/emittertest"
-	"go.uber.org/zap"
 )
 
 func TestEmitterStackConstruction(t *testing.T) {
@@ -22,24 +20,24 @@ func TestEmitterStackConstruction(t *testing.T) {
 		{
 			desc: "single",
 			give: []Emitter{
-				LogEmitter(zap.NewNop()),
+				NopEmitter(),
 			},
 		},
 		{
 			desc: "multiple",
 			give: []Emitter{
-				LogEmitter(zap.NewNop()),
 				NopEmitter(),
-				TallyEmitter(tally.NoopScope),
+				NopEmitter(),
+				NopEmitter(),
 			},
 		},
 		{
 			desc: "nested",
 			give: []Emitter{
-				LogEmitter(zap.NewNop()),
+				NopEmitter(),
 				EmitterStack(
 					NopEmitter(),
-					TallyEmitter(tally.NoopScope),
+					NopEmitter(),
 				),
 			},
 		},

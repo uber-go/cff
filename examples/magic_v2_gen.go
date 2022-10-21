@@ -9,9 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/uber-go/tally"
 	"go.uber.org/cff"
-	"go.uber.org/zap"
 )
 
 // RequestV2 TODO
@@ -25,24 +23,19 @@ type ResponseV2 struct {
 }
 
 type fooHandlerV2 struct {
-	mgr    *ManagerRepositoryV2
-	users  *UserRepositoryV2
-	ses    *SESClientV2
-	scope  tally.Scope
-	logger *zap.Logger
+	mgr   *ManagerRepositoryV2
+	users *UserRepositoryV2
+	ses   *SESClientV2
 }
 
 func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *RequestV2) (*ResponseV2, error) {
 	var res *ResponseV2
-	err := _cffFlowmagicv2_36_9(ctx,
-		_cffParamsmagicv2_37_3(req),
-		_cffResultsmagicv2_38_3(&res),
-		_cffConcurrencymagicv2_39_3(8),
-		_cffWithEmittermagicv2_40_3(cff.TallyEmitter(h.scope)),
-		_cffWithEmittermagicv2_41_3(cff.LogEmitter(h.logger)),
-		_cffInstrumentFlowmagicv2_42_3("HandleFoo"),
+	err := _cffFlowmagicv2_32_9(ctx,
+		_cffParamsmagicv2_33_3(req),
+		_cffResultsmagicv2_34_3(&res),
+		_cffConcurrencymagicv2_35_3(8),
 
-		_cffTaskmagicv2_44_3(
+		_cffTaskmagicv2_37_3(
 			func(req *RequestV2) (*GetManagerRequestV2, *ListUsersRequestV2) {
 				return &GetManagerRequestV2{
 						LDAPGroup: req.LDAPGroup,
@@ -50,10 +43,10 @@ func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *RequestV2) (*Response
 						LDAPGroup: req.LDAPGroup,
 					}
 			}),
-		_cffTaskmagicv2_52_3(
+		_cffTaskmagicv2_45_3(
 			h.mgr.Get),
-		_cffTaskmagicv2_54_3(h.ses.BatchSendEmail),
-		_cffTaskmagicv2_55_3(
+		_cffTaskmagicv2_47_3(h.ses.BatchSendEmail),
+		_cffTaskmagicv2_48_3(
 			func(responses []*SendEmailResponseV2) *ResponseV2 {
 				var r ResponseV2
 				for _, res := range responses {
@@ -62,15 +55,14 @@ func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *RequestV2) (*Response
 				return &r
 			},
 		),
-		_cffTaskmagicv2_64_3(
+		_cffTaskmagicv2_57_3(
 			h.users.List,
 			cff.Predicate(func(req *GetManagerRequestV2) bool {
 				return req.LDAPGroup != "everyone"
 			}),
 			cff.FallbackWith(&ListUsersResponseV2{}),
-			cff.Instrument("FormSendEmailRequest"),
 		),
-		_cffTaskmagicv2_72_3(
+		_cffTaskmagicv2_64_3(
 			func(mgr *GetManagerResponseV2, users *ListUsersResponseV2) []*SendEmailRequestV2 {
 				var reqs []*SendEmailRequestV2
 				for _, u := range users.Emails {
@@ -81,16 +73,12 @@ func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *RequestV2) (*Response
 			cff.Predicate(func(req *GetManagerRequestV2) bool {
 				return req.LDAPGroup != "everyone"
 			}),
-			cff.Instrument("FormSendEmailRequest"),
 		),
 	)
 
 	err = cff.Parallel(
 		ctx,
 		cff.Concurrency(2),
-		cff.WithEmitter(cff.TallyEmitter(h.scope)),
-		cff.WithEmitter(cff.LogEmitter(h.logger)),
-		cff.InstrumentParallel("SendParallel"),
 		cff.ContinueOnError(true),
 		cff.Tasks(
 			func(_ context.Context) error {
@@ -102,7 +90,6 @@ func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *RequestV2) (*Response
 			func() error {
 				return SendMessageV2()
 			},
-			cff.Instrument("SendMsg"),
 		),
 		cff.Slice(
 			func(ctx context.Context, idx int, s string) error {
@@ -211,59 +198,49 @@ func (*SESClientV2) BatchSendEmail(req []*SendEmailRequestV2) ([]*SendEmailRespo
 func SendMessageV2() error {
 	return nil
 }
-func _cffFlowmagicv2_36_9(
+func _cffFlowmagicv2_32_9(
 	ctx context.Context,
-	mmagicv237_3 func() *RequestV2,
-	mmagicv238_3 func() **ResponseV2,
-	mmagicv239_3 func() int,
-	mmagicv240_3 func() cff.Emitter,
-	mmagicv241_3 func() cff.Emitter,
-	mmagicv242_3 func() string,
-	mmagicv244_3 func() func(req *RequestV2) (*GetManagerRequestV2, *ListUsersRequestV2),
-	mmagicv252_3 func() func(req *GetManagerRequestV2) (*GetManagerResponseV2, error),
-	mmagicv254_3 func() func(req []*SendEmailRequestV2) ([]*SendEmailResponseV2, error),
-	mmagicv255_3 func() func(responses []*SendEmailResponseV2) *ResponseV2,
-	mmagicv264_3 func() (func(req *ListUsersRequestV2) (*ListUsersResponseV2, error), cff.TaskOption, cff.TaskOption, cff.TaskOption),
+	mmagicv233_3 func() *RequestV2,
+	mmagicv234_3 func() **ResponseV2,
+	mmagicv235_3 func() int,
+	mmagicv237_3 func() func(req *RequestV2) (*GetManagerRequestV2, *ListUsersRequestV2),
+	mmagicv245_3 func() func(req *GetManagerRequestV2) (*GetManagerResponseV2, error),
+	mmagicv247_3 func() func(req []*SendEmailRequestV2) ([]*SendEmailResponseV2, error),
+	mmagicv248_3 func() func(responses []*SendEmailResponseV2) *ResponseV2,
+	mmagicv257_3 func() (func(req *ListUsersRequestV2) (*ListUsersResponseV2, error), cff.TaskOption, cff.TaskOption),
 	_ cff.Option,
-	mmagicv272_3 func() (func(mgr *GetManagerResponseV2, users *ListUsersResponseV2) []*SendEmailRequestV2, cff.TaskOption, cff.TaskOption),
+	mmagicv264_3 func() (func(mgr *GetManagerResponseV2, users *ListUsersResponseV2) []*SendEmailRequestV2, cff.TaskOption),
 	_ cff.Option,
 ) error {
-	_37_14 := mmagicv237_3()
-	_ = _37_14 // possibly unused.
-	_38_15 := mmagicv238_3()
-	_ = _38_15 // possibly unused.
-	_39_19 := mmagicv239_3()
-	_ = _39_19 // possibly unused.
-	_40_19 := mmagicv240_3()
-	_ = _40_19 // possibly unused.
-	_41_19 := mmagicv241_3()
-	_ = _41_19 // possibly unused.
-	_42_22 := mmagicv242_3()
-	_ = _42_22 // possibly unused.
-	_45_4 := mmagicv244_3()
-	_ = _45_4 // possibly unused.
-	_53_4 := mmagicv252_3()
-	_ = _53_4 // possibly unused.
-	_54_12 := mmagicv254_3()
-	_ = _54_12 // possibly unused.
-	_56_4 := mmagicv255_3()
-	_ = _56_4 // possibly unused.
-	_65_4, _66_4, _69_4, _70_4 := mmagicv264_3()
-	_, _, _, _ = _65_4, _66_4, _69_4, _70_4 // possibly unused.
-	_73_4, _80_4, _83_4 := mmagicv272_3()
-	_, _, _ = _73_4, _80_4, _83_4 // possibly unused.
+	_33_14 := mmagicv233_3()
+	_ = _33_14 // possibly unused.
+	_34_15 := mmagicv234_3()
+	_ = _34_15 // possibly unused.
+	_35_19 := mmagicv235_3()
+	_ = _35_19 // possibly unused.
+	_38_4 := mmagicv237_3()
+	_ = _38_4 // possibly unused.
+	_46_4 := mmagicv245_3()
+	_ = _46_4 // possibly unused.
+	_47_12 := mmagicv247_3()
+	_ = _47_12 // possibly unused.
+	_49_4 := mmagicv248_3()
+	_ = _49_4 // possibly unused.
+	_58_4, _59_4, _62_4 := mmagicv257_3()
+	_, _, _ = _58_4, _59_4, _62_4 // possibly unused.
+	_65_4, _72_4 := mmagicv264_3()
+	_, _ = _65_4, _72_4 // possibly unused.
 
-	var v1 *RequestV2 = _37_14
-	emitter := cff.EmitterStack(_40_19, _41_19)
+	var v1 *RequestV2 = _33_14
+	emitter := cff.NopEmitter()
 
 	var (
 		flowInfo = &cff.FlowInfo{
-			Name:   _42_22,
 			File:   "go.uber.org/cff/examples/magic_v2.go",
-			Line:   36,
+			Line:   32,
 			Column: 9,
 		}
-		flowEmitter = emitter.FlowInit(flowInfo)
+		flowEmitter = cff.NopFlowEmitter()
 
 		schedInfo = &cff.SchedulerInfo{
 			Name:      flowInfo.Name,
@@ -284,7 +261,7 @@ func _cffFlowmagicv2_36_9(
 
 	sched := cff.BeginFlow(
 		cff.SchedulerParams{
-			Concurrency: _39_19, Emitter: schedEmitter,
+			Concurrency: _35_19, Emitter: schedEmitter,
 		},
 	)
 
@@ -295,7 +272,7 @@ func _cffFlowmagicv2_36_9(
 		job     *cff.ScheduledJob
 	}
 
-	// go.uber.org/cff/examples/magic_v2.go:45:4
+	// go.uber.org/cff/examples/magic_v2.go:38:4
 	var (
 		v2 *GetManagerRequestV2
 		v3 *ListUsersRequestV2
@@ -315,7 +292,7 @@ func _cffFlowmagicv2_36_9(
 			}
 		}()
 
-		v2, v3 = _45_4(v1)
+		v2, v3 = _38_4(v1)
 		return
 	}
 
@@ -325,7 +302,7 @@ func _cffFlowmagicv2_36_9(
 
 	tasks = append(tasks, task0)
 
-	// go.uber.org/cff/examples/magic_v2.go:53:4
+	// go.uber.org/cff/examples/magic_v2.go:46:4
 	var (
 		v4 *GetManagerResponseV2
 	)
@@ -344,7 +321,7 @@ func _cffFlowmagicv2_36_9(
 			}
 		}()
 
-		v4, err = _53_4(v2)
+		v4, err = _46_4(v2)
 		return
 	}
 
@@ -357,7 +334,7 @@ func _cffFlowmagicv2_36_9(
 
 	tasks = append(tasks, task1)
 
-	// go.uber.org/cff/examples/magic_v2.go:65:4
+	// go.uber.org/cff/examples/magic_v2.go:58:4
 	var (
 		v5 *ListUsersResponseV2
 	)
@@ -376,7 +353,7 @@ func _cffFlowmagicv2_36_9(
 			}
 		}()
 
-		v5, err = _65_4(v3)
+		v5, err = _58_4(v3)
 		return
 	}
 
@@ -390,7 +367,7 @@ func _cffFlowmagicv2_36_9(
 
 	tasks = append(tasks, task4)
 
-	// go.uber.org/cff/examples/magic_v2.go:73:4
+	// go.uber.org/cff/examples/magic_v2.go:65:4
 	var (
 		v6 []*SendEmailRequestV2
 	)
@@ -409,7 +386,7 @@ func _cffFlowmagicv2_36_9(
 			}
 		}()
 
-		v6 = _73_4(v4, v5)
+		v6 = _65_4(v4, v5)
 		return
 	}
 
@@ -424,7 +401,7 @@ func _cffFlowmagicv2_36_9(
 
 	tasks = append(tasks, task5)
 
-	// go.uber.org/cff/examples/magic_v2.go:54:12
+	// go.uber.org/cff/examples/magic_v2.go:47:12
 	var (
 		v7 []*SendEmailResponseV2
 	)
@@ -443,7 +420,7 @@ func _cffFlowmagicv2_36_9(
 			}
 		}()
 
-		v7, err = _54_12(v6)
+		v7, err = _47_12(v6)
 		return
 	}
 
@@ -456,7 +433,7 @@ func _cffFlowmagicv2_36_9(
 
 	tasks = append(tasks, task2)
 
-	// go.uber.org/cff/examples/magic_v2.go:56:4
+	// go.uber.org/cff/examples/magic_v2.go:49:4
 	var (
 		v8 *ResponseV2
 	)
@@ -475,7 +452,7 @@ func _cffFlowmagicv2_36_9(
 			}
 		}()
 
-		v8 = _56_4(v7)
+		v8 = _49_4(v7)
 		return
 	}
 
@@ -493,60 +470,48 @@ func _cffFlowmagicv2_36_9(
 		return err
 	}
 
-	*(_38_15) = v8 // *go.uber.org/cff/examples.ResponseV2
+	*(_34_15) = v8 // *go.uber.org/cff/examples.ResponseV2
 
 	flowEmitter.FlowSuccess(ctx)
 	return nil
 }
 
-func _cffParamsmagicv2_37_3(mmagicv237_14 *RequestV2) func() *RequestV2 {
-	return func() *RequestV2 { return mmagicv237_14 }
+func _cffParamsmagicv2_33_3(mmagicv233_14 *RequestV2) func() *RequestV2 {
+	return func() *RequestV2 { return mmagicv233_14 }
 }
 
-func _cffResultsmagicv2_38_3(mmagicv238_15 **ResponseV2) func() **ResponseV2 {
-	return func() **ResponseV2 { return mmagicv238_15 }
+func _cffResultsmagicv2_34_3(mmagicv234_15 **ResponseV2) func() **ResponseV2 {
+	return func() **ResponseV2 { return mmagicv234_15 }
 }
 
-func _cffConcurrencymagicv2_39_3(c int) func() int {
+func _cffConcurrencymagicv2_35_3(c int) func() int {
 	return func() int { return c }
 }
 
-func _cffWithEmittermagicv2_40_3(mmagicv240_19 cff.Emitter) func() cff.Emitter {
-	return func() cff.Emitter { return mmagicv240_19 }
+func _cffTaskmagicv2_37_3(mmagicv238_4 func(req *RequestV2) (*GetManagerRequestV2, *ListUsersRequestV2)) func() func(req *RequestV2) (*GetManagerRequestV2, *ListUsersRequestV2) {
+	return func() func(req *RequestV2) (*GetManagerRequestV2, *ListUsersRequestV2) { return mmagicv238_4 }
 }
 
-func _cffWithEmittermagicv2_41_3(mmagicv241_19 cff.Emitter) func() cff.Emitter {
-	return func() cff.Emitter { return mmagicv241_19 }
+func _cffTaskmagicv2_45_3(mmagicv246_4 func(req *GetManagerRequestV2) (*GetManagerResponseV2, error)) func() func(req *GetManagerRequestV2) (*GetManagerResponseV2, error) {
+	return func() func(req *GetManagerRequestV2) (*GetManagerResponseV2, error) { return mmagicv246_4 }
 }
 
-func _cffInstrumentFlowmagicv2_42_3(mmagicv242_22 string) func() string {
-	return func() string { return mmagicv242_22 }
+func _cffTaskmagicv2_47_3(mmagicv247_12 func(req []*SendEmailRequestV2) ([]*SendEmailResponseV2, error)) func() func(req []*SendEmailRequestV2) ([]*SendEmailResponseV2, error) {
+	return func() func(req []*SendEmailRequestV2) ([]*SendEmailResponseV2, error) { return mmagicv247_12 }
 }
 
-func _cffTaskmagicv2_44_3(mmagicv245_4 func(req *RequestV2) (*GetManagerRequestV2, *ListUsersRequestV2)) func() func(req *RequestV2) (*GetManagerRequestV2, *ListUsersRequestV2) {
-	return func() func(req *RequestV2) (*GetManagerRequestV2, *ListUsersRequestV2) { return mmagicv245_4 }
+func _cffTaskmagicv2_48_3(mmagicv249_4 func(responses []*SendEmailResponseV2) *ResponseV2) func() func(responses []*SendEmailResponseV2) *ResponseV2 {
+	return func() func(responses []*SendEmailResponseV2) *ResponseV2 { return mmagicv249_4 }
 }
 
-func _cffTaskmagicv2_52_3(mmagicv253_4 func(req *GetManagerRequestV2) (*GetManagerResponseV2, error)) func() func(req *GetManagerRequestV2) (*GetManagerResponseV2, error) {
-	return func() func(req *GetManagerRequestV2) (*GetManagerResponseV2, error) { return mmagicv253_4 }
-}
-
-func _cffTaskmagicv2_54_3(mmagicv254_12 func(req []*SendEmailRequestV2) ([]*SendEmailResponseV2, error)) func() func(req []*SendEmailRequestV2) ([]*SendEmailResponseV2, error) {
-	return func() func(req []*SendEmailRequestV2) ([]*SendEmailResponseV2, error) { return mmagicv254_12 }
-}
-
-func _cffTaskmagicv2_55_3(mmagicv256_4 func(responses []*SendEmailResponseV2) *ResponseV2) func() func(responses []*SendEmailResponseV2) *ResponseV2 {
-	return func() func(responses []*SendEmailResponseV2) *ResponseV2 { return mmagicv256_4 }
-}
-
-func _cffTaskmagicv2_64_3(mmagicv265_4 func(req *ListUsersRequestV2) (*ListUsersResponseV2, error), mmagicv266_4 cff.TaskOption, mmagicv269_4 cff.TaskOption, mmagicv270_4 cff.TaskOption) func() (func(req *ListUsersRequestV2) (*ListUsersResponseV2, error), cff.TaskOption, cff.TaskOption, cff.TaskOption) {
-	return func() (func(req *ListUsersRequestV2) (*ListUsersResponseV2, error), cff.TaskOption, cff.TaskOption, cff.TaskOption) {
-		return mmagicv265_4, mmagicv266_4, mmagicv269_4, mmagicv270_4
+func _cffTaskmagicv2_57_3(mmagicv258_4 func(req *ListUsersRequestV2) (*ListUsersResponseV2, error), mmagicv259_4 cff.TaskOption, mmagicv262_4 cff.TaskOption) func() (func(req *ListUsersRequestV2) (*ListUsersResponseV2, error), cff.TaskOption, cff.TaskOption) {
+	return func() (func(req *ListUsersRequestV2) (*ListUsersResponseV2, error), cff.TaskOption, cff.TaskOption) {
+		return mmagicv258_4, mmagicv259_4, mmagicv262_4
 	}
 }
 
-func _cffTaskmagicv2_72_3(mmagicv273_4 func(mgr *GetManagerResponseV2, users *ListUsersResponseV2) []*SendEmailRequestV2, mmagicv280_4 cff.TaskOption, mmagicv283_4 cff.TaskOption) func() (func(mgr *GetManagerResponseV2, users *ListUsersResponseV2) []*SendEmailRequestV2, cff.TaskOption, cff.TaskOption) {
-	return func() (func(mgr *GetManagerResponseV2, users *ListUsersResponseV2) []*SendEmailRequestV2, cff.TaskOption, cff.TaskOption) {
-		return mmagicv273_4, mmagicv280_4, mmagicv283_4
+func _cffTaskmagicv2_64_3(mmagicv265_4 func(mgr *GetManagerResponseV2, users *ListUsersResponseV2) []*SendEmailRequestV2, mmagicv272_4 cff.TaskOption) func() (func(mgr *GetManagerResponseV2, users *ListUsersResponseV2) []*SendEmailRequestV2, cff.TaskOption) {
+	return func() (func(mgr *GetManagerResponseV2, users *ListUsersResponseV2) []*SendEmailRequestV2, cff.TaskOption) {
+		return mmagicv265_4, mmagicv272_4
 	}
 }
