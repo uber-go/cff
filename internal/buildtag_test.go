@@ -3,12 +3,126 @@ package internal
 import (
 	"bytes"
 	"errors"
+	"go/build/constraint"
+	"go/parser"
+	"go/token"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestHasCFFTag(t *testing.T) {
+	tests := []struct {
+		desc string
+		give string
+		want bool
+	}{
+		{
+			desc: "non cff tag",
+			give: "// +build foo",
+		},
+		{
+			desc: "non cff constraint",
+			give: "//go:build foo",
+		},
+		{
+			desc: "cff tag",
+			give: "// +build cff",
+			want: true,
+		},
+		{
+			desc: "cff constraint",
+			give: "//go:build cff",
+			want: true,
+		},
+		{
+			desc: "conditional cff constraint",
+			give: "//go:build foo && cff",
+			want: true,
+		},
+		{
+			desc: "inverted cff",
+			give: "//go:build (foo && !cff)",
+			want: true,
+		},
+		{
+			desc: "nested cff",
+			give: "//go:build foo && (!bar || !(baz && cff))",
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			exp, err := constraint.Parse(tt.give)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.want, hasCFFTag(exp))
+		})
+	}
+}
+
+func TestFileHasCFFTag(t *testing.T) {
+	tests := []struct {
+		desc string
+		give []string
+		want bool
+	}{
+		{
+			desc: "nothing",
+			give: []string{
+				"package foo",
+			},
+		},
+		{
+			desc: "non cff tags",
+			give: []string{
+				"// +build foo",
+				"",
+				"package foo",
+			},
+		},
+		{
+			desc: "non cff constraint",
+			give: []string{
+				"//go:build foo && bar",
+				"",
+				"package foo",
+			},
+		},
+		{
+			desc: "cff tag",
+			give: []string{
+				"// +build cff",
+				"",
+				"package foo",
+			},
+			want: true,
+		},
+		{
+			desc: "cff constraint",
+			give: []string{
+				"//go:build cff",
+				"",
+				"package foo",
+			},
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			contents := strings.Join(tt.give, "\n")
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, "foo.go", contents, parser.ParseComments)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, fileHasCFFTag(f))
+		})
+	}
+}
 
 func TestWriteInvertedCFFTag(t *testing.T) {
 	tests := []struct {

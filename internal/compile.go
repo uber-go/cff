@@ -34,6 +34,7 @@ type compiler struct {
 	taskSerial int
 	errors     []error
 
+	requireBuildTag    bool
 	instrumentAllTasks bool
 }
 
@@ -42,6 +43,7 @@ type compilerOpts struct {
 	Info               *types.Info
 	Package            *types.Package
 	InstrumentAllTasks bool
+	RequireBuildTag    bool
 }
 
 func newCompiler(opts compilerOpts) *compiler {
@@ -50,6 +52,7 @@ func newCompiler(opts compilerOpts) *compiler {
 		info:               opts.Info,
 		pkg:                opts.Package,
 		instrumentAllTasks: opts.InstrumentAllTasks,
+		requireBuildTag:    opts.RequireBuildTag,
 	}
 }
 
@@ -122,6 +125,7 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *pkg.Package) *file {
 			file.Imports[importPath] = append(file.Imports[importPath], importName)
 			file.UnnamedImports[importPath] = struct{}{}
 			return false
+
 		case *ast.CallExpr:
 			// We're looking for a call in the form "cff.Flow" or
 			// "cff.Parallel". It will be a SelectorExpr where the "X" is a
@@ -148,6 +152,7 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *pkg.Package) *file {
 
 			switch {
 			case fn.Name() == "Flow":
+
 				flow := c.compileFlow(astFile, n)
 				if flow != nil && len(flow.modifiers) > 0 {
 					// The modifier for cff.Flow is a root modifier that
@@ -196,6 +201,17 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *pkg.Package) *file {
 			return true // keep looking
 		}
 	})
+
+	if c.requireBuildTag && !fileHasCFFTag(astFile) {
+		msgfmt := "files that use %v must be tagged with the 'cff' constraint: " +
+			"fix by adding '//go:build cff' to the top of this file"
+		for _, f := range file.Flows {
+			c.errf(c.nodePosition(f.Node), msgfmt, "cff.Flow")
+		}
+		for _, p := range file.Parallels {
+			c.errf(c.nodePosition(p.Node), msgfmt, "cff.Parallel")
+		}
+	}
 
 	return &file
 }
