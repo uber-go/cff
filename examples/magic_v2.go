@@ -126,9 +126,6 @@ func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *RequestV2) (*Response
 				return nil
 			},
 			[]string{"more", "messages", "sent"},
-			cff.SliceEnd(func(context.Context) error {
-				return nil
-			}),
 		),
 		cff.Map(
 			func(ctx context.Context, key string, value string) error {
@@ -144,9 +141,6 @@ func (h *fooHandlerV2) HandleFoo(ctx context.Context, req *RequestV2) (*Response
 				return nil
 			},
 			map[string]int{"a": 1, "b": 2, "c": 3},
-			cff.MapEnd(func(context.Context) {
-				_ = fmt.Sprint("}")
-			}),
 		),
 	)
 	return res, err

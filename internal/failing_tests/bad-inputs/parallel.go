@@ -357,6 +357,50 @@ func ParallelSliceEndWithInvalidReturn() {
 	)
 }
 
+// ParallelSliceEndWithContinueOnErrorAndInstrument is a cff.Slice function
+// that uses SliceEnd, ContinueOnError, and Instrument.
+//
+// This tests for a regression where SliceEnd-ContinueOnError incompatibility
+// was not verified if Instrument was used.
+func ParallelSliceEndWithContinueOnErrorAndInstrument() {
+	cff.Parallel(context.Background(),
+		cff.WithEmitter(cff.NopEmitter()),
+		cff.InstrumentParallel("myparallel"),
+		cff.ContinueOnError(true),
+		cff.Slice(
+			func(int, string) {
+				// stuff
+			},
+			[]string{"foo", "bar"},
+			cff.SliceEnd(func() error {
+				return nil
+			}),
+		),
+	)
+}
+
+// ParallelSliceEndWithContinueOnErrorAndInstrument is a cff.Slice function
+// that uses SliceEnd, ContinueOnError, and Instrument.
+//
+// This tests for a regression where SliceEnd-ContinueOnError incompatibility
+// was not verified if Instrument was used.
+func ParallelMapEndWithContinueOnErrorAndInstrument() {
+	cff.Parallel(context.Background(),
+		cff.WithEmitter(cff.NopEmitter()),
+		cff.InstrumentParallel("myparallel"),
+		cff.ContinueOnError(true),
+		cff.Map(
+			func(string, string) {
+				// stuff
+			},
+			map[string]string{"foo": "bar"},
+			cff.MapEnd(func() error {
+				return nil
+			}),
+		),
+	)
+}
+
 // ParallelSliceWithTwoSliceEnds is a cff.Slice function that has more than
 // one cff.SliceEnd.
 func ParallelSliceWithTwoSliceEnds() {
