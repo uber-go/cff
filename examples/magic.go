@@ -8,9 +8,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/uber-go/tally"
 	"go.uber.org/cff"
-	"go.uber.org/zap"
 )
 
 // Request TODO
@@ -24,11 +22,9 @@ type Response struct {
 }
 
 type fooHandler struct {
-	mgr    *ManagerRepository
-	users  *UserRepository
-	ses    *SESClient
-	scope  tally.Scope
-	logger *zap.Logger
+	mgr   *ManagerRepository
+	users *UserRepository
+	ses   *SESClient
 }
 
 func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
@@ -37,9 +33,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		cff.Params(req),
 		cff.Results(&res),
 		cff.Concurrency(8),
-		cff.WithEmitter(cff.TallyEmitter(h.scope)),
-		cff.WithEmitter(cff.LogEmitter(h.logger)),
-		cff.InstrumentFlow("HandleFoo"),
 
 		cff.Task(
 			func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
@@ -67,7 +60,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				return req.LDAPGroup != "everyone"
 			}),
 			cff.FallbackWith(&ListUsersResponse{}),
-			cff.Instrument("FormSendEmailRequest"),
 		),
 		cff.Task(
 			func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest {
@@ -80,16 +72,12 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			cff.Predicate(func(req *GetManagerRequest) bool {
 				return req.LDAPGroup != "everyone"
 			}),
-			cff.Instrument("FormSendEmailRequest"),
 		),
 	)
 
 	err = cff.Parallel(
 		ctx,
 		cff.Concurrency(2),
-		cff.WithEmitter(cff.TallyEmitter(h.scope)),
-		cff.WithEmitter(cff.LogEmitter(h.logger)),
-		cff.InstrumentParallel("SendParallel"),
 		cff.ContinueOnError(true),
 		cff.Tasks(
 			func(_ context.Context) error {
@@ -101,7 +89,6 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			func() error {
 				return SendMessage()
 			},
-			cff.Instrument("SendMsg"),
 		),
 		cff.Slice(
 			func(ctx context.Context, idx int, s string) error {

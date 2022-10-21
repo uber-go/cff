@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"embed"
 	"fmt"
 	"go/token"
 	"path/filepath"
@@ -19,9 +18,6 @@ const (
 	aquaregiaTestDir = "failing_tests"
 	internalTests    = "go.uber.org/cff/internal"
 )
-
-//go:embed package_fixtures/*
-var pkgFixtures embed.FS
 
 type errorCase struct {
 	// File is the file where errors matching this case are found.
@@ -512,50 +508,12 @@ func loadAquaregiaPackages(p *loadParams) ([]*packages.Package, error) {
 		Name:  "go.uber.org/cff",
 		Files: packagestest.MustCopyFileTree("./.."),
 	}
-	tallyContent, err := pkgFixtures.ReadFile("package_fixtures/tally.fixture")
-	require.NoError(p.t, err)
-
-	tallyModule := packagestest.Module{
-		Name: "github.com/uber-go/tally",
-		Files: map[string]interface{}{
-			// This needs to be a valid Go file.
-			"tally.go": string(tallyContent),
-		},
-		Overlay: nil,
-	}
-
-	zapContent, err := pkgFixtures.ReadFile("package_fixtures/zap.fixture")
-	require.NoError(p.t, err)
-
-	zapModule := packagestest.Module{
-		Name: "go.uber.org/zap",
-		Files: map[string]interface{}{
-			// This needs to be a valid Go file.
-			"zap.go": string(zapContent),
-		},
-		Overlay: nil,
-	}
-
-	observerContent, err := pkgFixtures.ReadFile("package_fixtures/observer.fixture")
-	require.NoError(p.t, err)
-
-	zapTestObserverModule := packagestest.Module{
-		Name: "go.uber.org/zap/zaptest/observer",
-		Files: map[string]interface{}{
-			// This needs to be a valid Go file.
-			"observer.go": string(observerContent),
-		},
-		Overlay: nil,
-	}
 
 	exp := packagestest.Export(
 		p.t,
 		packagestest.Modules,
 		[]packagestest.Module{
 			cffModule,
-			tallyModule,
-			zapModule,
-			zapTestObserverModule,
 		},
 	)
 

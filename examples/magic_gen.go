@@ -10,9 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/uber-go/tally"
 	"go.uber.org/cff"
-	"go.uber.org/zap"
 )
 
 // Request TODO
@@ -26,88 +24,75 @@ type Response struct {
 }
 
 type fooHandler struct {
-	mgr    *ManagerRepository
-	users  *UserRepository
-	ses    *SESClient
-	scope  tally.Scope
-	logger *zap.Logger
+	mgr   *ManagerRepository
+	users *UserRepository
+	ses   *SESClient
 }
 
 func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
 	var res *Response
 	err := func() (err error) {
-		/*line magic.go:36:18*/
-		_36_18 := ctx
-		/*line magic.go:37:14*/
-		_37_14 := req
-		/*line magic.go:38:15*/
-		_38_15 := &res
-		/*line magic.go:39:19*/
-		_39_19 := 8
-		/*line magic.go:40:19*/
-		_40_19 := cff.TallyEmitter(h.scope)
-		/*line magic.go:41:19*/
-		_41_19 := cff.LogEmitter(h.logger)
-		/*line magic.go:42:22*/
-		_42_22 := "HandleFoo"
-		/*line magic.go:45:4*/
-		_45_4 := func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
+		/*line magic.go:32:18*/
+		_32_18 := ctx
+		/*line magic.go:33:14*/
+		_33_14 := req
+		/*line magic.go:34:15*/
+		_34_15 := &res
+		/*line magic.go:35:19*/
+		_35_19 := 8
+		/*line magic.go:38:4*/
+		_38_4 := func(req *Request) (*GetManagerRequest, *ListUsersRequest) {
 			return &GetManagerRequest{
 					LDAPGroup: req.LDAPGroup,
 				}, &ListUsersRequest{
 					LDAPGroup: req.LDAPGroup,
 				}
 		}
-		/*line magic.go:53:4*/
-		_53_4 := h.mgr.Get
-		/*line magic.go:54:12*/
-		_54_12 := h.ses.BatchSendEmail
-		/*line magic.go:56:4*/
-		_56_4 := func(responses []*SendEmailResponse) *Response {
+		/*line magic.go:46:4*/
+		_46_4 := h.mgr.Get
+		/*line magic.go:47:12*/
+		_47_12 := h.ses.BatchSendEmail
+		/*line magic.go:49:4*/
+		_49_4 := func(responses []*SendEmailResponse) *Response {
 			var r Response
 			for _, res := range responses {
 				r.MessageIDs = append(r.MessageIDs, res.MessageID)
 			}
 			return &r
 		}
-		/*line magic.go:65:4*/
-		_65_4 := h.users.List
-		/*line magic.go:66:18*/
-		_66_18 := func(req *GetManagerRequest) bool {
+		/*line magic.go:58:4*/
+		_58_4 := h.users.List
+		/*line magic.go:59:18*/
+		_59_18 := func(req *GetManagerRequest) bool {
 			return req.LDAPGroup != "everyone"
 		}
-		/*line magic.go:69:21*/
-		_69_21 := &ListUsersResponse{}
-		/*line magic.go:70:19*/
-		_70_19 := "FormSendEmailRequest"
-		/*line magic.go:73:4*/
-		_73_4 := func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest {
+		/*line magic.go:62:21*/
+		_62_21 := &ListUsersResponse{}
+		/*line magic.go:65:4*/
+		_65_4 := func(mgr *GetManagerResponse, users *ListUsersResponse) []*SendEmailRequest {
 			var reqs []*SendEmailRequest
 			for _, u := range users.Emails {
 				reqs = append(reqs, &SendEmailRequest{Address: u})
 			}
 			return reqs
 		}
-		/*line magic.go:80:18*/
-		_80_18 := func(req *GetManagerRequest) bool {
+		/*line magic.go:72:18*/
+		_72_18 := func(req *GetManagerRequest) bool {
 			return req.LDAPGroup != "everyone"
 		}
-		/*line magic.go:83:19*/
-		_83_19 := "FormSendEmailRequest"
 
-		/*line magic_gen.go:99*/
-		ctx := _36_18
-		var v1 *Request = _37_14
-		emitter := cff.EmitterStack(_40_19, _41_19)
+		/*line magic_gen.go:85*/
+		ctx := _32_18
+		var v1 *Request = _33_14
+		emitter := cff.NopEmitter()
 
 		var (
 			flowInfo = &cff.FlowInfo{
-				Name:   _42_22,
 				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   36,
+				Line:   32,
 				Column: 9,
 			}
-			flowEmitter = emitter.FlowInit(flowInfo)
+			flowEmitter = cff.NopFlowEmitter()
 
 			schedInfo = &cff.SchedulerInfo{
 				Name:      flowInfo.Name,
@@ -128,7 +113,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		sched := cff.BeginFlow(
 			cff.SchedulerParams{
-				Concurrency: _39_19, Emitter: schedEmitter,
+				Concurrency: _35_19, Emitter: schedEmitter,
 			},
 		)
 
@@ -146,7 +131,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 		}()
 
-		// go.uber.org/cff/examples/magic.go:45:4
+		// go.uber.org/cff/examples/magic.go:38:4
 		var (
 			v2 *GetManagerRequest
 			v3 *ListUsersRequest
@@ -177,7 +162,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task0.ran.Store(true)
 
-			v2, v3 = _45_4(v1)
+			v2, v3 = _38_4(v1)
 
 			taskEmitter.TaskSuccess(ctx)
 
@@ -189,7 +174,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task0)
 
-		// go.uber.org/cff/examples/magic.go:53:4
+		// go.uber.org/cff/examples/magic.go:46:4
 		var (
 			v4 *GetManagerResponse
 		)
@@ -219,7 +204,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task1.ran.Store(true)
 
-			v4, err = _53_4(v2)
+			v4, err = _46_4(v2)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -239,7 +224,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task1)
 
-		// go.uber.org/cff/examples/magic.go:66:4
+		// go.uber.org/cff/examples/magic.go:59:4
 		var p0 bool
 		var p0PanicRecover interface{}
 		pred1 := new(struct {
@@ -253,7 +238,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 					p0PanicRecover = recovered
 				}
 			}()
-			p0 = _66_18(v2)
+			p0 = _59_18(v2)
 			return nil
 		}
 
@@ -264,7 +249,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			},
 		})
 
-		// go.uber.org/cff/examples/magic.go:65:4
+		// go.uber.org/cff/examples/magic.go:58:4
 		var (
 			v5 *ListUsersResponse
 		)
@@ -274,21 +259,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			run     func(context.Context) error
 			job     *cff.ScheduledJob
 		})
-		task4.emitter = emitter.TaskInit(
-			&cff.TaskInfo{
-				Name:   _70_19,
-				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   65,
-				Column: 4,
-			},
-			&cff.DirectiveInfo{
-				Name:      flowInfo.Name,
-				Directive: cff.FlowDirective,
-				File:      flowInfo.File,
-				Line:      flowInfo.Line,
-				Column:    flowInfo.Column,
-			},
-		)
+		task4.emitter = cff.NopTaskEmitter()
 		task4.run = func(ctx context.Context) (err error) {
 			taskEmitter := task4.emitter
 			startTime := time.Now()
@@ -305,7 +276,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 				if recovered != nil {
 					taskEmitter.TaskPanicRecovered(ctx, recovered)
-					v5, err = _69_21, nil
+					v5, err = _62_21, nil
 				}
 			}()
 
@@ -315,11 +286,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task4.ran.Store(true)
 
-			v5, err = _65_4(v3)
+			v5, err = _58_4(v3)
 
 			if err != nil {
 				taskEmitter.TaskErrorRecovered(ctx, err)
-				v5, err = _69_21, nil
+				v5, err = _62_21, nil
 			} else {
 				taskEmitter.TaskSuccess(ctx)
 			}
@@ -336,7 +307,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task4)
 
-		// go.uber.org/cff/examples/magic.go:80:4
+		// go.uber.org/cff/examples/magic.go:72:4
 		var p1 bool
 		var p1PanicRecover interface{}
 		pred2 := new(struct {
@@ -350,7 +321,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 					p1PanicRecover = recovered
 				}
 			}()
-			p1 = _80_18(v2)
+			p1 = _72_18(v2)
 			return nil
 		}
 
@@ -361,7 +332,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			},
 		})
 
-		// go.uber.org/cff/examples/magic.go:73:4
+		// go.uber.org/cff/examples/magic.go:65:4
 		var (
 			v6 []*SendEmailRequest
 		)
@@ -371,21 +342,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			run     func(context.Context) error
 			job     *cff.ScheduledJob
 		})
-		task5.emitter = emitter.TaskInit(
-			&cff.TaskInfo{
-				Name:   _83_19,
-				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   73,
-				Column: 4,
-			},
-			&cff.DirectiveInfo{
-				Name:      flowInfo.Name,
-				Directive: cff.FlowDirective,
-				File:      flowInfo.File,
-				Line:      flowInfo.Line,
-				Column:    flowInfo.Column,
-			},
-		)
+		task5.emitter = cff.NopTaskEmitter()
 		task5.run = func(ctx context.Context) (err error) {
 			taskEmitter := task5.emitter
 			startTime := time.Now()
@@ -412,7 +369,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task5.ran.Store(true)
 
-			v6 = _73_4(v4, v5)
+			v6 = _65_4(v4, v5)
 
 			taskEmitter.TaskSuccess(ctx)
 
@@ -429,7 +386,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task5)
 
-		// go.uber.org/cff/examples/magic.go:54:12
+		// go.uber.org/cff/examples/magic.go:47:12
 		var (
 			v7 []*SendEmailResponse
 		)
@@ -459,7 +416,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task2.ran.Store(true)
 
-			v7, err = _54_12(v6)
+			v7, err = _47_12(v6)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -479,7 +436,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task2)
 
-		// go.uber.org/cff/examples/magic.go:56:4
+		// go.uber.org/cff/examples/magic.go:49:4
 		var (
 			v8 *Response
 		)
@@ -509,7 +466,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task3.ran.Store(true)
 
-			v8 = _56_4(v7)
+			v8 = _49_4(v7)
 
 			taskEmitter.TaskSuccess(ctx)
 
@@ -529,86 +486,77 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return err
 		}
 
-		*(_38_15) = v8 // *go.uber.org/cff/examples.Response
+		*(_34_15) = v8 // *go.uber.org/cff/examples.Response
 
 		flowEmitter.FlowSuccess(ctx)
-		return nil /*line magic.go:84*/
+		return nil /*line magic.go:75*/
 	}()
 
 	err = func() (err error) {
-		/*line magic.go:88:3*/
-		_88_3 := ctx
-		/*line magic.go:89:19*/
-		_89_19 := 2
-		/*line magic.go:90:19*/
-		_90_19 := cff.TallyEmitter(h.scope)
-		/*line magic.go:91:19*/
-		_91_19 := cff.LogEmitter(h.logger)
-		/*line magic.go:92:26*/
-		_92_26 := "SendParallel"
-		/*line magic.go:93:23*/
-		_93_23 := true
-		/*line magic.go:95:4*/
-		_95_4 := func(_ context.Context) error {
+		/*line magic.go:79:3*/
+		_79_3 := ctx
+		/*line magic.go:80:19*/
+		_80_19 := 2
+		/*line magic.go:81:23*/
+		_81_23 := true
+		/*line magic.go:83:4*/
+		_83_4 := func(_ context.Context) error {
 			return SendMessage()
 		}
-		/*line magic.go:98:4*/
-		_98_4 := SendMessage
-		/*line magic.go:101:4*/
-		_101_4 := func() error {
+		/*line magic.go:86:4*/
+		_86_4 := SendMessage
+		/*line magic.go:89:4*/
+		_89_4 := func() error {
 			return SendMessage()
 		}
-		/*line magic.go:104:19*/
-		_104_19 := "SendMsg"
-		/*line magic.go:107:4*/
-		_107_4 := func(ctx context.Context, idx int, s string) error {
+		/*line magic.go:94:4*/
+		_94_4 := func(ctx context.Context, idx int, s string) error {
 			_ = fmt.Sprintf("%d and %q", idx, s)
 			_, _ = ctx.Deadline()
 			return nil
 		}
-		/*line magic.go:112:4*/
-		_112_4 := []string{"message", "to", "send"}
-		/*line magic.go:115:4*/
-		_115_4 := func(ctx context.Context, s string) error {
+		/*line magic.go:99:4*/
+		_99_4 := []string{"message", "to", "send"}
+		/*line magic.go:102:4*/
+		_102_4 := func(ctx context.Context, s string) error {
 			_ = fmt.Sprintf("%q", s)
 			_, _ = ctx.Deadline()
 			return nil
 		}
-		/*line magic.go:120:4*/
-		_120_4 := []string{"message", "to", "send"}
-		/*line magic.go:123:4*/
-		_123_4 := func(ctx context.Context, idx int, s string) error {
+		/*line magic.go:107:4*/
+		_107_4 := []string{"message", "to", "send"}
+		/*line magic.go:110:4*/
+		_110_4 := func(ctx context.Context, idx int, s string) error {
 			_ = fmt.Sprintf("%d and %q", idx, s)
 			ctx.Deadline()
 			return nil
 		}
-		/*line magic.go:128:4*/
-		_128_4 := []string{"more", "messages", "sent"}
-		/*line magic.go:131:4*/
-		_131_4 := func(ctx context.Context, key string, value string) error {
+		/*line magic.go:115:4*/
+		_115_4 := []string{"more", "messages", "sent"}
+		/*line magic.go:118:4*/
+		_118_4 := func(ctx context.Context, key string, value string) error {
 			_ = fmt.Sprintf("%q : %q", key, value)
 			_, _ = ctx.Deadline()
 			return nil
 		}
-		/*line magic.go:136:4*/
-		_136_4 := map[string]string{"key": "value"}
-		/*line magic.go:139:4*/
-		_139_4 := func(ctx context.Context, key string, value int) error {
+		/*line magic.go:123:4*/
+		_123_4 := map[string]string{"key": "value"}
+		/*line magic.go:126:4*/
+		_126_4 := func(ctx context.Context, key string, value int) error {
 			_ = fmt.Sprintf("%q: %v", key, value)
 			return nil
 		}
-		/*line magic.go:143:4*/
-		_143_4 := map[string]int{"a": 1, "b": 2, "c": 3}
+		/*line magic.go:130:4*/
+		_130_4 := map[string]int{"a": 1, "b": 2, "c": 3}
 
-		/*line magic_gen.go:604*/
-		ctx := _88_3
-		emitter := cff.EmitterStack(_90_19, _91_19)
+		/*line magic_gen.go:553*/
+		ctx := _79_3
+		emitter := cff.NopEmitter()
 
 		var (
 			parallelInfo = &cff.ParallelInfo{
-				Name:   _92_26,
 				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   87,
+				Line:   78,
 				Column: 8,
 			}
 			directiveInfo = &cff.DirectiveInfo{
@@ -618,7 +566,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				Line:      parallelInfo.Line,
 				Column:    parallelInfo.Column,
 			}
-			parallelEmitter = emitter.ParallelInit(parallelInfo)
+			parallelEmitter = cff.NopParallelEmitter()
 
 			schedInfo = &cff.SchedulerInfo{
 				Name:      parallelInfo.Name,
@@ -640,8 +588,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		sched := cff.BeginFlow(
 			cff.SchedulerParams{
-				Concurrency: _89_19, Emitter: schedEmitter,
-				ContinueOnError: _93_23,
+				Concurrency: _80_19, Emitter: schedEmitter,
+				ContinueOnError: _81_23,
 			},
 		)
 
@@ -658,7 +606,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}
 		}()
 
-		// go.uber.org/cff/examples/magic.go:95:4
+		// go.uber.org/cff/examples/magic.go:83:4
 		task6 := new(struct {
 			emitter cff.TaskEmitter
 			fn      func(context.Context) error
@@ -684,7 +632,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task6.ran.Store(true)
 
-			err = _95_4(ctx)
+			err = _83_4(ctx)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -699,7 +647,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task6)
 
-		// go.uber.org/cff/examples/magic.go:98:4
+		// go.uber.org/cff/examples/magic.go:86:4
 		task7 := new(struct {
 			emitter cff.TaskEmitter
 			fn      func(context.Context) error
@@ -725,7 +673,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task7.ran.Store(true)
 
-			err = _98_4()
+			err = _86_4()
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -740,21 +688,13 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task7)
 
-		// go.uber.org/cff/examples/magic.go:101:4
+		// go.uber.org/cff/examples/magic.go:89:4
 		task8 := new(struct {
 			emitter cff.TaskEmitter
 			fn      func(context.Context) error
 			ran     cff.AtomicBool
 		})
-		task8.emitter = emitter.TaskInit(
-			&cff.TaskInfo{
-				Name:   _104_19,
-				File:   "go.uber.org/cff/examples/magic.go",
-				Line:   101,
-				Column: 4,
-			},
-			directiveInfo,
-		)
+		task8.emitter = cff.NopTaskEmitter()
 		task8.fn = func(ctx context.Context) (err error) {
 			taskEmitter := task8.emitter
 			startTime := time.Now()
@@ -774,7 +714,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer task8.ran.Store(true)
 
-			err = _101_4()
+			err = _89_4()
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -789,8 +729,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		})
 		tasks = append(tasks, task8)
 
-		// go.uber.org/cff/examples/magic.go:106:3
-		sliceTask9Slice := _112_4
+		// go.uber.org/cff/examples/magic.go:93:3
+		sliceTask9Slice := _99_4
 		for idx, val := range sliceTask9Slice {
 			idx := idx
 			val := val
@@ -806,7 +746,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 						err = fmt.Errorf("panic: %v", recovered)
 					}
 				}()
-				err = _107_4(ctx, idx, val)
+				err = _94_4(ctx, idx, val)
 				return
 			}
 			sched.Enqueue(ctx, cff.Job{
@@ -814,8 +754,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			})
 		}
 
-		// go.uber.org/cff/examples/magic.go:114:3
-		sliceTask10Slice := _120_4
+		// go.uber.org/cff/examples/magic.go:101:3
+		sliceTask10Slice := _107_4
 		for _, val := range sliceTask10Slice {
 
 			val := val
@@ -831,7 +771,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 						err = fmt.Errorf("panic: %v", recovered)
 					}
 				}()
-				err = _115_4(ctx, val)
+				err = _102_4(ctx, val)
 				return
 			}
 			sched.Enqueue(ctx, cff.Job{
@@ -839,8 +779,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			})
 		}
 
-		// go.uber.org/cff/examples/magic.go:122:3
-		sliceTask11Slice := _128_4
+		// go.uber.org/cff/examples/magic.go:109:3
+		sliceTask11Slice := _115_4
 		for idx, val := range sliceTask11Slice {
 			idx := idx
 			val := val
@@ -856,7 +796,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 						err = fmt.Errorf("panic: %v", recovered)
 					}
 				}()
-				err = _123_4(ctx, idx, val)
+				err = _110_4(ctx, idx, val)
 				return
 			}
 			sched.Enqueue(ctx, cff.Job{
@@ -864,8 +804,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			})
 		}
 
-		// go.uber.org/cff/examples/magic.go:130:3
-		for key, val := range _136_4 {
+		// go.uber.org/cff/examples/magic.go:117:3
+		for key, val := range _123_4 {
 			key := key
 			val := val
 			mapTask12 := new(struct {
@@ -881,7 +821,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 					}
 				}()
 
-				err = _131_4(ctx, key, val)
+				err = _118_4(ctx, key, val)
 				return
 			}
 
@@ -890,8 +830,8 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			})
 		}
 
-		// go.uber.org/cff/examples/magic.go:138:3
-		for key, val := range _143_4 {
+		// go.uber.org/cff/examples/magic.go:125:3
+		for key, val := range _130_4 {
 			key := key
 			val := val
 			mapTask13 := new(struct {
@@ -907,7 +847,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 					}
 				}()
 
-				err = _139_4(ctx, key, val)
+				err = _126_4(ctx, key, val)
 				return
 			}
 
@@ -921,7 +861,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return err
 		}
 		parallelEmitter.ParallelSuccess(ctx)
-		return nil /*line magic.go:144*/
+		return nil /*line magic.go:131*/
 	}()
 	return res, err
 }

@@ -8,17 +8,11 @@ import (
 	"fmt"
 	"time"
 
-	"go.uber.org/zap"
-
-	"github.com/uber-go/tally"
 	"go.uber.org/cff"
 )
 
 // Panicker is exported to be used by tests.
-type Panicker struct {
-	Scope  tally.Scope
-	Logger *zap.Logger
-}
+type Panicker struct{}
 
 // FlowPanicsParallel runs tasks in parallel.
 func (p *Panicker) FlowPanicsParallel() error {
@@ -26,40 +20,31 @@ func (p *Panicker) FlowPanicsParallel() error {
 
 	err := func() (err error) {
 
-		_26_3 := context.Background()
+		_20_3 := context.Background()
 
-		_27_19 := cff.TallyEmitter(p.Scope)
+		_21_15 := &b
 
-		_28_19 := cff.LogEmitter(p.Logger)
-
-		_29_22 := "PanicParallel"
-
-		_30_15 := &b
-
-		_32_4 := func() string {
+		_23_4 := func() string {
 			panic("panic")
 		}
 
-		_35_19 := "T1"
-
-		_40_4 := func() int64 {
+		_30_4 := func() int64 {
 			return 0
 		}
 
-		_45_4 := func(string, int64) bool {
+		_35_4 := func(string, int64) bool {
 			return true
 		}
-		ctx := _26_3
-		emitter := cff.EmitterStack(_27_19, _28_19)
+		ctx := _20_3
+		emitter := cff.NopEmitter()
 
 		var (
 			flowInfo = &cff.FlowInfo{
-				Name:   _29_22,
 				File:   "go.uber.org/cff/internal/tests/panic/panic.go",
-				Line:   25,
+				Line:   19,
 				Column: 9,
 			}
-			flowEmitter = emitter.FlowInit(flowInfo)
+			flowEmitter = cff.NopFlowEmitter()
 
 			schedInfo = &cff.SchedulerInfo{
 				Name:      flowInfo.Name,
@@ -98,7 +83,7 @@ func (p *Panicker) FlowPanicsParallel() error {
 			}
 		}()
 
-		// go.uber.org/cff/internal/tests/panic/panic.go:32:4
+		// go.uber.org/cff/internal/tests/panic/panic.go:23:4
 		var (
 			v1 string
 		)
@@ -108,21 +93,7 @@ func (p *Panicker) FlowPanicsParallel() error {
 			run     func(context.Context) error
 			job     *cff.ScheduledJob
 		})
-		task0.emitter = emitter.TaskInit(
-			&cff.TaskInfo{
-				Name:   _35_19,
-				File:   "go.uber.org/cff/internal/tests/panic/panic.go",
-				Line:   32,
-				Column: 4,
-			},
-			&cff.DirectiveInfo{
-				Name:      flowInfo.Name,
-				Directive: cff.FlowDirective,
-				File:      flowInfo.File,
-				Line:      flowInfo.Line,
-				Column:    flowInfo.Column,
-			},
-		)
+		task0.emitter = cff.NopTaskEmitter()
 		task0.run = func(ctx context.Context) (err error) {
 			taskEmitter := task0.emitter
 			startTime := time.Now()
@@ -142,7 +113,7 @@ func (p *Panicker) FlowPanicsParallel() error {
 
 			defer task0.ran.Store(true)
 
-			v1 = _32_4()
+			v1 = _23_4()
 
 			taskEmitter.TaskSuccess(ctx)
 
@@ -154,7 +125,7 @@ func (p *Panicker) FlowPanicsParallel() error {
 		})
 		tasks = append(tasks, task0)
 
-		// go.uber.org/cff/internal/tests/panic/panic.go:40:4
+		// go.uber.org/cff/internal/tests/panic/panic.go:30:4
 		var (
 			v2 int64
 		)
@@ -184,7 +155,7 @@ func (p *Panicker) FlowPanicsParallel() error {
 
 			defer task1.ran.Store(true)
 
-			v2 = _40_4()
+			v2 = _30_4()
 
 			taskEmitter.TaskSuccess(ctx)
 
@@ -196,7 +167,7 @@ func (p *Panicker) FlowPanicsParallel() error {
 		})
 		tasks = append(tasks, task1)
 
-		// go.uber.org/cff/internal/tests/panic/panic.go:45:4
+		// go.uber.org/cff/internal/tests/panic/panic.go:35:4
 		var (
 			v3 bool
 		)
@@ -226,7 +197,7 @@ func (p *Panicker) FlowPanicsParallel() error {
 
 			defer task2.ran.Store(true)
 
-			v3 = _45_4(v1, v2)
+			v3 = _35_4(v1, v2)
 
 			taskEmitter.TaskSuccess(ctx)
 
@@ -247,7 +218,7 @@ func (p *Panicker) FlowPanicsParallel() error {
 			return err
 		}
 
-		*(_30_15) = v3 // bool
+		*(_21_15) = v3 // bool
 
 		flowEmitter.FlowSuccess(ctx)
 		return nil
@@ -262,32 +233,23 @@ func (p *Panicker) FlowPanicsSerial() error {
 
 	err := func() (err error) {
 
-		_59_3 := context.Background()
+		_49_3 := context.Background()
 
-		_60_15 := &r
+		_50_15 := &r
 
-		_61_19 := cff.TallyEmitter(p.Scope)
-
-		_62_19 := cff.LogEmitter(p.Logger)
-
-		_63_22 := "FlowPanicsSerial"
-
-		_65_4 := func() string {
+		_52_4 := func() string {
 			panic("panic")
 		}
-
-		_68_19 := "T2"
-		ctx := _59_3
-		emitter := cff.EmitterStack(_61_19, _62_19)
+		ctx := _49_3
+		emitter := cff.NopEmitter()
 
 		var (
 			flowInfo = &cff.FlowInfo{
-				Name:   _63_22,
 				File:   "go.uber.org/cff/internal/tests/panic/panic.go",
-				Line:   58,
+				Line:   48,
 				Column: 9,
 			}
-			flowEmitter = emitter.FlowInit(flowInfo)
+			flowEmitter = cff.NopFlowEmitter()
 
 			schedInfo = &cff.SchedulerInfo{
 				Name:      flowInfo.Name,
@@ -326,7 +288,7 @@ func (p *Panicker) FlowPanicsSerial() error {
 			}
 		}()
 
-		// go.uber.org/cff/internal/tests/panic/panic.go:65:4
+		// go.uber.org/cff/internal/tests/panic/panic.go:52:4
 		var (
 			v1 string
 		)
@@ -336,21 +298,7 @@ func (p *Panicker) FlowPanicsSerial() error {
 			run     func(context.Context) error
 			job     *cff.ScheduledJob
 		})
-		task3.emitter = emitter.TaskInit(
-			&cff.TaskInfo{
-				Name:   _68_19,
-				File:   "go.uber.org/cff/internal/tests/panic/panic.go",
-				Line:   65,
-				Column: 4,
-			},
-			&cff.DirectiveInfo{
-				Name:      flowInfo.Name,
-				Directive: cff.FlowDirective,
-				File:      flowInfo.File,
-				Line:      flowInfo.Line,
-				Column:    flowInfo.Column,
-			},
-		)
+		task3.emitter = cff.NopTaskEmitter()
 		task3.run = func(ctx context.Context) (err error) {
 			taskEmitter := task3.emitter
 			startTime := time.Now()
@@ -370,7 +318,7 @@ func (p *Panicker) FlowPanicsSerial() error {
 
 			defer task3.ran.Store(true)
 
-			v1 = _65_4()
+			v1 = _52_4()
 
 			taskEmitter.TaskSuccess(ctx)
 
@@ -387,7 +335,7 @@ func (p *Panicker) FlowPanicsSerial() error {
 			return err
 		}
 
-		*(_60_15) = v1 // string
+		*(_50_15) = v1 // string
 
 		flowEmitter.FlowSuccess(ctx)
 		return nil
