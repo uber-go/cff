@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"go/ast"
 	"go/build/constraint"
 	"io"
 )
@@ -32,6 +33,53 @@ func invertCFFConstraint(exp *constraint.Expr) {
 			*exp = &constraint.NotExpr{X: ex}
 		}
 	}
+}
+
+// hasCFFTag reports whether a constraint contains the 'cff' tag.
+//
+// Note that this does not evaluate whether the constraint evaluates to true,
+// only that it exists.
+// This allows it to work with partial knowledge. e.g., if someone has:
+//
+//	//go:build (cff && foo) || (cff && !bar)
+//
+// This function does not need to know whether 'foo' is enabled or whether
+// 'bar' is disabled because we don't care at this point in the program.
+// We can assume that the constraint for 'cff' evaluates to true because the
+// package loader wouldn't have picked up this file otherwise.
+func hasCFFTag(exp constraint.Expr) (found bool) {
+	exp.Eval(func(tag string) bool {
+		if tag == "cff" {
+			found = true
+			return true
+		}
+		return false
+	})
+	return found
+}
+
+// fileHasCFFTag reports whether a file has the 'cff' tag in its constraints.
+func fileHasCFFTag(f *ast.File) bool {
+	for _, group := range f.Comments {
+		// Ignore comments after the package clause
+		// because build constraints are allowed only before that.
+		if group.Pos() >= f.Package {
+			return false
+		}
+
+		for _, c := range group.List {
+			exp, err := constraint.Parse(c.Text)
+			if err != nil {
+				continue // not a constraint
+			}
+
+			if hasCFFTag(exp) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // writeInvertedCFFTag writes the provided byte slice to the io.Writer,

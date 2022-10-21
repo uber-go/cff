@@ -395,6 +395,14 @@ var codeGenerateFailCases = map[string][]errorCase{
 				"ParallelMapEndWithContinueOnErrorAndInstrument",
 			},
 		},
+		{
+			File:         "missing-tag.go",
+			ErrorMatches: `files that use cff.(Flow|Parallel) must be tagged with the 'cff' constraint`,
+			TestFuncs: []string{
+				"FlowWithoutTag",
+				"ParallelWithoutTag",
+			},
+		},
 	},
 	"cycles": {
 		{
@@ -435,7 +443,10 @@ func TestCodeGenerateFails(t *testing.T) {
 			require.NoError(t, err, "could not load packages")
 			require.NotEmpty(t, pkgs, "didn't find any packages")
 
-			processor := Processor{Fset: fset}
+			processor := Processor{
+				Fset:            fset,
+				RequireBuildTag: true,
+			}
 
 			for _, gopkg := range pkgs {
 				pkg := newPackage(gopkg)

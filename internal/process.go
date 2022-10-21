@@ -13,6 +13,7 @@ type Processor struct {
 	Fset               *token.FileSet
 	InstrumentAllTasks bool
 	GenMode            flag.Mode
+	RequireBuildTag    bool
 }
 
 // Process processes a single CFF file.
@@ -22,6 +23,7 @@ func (p *Processor) Process(pkg *pkg.Package, file *ast.File, outputPath string)
 		Info:               pkg.TypesInfo,
 		Package:            pkg.Types,
 		InstrumentAllTasks: p.InstrumentAllTasks,
+		RequireBuildTag:    p.RequireBuildTag,
 	})
 
 	f, err := c.CompileFile(file, pkg)

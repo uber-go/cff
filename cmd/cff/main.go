@@ -73,7 +73,14 @@ func main() {
 	}
 }
 
-var _loaderFactory pkg.LoaderFactory = new(pkg.GoPackagesLoaderFactory)
+var (
+	// Defines how we load package information.
+	_loaderFactory pkg.LoaderFactory = new(pkg.GoPackagesLoaderFactory)
+
+	// Whether files that use cff.Flow/cff.Parallel must have a 'cff' build
+	// constraint.
+	_requireBuildTag = true
+)
 
 func run(args []string) error {
 	defer func() {
@@ -108,6 +115,7 @@ func run(args []string) error {
 		Fset:               fset,
 		InstrumentAllTasks: f.AutoInstrument,
 		GenMode:            f.GenMode,
+		RequireBuildTag:    _requireBuildTag,
 	}
 
 	// If --file was provided, only the requested files will be processed.
