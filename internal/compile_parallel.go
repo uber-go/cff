@@ -100,6 +100,18 @@ func (c *compiler) compileParallel(file *ast.File, call *ast.CallExpr) *parallel
 	}
 	c.validateParallelInstrument(parallel)
 
+	for _, s := range parallel.SliceTasks {
+		if s.SliceEndFn != nil && parallel.ContinueOnError != nil {
+			c.errf(c.nodePosition(parallel.Node), `"cff.SliceEnd" is an invalid option when "ContinueOnError" is used`)
+		}
+	}
+
+	for _, m := range parallel.MapTasks {
+		if m.MapEndFn != nil && parallel.ContinueOnError != nil {
+			c.errf(c.nodePosition(parallel.Node), `"cff.MapEnd" is an invalid option when "ContinueOnError" is used`)
+		}
+	}
+
 	return parallel
 }
 
@@ -117,18 +129,6 @@ func (c *compiler) validateParallelInstrument(p *parallel) {
 	for _, t := range p.Tasks {
 		if t.Instrument != nil {
 			c.errf(c.nodePosition(p.Node), "cff.Instrument requires a cff.Emitter to be provided: use cff.WithEmitter")
-		}
-	}
-
-	for _, s := range p.SliceTasks {
-		if s.SliceEndFn != nil && p.ContinueOnError != nil {
-			c.errf(c.nodePosition(p.Node), `"cff.SliceEnd" is an invalid option when "ContinueOnError" is used`)
-		}
-	}
-
-	for _, m := range p.MapTasks {
-		if m.MapEndFn != nil && p.ContinueOnError != nil {
-			c.errf(c.nodePosition(p.Node), `"cff.MapEnd" is an invalid option when "ContinueOnError" is used`)
 		}
 	}
 }

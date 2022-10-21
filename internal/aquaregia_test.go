@@ -229,6 +229,7 @@ var codeGenerateFailCases = map[string][]errorCase{
 			ErrorMatches: `"cff.SliceEnd" is an invalid option when "ContinueOnError" is used`,
 			TestFuncs: []string{
 				"ParallelSliceEndWithContinueOnError",
+				"ParallelSliceEndWithContinueOnErrorAndInstrument",
 			},
 		},
 		{
@@ -393,7 +394,10 @@ var codeGenerateFailCases = map[string][]errorCase{
 		{
 			File:         "parallel.go",
 			ErrorMatches: `"cff.MapEnd" is an invalid option when "ContinueOnError" is used`,
-			TestFuncs:    []string{"ParallelMapEndWithContinueOnError"},
+			TestFuncs: []string{
+				"ParallelMapEndWithContinueOnError",
+				"ParallelMapEndWithContinueOnErrorAndInstrument",
+			},
 		},
 	},
 	"cycles": {
