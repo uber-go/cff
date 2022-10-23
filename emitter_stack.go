@@ -7,10 +7,10 @@ import (
 
 type emitterStack []Emitter
 
-// EmitterStack allows users to combine multiple Emitters together.
+// EmitterStack combines multiple emitters together into one.
 //
-// Events are sent to the emitters in an unspecified order. Emitters should
-// not assume the ordering of events.
+// Events are sent to the emitters in an unspecified order.
+// Emitters should not assume the ordering of events.
 func EmitterStack(emitters ...Emitter) Emitter {
 	switch len(emitters) {
 	case 0:
