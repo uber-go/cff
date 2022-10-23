@@ -86,3 +86,10 @@ func TestParseArgs(t *testing.T) {
 		})
 	}
 }
+
+func TestMain_ErrorNoPanic(t *testing.T) {
+	assert.NotPanics(t, func() {
+		err := run([]string{"-unknown-flag"})
+		assert.Error(t, err)
+	})
+}
