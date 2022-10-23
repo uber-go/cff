@@ -83,13 +83,6 @@ var (
 )
 
 func run(args []string) error {
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Println("You've encountered a CFFv2 bug! Please report this http://t.uber.com/cff-bug")
-			panic(err)
-		}
-	}()
-
 	loader, f, err := parseArgs(os.Stderr, args)
 	if err != nil {
 		return err
