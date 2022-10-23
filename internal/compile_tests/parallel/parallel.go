@@ -12,7 +12,7 @@ import (
 )
 
 // ExampleParallel provides a flow that deploys multiple calls to cff.Parallel
-// This flow is compiled to test the CFF compiler's internal state.
+// This flow is compiled to test the cff compiler's internal state.
 func ExampleParallel(m *sync.Map, c chan<- string) error {
 	sendFn := func() {
 		c <- "send"

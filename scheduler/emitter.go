@@ -1,11 +1,11 @@
 package scheduler
 
-// Emitter emits the state of the CFF scheduler.
+// Emitter emits the state of the cff scheduler.
 type Emitter interface {
 	Emit(State)
 }
 
-// State describes the status of jobs managed by the CFF scheduler.
+// State describes the status of jobs managed by the cff scheduler.
 type State struct {
 	// Pending is total number of jobs, including jobs being executed and
 	// waiting to be executed.

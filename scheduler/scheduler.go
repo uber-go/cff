@@ -1,4 +1,4 @@
-// Package scheduler implements a runtime scheduler for CFF with support for
+// Package scheduler implements a runtime scheduler for cff with support for
 // interdependent jobs.
 //
 // To use the scheduler, build one with New, providing the desired maximum
@@ -155,7 +155,7 @@ func worker(readyc <-chan *ScheduledJob, donec chan<- jobResult) {
 	exitCleanly = true
 }
 
-// Scheduler schedules jobs for a CFF flow based on their dependencies.
+// Scheduler schedules jobs for a cff flow based on their dependencies.
 type Scheduler struct {
 	// Closed when the Scheduler Loop exits.
 	finishedc chan struct{}

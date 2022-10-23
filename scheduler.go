@@ -5,20 +5,20 @@ import (
 	"go.uber.org/cff/scheduler"
 )
 
-// We re-export things here so that users of CFF don't have to add other
+// We re-export things here so that users of cff don't have to add other
 // packages as dependencies to their BUILD.bazel.
 
-// Job is a job prepared to be enqueued to the CFF scheduler.
+// Job is a job prepared to be enqueued to the cff scheduler.
 type Job = scheduler.Job
 
 // AtomicBool is a type-safe means of reading and writing boolean values.
 type AtomicBool = atomic.Bool
 
-// ScheduledJob is a job that has been scheduled for execution with the CFF
+// ScheduledJob is a job that has been scheduled for execution with the cff
 // scheduler.
 type ScheduledJob = scheduler.ScheduledJob
 
-// SchedulerParams configures the CFF scheduler.
+// SchedulerParams configures the cff scheduler.
 type SchedulerParams struct {
 	// Concurrency specifies the number of concurrent workers
 	// used by the scheduler to run jobs.

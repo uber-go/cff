@@ -35,16 +35,16 @@ func TestNoOutputTypes(t *testing.T) {
 	assert.Equal(t, task.invokeType, f.providers.At(task.invokeType))
 }
 
-// toCompile contains a CFF source file, compiler, and Package that the source
+// toCompile contains a cff source file, compiler, and Package that the source
 // file can be compiled with. This assortment is a convenience for invoking the
-// CFF compiler in test.
+// cff compiler in test.
 type toCompile struct {
 	file     *ast.File
 	compiler *compiler
 	pkg      *pkg.Package
 }
 
-// setupCompilers loads a collection of CFF source files and compilers for
+// setupCompilers loads a collection of cff source files and compilers for
 // the source files that can be used to invoke and test compiler behaviour.
 func setupCompilers(
 	t *testing.T,
@@ -105,7 +105,7 @@ func newPackage(p *packages.Package) *pkg.Package {
 	}
 }
 
-// TestCompileFile_Predicate tests that the internal state of the CFF compiler
+// TestCompileFile_Predicate tests that the internal state of the cff compiler
 // is correct after compiling cff.Predicates.
 func TestCompileFile_Predicate(t *testing.T) {
 	cffModule := packagestest.Module{

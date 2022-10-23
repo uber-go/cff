@@ -15,7 +15,7 @@ import (
 	nestedchild "go.uber.org/cff/internal/tests/nested_child"
 )
 
-// Parent is a CFF flow that uses a nested CFF flow.
+// Parent is a cff flow that uses a nested cff flow.
 func Parent(ctx context.Context, i int) (s string, err error) {
 	err = func() (err error) {
 
@@ -25,7 +25,7 @@ func Parent(ctx context.Context, i int) (s string, err error) {
 
 		_20_15 := &s
 
-		_22_12 := nestedchild.Itoa
+		_21_12 := nestedchild.Itoa
 		ctx := _18_17
 		var v1 int = _19_14
 		emitter := cff.NopEmitter()
@@ -75,7 +75,7 @@ func Parent(ctx context.Context, i int) (s string, err error) {
 			}
 		}()
 
-		// go.uber.org/cff/internal/tests/nested_parent/nested_parent.go:22:12
+		// go.uber.org/cff/internal/tests/nested_parent/nested_parent.go:21:12
 		var (
 			v2 string
 		)
@@ -105,7 +105,7 @@ func Parent(ctx context.Context, i int) (s string, err error) {
 
 			defer task0.ran.Store(true)
 
-			v2, err = _22_12(ctx, v1)
+			v2, err = _21_12(ctx, v1)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -132,6 +132,5 @@ func Parent(ctx context.Context, i int) (s string, err error) {
 		flowEmitter.FlowSuccess(ctx)
 		return nil
 	}()
-
 	return
 }

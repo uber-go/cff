@@ -18,7 +18,7 @@ func ExpectsFunctionCallExpression() {
 
 // ExpectedFlowArgumentsSelectorExpression is a function that calls cff.Task with the wrong arguments but trickily
 // passes the type checks.
-// TODO: note doesn't trigger due to string being present in ExpectedFlowArgumentsNotCFF. Leaving for
+// TODO: note doesn't trigger due to string being present in ExpectedFlowArgumentsNotCff. Leaving for
 // illustration purposes.
 func ExpectedFlowArgumentsSelectorExpression() {
 	cff.Flow(
@@ -43,9 +43,9 @@ func ExpectedFlowArgumentsCallExpressions() {
 	)
 }
 
-// ExpectedFlowArgumentsNotCFF is a function that calls cff.Task with the wrong arguments but trickily
+// ExpectedFlowArgumentsNotCff is a function that calls cff.Task with the wrong arguments but trickily
 // passes the type checks.
-func ExpectedFlowArgumentsNotCFF() {
+func ExpectedFlowArgumentsNotCff() {
 	badFn := struct{ ProvideBad func() cff.TaskOption }{func() cff.TaskOption { return cff.Instrument("") }}
 	cff.Flow(
 		context.Background(),
@@ -76,8 +76,8 @@ func ExpectedTasksBadCallExpr() {
 	)
 }
 
-// ExpectedTasksBadCallExprNotCFF is a function that calls cff.Task with the wrong arguments.
-func ExpectedTasksBadCallExprNotCFF() {
+// ExpectedTasksBadCallExprNotCff is a function that calls cff.Task with the wrong arguments.
+func ExpectedTasksBadCallExprNotCff() {
 	badFn := struct{ Task func() int }{func() int { return 0 }}
 	cff.Flow(
 		context.Background(),

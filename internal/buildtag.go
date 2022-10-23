@@ -9,14 +9,14 @@ import (
 	"io"
 )
 
-// invertCFFConstraint takes the address of a parsed
+// invertCffConstraint takes the address of a parsed
 // build tag (// +build) or constraint (//go:build)
 // and modifies it in-place to invert all instances of the "cff" tag.
-func invertCFFConstraint(exp *constraint.Expr) {
+func invertCffConstraint(exp *constraint.Expr) {
 	switch ex := (*exp).(type) {
 	case *constraint.AndExpr:
-		invertCFFConstraint(&ex.X)
-		invertCFFConstraint(&ex.Y)
+		invertCffConstraint(&ex.X)
+		invertCffConstraint(&ex.Y)
 	case *constraint.NotExpr:
 		// Special-case: If "X" in "!X" is "cff",
 		// just remove the "!".
@@ -24,10 +24,10 @@ func invertCFFConstraint(exp *constraint.Expr) {
 			*exp = ex.X
 			return
 		}
-		invertCFFConstraint(&ex.X)
+		invertCffConstraint(&ex.X)
 	case *constraint.OrExpr:
-		invertCFFConstraint(&ex.X)
-		invertCFFConstraint(&ex.Y)
+		invertCffConstraint(&ex.X)
+		invertCffConstraint(&ex.Y)
 	case *constraint.TagExpr:
 		if ex.Tag == "cff" {
 			*exp = &constraint.NotExpr{X: ex}
@@ -35,7 +35,7 @@ func invertCFFConstraint(exp *constraint.Expr) {
 	}
 }
 
-// hasCFFTag reports whether a constraint contains the 'cff' tag.
+// hasCffTag reports whether a constraint contains the 'cff' tag.
 //
 // Note that this does not evaluate whether the constraint evaluates to true,
 // only that it exists.
@@ -47,7 +47,7 @@ func invertCFFConstraint(exp *constraint.Expr) {
 // 'bar' is disabled because we don't care at this point in the program.
 // We can assume that the constraint for 'cff' evaluates to true because the
 // package loader wouldn't have picked up this file otherwise.
-func hasCFFTag(exp constraint.Expr) (found bool) {
+func hasCffTag(exp constraint.Expr) (found bool) {
 	exp.Eval(func(tag string) bool {
 		if tag == "cff" {
 			found = true
@@ -58,8 +58,8 @@ func hasCFFTag(exp constraint.Expr) (found bool) {
 	return found
 }
 
-// fileHasCFFTag reports whether a file has the 'cff' tag in its constraints.
-func fileHasCFFTag(f *ast.File) bool {
+// fileHasCffTag reports whether a file has the 'cff' tag in its constraints.
+func fileHasCffTag(f *ast.File) bool {
 	for _, group := range f.Comments {
 		// Ignore comments after the package clause
 		// because build constraints are allowed only before that.
@@ -73,7 +73,7 @@ func fileHasCFFTag(f *ast.File) bool {
 				continue // not a constraint
 			}
 
-			if hasCFFTag(exp) {
+			if hasCffTag(exp) {
 				return true
 			}
 		}
@@ -82,10 +82,10 @@ func fileHasCFFTag(f *ast.File) bool {
 	return false
 }
 
-// writeInvertedCFFTag writes the provided byte slice to the io.Writer,
+// writeInvertedCffTag writes the provided byte slice to the io.Writer,
 // accounting for any "cff" build constraints in the byte slice
 // by inverting them.
-func writeInvertedCFFTag(w io.Writer, bs []byte) error {
+func writeInvertedCffTag(w io.Writer, bs []byte) error {
 	// This reduces the unnecessary if err != nil statements below.
 	errw := stickyErrWriter{W: w}
 	w = &errw
@@ -108,7 +108,7 @@ func writeInvertedCFFTag(w io.Writer, bs []byte) error {
 			fmt.Fprintln(w, line)
 			continue
 		}
-		invertCFFConstraint(&expr)
+		invertCffConstraint(&expr)
 
 		if isGoBuild {
 			fmt.Fprintf(w, "//go:build %v\n", expr.String())

@@ -30,8 +30,8 @@ func FlowArgumentCallExpression() {
 	)
 }
 
-// FlowArgumentNonCFF is a function that has the wrong arguments to cff.Flow.
-func FlowArgumentNonCFF() {
+// FlowArgumentNonCff is a function that has the wrong arguments to cff.Flow.
+func FlowArgumentNonCff() {
 	badProvider := struct{ ProvidesBad func() cff.Option }{ProvidesBad: func() cff.Option { return cff.Params() }}
 	cff.Flow(context.Background(),
 		badProvider.ProvidesBad(),

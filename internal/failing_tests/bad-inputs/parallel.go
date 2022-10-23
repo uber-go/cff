@@ -61,7 +61,7 @@ func ParallelInvalidReturnMultiple() {
 }
 
 // ParallelInvalidFuncVar is a Parallel task with a function reference that
-// does not comply with CFF's Tasks function validation.
+// does not comply with cff's Tasks function validation.
 func ParallelInvalidFuncVar() {
 	cff.Parallel(
 		context.Background(),

@@ -10,7 +10,7 @@ import (
 )
 
 // ExampleFlowWithPredicates provides a flow that deploys multiple
-// cff.Predicates. This flow is compiled to test the CFF compiler's
+// cff.Predicates. This flow is compiled to test the cff compiler's
 // internal state.
 func ExampleFlowWithPredicates(f func(), pred bool) error {
 	var s string

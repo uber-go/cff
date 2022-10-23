@@ -6,19 +6,19 @@ import (
 	"fmt"
 )
 
-// Mode specifies the code generation mode for CFF.
+// Mode specifies the code generation mode for cff.
 type Mode uint8
 
 const (
-	// BaseMode generates CFF code without modification.
+	// BaseMode generates cff code without modification.
 	BaseMode Mode = iota + 1
 
-	// SourceMapMode generates CFF code with line directives to remap
+	// SourceMapMode generates cff code with line directives to remap
 	// generated code locations to source.
 	SourceMapMode
 
-	// ModifierMode generates CFF code that preserves all original file line
-	// locations by generating CFF logic into separate modifier
+	// ModifierMode generates cff code that preserves all original file line
+	// locations by generating cff logic into separate modifier
 	// functions.
 	ModifierMode
 )

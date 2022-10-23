@@ -170,7 +170,7 @@ func (es emitterStack) SchedulerInit(info *SchedulerInfo) SchedulerEmitter {
 
 type schedulerEmitterStack []SchedulerEmitter
 
-// EmitScheduler emits the state of the CFF scheduler.
+// EmitScheduler emits the state of the cff scheduler.
 func (ses schedulerEmitterStack) EmitScheduler(s SchedulerState) {
 	for _, e := range ses {
 		e.EmitScheduler(s)

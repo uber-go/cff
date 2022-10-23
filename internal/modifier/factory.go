@@ -36,19 +36,19 @@ var _ Modifier = (*funcModifier)(nil)
 
 // Params are the inputs to generating a modifier function.
 type Params struct {
-	// Name prefix that will replace the modified CFF directive in generated
+	// Name prefix that will replace the modified cff directive in generated
 	// code.
 	Name string
 	// Modified is the ast.Expr that is replaced by the modifier.
 	Modified ast.Expr
-	// Provided are arguments of modified CFF directive. These values are the
+	// Provided are arguments of modified cff directive. These values are the
 	// same as the values returned by the replacement modifier function.
 	Provided []ast.Expr
 	Fset     *token.FileSet
 	Info     *types.Info
 }
 
-// NewModifier creates a basic modifier from the arguments of a CFF directive.
+// NewModifier creates a basic modifier from the arguments of a cff directive.
 func NewModifier(p Params) Modifier {
 	return &funcModifier{
 		name:     p.Name,

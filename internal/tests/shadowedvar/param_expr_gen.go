@@ -142,7 +142,7 @@ func ParamOrder(track *orderCheck) error {
 }
 
 // NilParam verifies that cff.Flow is compilable with a user provided nil.
-// CFF should compile and generate this flow even if no test function
+// cff should compile and generate this flow even if no test function
 // uses it.
 func NilParam() {
 	var res []int

@@ -40,7 +40,7 @@ func parseArgs(stderr io.Writer, args []string) (pkg.Loader, *params, error) {
 		"When cff processes a file, it generates sibling files with a _gen suffix next to the original files.\n"+
 		"Use the form -file=PATH=OUTPUT to specify a different path for the output file.")
 
-	fset.Var(&opts.GenMode, "genmode", "Use the specified CFF code generation mode.\n"+
+	fset.Var(&opts.GenMode, "genmode", "Use the specified cff code generation mode.\n"+
 		"Valid values are: base, modifier, source-map. Defaults to base.")
 
 	fset.BoolVar(&opts.AutoInstrument, "auto-instrument", false,

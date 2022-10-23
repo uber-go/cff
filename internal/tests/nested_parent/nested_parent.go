@@ -13,14 +13,12 @@ import (
 	nestedchild "go.uber.org/cff/internal/tests/nested_child"
 )
 
-// Parent is a CFF flow that uses a nested CFF flow.
+// Parent is a cff flow that uses a nested cff flow.
 func Parent(ctx context.Context, i int) (s string, err error) {
 	err = cff.Flow(ctx,
 		cff.Params(i),
 		cff.Results(&s),
-
 		cff.Task(nestedchild.Itoa),
 	)
-
 	return
 }

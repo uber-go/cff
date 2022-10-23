@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// NopEmitter is a CFF emitter that does not do anything.
+// NopEmitter is a cff emitter that does not do anything.
 func NopEmitter() Emitter {
 	// We implement the interface on the pointer receiver to avoid
 	// allocations when the emitter is used. Conversion from pointer to
