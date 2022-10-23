@@ -36,16 +36,16 @@ type SchedulerParams struct {
 	ContinueOnError bool
 }
 
-// BeginFlow begins execution of a flow with a maximum of n workers. Enqueue
+// NewScheduler returns a new Scheduler with a maximum of n workers. Enqueue
 // jobs into the returned scheduler in topological order using the Enqueue
 // method, and wait for results with Wait.
 //
-//	sched := cff.BeginFlow(..)
+//	sched := cff.NewScheduler(..)
 //	j1 := sched.Enqueue(cff.Job{...}
 //	j2 := sched.Enqueue(cff.Job{..., Dependencies: []*cff.ScheduledJob{j1}}
 //	// ...
 //	err := sched.Wait()
-func BeginFlow(p SchedulerParams) *scheduler.Scheduler {
+func NewScheduler(p SchedulerParams) *scheduler.Scheduler {
 	cfg := scheduler.Config{
 		Concurrency:     p.Concurrency,
 		Emitter:         adaptSchedulerEmitter(p.Emitter),

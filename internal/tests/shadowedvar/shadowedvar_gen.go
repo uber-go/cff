@@ -54,7 +54,7 @@ func CtxConflict(ctx string) (string, error) {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff2.BeginFlow(
+		sched := cff2.NewScheduler(
 			cff2.SchedulerParams{
 				Emitter: schedEmitter,
 			},
@@ -187,7 +187,7 @@ func CtxConflictParallel(ctx string) (string, string, error) {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff2.BeginFlow(
+		sched := cff2.NewScheduler(
 			cff2.SchedulerParams{
 				Emitter: schedEmitter,
 			},
@@ -341,7 +341,7 @@ func CtxConflictSlice(ctx string, target []string) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff2.BeginFlow(
+		sched := cff2.NewScheduler(
 			cff2.SchedulerParams{
 				Concurrency: _51_20, Emitter: schedEmitter,
 			},
@@ -445,7 +445,7 @@ func CtxConflictMap(ctx int, input map[int]int) ([]int, error) {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff2.BeginFlow(
+		sched := cff2.NewScheduler(
 			cff2.SchedulerParams{
 				Concurrency: _68_20, Emitter: schedEmitter,
 			},
@@ -545,7 +545,7 @@ func PredicateCtxConflict(f func(), ctx bool) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff2.BeginFlow(
+		sched := cff2.NewScheduler(
 			cff2.SchedulerParams{
 				Emitter: schedEmitter,
 			},

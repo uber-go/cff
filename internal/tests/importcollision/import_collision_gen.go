@@ -63,7 +63,7 @@ func Flow() (string, error) {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff2.BeginFlow(
+		sched := cff2.NewScheduler(
 			cff2.SchedulerParams{
 				Emitter: schedEmitter,
 			},

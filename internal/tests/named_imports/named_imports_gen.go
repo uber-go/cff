@@ -53,7 +53,7 @@ func run(ctx newctx.Context) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cffv2.BeginFlow(
+		sched := cffv2.NewScheduler(
 			cffv2.SchedulerParams{
 				Emitter: schedEmitter,
 			},
