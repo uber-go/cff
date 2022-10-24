@@ -148,10 +148,10 @@ func genFilename(path string) string {
 	var genname string
 	if strings.HasSuffix(name, "_test.go") {
 		// foo_test.go => foo + _gen_test.go
-		genname = strings.TrimSuffix(name, "_test.go")+"_gen_test.go"
+		genname = strings.TrimSuffix(name, "_test.go") + "_gen_test.go"
 	} else {
 		// foo.go => foo + _gen.go
-		genname = strings.TrimSuffix(name, filepath.Ext(name))+"_gen.go"
+		genname = strings.TrimSuffix(name, filepath.Ext(name)) + "_gen.go"
 	}
 	// x/y/foo.go => x/y/foo_gen.go
 	// x/y/foo_test.go => x/y/foo_gen_test.go

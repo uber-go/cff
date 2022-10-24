@@ -78,6 +78,7 @@ func (l *goPackagesLoader) Load(fset *token.FileSet, importPath string) ([]*Pack
 		Fset:       fset,
 		BuildFlags: []string{"-tags", strings.Join(uniqueTags, ",")},
 		Dir:        l.dir,
+		Tests:      true,
 	}, importPath)
 	if err != nil {
 		return nil, fmt.Errorf("packages.Load: %w", err)
