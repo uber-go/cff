@@ -5,9 +5,9 @@
 //	func IsCodegenDirective(name string) bool
 //
 // The function returns true if the function with the provided name should be
-// considered a code generation directive by CFF.
+// considered a code generation directive by cff.
 //
-// Code generation directives are defined in cff.go in the root of the CFF
+// Code generation directives are defined in cff.go in the root of the cff
 // project.
 package main
 
@@ -18,7 +18,6 @@ import (
 	"go/token"
 	"log"
 	"os"
-
 	"text/template"
 )
 
@@ -74,7 +73,7 @@ type templateData struct {
 var _tmpl = template.Must(template.New("directives.go").Parse(`
 package internal
 
-// List of functions in the CFF package that are code generation directives.
+// List of functions in the cff package that are code generation directives.
 var _codegenDirectives = map[string]struct{}{
 	{{ range .Directives -}}
 		{{ printf "%q" . }}: {},
@@ -82,7 +81,7 @@ var _codegenDirectives = map[string]struct{}{
 }
 
 // IsCodegenDirective reports whether the function with the given name in the
-// CFF package is a code generation directive.
+// cff package is a code generation directive.
 func IsCodegenDirective(name string) bool {
 	_, ok := _codegenDirectives[name]
 	return ok

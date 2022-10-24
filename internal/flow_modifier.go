@@ -124,6 +124,6 @@ func (fm *flowModifier) Expr() ast.Expr {
 
 func (fm *flowModifier) Provides() []ast.Expr {
 	// cff.Flow Root modifier constructs its arguments from all modifiers
-	// associated with it during CFF compilation.
+	// associated with it during cff compilation.
 	return nil
 }

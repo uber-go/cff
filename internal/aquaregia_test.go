@@ -22,7 +22,7 @@ const (
 type errorCase struct {
 	// File is the file where errors matching this case are found.
 	File string
-	// ErrorMatches is the error expected when compiling CFF code.
+	// ErrorMatches is the error expected when compiling cff code.
 	ErrorMatches string
 	// TestFuncs are test function names where errors matching this
 	// case are found.
@@ -60,7 +60,7 @@ var codeGenerateFailCases = map[string][]errorCase{
 		{
 			File:         "cff-flow-arguments.go",
 			ErrorMatches: "expected cff call but got field ProvidesBad func\\(\\) go.uber.org/cff.Option",
-			TestFuncs:    []string{"FlowArgumentNonCFF"},
+			TestFuncs:    []string{"FlowArgumentNonCff"},
 		},
 		{
 			File:         "cff-flow-arguments.go",
@@ -110,12 +110,12 @@ var codeGenerateFailCases = map[string][]errorCase{
 		{
 			File:         "cff-task-arguments.go",
 			ErrorMatches: `unexpected code generation directive "Instrument": only cff.Flow or cff.Parallel may be called at the top-level`,
-			TestFuncs:    []string{"ExpectedFlowArgumentsCallExpressions", "ExpectedFlowArgumentsNotCFF"},
+			TestFuncs:    []string{"ExpectedFlowArgumentsCallExpressions", "ExpectedFlowArgumentsNotCff"},
 		},
 		{
 			File:         "cff-task-arguments.go",
 			ErrorMatches: "only cff functions may be passed as task options: found package \"go.uber.org/cff/internal/failing_tests/bad-inputs\"",
-			TestFuncs:    []string{"ExpectedFlowArgumentsNotCFF"},
+			TestFuncs:    []string{"ExpectedFlowArgumentsNotCff"},
 		},
 		{
 			File:         "cff-task-arguments.go",
@@ -130,7 +130,7 @@ var codeGenerateFailCases = map[string][]errorCase{
 		{
 			File:         "cff-task-arguments.go",
 			ErrorMatches: "expected function, got int",
-			TestFuncs:    []string{"ExpectedTasksBadCallExprNotCFF"},
+			TestFuncs:    []string{"ExpectedTasksBadCallExprNotCff"},
 		},
 		{
 			File:         "context-predicate.go",
@@ -195,7 +195,7 @@ var codeGenerateFailCases = map[string][]errorCase{
 		{
 			File:         "instrument.go",
 			ErrorMatches: "cff.Instrument requires a cff\\.Emitter to be provided: use cff\\.WithEmitter",
-			TestFuncs:    []string{"MissingCFFLoggerAndMetrics"},
+			TestFuncs:    []string{"MissingCffLoggerAndMetrics"},
 		},
 
 		{

@@ -8,7 +8,7 @@ import (
 	"go.uber.org/cff/internal/pkg"
 )
 
-// Processor processes CFF files.
+// Processor processes cff files.
 type Processor struct {
 	Fset               *token.FileSet
 	InstrumentAllTasks bool
@@ -16,7 +16,7 @@ type Processor struct {
 	RequireBuildTag    bool
 }
 
-// Process processes a single CFF file.
+// Process processes a single cff file.
 func (p *Processor) Process(pkg *pkg.Package, file *ast.File, outputPath string) error {
 	c := newCompiler(compilerOpts{
 		Fset:               p.Fset,

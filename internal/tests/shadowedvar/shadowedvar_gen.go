@@ -12,7 +12,7 @@ import (
 )
 
 // CtxConflict introduces a variable conflict with ctx to demonstrate that
-// CFF does not shadow variables.
+// cff does not shadow variables.
 func CtxConflict(ctx string) (string, error) {
 	var result string
 	err := func() (err error) {
@@ -136,7 +136,7 @@ func CtxConflict(ctx string) (string, error) {
 }
 
 // CtxConflictParallel introduces a variable conflict with ctx within cff.Parallel Task
-// to demonstrate that CFF does not shadow variables.
+// to demonstrate that cff does not shadow variables.
 func CtxConflictParallel(ctx string) (string, string, error) {
 	var result1 string
 	var result2 string
@@ -291,7 +291,7 @@ func CtxConflictParallel(ctx string) (string, string, error) {
 }
 
 // CtxConflictSlice introduces a variable conflict with ctx within cff.Slice function
-// to demonstrate that CFF does not shadow variables.
+// to demonstrate that cff does not shadow variables.
 func CtxConflictSlice(ctx string, target []string) error {
 	return func() (err error) {
 
@@ -395,7 +395,7 @@ func CtxConflictSlice(ctx string, target []string) error {
 }
 
 // CtxConflictMap introduces a variable conflict with ctx within cff.Map function
-// to demonstrate that CFF does not shadow variables.
+// to demonstrate that cff does not shadow variables.
 func CtxConflictMap(ctx int, input map[int]int) ([]int, error) {
 	slice := make([]int, len(input))
 	err := func() (err error) {

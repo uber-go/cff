@@ -202,7 +202,7 @@ func (c *compiler) compileFile(astFile *ast.File, pkg *pkg.Package) *file {
 		}
 	})
 
-	if c.requireBuildTag && !fileHasCFFTag(astFile) {
+	if c.requireBuildTag && !fileHasCffTag(astFile) {
 		msgfmt := "files that use %v must be tagged with the 'cff' constraint: " +
 			"fix by adding '//go:build cff' to the top of this file"
 		for _, f := range file.Flows {
@@ -282,7 +282,7 @@ func (f *flow) mustSetNoOutputProvider(key *function, value int) {
 	}
 }
 
-// addPreciateOutput creates a unique predicate sentinel type. Since CFF's
+// addPreciateOutput creates a unique predicate sentinel type. Since cff's
 // dependency resolution logic only allows for one of each type to be provided
 // to the dependency graph and cff.Predicate functions return booleans,
 // these sentinel types distinguish the outputs of cff.Predicates.
@@ -507,7 +507,7 @@ func (c *compiler) validateFuncs(f *flow) {
 
 	// A list of predicateOutput types are not pushed into the queue as they
 	// are an internal book-keeping type not declared as an input or output
-	// by CFF's public APIs.
+	// by cff's public APIs.
 
 	for queue.Len() > 0 {
 		t := queue.Remove(queue.Front()).(validateVisitedType)
@@ -906,7 +906,7 @@ type predicate struct {
 
 	// SentinelOutput is the sentinel value which represents the boolean
 	// output of the predicate and is used to distinguish the results of the
-	// predicate in the CFF graph.
+	// predicate in the cff graph.
 	SentinelOutput *predicateOutput
 
 	// Serial is a unique serially incrementing number for each predicate.

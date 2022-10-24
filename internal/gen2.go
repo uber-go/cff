@@ -79,7 +79,7 @@ func (g *generatorv2) GenerateFile(f *file) error {
 	// Build tags appear before the package clause.
 	// Write those to the output with cff tags inverted.
 	lastOff := posFile.Offset(f.AST.Package)
-	if err := writeInvertedCFFTag(&buff, bs[:lastOff]); err != nil {
+	if err := writeInvertedCffTag(&buff, bs[:lastOff]); err != nil {
 		return err
 	}
 

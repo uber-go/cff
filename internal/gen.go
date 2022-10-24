@@ -110,7 +110,7 @@ func (g *generator) GenerateFile(f *file) error {
 	// Build tags appear before the package clause.
 	// Write those to the output with cff tags inverted.
 	lastOff := posFile.Offset(f.AST.Package)
-	if err := writeInvertedCFFTag(&buff, bs[:lastOff]); err != nil {
+	if err := writeInvertedCffTag(&buff, bs[:lastOff]); err != nil {
 		return err
 	}
 
@@ -120,7 +120,7 @@ func (g *generator) GenerateFile(f *file) error {
 			return err
 		}
 
-		// Generate code for top-level CFF constructs and update the
+		// Generate code for top-level cff constructs and update the
 		// addImports map.
 		if err = gen.generate(
 			genParams{
@@ -199,7 +199,7 @@ func (g *generator) resetMagicTokens(w io.Writer, buff *bytes.Buffer) error {
 
 	// Then we need to re-parse this to search for the magic token and
 	// replace it with the line directives to "reset" the line directives
-	// that point back to the original CFF source.
+	// that point back to the original cff source.
 	// Without these, all the generated code will point to arbitrary and/or
 	// non-existent locations in the original source.
 	fset := token.NewFileSet()
@@ -227,7 +227,7 @@ func (g *generator) resetMagicTokens(w io.Writer, buff *bytes.Buffer) error {
 	return nil
 }
 
-// generateFlow runs the CFF template for the given flow and writes it to w, modifying addImports if the template
+// generateFlow runs the cff template for the given flow and writes it to w, modifying addImports if the template
 // requires additional imports to be added.
 func (g *generator) generateFlow(file *file, f *flow, w io.Writer, addImports map[string]string, aliases map[string]struct{}) error {
 	// Tracks user-provided expressions used in the generated code.
@@ -458,7 +458,7 @@ func paramExprs(provided map[ast.Expr]struct{}) []ast.Expr {
 
 	for expr := range provided {
 		// A user provided expr cannot have a 0 Line nor 0 Column, so filter
-		// these non user provided entries out. CFF implied instrumentation
+		// these non user provided entries out. cff implied instrumentation
 		// creates expressions that are not user provided and must be handled.
 		if !expr.Pos().IsValid() {
 			continue
@@ -528,10 +528,10 @@ type genParams struct {
 	aliases    map[string]struct{}
 }
 
-// directiveGenerator generates code for top-level CFF constructs.
+// directiveGenerator generates code for top-level cff constructs.
 type directiveGenerator interface {
 	ast.Node
-	// generate produces CFF code with side effects.
+	// generate produces cff code with side effects.
 	generate(p genParams) error
 }
 

@@ -1,6 +1,6 @@
 package internal
 
-// List of functions in the CFF package that are code generation directives.
+// List of functions in the cff package that are code generation directives.
 var _codegenDirectives = map[string]struct{}{
 	"Params":             {},
 	"Results":            {},
@@ -24,7 +24,7 @@ var _codegenDirectives = map[string]struct{}{
 }
 
 // IsCodegenDirective reports whether the function with the given name in the
-// CFF package is a code generation directive.
+// cff package is a code generation directive.
 func IsCodegenDirective(name string) bool {
 	_, ok := _codegenDirectives[name]
 	return ok

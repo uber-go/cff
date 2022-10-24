@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestHasCFFTag(t *testing.T) {
+func TestHasCffTag(t *testing.T) {
 	tests := []struct {
 		desc string
 		give string
@@ -60,12 +60,12 @@ func TestHasCFFTag(t *testing.T) {
 			exp, err := constraint.Parse(tt.give)
 			require.NoError(t, err)
 
-			assert.Equal(t, tt.want, hasCFFTag(exp))
+			assert.Equal(t, tt.want, hasCffTag(exp))
 		})
 	}
 }
 
-func TestFileHasCFFTag(t *testing.T) {
+func TestFileHasCffTag(t *testing.T) {
 	tests := []struct {
 		desc string
 		give []string
@@ -119,12 +119,12 @@ func TestFileHasCFFTag(t *testing.T) {
 			fset := token.NewFileSet()
 			f, err := parser.ParseFile(fset, "foo.go", contents, parser.ParseComments)
 			require.NoError(t, err)
-			assert.Equal(t, tt.want, fileHasCFFTag(f))
+			assert.Equal(t, tt.want, fileHasCffTag(f))
 		})
 	}
 }
 
-func TestWriteInvertedCFFTag(t *testing.T) {
+func TestWriteInvertedCffTag(t *testing.T) {
 	tests := []struct {
 		desc string
 		give string
@@ -210,7 +210,7 @@ func TestWriteInvertedCFFTag(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			var got bytes.Buffer
-			err := writeInvertedCFFTag(&got, []byte(tt.give))
+			err := writeInvertedCffTag(&got, []byte(tt.give))
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, got.String())
 		})

@@ -18,7 +18,7 @@ import (
 // This must be updated if scheduler.worker is renamed.
 const _workerFunction = "go.uber.org/cff/scheduler.worker"
 
-// NumWorkers runs a CFF flow with the provided concurrency, and reports the
+// NumWorkers runs a cff flow with the provided concurrency, and reports the
 // number of workers from within the flow.
 func NumWorkers(conc int) (int, error) {
 	var numGoroutines int
@@ -143,7 +143,7 @@ func NumWorkers(conc int) (int, error) {
 	return numGoroutines, err
 }
 
-// NumWorkersNoArg runs a CFF flow, and reports the
+// NumWorkersNoArg runs a cff flow, and reports the
 // number of workers from within the flow.
 func NumWorkersNoArg() (int, error) {
 	var numGoroutines int
@@ -292,7 +292,7 @@ func numWorkersStable(n int, tick time.Duration) (int, error) {
 	return numw, nil
 }
 
-// numWorkers reports the number of goroutines currently running the CFF
+// numWorkers reports the number of goroutines currently running the cff
 // scheduler's worker function.
 func numWorkers() (int, error) {
 	scanner := bufio.NewScanner(bytes.NewReader(getStack()))

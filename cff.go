@@ -7,8 +7,8 @@ package cff
 
 import "context"
 
-const _noGenMsg = `If you're seeing this error, you probably built code that uses CFF without processing it with CFF.
-Run 'cff ./...' to ensure that the code you're running is processed through CFF.`
+const _noGenMsg = `If you're seeing this error, you probably built code that uses cff without processing it with cff.
+Ensure that .go files that use cff have '//go:build cff' on top and run 'cff ./...'`
 
 // NOTE: All code generation directives must be added to this file. The list
 // of directives is updated automatically based on the contents of this file.
@@ -130,7 +130,7 @@ func InstrumentFlow(name string) Option {
 	panic(_noGenMsg)
 }
 
-// Concurrency specifies the maximum number of goroutines CFF should use to
+// Concurrency specifies the maximum number of goroutines cff should use to
 // execute the tasks of this Flow.
 //
 // Defaults to max(GOMAXPROCS, 4).
@@ -164,7 +164,7 @@ func ContinueOnError(bool) Option {
 	panic(_noGenMsg)
 }
 
-// Flow specifies a single Flow for execution with CFF. The provided context
+// Flow specifies a single Flow for execution with cff. The provided context
 // is made available to all tasks in the Flow.
 //
 // A Flow MUST have at least one Task (specified with Task or Tasks), and at
@@ -249,7 +249,7 @@ func Invoke(enable bool) TaskOption {
 	panic(_noGenMsg)
 }
 
-// Parallel specifies a Parallel operation for execution with CFF. The provided
+// Parallel specifies a Parallel operation for execution with cff. The provided
 // context is made available to all tasks in the Parallel.
 //
 // A Parallel MUST have at least one Tasks function.

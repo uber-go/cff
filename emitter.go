@@ -19,20 +19,20 @@ type Emitter interface {
 	// ParallelInit returns a ParallelEmitter which could be memoized based on
 	// parallel name.
 	ParallelInit(*ParallelInfo) ParallelEmitter
-	// SchedulerInit returns an emitter for the CFF scheduler.
+	// SchedulerInit returns an emitter for the cff scheduler.
 	SchedulerInit(s *SchedulerInfo) SchedulerEmitter
 }
 
-// SchedulerState describes the status of jobs managed by the CFF scheduler.
+// SchedulerState describes the status of jobs managed by the cff scheduler.
 type SchedulerState = scheduler.State
 
-// SchedulerEmitter provides observability into the state of the CFF
+// SchedulerEmitter provides observability into the state of the cff
 // scheduler.
 //
 // WARNING: Do not use this API.
 // We intend to replace it in an upcoming release.
 type SchedulerEmitter interface {
-	// EmitScheduler emits the state of the CFF scheduler.
+	// EmitScheduler emits the state of the cff scheduler.
 	EmitScheduler(s SchedulerState)
 }
 
@@ -55,7 +55,7 @@ type FlowInfo struct {
 	Line, Column int
 }
 
-// DirectiveInfo provides information to uniquely identify a CFF Directive.
+// DirectiveInfo provides information to uniquely identify a cff Directive.
 type DirectiveInfo struct {
 	Name string
 	// Directive is the type of directive (e.g flow or parallel)
