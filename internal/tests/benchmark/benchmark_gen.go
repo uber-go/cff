@@ -67,7 +67,7 @@ func Baseline() float64 {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Emitter: schedEmitter,
 			},

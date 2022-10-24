@@ -81,7 +81,7 @@ func PredicateCombined() float64 {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _38_19, Emitter: schedEmitter,
 			},
@@ -252,7 +252,7 @@ func PredicateSplit() float64 {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _66_19, Emitter: schedEmitter,
 			},

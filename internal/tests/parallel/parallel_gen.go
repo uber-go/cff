@@ -70,7 +70,7 @@ func TasksAndTask(m *sync.Map) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _20_19, Emitter: schedEmitter,
 			},
@@ -256,7 +256,7 @@ func TasksWithError() error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _41_19, Emitter: schedEmitter,
 			},
@@ -372,7 +372,7 @@ func TasksWithPanic() error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _54_19, Emitter: schedEmitter,
 			},
@@ -491,7 +491,7 @@ func MultipleTasks(c chan<- string) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _72_19, Emitter: schedEmitter,
 			},
@@ -645,7 +645,7 @@ func ContextErrorBefore(ctx context.Context, src, target []int) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _89_19, Emitter: schedEmitter,
 			},
@@ -768,7 +768,7 @@ func ContextErrorInFlight(ctx context.Context, cancel func(), src, target []int)
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _104_19, Emitter: schedEmitter,
 			},
@@ -954,7 +954,7 @@ func TaskWithError() error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _126_19, Emitter: schedEmitter,
 			},
@@ -1070,7 +1070,7 @@ func TaskWithPanic() error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _139_19, Emitter: schedEmitter,
 			},
@@ -1190,7 +1190,7 @@ func MultipleTask(src, target []int) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _158_19, Emitter: schedEmitter,
 			},
@@ -1369,7 +1369,7 @@ func ContinueOnError(src []int, target []int) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _178_19, Emitter: schedEmitter,
 				ContinueOnError: _179_23,
@@ -1621,7 +1621,7 @@ func ContinueOnErrorBoolExpr(src, target []int, fn func() bool) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _221_19, Emitter: schedEmitter,
 				ContinueOnError: _222_23,
@@ -1814,7 +1814,7 @@ func ContinueOnErrorCancelled(ctx context.Context, src []int, target []int) erro
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _255_19, Emitter: schedEmitter,
 				ContinueOnError: _256_23,
@@ -1940,7 +1940,7 @@ func ContinueOnErrorCancelledDuring(ctx context.Context, cancel func(), src []in
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _271_19, Emitter: schedEmitter,
 				ContinueOnError: _272_23,
@@ -2137,7 +2137,7 @@ func SliceMultiple(srcA, srcB, targetA, targetB []int) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _297_19, Emitter: schedEmitter,
 			},
@@ -2271,7 +2271,7 @@ func SliceNoIndex(srcA, srcB, targetA, targetB []int) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _318_19, Emitter: schedEmitter,
 			},
@@ -2401,7 +2401,7 @@ func SliceWrapped(src, target manyInts) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _341_19, Emitter: schedEmitter,
 			},
@@ -2514,7 +2514,7 @@ func AssignSliceItems(src, target []string, keepgoing bool) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _357_19, Emitter: schedEmitter,
 				ContinueOnError: _358_23,
@@ -2618,7 +2618,7 @@ func SliceEnd(src []int, sliceFn func(idx, val int) error, sliceEndFn func()) (e
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _381_19, Emitter: schedEmitter,
 			},
@@ -2738,7 +2738,7 @@ func SliceEndWithErr(src []int, sliceFn func(idx, val int) error, sliceEndFn fun
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _396_19, Emitter: schedEmitter,
 			},
@@ -2858,7 +2858,7 @@ func SliceEndWithCtx(src []int, sliceFn func(idx, val int) error, sliceEndFn fun
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _411_19, Emitter: schedEmitter,
 			},
@@ -2978,7 +2978,7 @@ func SliceEndWithCtxAndErr(src []int, sliceFn func(idx, val int) error, sliceEnd
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _426_19, Emitter: schedEmitter,
 			},
@@ -3108,7 +3108,7 @@ func AssignMapItems(src map[string]int, keys []string, values []int, keepgoing b
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _440_19, Emitter: schedEmitter,
 				ContinueOnError: _441_23,
@@ -3218,7 +3218,7 @@ func ForEachMapItem[K comparable, V any](
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _470_19, Emitter: schedEmitter,
 			},
@@ -3341,7 +3341,7 @@ func ForEachMapItemError[K comparable, V any](
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _484_19, Emitter: schedEmitter,
 			},
@@ -3465,7 +3465,7 @@ func ForEachMapItemContext[K comparable, V any](
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _499_19, Emitter: schedEmitter,
 			},

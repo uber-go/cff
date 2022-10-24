@@ -65,7 +65,7 @@ func _cffFlowfile1_15_9(
 
 	schedEmitter := emitter.SchedulerInit(schedInfo)
 
-	sched := cff.BeginFlow(
+	sched := cff.NewScheduler(
 		cff.SchedulerParams{
 			Concurrency: _16_19, Emitter: schedEmitter,
 		},

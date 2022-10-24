@@ -111,7 +111,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _35_19, Emitter: schedEmitter,
 			},
@@ -586,7 +586,7 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _80_19, Emitter: schedEmitter,
 				ContinueOnError: _81_23,

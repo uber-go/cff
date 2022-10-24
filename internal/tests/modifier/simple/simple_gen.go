@@ -178,7 +178,7 @@ func _cffFlowsimple_21_9(
 
 	schedEmitter := emitter.SchedulerInit(schedInfo)
 
-	sched := cff.BeginFlow(
+	sched := cff.NewScheduler(
 		cff.SchedulerParams{
 			Concurrency: _22_19, Emitter: schedEmitter,
 		},
@@ -399,7 +399,7 @@ func _cffFlowsimple_55_9(
 
 	schedEmitter := emitter.SchedulerInit(schedInfo)
 
-	sched := cff.BeginFlow(
+	sched := cff.NewScheduler(
 		cff.SchedulerParams{
 			Concurrency: _56_19, Emitter: schedEmitter,
 		},
@@ -582,7 +582,7 @@ func _cffFlowsimple_82_9(
 
 	schedEmitter := emitter.SchedulerInit(schedInfo)
 
-	sched := cff.BeginFlow(
+	sched := cff.NewScheduler(
 		cff.SchedulerParams{
 			Concurrency: _83_19, Emitter: schedEmitter,
 		},
@@ -770,7 +770,7 @@ func _cffFlowsimple_106_9(
 
 	schedEmitter := emitter.SchedulerInit(schedInfo)
 
-	sched := cff.BeginFlow(
+	sched := cff.NewScheduler(
 		cff.SchedulerParams{
 			Concurrency: _107_19, Emitter: schedEmitter,
 		},

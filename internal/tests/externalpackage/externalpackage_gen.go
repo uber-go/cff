@@ -56,7 +56,7 @@ func NestedType(ctx context.Context, driverUUID uuid.UUID) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Emitter: schedEmitter,
 			},
@@ -170,7 +170,7 @@ func ImplicitType(ctx context.Context) error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Emitter: schedEmitter,
 			},

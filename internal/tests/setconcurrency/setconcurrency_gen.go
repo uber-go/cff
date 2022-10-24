@@ -62,7 +62,7 @@ func NumWorkers(conc int) (int, error) {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Concurrency: _27_19, Emitter: schedEmitter,
 			},
@@ -185,7 +185,7 @@ func NumWorkersNoArg() (int, error) {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Emitter: schedEmitter,
 			},

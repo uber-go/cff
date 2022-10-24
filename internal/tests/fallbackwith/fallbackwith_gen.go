@@ -54,7 +54,7 @@ func Serial(e error, r string) (string, error) {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Emitter: schedEmitter,
 			},
@@ -171,7 +171,7 @@ func NoOutput() error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Emitter: schedEmitter,
 			},
@@ -289,7 +289,7 @@ func Panic() (string, error) {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Emitter: schedEmitter,
 			},

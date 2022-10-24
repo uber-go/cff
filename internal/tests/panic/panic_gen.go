@@ -63,7 +63,7 @@ func (p *Panicker) FlowPanicsParallel() error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Emitter: schedEmitter,
 			},
@@ -268,7 +268,7 @@ func (p *Panicker) FlowPanicsSerial() error {
 
 		schedEmitter := emitter.SchedulerInit(schedInfo)
 
-		sched := cff.BeginFlow(
+		sched := cff.NewScheduler(
 			cff.SchedulerParams{
 				Emitter: schedEmitter,
 			},

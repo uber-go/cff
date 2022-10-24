@@ -46,7 +46,7 @@
 
 	schedEmitter := emitter.SchedulerInit(schedInfo)
 
-	sched := {{ $cff }}.BeginFlow(
+	sched := {{ $cff }}.NewScheduler(
 		{{ $cff }}.SchedulerParams{
 			{{ with .Concurrency -}} Concurrency: {{ expr . }}, {{ end -}}
 			Emitter: schedEmitter,

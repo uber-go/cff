@@ -259,7 +259,7 @@ func _cffFlowmagicv2_32_9(
 
 	schedEmitter := emitter.SchedulerInit(schedInfo)
 
-	sched := cff.BeginFlow(
+	sched := cff.NewScheduler(
 		cff.SchedulerParams{
 			Concurrency: _35_19, Emitter: schedEmitter,
 		},
