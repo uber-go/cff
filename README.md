@@ -1,35 +1,17 @@
-# CFF
+# cff: a concurrency toolkit for Go
 
-CFF is intended to be a system which facilitates orchestrating large numbers
-of interrelated functions with as much concurrent execution as possible.
+cff (pronounce *caff* as in caffeine) is a library and code generator for Go
+that makes it easy to write concurrent code in Go.
 
-## Concepts
+See our documentation at https://uber-go.github.io/cff for more information.
 
-In CFF, a **Task** is a single executable function or bound method. Tasks have
-**inputs** and **outputs**: the parameters and return values of the
-corresponding functions. One or more tasks come together to form a **Flow**.
-Flows have zero or more **inputs** and one or more **outputs**.
+## Project status
 
-A single Flow must be self-contained. That is, all inputs of all Tasks in a
-Flow must come from either another task or as one of the inputs of the Flow
-itself.
+At Uber, we've been using cff in production for several years.
+We're confident in the stability of its core functionality.
 
-## Usage
+Although its APIs have satisfied a majority of our needs,
+we expect to add or modify some of these once the project is public.
 
-To use CFF, write code using the APIs exported by the
-`go.uber.org/cff` package.
-
-```go
-var result Response
-err := cff.Flow(
-    cff.Params(request),
-    cff.Results(&response),
-    cff.Task(
-        client.GetUser),
-    cff.Task(
-        func(*GetUserResponse) *FooResults {
-            ...
-        }),
-    cff.Task( mapper.FormatResponse),
-)
-```
+That said, we intend to make these changes in compliance with
+[Semantic Versioning](https://semver.org/).

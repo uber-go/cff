@@ -1,14 +1,19 @@
 export GOBIN = $(shell pwd)/bin
 export PATH := $(GOBIN):$(PATH)
 
-MODULES ?= . ./examples ./internal/tests
+MODULES ?= . ./examples ./internal/tests ./tools ./docs
 TEST_FLAGS ?= -race
 
 CFF = $(GOBIN)/cff
 MOCKGEN = $(GOBIN)/mockgen
 STATICCHECK = $(GOBIN)/staticcheck
+MDOX = $(GOBIN)/mdox
 
-SRC_FILES = $(shell find . '(' -path './.*' -o -path '*test*' -o -path '*/examples/*' -prune ')' -o -name '*.go' -print)
+# 'make cover' should not run on docs by default.
+# We run that separately explicitly on a specific platform.
+COVER_MODULES ?= $(filter-out ./docs ./tools,$(MODULES))
+
+SRC_FILES = $(shell find . '(' -path './.*' -o -path '*test*' -o -path '*/examples/*' -o -path './docs/*' -prune ')' -o -name '*.go' -print)
 
 # All go files are in scope for formatting -- even if they're generated.
 GOFMT_FILES = $(shell find . -path './.*' -prune -o -name '*.go' -print)
@@ -26,7 +31,7 @@ test: build
 
 .PHONY: cover
 cover: build
-	@$(foreach dir,$(MODULES),( \
+	@$(foreach dir,$(COVER_MODULES),( \
 		cd $(dir) && \
 		echo "--- [cover] $(dir)" && \
 		go test $(TEST_FLAGS) -coverprofile=cover.out -coverpkg=go.uber.org/cff/... ./... && \
@@ -56,7 +61,7 @@ fmt:
 	@gofmt -w -l $(GOFMT_FILES)
 
 .PHONY: lint
-lint: staticcheck checkfmt
+lint: staticcheck checkfmt docs-check
 
 .PHONY: staticcheck
 staticcheck: $(STATICCHECK)
@@ -71,6 +76,15 @@ checkfmt:
 		exit 1; \
 	fi
 
+.PHONY: docs
+docs:
+	cd docs && yarn build
+
+.PHONY: docs-check
+docs-check: $(MDOX)
+	@echo "Checking documentation"
+	@make -C docs check
+
 $(CFF): $(SRC_FILES)
 	go install go.uber.org/cff/cmd/cff
 
@@ -79,3 +93,6 @@ $(MOCKGEN): go.mod
 
 $(STATICCHECK): tools/go.mod
 	cd tools && go install honnef.co/go/tools/cmd/staticcheck
+
+$(MDOX): tools/go.mod
+	cd tools && go install github.com/bwplotka/mdox

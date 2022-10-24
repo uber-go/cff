@@ -1,0 +1,23 @@
+{
+  "name": "cff",
+  "version": "0.1.0",
+  "description": "Concurrency toolkit for Go.",
+  "main": "index.js",
+  "authors": {
+    "name": "Uber Technologies",
+    "email": "oss@uber.com"
+  },
+  "repository": "https://github.com/uber-go/cff",
+  "scripts": {
+    "dev": "vuepress dev",
+    "build": "vuepress build"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@vuepress/plugin-back-to-top": "^1.9.7",
+    "@vuepress/plugin-medium-zoom": "^1.9.7",
+    "vuepress": "^1.5.3",
+    "vuepress-plugin-fulltext-search": "^2.2.1",
+    "vuepress-plugin-mermaidjs": "1.9.1"
+  }
+}
