@@ -274,7 +274,7 @@ func FallbackWith(results ...interface{}) TaskOption {
 //	cff.Task(
 //		authorizeUser,
 //		cff.Predicate(func(cfg *Config) bool {
-//			return cfg.Prorudction == true
+//			return cfg.Production == true
 //		}),
 //	)
 //
@@ -326,7 +326,7 @@ func Invoke(enable bool) TaskOption {
 //		cff.Map(/* ... */)
 //	)
 //
-// Tasks inside a Parallel are all independent.
+// Tasks inside a [Parallel] are all independent.
 // They run concurrently with bounded parallelism.
 //
 // If any of the tasks fail with an error or panic,
@@ -344,7 +344,7 @@ func Invoke(enable bool) TaskOption {
 //
 // # Parallel tasks
 //
-// Within a cff.Parallel, each task has:
+// Within a [Parallel], each task has:
 //
 //   - optionally, a context.Context as the first parameter
 //   - optionally, an error as the last return value
