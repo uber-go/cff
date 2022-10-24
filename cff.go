@@ -1,8 +1,18 @@
-// Package cff along with the cff binary, provides a means of easily
-// orchestrating a number of related functions with automated concurrent
-// execution.
+// Package cff along with the cff CLI, provides a means of easily writing
+// common concurrent code patterns in a type-safe manner.
 //
-// Specify one or more flows in your code with the Flow function.
+// # Code generation directives
+//
+// Some APIs in this package are marked as "code generation directives."
+// If you use a code generation directive in a file,
+// that file must have the 'cff' build constraint on top:
+//
+//	//go:build cff
+//
+// Following that, you must run the following command before you use
+// 'go build' or 'go test' with that file.
+//
+//	cff ./...
 package cff
 
 import "context"
@@ -13,27 +23,39 @@ Ensure that .go files that use cff have '//go:build cff' on top and run 'cff ./.
 // NOTE: All code generation directives must be added to this file. The list
 // of directives is updated automatically based on the contents of this file.
 
-// Option specifies parameters for a Flow or Parallel.
+// Option is an argument for a [Flow] or [Parallel].
+//
+// See individual option documentation for details.
 type Option interface {
 	cffOption()
 }
 
-// Params specifies inputs for a Flow that do not come from tasks. These
-// values are made available to the Flow as-is.
+// Params specifies inputs for a Flow that do not have any dependencies.
+// These values are made available to the Flow as-is.
 //
-//	cff.Params(request)
+// For example:
+//
+//	var req *GetUserRequest = // ...
+//	cff.Flow(
+//		cff.Params(req),
+//		// ...
+//	)
 //
 // This is a code generation directive.
 func Params(args ...interface{}) Option {
 	panic(_noGenMsg)
 }
 
-// Results specifies one or more outputs for a Flow as pointers.
+// Results specifies one or more outputs for a Flow.
+// Arguments to Results must be pointers to variables
+// that will hold the result values.
 //
-//	var result *Response
+// For example:
+//
+//	var result *GetUserResponse
 //	err := cff.Flow(ctx,
-//	  cff.Results(&result),
-//	  cff.Task(...),
+//		cff.Results(&result),
+//		// ...
 //	)
 //
 // This is a code generation directive.
@@ -41,13 +63,15 @@ func Results(results ...interface{}) Option {
 	panic(_noGenMsg)
 }
 
-// WithEmitter provides an optional observer for flow events. Emitters can
-// track metrics, logs, or other observability data.
+// WithEmitter provides an optional observer for [Flow] or [Parallel] events.
+// Emitters can track metrics, logs, or other observability data.
 //
 //	cff.Flow(ctx,
-//	  ...
-//	  cff.WithEmitter(em),
+//		// ...
+//		cff.WithEmitter(em),
 //	)
+//
+// Provide this option multiple times to use multiple emitters.
 //
 // WARNING: Do not use this API.
 // We intend to replace it in an upcoming release.
@@ -57,64 +81,34 @@ func WithEmitter(Emitter) Option {
 	panic(_noGenMsg)
 }
 
-// Task specifies a task for execution with a cff.Flow or cff.Parallel. A Task
-// is any executable function or bound method available in the scope when
-// cff.Flow or cff.Parallel is called.
+// Task specifies a task for execution with a [Flow] or [Parallel].
+// A task can be a reference to:
 //
-// A Task's usage and constraints change between its usage in a cff.Flow or
-// cff.Parallel.
+//   - a top-level function; or
+//   - a bound method; or
+//   - an anonymous function
 //
-// Within a cff.Flow,
+// For example:
 //
-//	cff.Flow(
-//	  ctx,
-//	  cff.Task(h.client.GetUser),
-//	  cff.Task(bindUser),
-//	  cff.Task(h.processRequest),
-//	)
+//	// Given,
+//	//   var client *Client
+//	//   func (*Client) GetUser(...) (...)
+//	// The following is a bound method reference.
+//	cff.Task(client.GetUser)
 //
-// Each Task has zero or more inputs, specified by the arguments of the
-// function, and one or more results, specified by the return values of the
-// function.
+//	// Given,
+//	//   func bindUser(...) (...)
+//	// The following is a top-level function reference.
+//	cff.Task(bindUser),
 //
-//	func(I1, I2, ...) (R1, R2, ...)
+//	// The following is an anonymous function reference.
+//	cff.Task(func(...) (...,, error) {
+//		// ...
+//	})
 //
-// Before this function is executed, all the tasks providing the inputs it
-// depends on will have finished executing. Similarly, no task that depends
-// on a result of this function will be executed until this function finishes
-// executing.
-//
-// Tasks can request the context for the current execution scope by adding a
-// context.Context as their first argument.
-//
-//	func(context.Context, I1, I2, ...) (R1, R2, ...)
-//
-// Additionally, tasks that may fail can do so by adding an error as their
-// last return value.
-//
-//	func(I1, I2, ...) (R1, R2, ..., error)
-//	func(context.Context, I1, I2, ...) (R1, R2, ..., error)
-//
-// Task behavior may further be customized with TaskOptions.
-//
-// Within a cff.Parallel, a Task is a function executed in parallel.
-//
-// Task can request the context for the current execution scope by optionally
-// adding a context.Context as the only argument.
-//
-// Additionally, Tasks that may fail can do so by optionally adding an error
-// as the only return value.
-//
-//	cff.Parallel(
-//	  ctx,
-//	  cff.Task(func() {...}),
-//	  cff.Task(func() error {...}),
-//	  cff.Task(func(ctx context.Context) {...}),
-//	  cff.Task(func(ctx context.Context) error {...}),
-//	)
-//
-// Task functions under cff.Parallel cannot accept other arguments
-// or return other values.
+// A Task's usage and constraints change based on whether you're using it
+// inside a Flow or a Parallel.
+// See the documentation for [Flow] or [Parallel] for more details.
 //
 // This is a code generation directive.
 func Task(fn interface{}, opts ...TaskOption) Option {
@@ -122,8 +116,9 @@ func Task(fn interface{}, opts ...TaskOption) Option {
 }
 
 // InstrumentFlow specifies that this Flow should be instrumented for
-// observability. The provided name will be used in emitted metrics, logs, and
-// spans, if any.
+// observability.
+// The provided name will be passed to the [Emitter] you passed into
+// WithEmitter.
 //
 // This is a code generation directive.
 func InstrumentFlow(name string) Option {
@@ -131,98 +126,157 @@ func InstrumentFlow(name string) Option {
 }
 
 // Concurrency specifies the maximum number of goroutines cff should use to
-// execute the tasks of this Flow.
+// execute tasks of this Flow or Parallel.
 //
-// Defaults to max(GOMAXPROCS, 4).
+// The default value for this is,
+//
+//	max(GOMAXPROCS, 4)
+//
+// That is, by default cff will use [runtime.GOMAXPROCS] goroutines,
+// with a minimum of 4.
 //
 // This is a code generation directive.
 func Concurrency(n int) Option {
 	panic(_noGenMsg)
 }
 
-// ContinueOnError configures a Parallel to run through any errors returned
-// by tasks over the course of its execution and continue executing remaining
-// tasks when it would have otherwise stopped at the first error.
+// ContinueOnError configures a [Parallel] to keep running all other tasks
+// despite errors returned by tasks over the course of its execution.
+// By default, Parallel will stop execution at the first error it encounters.
 //
-// err := cff.Parallel(ctx,
+//	err = cff.Parallel(ctx,
+//		cff.Task(task1),
+//		cff.Task(task2),
+//		// ...
+//		cff.ContinueOnError(true),
+//	)
 //
-//	cff.Tasks(
-//	    func() error { ... },
-//	),
-//	cff.ContinueOnError(true),
+// If one or more tasks return errors with ContinueOnError(true),
+// Parallel will still run all the other tasks,
+// and accumulate and combine the errors together into a single error object.
+// You can access the full list of errors with [go.uber.org/multierr.Errors].
 //
-// )
-//
-// If one or more errors are encountered during when ContinueOnError is
-// configured to true, the Parallel will return an error that accumulates the
-// messages of all encountered errors after executing all remaining tasks.
-//
-// ContinueOnError is incompatible with SliceEnd and MapEnd.
+// ContinueOnError(true) is incompatible with [Flow], [SliceEnd] and [MapEnd].
 //
 // This is a code generation directive.
 func ContinueOnError(bool) Option {
 	panic(_noGenMsg)
 }
 
-// Flow specifies a single Flow for execution with cff. The provided context
-// is made available to all tasks in the Flow.
+// Flow specifies a single Flow for execution with cff.
+// A child of the provided context is made available to all tasks in the Flow
+// if they request it.
 //
-// A Flow MUST have at least one Task (specified with Task or Tasks), and at
-// least one Results.
+// A Flow MUST have at least one task (specified with [Task] or [Tasks]),
+// and at least one result (specified with [Results]).
 //
+//	var result *Result
 //	cff.Flow(ctx,
-//	  cff.Results(&result),
-//	  cff.Task(
-//	    ...
-//	  ),
+//		cff.Results(&result),
+//		cff.Task(
+//			// ...
+//		),
 //	)
 //
-// Tasks may be specified in any order. They will be connected based on their
-// inputs and outputs. If any of the tasks fail, the entire Flow fails and the
-// corresponding error is returned.
+// Tasks may be specified to a Flow in any order.
+// They will be connected based on their inputs and outputs.
+// If a task fails with an error,
+// the entire Flow terminates and the error is returned.
+//
+// # Flow tasks
+//
+// Within a cff.Flow, each task has:
+//
+//   - zero or more inputs, specified by its parameters
+//   - *one* or more outputs, specified by its return values
+//   - optionally, a context.Context as the first parameter
+//   - optionally, an error as the last return value
+//
+// This is roughly expressed as:
+//
+//	func([context.Context], I1, I2, ...) (R1, R2, ..., [error])
+//
+// The types of the inputs specify the dependencies of this task.
+// cff will run other tasks that provide these dependencies
+// and feed their results back into this task to run it.
+// Similarly, it will feed the results of this task into other tasks that
+// depend on them.
+//
+// Tasks may use the optional context argument to cancel operations early in
+// case of failures:
+// the context is valid only as long as the flow is running.
+// If the flow terminates early because of a failure, the context is
+// invalidated.
+//
+//	func(context.Context, I1, I2, ...) (R1, R2, ...)
+//
+// Fallible tasks may declare an error as their last return value.
+// If a task fails, the flow is terminated and all ongoing tasks are canceled.
+//
+//	func(I1, I2, ...) (R1, R2, ..., error)
+//
+// Task behaviors may further be customized with [TaskOption].
 //
 // This is a code generation directive.
 func Flow(ctx context.Context, opts ...Option) error {
 	panic(_noGenMsg)
 }
 
-// TaskOption customizes the execution behavior of a single Task.
+// TaskOption customizes the behavior of a single Task.
 type TaskOption interface {
 	cffTaskOption()
 }
 
-// FallbackWith specifies that if the corresponding Task failed with an error
-// or panic, we should recover from that failure and return the provided
-// values instead.
+// FallbackWith specifies that
+// if the corresponding task fails with an error or panics,
+// we should recover from that failure and return the provided values instead.
 //
-// This function accepts the same number of values as returned by the Task
-// with exactly the same types. This DOES NOT include the error type returned
-// by the Task.
+// This function accepts the same number of values as returned by the task
+// with exactly the same types -- not including the error return value (if
+// any).
 //
+// For example:
+//
+//	// Given,
+//	//   func (*Client) ListUsers(context.Context) ([]*User, error)
+//	// And,
+//	//   var cachedUserList []*User = ...
 //	cff.Task(client.ListUsers, cff.FallbackWith(cachedUserList))
+//
+// If client.ListUsers returns an error or panics,
+// cff will return cachedUserList instead.
 //
 // This is a code generation directive.
 func FallbackWith(results ...interface{}) TaskOption {
 	panic(_noGenMsg)
 }
 
-// Predicate specifies that the corresponding Task should be executed only if
-// the provided function returns true.
+// Predicate specifies a function that determines if the corresponding task
+// should run.
 //
-// This accepts a function which has the signature,
+// The predicate function has the following signature:
 //
 //	func(I1, I2, ...) bool
 //
-// Where the arguments of the functions are inputs similar to a Task. Any type
-// added here becomes a dependency of the Task if it is not already. This
-// means that the Task will not be executed until these types are available.
+// Where the arguments I1, I2, ... are inputs similar to a task.
+// Arguments added to the predicate become a dependency of the task,
+// so the predicate or the task will not run until that value is available.
 //
-// When specified, the corresponding Task will be executed only if this
+// When specified, the corresponding task will be executed only if this
 // function returns true.
+// If the function evaluates to false, the cff will skip execution of this
+// task.
+// If any other tasks depend on this task,
+// cff will give them zero values of the outputs of this task.
 //
-// If the function evaluates to false, the annotated function is skipped and
-// tasks that depend on the type provided by that function get the zero value
-// for that type.
+// For example:
+//
+//	cff.Task(
+//		authorizeUser,
+//		cff.Predicate(func(cfg *Config) bool {
+//			return cfg.Prorudction == true
+//		}),
+//	)
 //
 // This is a code generation directive.
 func Predicate(fn interface{}) TaskOption {
@@ -230,52 +284,83 @@ func Predicate(fn interface{}) TaskOption {
 }
 
 // Instrument specifies that this Task should be instrumented for
-// observability. The provided name will be used in emitted metrics, logs, and
-// spans, if any.
+// observability.
+// The provided name will be passed to the [Emitter] you passed into
+// WithEmitter.
 //
 // This is a code generation directive.
 func Instrument(name string) TaskOption {
 	panic(_noGenMsg)
 }
 
-// Invoke specifies that task must always be executed, even if none of other
-// tasks consume its output.
+// Invoke specifies that a flow task must be executed
+// even if none of other tasks consume its output.
 //
-// Only tasks marked with Invoke are allowed to have zero non-error or
-// single error returns.
+// By default, flow tasks have the following restrictions:
+//
+//   - must have a non-error return value (outputs)
+//   - the output must be consumed by another task or flow result (via
+//     [Results])
+//
+// A task tagged with Invoke(true) loses these restriction.
+// It may have zero outputs, or if it has outputs,
+// other tasks or flow results don't have to consume them.
+//
+//	cff.Task(func(ctx context.Context, req *Request) {
+//		res, err := shadowClient.Send(req)
+//		log.Info("shadowed request", "response", res, "error", err)
+//	}, cff.Invoke(true))
 //
 // This is a code generation directive.
 func Invoke(enable bool) TaskOption {
 	panic(_noGenMsg)
 }
 
-// Parallel specifies a Parallel operation for execution with cff. The provided
-// context is made available to all tasks in the Parallel.
+// Parallel specifies a parallel operation for execution with cff.
 //
-// A Parallel MUST have at least one Tasks function.
+// A Parallel must have at least one [Task], [Tasks], [Map], or [Slice].
 //
 //	cff.Parallel(ctx,
-//	  cff.Concurrency(4),
-//	  cff.Tasks(
-//	    func(ctx context.Context) error {
-//	       ...
-//	    },
-//	    ...
-//	  ),
+//		cff.Task(/* ... */)
+//		cff.Slice(/* ... */)
+//		cff.Map(/* ... */)
 //	)
 //
-// Tasks will run independently with bounded parallelism with all other
-// Parallel declared tasks. If any of the tasks return an error, Parallel
-// stops processsing outstanding tasks and an error is returned.
+// Tasks inside a Parallel are all independent.
+// They run concurrently with bounded parallelism.
 //
-// The cff.ContinueOnError option, when set true, directs cff.Parallel to
-// continue processing pending tasks through errors. In this case, the final
-// error returned by cff.Parallel aggregates the errors returned by all
-// executed tasks.
+// If any of the tasks fail with an error or panic,
+// Parallel terminates the entire operation.
+// You can change this with [ContinueOnError].
+// With ContinueOnError(true), Parallel will run through all provided tasks
+// despite errors,
+// and return an aggregated error object representing all encountered failures.
 //
-// If the context passed to cff.Parallel is cancelled or otherwise errored,
-// cff.Parallel does not run further tasks. This behaviour is not overidden
-// by cff.ContinueOnError.
+// A child of the provided context is made available to all tasks in the
+// parallel if they request it.
+// If the context is cancelled or otherwise errors,
+// Parallel does not run further tasks.
+// This behaviour cannot be changed.
+//
+// # Parallel tasks
+//
+// Within a cff.Parallel, each task has:
+//
+//   - optionally, a context.Context as the first parameter
+//   - optionally, an error as the last return value
+//
+// Note that tasks inside Parallel cannot have dependencies.
+// Use [Flow] for that.
+//
+// This is roughly expressed as:
+//
+//	func([context.Context]) ([error])
+//
+// Tasks may use the context argument to cancel operations early in case of
+// failures.
+// Fallible tasks may return a non-nil error to signal failure.
+//
+// Task behaviors may further be customized with [TaskOption].
 //
 // This is a code generation directive.
 func Parallel(ctx context.Context, opts ...Option) error {
@@ -283,171 +368,147 @@ func Parallel(ctx context.Context, opts ...Option) error {
 }
 
 // InstrumentParallel specifies that this Parallel should be instrumented for
-// observability. The provided name will be used in emitted metrics, logs, and
-// spans, if any.
+// observability.
+// The provided name will be passed to the [Emitter] you passed into
+// WithEmitter.
 //
 // This is a code generation directive.
 func InstrumentParallel(name string) Option {
 	panic(_noGenMsg)
 }
 
-// Tasks specifies functions for execution with Parallel. Tasks are any
-// executable function or bound method available in the scope when cff.Parallel
-// is called.
+// Tasks specifies multiple functions for execution with [Parallel].
+// As with [Task], each argument to Tasks is a reference to:
 //
-// Tasks can request the context for the current execution scope by optionally
-// adding a context.Context as the only argument.
-// Additionally, Tasks that may fail can do so by optionally adding an error
-// as the only return value.
+//   - a top-level function; or
+//   - a bound method; or
+//   - an anonymous function
 //
-//	func(context.Context) error
+// They may all match the signature specified for parallel tasks (see
+// [Parallel]).
 //
-// Tasks functions do not accept other arguments or return values.
-//
-// Tasks should only be used with cff.Parallel.
+// Tasks cannot be used with Flow. Use [Task] for that.
 //
 // This is a code generation directive.
 func Tasks(fn ...interface{}) Option {
 	panic(_noGenMsg)
 }
 
-// Slice executes a parallel operation on the elements of the provided slice.
+// Slice runs fn in parallel on elements of the provided slice
+// with a bounded number of goroutines.
 //
-// The fn parameter is function that is invoked on each element of the slice
-// parameter.
-//
-// The fn parameter's non-context argument is a value of same type as the
-// slice parameter's elements.
-//
-//	cff.Parallel(
-//		ctx,
-//		cff.Concurrency(...),
-//		cff.Slice(func(elem someType) { ... }, []someType{...})
+//	cff.Parallel(ctx,
+//		cff.Slice(
+//			func(el someType) { ... },
+//			[]someType{...},
+//		),
 //	)
 //
-// Optionally, a context.Context can be provided as a first argument to the
-// execution function.
+// For a slice []T, fn has the following signature:
 //
-//	func(ctx context.Context, idx int, item someType) { ... }
+//	func([ctx context.Context,] [idx int,] value T) ([error])
 //
-// Optionally, a slice index of type int can be provided as a first
-// (or second if context.Context is provided) parameter
+// That is, it has the following parameters in-order:
 //
-//	func(idx int, item SomeType) { ... }
+//   - an optional context.Context
+//   - an optional integer holding the index of the element in the slice
+//   - a value in the slice
 //
-// Optionally, an error can be returned as the execution function's sole
-// return value.
+// And if the operation is fallible, it may have an error return value.
+// A non-nil error returned by the function halts the entire Parallel
+// operation.
+// Use [ContinueOnError] to change this.
 //
-//	func(idx int, item someType) error { ... }
-//
-// The second argument to Slice is a slice on which the execution function
-// is invoked.
-//
-// cff.Slice is only an option for cff.Parallel.
+// Slice may only be used with [Parallel].
 //
 // This is a code generation directive.
 func Slice(fn interface{}, slice interface{}, opts ...SliceOption) Option {
 	panic(_noGenMsg)
 }
 
-// SliceOption customizes the execution behavior of cff.Slice.
+// SliceOption customizes the execution behavior of [Slice].
 type SliceOption interface {
 	cffSliceOption()
 }
 
-// SliceEnd specifies a function for execution with a cff.Slice.
-// This function will run after all items in the slice have finished.
+// SliceEnd specifies a function for execution when a [Slice] operation
+// finishes.
+// This function will run after all items in the slice have been processed.
 //
-// SliceEnd can request the context for the current execution scope by optionally
-// adding a context.Context as the only argument.
+// As with parallel tasks, the function passed to SliceEnd may have:
 //
-// Additionally, a SliceEnd that may fail can do so by optionally adding an error
-// as the only return value.
+//   - an optional context.Context parameter
+//   - an optional error return value
 //
-//	 cff.Slice(
-//			func(idx int, elem someType) { ... },
-//			[]someType{...},
-//			cff.SliceEnd(func(ctx context.Context) error {...}),
-//		)
+// Therefore, these are all valid:
 //
-// SliceEnd cannot be used with cff.ContinueOnError.
+//	cff.SliceEnd(func() {...})
+//	cff.SliceEnd(func() error {...})
+//	cff.SliceEnd(func(ctx context.Context) {...})
+//	cff.SliceEnd(func(ctx context.Context) error {...})
 //
-// Here are the list of supported signatures for SliceEnd:
+// SliceEnd cannot be used with [ContinueOnError].
 //
-//	cff.SliceEnd(func() {...}),
-//	cff.SliceEnd(func() error {...}),
-//	cff.SliceEnd(func(ctx context.Context) {...}),
-//	cff.SliceEnd(func(ctx context.Context) error {...}),
+// This is a code generation directive.
 func SliceEnd(fn interface{}) SliceOption {
 	panic(_noGenMsg)
 }
 
-// Map executes a parallel operation on the elements of the provided map.
+// Map runs fn in parallel on elements of the provided map
+// with a bounded number of goroutines.
 //
-// The fn parameter is a function that is invoked on each key/value pair
-// of the m parameter.
-//
-// The fn parameter's first non-context argument is the key of the type of the
-// map key provided followed by a value of the type of the map value.
-//
-//	cff.Parallel(
-//		ctx,
-//		cff.Concurrency(...),
-//		cff.Map(func(key someType, value someType) { ... }, map[someType][someType]{...})
+//	cff.Parallel(ctx,
+//		cff.Map(
+//			func(k string, v *User) { /* ... */ },
+//			map[string]*User{ /* ... */ },
+//		),
 //	)
 //
-// Optionally, a context.Context can be provided as a first argument to the
-// execution function.
+// For a slice map[K]V, fn has the following signature:
 //
-//	func(ctx context.Context, key someType, value someType) { ... }
+//	func([ctx context.Context,] k K, v V) ([error])
 //
-// Optionally, an error can be returned as the execution function's sole
-// return value.
+// That is, it has the following parameters in-order:
 //
-//	func(key someType, value someType) error { ... }
+//   - an optional context.Context
+//   - a key in the map
+//   - the value of that key in the map
 //
-// The second argument to Map is a map on which the execution function
-// is invoked.
+// And if the operation is fallible, it may have an error return value.
+// A non-nil error returned by the function halts the entire Parallel
+// operation.
+// Use [ContinueOnError] to change this.
 //
-// cff.Map is only an option for cff.Parallel.
+// Map may only be used with [Parallel].
 //
 // This is a code generation directive.
 func Map(fn interface{}, m interface{}, opts ...MapOption) Option {
 	panic(_noGenMsg)
 }
 
-// MapOption customizes the execution of a cff.Map.
+// MapOption customizes the execution behavior of [Map].
 type MapOption interface {
 	cffMapOption()
 }
 
-// MapEnd specifies a function for execution with a cff.Map.
-// This function will run after all items in the cff.Map have finished.
+// MapEnd specifies a function for execution when a [Map] operation finishes.
+// This function will run after all items in the map have been processed.
 //
-//	cff.Map(
-//	    func(name string, value *User) {
-//	        // ...
-//	    },
-//	    usersMap,
-//	    cff.MapEnd(func() {
-//	        // ...
-//	    })
+// As with parallel tasks, the function passed to MapEnd may have:
 //
-// Functions provided to MapEnd can,
+//   - an optional context.Context parameter
+//   - an optional error return value
 //
-//   - accept zero arguments
-//   - accept context.Context as an argument
-//   - return no results
-//   - return an error as a result
+// Therefore, these are all valid:
 //
-// That is, the following are the only valid signatures for a MapEnd function.
+//	cff.MapEnd(func() {...})
+//	cff.MapEnd(func() error {...})
+//	cff.MapEnd(func(ctx context.Context) {...})
+//	cff.MapEnd(func(ctx context.Context) error {...})
 //
-//	func()
-//	func() error
-//	func(context.Context)
-//	func(context.Context) error
+// MapEnd cannot be used with [ContinueOnError].
 //
-// MapEnd cannot be used with cff.ContinueOnError.
+// This is a code generation directive.
 func MapEnd(fn interface{}) MapOption {
 	panic(_noGenMsg)
 }

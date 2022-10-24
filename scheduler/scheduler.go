@@ -1,10 +1,11 @@
 // Package scheduler implements a runtime scheduler for cff with support for
 // interdependent jobs.
 //
-// To use the scheduler, build one with New, providing the desired maximum
-// number of goroutines. This defaults to the number of CPUs available.
+// To use the scheduler, build one with [Config.New],
+// providing the desired maximum number of goroutines.
 //
-//	sched := scheduler.New(n)
+//	cfg := scheduler.Config{Concurrency: 4}
+//	sched := cfg.New()
 //
 // With a scheduler available, enqueue jobs into it with the Enqueue method.
 //
@@ -12,26 +13,27 @@
 //
 // The scheduler will begin running this job as soon as a worker is available.
 //
-// Enqueue returns a reference to the scheduled job. Use this reference in
-// other Enqueue calls to specify dependencies for jobs.
+// Enqueue returns a reference to the scheduled job.
+// Use this reference in other Enqueue calls to specify dependencies for jobs.
 //
 //	j3 := sched.Enqueue(ctx, Job{
-//	  ...,
-//	  Dependencies: []*scheduler.ScheduledJob{j1, j2},
+//		...,
+//		Dependencies: []*scheduler.ScheduledJob{j1, j2},
 //	})
 //
 // j3 will not be run until j1 and j2 have finished successfully.
 //
-// Dependencies must be enqueued before jobs that depend on them. This adds
-// the burden of dependency order resolution on the caller.
+// Dependencies must be enqueued before jobs that depend on them.
+// This adds the burden of dependency order resolution on the caller.
 //
-// After enqueuing all jobs, await completion with sched.Wait. This is
-// comparable to WaitGroup.Wait().
+// After enqueuing all jobs, await completion with [Scheduler.Wait].
+// This is comparable to WaitGroup.Wait().
 //
 //	err := sched.Wait(ctx)
 //
-// If any of the enqueued jobs failed, the remaining jobs will be aborted and
-// sched.Wait will return the error.
+// If any of the enqueued jobs failed,
+// the remaining jobs will be aborted and Wait will return the error.
+// This may be changed by setting [Config].ContinueOnError.
 package scheduler
 
 import (
@@ -155,7 +157,7 @@ func worker(readyc <-chan *ScheduledJob, donec chan<- jobResult) {
 	exitCleanly = true
 }
 
-// Scheduler schedules jobs for a cff flow based on their dependencies.
+// Scheduler schedules jobs for a cff flow or parallel.
 type Scheduler struct {
 	// Closed when the Scheduler Loop exits.
 	finishedc chan struct{}
@@ -190,23 +192,30 @@ type Scheduler struct {
 // entry point for running the scheduler.
 type Config struct {
 	// Concurrency is the number of concurrent workers to schedule tasks to.
+	//
+	// Defaults to max(GOMAXPROCS, 4).
 	Concurrency int
+
 	// Emitter provides a hook into the state of the scheduler.
 	Emitter Emitter
+
 	// StateFlushFrequency is how often the scheduler will emit metrics with the
-	// emitter. This defaults to 100 milliseconds.
+	// emitter.
+	//
+	// Defaults to 100 milliseconds.
 	StateFlushFrequency time.Duration
+
 	// ContinueOnError, if true when a job fails, directs the scheduler to
 	// record its failure, invalidate all jobs that depend on the failed job,
 	// and keep running.
 	ContinueOnError bool
 }
 
-// New begins execution of a flow with the provided number of
-// goroutines. Concurrency defaults to max(GOMAXPROCS, 4) if zero.
+// New starts a scheduler with a fixed number of goroutines.
+// goroutines.
 //
-// Enqueue jobs into the returned scheduler using the Enqueue method, and wait
-// for the result with Wait.
+// Enqueue jobs into the returned scheduler using the Enqueue method,
+// and wait for the result with Wait.
 func (c Config) New() *Scheduler {
 	if c.Concurrency == 0 {
 		c.Concurrency = runtime.GOMAXPROCS(0)

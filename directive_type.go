@@ -1,22 +1,26 @@
 package cff
 
-// DirectiveType identifies the type of code generation directive.
+// DirectiveType identifies the type of code generation directive
+// for [Emitter] operations.
 type DirectiveType int
 
 const (
-	// UnknownDirective is an unknown directive.
+	// UnknownDirective is an invalid value for a DirectiveType.
 	UnknownDirective DirectiveType = iota
-	// FlowDirective is a cff.Flow directive.
+
+	// FlowDirective marks a Flow.
 	FlowDirective
-	// ParallelDirective is a cff.Parallel directive.
+
+	// ParallelDirective marks a Parallel.
 	ParallelDirective
 )
 
 // String returns the directive string.
 func (d DirectiveType) String() string {
-	if d == FlowDirective {
+	switch d {
+	case FlowDirective:
 		return "flow"
-	} else if d == ParallelDirective {
+	case ParallelDirective:
 		return "parallel"
 	}
 	return "unknown"
