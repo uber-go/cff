@@ -1,4 +1,4 @@
-export PATH := $(shell pwd)/../bin:$(PATH)
+export PATH := $(shell pwd)/../bin:$(shell pwd)/bin:$(PATH)
 
 MDOX = $(shell pwd)/../bin/mdox
 MDOX_FMT_FLAGS = --soft-wraps --links.validate --links.validate.config-file $(shell pwd)/.mdox-validate.yaml
