@@ -4,5 +4,7 @@ timeout: 1m
 validators:
   # Instead of hitting every GitHub PR/issue links manually,
   # use the GitHub API.
-  - regex: '(^http[s]?:\/\/)(www\.)?(github\.com\/)uber-go\/cff(\/pull\/|\/issues\/|\/discussions\/)'
+  - regex: '(^http[s]?:\/\/)(www\.)?(github\.com\/)uber-go\/cff(\/pull\/|\/issues\/)'
     type: 'githubPullsIssues'
+  - regex: '(^http[s]?:\/\/)(www\.)?(github\.com\/)uber-go\/cff(\/discussions\/)'
+    type: 'ignore'
