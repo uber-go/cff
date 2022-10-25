@@ -125,12 +125,7 @@ func run(args []string) error {
 			}
 
 			if len(output) == 0 {
-				// x/y/foo.go => x/y/foo_gen.go
-				output = filepath.Join(
-					filepath.Dir(path),
-					// foo.go => foo + _gen.go
-					strings.TrimSuffix(name, filepath.Ext(name))+"_gen.go",
-				)
+				output = genFilename(path)
 			}
 
 			processed++
@@ -145,4 +140,23 @@ func run(args []string) error {
 		log.Printf("Processed %d files with %d errors", processed, errored)
 	}
 	return err
+}
+
+// genFilename returns the default file name for the generated output file.
+func genFilename(path string) string {
+	name := filepath.Base(path)
+	var genname string
+	if strings.HasSuffix(name, "_test.go") {
+		// foo_test.go => foo + _gen_test.go
+		genname = strings.TrimSuffix(name, "_test.go") + "_gen_test.go"
+	} else {
+		// foo.go => foo + _gen.go
+		genname = strings.TrimSuffix(name, filepath.Ext(name)) + "_gen.go"
+	}
+	// x/y/foo.go => x/y/foo_gen.go
+	// x/y/foo_test.go => x/y/foo_gen_test.go
+	return filepath.Join(
+		filepath.Dir(path),
+		genname,
+	)
 }

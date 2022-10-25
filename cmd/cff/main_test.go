@@ -93,3 +93,38 @@ func TestMain_ErrorNoPanic(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestGenFilename(t *testing.T) {
+	tests := []struct {
+		desc    string
+		give    string
+		want    string
+	}{
+		{
+			desc: "source file",
+			give: "x/y/foo.go",
+			want: "x/y/foo_gen.go",
+		},
+		{
+			desc: "test file",
+			give: "x/y/foo_test.go",
+			want: "x/y/foo_gen_test.go",
+		},
+		{
+			desc: "source file abs path",
+			give: "/x/y/foo.go",
+			want: "/x/y/foo_gen.go",
+		},
+		{
+			desc: "test file abs path",
+			give: "/x/y/foo_test.go",
+			want: "/x/y/foo_gen_test.go",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			assert.Equal(t, tt.want, genFilename(tt.give))
+		})
+	}
+}
