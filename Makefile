@@ -23,7 +23,7 @@ build: $(CFF)
 
 .PHONY: test
 test: build
-	@$(foreach dir,$(MODULES),( \
+	@$(foreach dir,$(COVER_MODULES),( \
 		cd $(dir) && \
 		echo "--- [test] $(dir)" && \
 		go test $(TEST_FLAGS) ./... \
