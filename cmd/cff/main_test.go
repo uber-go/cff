@@ -96,9 +96,9 @@ func TestMain_ErrorNoPanic(t *testing.T) {
 
 func TestGenFilename(t *testing.T) {
 	tests := []struct {
-		desc    string
-		give    string
-		want    string
+		desc string
+		give string
+		want string
 	}{
 		{
 			desc: "source file",
