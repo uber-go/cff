@@ -26,7 +26,7 @@ Editor-specific instructions for gopls follow.
 
 If you're using VSCode:
 
-1. Locate the gopls configuration section in your settings.json.
+1. Locate the gopls configuration section in your `settings.json`.
    It might look like this:
 
    ```json
@@ -44,12 +44,20 @@ If you're using VSCode:
    }
    ```
 
+### vim-go
+
+If you're using vim-go, add the following to your `.vimrc`.
+
+```vim
+let g:go_build_tags = 'cff'
+```
+
 ### nvim-lspconfig
 
 If you're using Neovim's built-in LSP client with
 [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig):
 
-1. Locate the `gopls.setup` call.
+1. Locate the `gopls.setup` call in your `init.vim` or `.vimrc`.
    It should look similar to one of the following:
 
    ```lua
