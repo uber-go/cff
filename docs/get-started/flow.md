@@ -208,32 +208,7 @@ Now let's actually make requests to this interface.
         }),
     ```
 
-11. Run `go generate`. You'll see an error similar to the following:
-
-    ```
-    main.go:59:12: unused output type *[..].Response
-    ```
-
-    In cff, the results of a task must be consumed by another task
-    or by a `cff.Results` directive which extracts values from a flow.
-    Let's fix this.
-
-12. Declare a new `*Response` variable above the `cff.Flow` call,
-    and use `cff.Results` to pass a reference to it to the flow.
-    This tells cff to fill that pointer with a value from the flow.
-
-    ```go mdox-exec='region ex/get-started/flow/main.go flow-start resp-var'
-      var res *Response
-      err := cff.Flow(ctx,
-        cff.Params(12),
-        cff.Results(&res),
-        cff.Task(func(tripID int) (*Trip, error) {
-    ```
-
-    As with previous cases--the position of `cff.Results` in the `cff.Flow` call
-    does not matter.
-
-13. Handle the error returned by `cff.Flow`.
+11. Handle the error returned by `cff.Flow`.
     For the tutorial, we're just exiting the application.
     In a real application, you should handle this error more gracefully.
 
@@ -251,7 +226,32 @@ Now let's actually make requests to this interface.
       }
     ```
 
-14. Lastly, print the result.
+12. Run `go generate`. You'll see an error similar to the following:
+
+    ```
+    main.go:59:12: unused output type *[..].Response
+    ```
+
+    In cff, the results of a task must be consumed by another task
+    or by a `cff.Results` directive which extracts values from a flow.
+    Let's fix this.
+
+13. Declare a new `*Response` variable above the `cff.Flow` call,
+    and use `cff.Results` to pass a reference to it to the flow.
+    This tells cff to fill that pointer with a value from the flow.
+
+    ```go mdox-exec='region ex/get-started/flow/main.go flow-start resp-var'
+      var res *Response
+      err := cff.Flow(ctx,
+        cff.Params(12),
+        cff.Results(&res),
+        cff.Task(func(tripID int) (*Trip, error) {
+    ```
+
+    As with previous cases--the position of `cff.Results` in the `cff.Flow` call
+    does not matter.
+
+14. Print the response after handling the error.
 
     ```go mdox-exec='region ex/get-started/flow/main.go tail'
     	if err != nil {
@@ -261,6 +261,7 @@ Now let's actually make requests to this interface.
     	fmt.Println(res.Driver, "drove", res.Rider, "who lives in", res.HomeCity)
     ```
 
+
 15. Finally, run `go generate` again.
     You should see a message similar to the following.
 
@@ -268,7 +269,7 @@ Now let's actually make requests to this interface.
     Processed 3 files with 0 errors
     ```
 
-16. Run `go run .` to run the program.
+16. Run the program with `go run .`:
 
     ```
     % go run .
