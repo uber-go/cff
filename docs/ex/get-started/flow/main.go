@@ -18,8 +18,9 @@ var uber UberAPI = new(fakeUberClient)
 
 // region resp-decl
 type Response struct {
-	Rider  string
-	Driver string
+	Rider    string
+	Driver   string
+	HomeCity string
 }
 
 // endregion resp-decl
@@ -37,13 +38,16 @@ func main() {
 	// region flow-start
 	err := cff.Flow(ctx,
 		// endregion flow-start
+		// region flow-dots
+		// ...
+		// endregion flow-dots
 		// region params
 		// region resp-var
-		cff.Params("1234"),
+		cff.Params(12),
 		// endregion params
 		cff.Results(&res),
 		// region get-trip
-		cff.Task(func(tripID string) (*Trip, error) {
+		cff.Task(func(tripID int) (*Trip, error) {
 			// endregion resp-var
 			return uber.TripByID(tripID)
 		}),
@@ -58,13 +62,18 @@ func main() {
 			return uber.RiderByID(trip.RiderID)
 		}),
 		// endregion get-rider
+		// region get-location
+		cff.Task(func(rider *Rider) (*Location, error) {
+			return uber.LocationByID(rider.HomeID)
+		}),
+		// endregion get-location
 		// region last-task
-		// ...
 		// region tail
-		cff.Task(func(r *Rider, d *Driver) *Response {
+		cff.Task(func(r *Rider, d *Driver, home *Location) *Response {
 			return &Response{
-				Driver: d.Name,
-				Rider:  r.Name,
+				Driver:   d.Name,
+				Rider:    r.Name,
+				HomeCity: home.City,
 			}
 		}),
 		// endregion last-task
@@ -73,6 +82,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(res.Driver, "drove", res.Rider)
+	fmt.Println(res.Driver, "drove", res.Rider, "who lives in", res.HomeCity)
 	// endregion tail
 }
