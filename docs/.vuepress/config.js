@@ -63,7 +63,14 @@ module.exports = {
           'non-use-cases.md',
         ],
       },
-      'setup.md',
+      {
+        title: 'Setup',
+        children: [
+          'install.md',
+          'editor.md',
+          'workflow.md',
+        ],
+      },
       {
         title: 'Concepts',
         path: '/concepts',
