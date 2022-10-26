@@ -10,36 +10,46 @@ instead of using a real system.
 
    ```go mdox-exec='region ex/get-started/flow/api.go api-def'
    type UberAPI interface {
-   	DriverByID(string) (*Driver, error)
-   	RiderByID(string) (*Rider, error)
-   	TripByID(string) (*Trip, error)
+   	DriverByID(int) (*Driver, error)
+   	RiderByID(int) (*Rider, error)
+   	TripByID(int) (*Trip, error)
+   	LocationByID(int) (*Location, error)
    }
 
    type Driver struct {
-   	ID   string
+   	ID   int
    	Name string
+   }
+
+   type Location struct {
+   	ID    int
+   	City  string
+   	State string
+   	// ...
    }
 
    type Rider struct {
-   	ID   string
-   	Name string
+   	ID     int
+   	Name   string
+   	HomeID int
    }
 
    type Trip struct {
-   	ID       string
-   	DriverID string
-   	RiderID  string
+   	ID       int
+   	DriverID int
+   	RiderID  int
    }
    ```
 
    This defines a pretty simple interface for a conceivable
    Uber API client:
 
-   - there are three resources: driver, rider, trip
+   - there are four resources: driver, rider, trip, location
    - the `*ById` methods support retrieving them by ID
    - trips have a driver and a rider
+   - riders have a home location
 
-   This is obviously simplified, but it will suffice for the demo.
+   This is obviously oversimplified, but it will suffice for the demo.
 
 2. In the same file, or a new file, add the following fake implementation
    of this interface.
@@ -47,16 +57,7 @@ instead of using a real system.
    ```go mdox-exec='region ex/get-started/flow/api.go impl'
    type fakeUberClient struct{}
 
-   func (*fakeUberClient) TripByID(id string) (*Trip, error) {
-   	time.Sleep(200 * time.Millisecond)
-   	return &Trip{
-   		ID:       id,
-   		DriverID: "42",
-   		RiderID:  "57",
-   	}, nil
-   }
-
-   func (*fakeUberClient) DriverByID(id string) (*Driver, error) {
+   func (*fakeUberClient) DriverByID(id int) (*Driver, error) {
    	time.Sleep(500 * time.Millisecond)
    	return &Driver{
    		ID:   id,
@@ -64,17 +65,34 @@ instead of using a real system.
    	}, nil
    }
 
-   func (*fakeUberClient) RiderByID(id string) (*Rider, error) {
+   func (*fakeUberClient) LocationByID(id int) (*Location, error) {
+   	time.Sleep(200 * time.Millisecond)
+   	return &Location{
+   		ID:    id,
+   		City:  "San Francisco",
+   		State: "California",
+   	}, nil
+   }
+
+   func (*fakeUberClient) RiderByID(id int) (*Rider, error) {
    	time.Sleep(300 * time.Millisecond)
    	return &Rider{
    		ID:   id,
    		Name: "Richard Dickson",
    	}, nil
    }
+
+   func (*fakeUberClient) TripByID(id int) (*Trip, error) {
+   	time.Sleep(150 * time.Millisecond)
+   	return &Trip{
+   		ID:       id,
+   		DriverID: 42,
+   		RiderID:  57,
+   	}, nil
+   }
    ```
 
-   Note that the `DriverByID` and `RiderByID` operations
-   take 500 and 300 milliseconds each.
+   Note that the different `*ByID` operations take different amounts of time.
 
 ## Write the flow
 
@@ -86,8 +104,16 @@ Now let's actually make requests to this interface.
    var uber UberAPI = new(fakeUberClient)
    ```
 
-2. Start a new flow by calling `cff.Flow` with a context argument.
-   We'll create one with a timeout here.
+2. In main, set up a `context.Context` with a one second timeout.
+   We'll use this in our flow.
+
+   ```go mdox-exec='region ex/get-started/flow/main.go main ctx'
+   func main() {
+     ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+     defer cancel()
+   ```
+
+3. Now start a new flow by calling `cff.Flow` with the context.
 
    ```go mdox-exec='region ex/get-started/flow/main.go main ctx flow-start'
    func main() {
@@ -96,37 +122,36 @@ Now let's actually make requests to this interface.
      err := cff.Flow(ctx,
    ```
 
-3. Add a task to the flow to retrieve information about the trip.
+4. Add a task to the flow to retrieve information about the trip.
 
    ```go mdox-exec='region ex/get-started/flow/main.go flow-start get-trip'
      err := cff.Flow(ctx,
-       cff.Task(func(tripID string) (*Trip, error) {
+       cff.Task(func(tripID int) (*Trip, error) {
          return uber.TripByID(tripID)
        }),
    ```
 
-4. The task we just added expects the trip ID to be present in a string.
+5. The task we just added expects the trip ID to be present in an integer.
    Let's give it that.
    Add a `cff.Params` call to provide the trip ID for this function.
 
    ```go mdox-exec='region ex/get-started/flow/main.go flow-start params get-trip'
      err := cff.Flow(ctx,
-       cff.Params("1234"),
-       cff.Task(func(tripID string) (*Trip, error) {
+       cff.Params(12),
+       cff.Task(func(tripID int) (*Trip, error) {
          return uber.TripByID(tripID)
        }),
    ```
 
    The order in which this is passed to `cff.Flow` does not matter.
 
-5. With a trip object available, the flow can run other operations.
-   Add two new tasks: one to fetch the driver, and one to fetch the rider,
-   given a trip.
+6. With a trip object available, the flow can run other operations.
+   Add two new tasks that, given a trip,
+   will fetch the driver and the rider for that trip respectively.
 
-   ```go mdox-exec='region ex/get-started/flow/main.go get-trip get-driver get-rider'
-       cff.Task(func(tripID string) (*Trip, error) {
-         return uber.TripByID(tripID)
-       }),
+   ```go mdox-exec='region ex/get-started/flow/main.go flow-start flow-dots get-driver get-rider'
+     err := cff.Flow(ctx,
+       // ...
        cff.Task(func(trip *Trip) (*Driver, error) {
          return uber.DriverByID(trip.DriverID)
        }),
@@ -137,63 +162,77 @@ Now let's actually make requests to this interface.
 
    Again, the order in which these are provided does not matter.
 
-6. At this point, we have two independent tasks: DriverByID and RiderByID,
-   fetching information about a driver and a rider respectively.
-   Let's bring them together. Declare a new `Response` type.
+7. One of the tasks we just added fetches information about a rider.
+   Add another task that retrieves the rider's location.
+
+   ```go mdox-exec='region ex/get-started/flow/main.go flow-start flow-dots get-location'
+     err := cff.Flow(ctx,
+       // ...
+       cff.Task(func(rider *Rider) (*Location, error) {
+         return uber.LocationByID(rider.HomeID)
+       }),
+   ```
+
+8. We now have a few different tasks. Let's bring their results together.
+   Declare a new `Response` type.
 
    ```go mdox-exec='region ex/get-started/flow/main.go resp-decl'
    type Response struct {
-   	Rider  string
-   	Driver string
+   	Rider    string
+   	Driver   string
+   	HomeCity string
    }
    ```
 
-7. Back in the flow, add a new task to build the Response.
+9. Back in the flow, add a new task to build the Response
+   from the outputs of the different tasks.
 
-   ```go mdox-exec='region ex/get-started/flow/main.go flow-start last-task'
+   ```go mdox-exec='region ex/get-started/flow/main.go flow-start flow-dots last-task'
      err := cff.Flow(ctx,
        // ...
-       cff.Task(func(r *Rider, d *Driver) *Response {
+       cff.Task(func(r *Rider, d *Driver, home *Location) *Response {
          return &Response{
-           Driver: d.Name,
-           Rider:  r.Name,
+           Driver:   d.Name,
+           Rider:    r.Name,
+           HomeCity: home.City,
          }
        }),
    ```
 
-8. Run `go generate`. You'll see an error similar to the following:
+10. Run `go generate`. You'll see an error similar to the following:
 
-   ```
-   main.go:59:12: unused output type *[..].Response
-   ```
+    ```
+    main.go:59:12: unused output type *[..].Response
+    ```
 
-   In cff, the results of a task must be consumed by another task or by a
-   `cff.Results` directive which extracts values from a flow.
-   Let's fix this.
+    In cff, the results of a task must be consumed by another task
+    or by a `cff.Results` directive which extracts values from a flow.
+    Let's fix this.
 
-9. Declare a new `*Response` variable and pass a pointer to it to
-   `cff.Results`.
-   This tells cff to fill that pointer with a value from the flow.
+11. Declare a new `*Response` variable above the `cff.Flow` call,
+    and use `cff.Results` to pass a reference to it to the flow.
+    This tells cff to fill that pointer with a value from the flow.
 
-   ```go mdox-exec='region ex/get-started/flow/main.go flow-start resp-var'
-     var res *Response
-     err := cff.Flow(ctx,
-       cff.Params("1234"),
-       cff.Results(&res),
-       cff.Task(func(tripID string) (*Trip, error) {
-   ```
+    ```go mdox-exec='region ex/get-started/flow/main.go flow-start resp-var'
+      var res *Response
+      err := cff.Flow(ctx,
+        cff.Params(12),
+        cff.Results(&res),
+        cff.Task(func(tripID int) (*Trip, error) {
+    ```
 
-   As with previous cases--the position of `cff.Results` in the `cff.Flow` call
-   does not matter.
+    As with previous cases--the position of `cff.Results` in the `cff.Flow` call
+    does not matter.
 
-10. Finally, handle the error returned by `cff.Flow`
+12. Finally, handle the error returned by `cff.Flow`
     and print the response.
 
     ```go mdox-exec='region ex/get-started/flow/main.go tail'
-        cff.Task(func(r *Rider, d *Driver) *Response {
+        cff.Task(func(r *Rider, d *Driver, home *Location) *Response {
           return &Response{
-            Driver: d.Name,
-            Rider:  r.Name,
+            Driver:   d.Name,
+            Rider:    r.Name,
+            HomeCity: home.City,
           }
         }),
       )
@@ -201,28 +240,28 @@ Now let's actually make requests to this interface.
         log.Fatal(err)
       }
 
-      fmt.Println(res.Driver, "drove", res.Rider)
+      fmt.Println(res.Driver, "drove", res.Rider, "who lives in", res.HomeCity)
     ```
 
-11. Finally, run `go generate` again.
+13. Finally, run `go generate` again.
     You should see a message similar to the following.
 
     ```
     Processed 3 files with 0 errors
     ```
 
-12. Run `go run .` to run the program.
+14. Run `go run .` to run the program.
 
     ```
     % go run .
-    Eleanor Nelson drove Richard Dickson
+    Eleanor Nelson drove Richard Dickson who lives in San Francisco
     ```
 
 **What did we just do?**
 
 After the setup in the first section,
-we build a cff flow with four tasks:
-TripByID, DriverByID, RiderByID,
+we build a cff flow with five tasks:
+TripByID, DriverByID, RiderByID, LocationByID,
 and the final task to build a Response.
 
 These together form the following graph.
@@ -232,16 +271,25 @@ graph LR
   TripID --TripByID--> Trip 
   Trip --DriverByID --> Driver 
   Trip --RiderByID--> Rider 
-  Driver & Rider --> Response 
+  Rider --LocationByID --> Location
+  Driver & Rider & Location --> Response 
 ```
 
-`DriverByID` and `RiderByID` are independent of each other
-so as soon as the trip information is available,
-cff runs them both concurrently.
-When both their results are available,
-cff runs the function to build `Response`.
+- `DriverByID` and `RiderByID` are independent of each other
+  so as soon as the trip information is available,
+  cff runs them both concurrently.
+- When the rider information is available, `DriverByID` is still running,
+  so cff runs `LocationByID` concurrently.
+- When they're both finished,
+  cff finally brings the results together in `Response`.
 
-Although this was a simple graph example,
-cff can handle graphs that are significantly more complex:
+Although the graph in this example is contrived,
+cff can and does handle graphs that are significantly more complex:
 more than it would be reasonable for a person to manually orchestrate
 concurrency for.
+
+**Next steps**
+
+- Explore the [API Reference](https://pkg.go.dev/go.uber.org/cff)
+
+<!-- TODO: another tutorial on using cff.Parallel should be linked here. -->
