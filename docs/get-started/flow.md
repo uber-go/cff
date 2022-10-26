@@ -98,13 +98,22 @@ instead of using a real system.
 
 Now let's actually make requests to this interface.
 
-1. In your main.go, instantiate the fake client to send requests to.
+1. Create a `main.go` and put a `//go:build cff` comment at the top it.
+   This is necessary for cff to be able to process this file.
+
+   ```go mdox-exec='region ex/get-started/flow/main.go directive'
+   //go:build cff
+
+   package main
+   ```
+
+2. Elsewhere in the file, instantiate the fake client to send requests to.
 
    ```go mdox-exec='region ex/get-started/flow/main.go fake-client'
    var uber UberAPI = new(fakeUberClient)
    ```
 
-2. In main, set up a `context.Context` with a one second timeout.
+3. Declare a `main()` and set up a `context.Context` with a one second timeout.
    We'll use this in our flow.
 
    ```go mdox-exec='region ex/get-started/flow/main.go main ctx'
@@ -113,7 +122,7 @@ Now let's actually make requests to this interface.
      defer cancel()
    ```
 
-3. Now start a new flow by calling `cff.Flow` with the context.
+4. Now start a new flow by calling `cff.Flow` with the context.
 
    ```go mdox-exec='region ex/get-started/flow/main.go main ctx flow-start'
    func main() {
@@ -122,7 +131,7 @@ Now let's actually make requests to this interface.
      err := cff.Flow(ctx,
    ```
 
-4. Add a task to the flow to retrieve information about the trip.
+5. Add a task to the flow to retrieve information about the trip.
 
    ```go mdox-exec='region ex/get-started/flow/main.go flow-start get-trip'
      err := cff.Flow(ctx,
@@ -131,7 +140,7 @@ Now let's actually make requests to this interface.
        }),
    ```
 
-5. The task we just added expects the trip ID to be present in an integer.
+6. The task we just added expects the trip ID to be present in an integer.
    Let's give it that.
    Add a `cff.Params` call to provide the trip ID for this function.
 
@@ -145,7 +154,7 @@ Now let's actually make requests to this interface.
 
    The order in which this is passed to `cff.Flow` does not matter.
 
-6. With a trip object available, the flow can run other operations.
+7. With a trip object available, the flow can run other operations.
    Add two new tasks that, given a trip,
    will fetch the driver and the rider for that trip respectively.
 
@@ -162,7 +171,7 @@ Now let's actually make requests to this interface.
 
    Again, the order in which these are provided does not matter.
 
-7. One of the tasks we just added fetches information about a rider.
+8. One of the tasks we just added fetches information about a rider.
    Add another task that retrieves the rider's location.
 
    ```go mdox-exec='region ex/get-started/flow/main.go flow-start flow-dots get-location'
@@ -173,7 +182,7 @@ Now let's actually make requests to this interface.
        }),
    ```
 
-8. We now have a few different tasks. Let's bring their results together.
+9. We now have a few different tasks. Let's bring their results together.
    Declare a new `Response` type.
 
    ```go mdox-exec='region ex/get-started/flow/main.go resp-decl'
@@ -184,22 +193,22 @@ Now let's actually make requests to this interface.
    }
    ```
 
-9. Back in the flow, add a new task to build the Response
-   from the outputs of the different tasks.
+10. Back in the flow, add a new task to build the Response
+    from the outputs of the different tasks.
 
-   ```go mdox-exec='region ex/get-started/flow/main.go flow-start flow-dots last-task'
-     err := cff.Flow(ctx,
-       // ...
-       cff.Task(func(r *Rider, d *Driver, home *Location) *Response {
-         return &Response{
-           Driver:   d.Name,
-           Rider:    r.Name,
-           HomeCity: home.City,
-         }
-       }),
-   ```
+    ```go mdox-exec='region ex/get-started/flow/main.go flow-start flow-dots last-task'
+      err := cff.Flow(ctx,
+        // ...
+        cff.Task(func(r *Rider, d *Driver, home *Location) *Response {
+          return &Response{
+            Driver:   d.Name,
+            Rider:    r.Name,
+            HomeCity: home.City,
+          }
+        }),
+    ```
 
-10. Run `go generate`. You'll see an error similar to the following:
+11. Run `go generate`. You'll see an error similar to the following:
 
     ```
     main.go:59:12: unused output type *[..].Response
@@ -209,7 +218,7 @@ Now let's actually make requests to this interface.
     or by a `cff.Results` directive which extracts values from a flow.
     Let's fix this.
 
-11. Declare a new `*Response` variable above the `cff.Flow` call,
+12. Declare a new `*Response` variable above the `cff.Flow` call,
     and use `cff.Results` to pass a reference to it to the flow.
     This tells cff to fill that pointer with a value from the flow.
 
@@ -224,10 +233,11 @@ Now let's actually make requests to this interface.
     As with previous cases--the position of `cff.Results` in the `cff.Flow` call
     does not matter.
 
-12. Finally, handle the error returned by `cff.Flow`
-    and print the response.
+13. Handle the error returned by `cff.Flow`.
+    For the tutorial, we're just exiting the application.
+    In a real application, you should handle this error more gracefully.
 
-    ```go mdox-exec='region ex/get-started/flow/main.go tail'
+    ```go mdox-exec='region ex/get-started/flow/main.go error'
         cff.Task(func(r *Rider, d *Driver, home *Location) *Response {
           return &Response{
             Driver:   d.Name,
@@ -239,18 +249,26 @@ Now let's actually make requests to this interface.
       if err != nil {
         log.Fatal(err)
       }
-
-      fmt.Println(res.Driver, "drove", res.Rider, "who lives in", res.HomeCity)
     ```
 
-13. Finally, run `go generate` again.
+14. Lastly, print the result.
+
+    ```go mdox-exec='region ex/get-started/flow/main.go tail'
+    	if err != nil {
+    		log.Fatal(err)
+    	}
+
+    	fmt.Println(res.Driver, "drove", res.Rider, "who lives in", res.HomeCity)
+    ```
+
+15. Finally, run `go generate` again.
     You should see a message similar to the following.
 
     ```
     Processed 3 files with 0 errors
     ```
 
-14. Run `go run .` to run the program.
+16. Run `go run .` to run the program.
 
     ```
     % go run .

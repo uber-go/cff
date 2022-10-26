@@ -1,6 +1,9 @@
+// region directive
 //go:build !cff
 
 package main
+
+// endregion directive
 
 import (
 	"context"
@@ -38,44 +41,44 @@ func main() {
 	// region flow-start
 	err := func() (err error) {
 
-		_39_18 := ctx
+		_42_18 := ctx
 
-		_46_14 := 12
+		_49_14 := 12
 
-		_48_15 := &res
+		_51_15 := &res
 
-		_50_12 := func(tripID int) (*Trip, error) {
+		_53_12 := func(tripID int) (*Trip, error) {
 
 			return uber.TripByID(tripID)
 		}
 
-		_56_12 := func(trip *Trip) (*Driver, error) {
+		_59_12 := func(trip *Trip) (*Driver, error) {
 			return uber.DriverByID(trip.DriverID)
 		}
 
-		_61_12 := func(trip *Trip) (*Rider, error) {
+		_64_12 := func(trip *Trip) (*Rider, error) {
 			return uber.RiderByID(trip.RiderID)
 		}
 
-		_66_12 := func(rider *Rider) (*Location, error) {
+		_69_12 := func(rider *Rider) (*Location, error) {
 			return uber.LocationByID(rider.HomeID)
 		}
 
-		_72_12 := func(r *Rider, d *Driver, home *Location) *Response {
+		_75_12 := func(r *Rider, d *Driver, home *Location) *Response {
 			return &Response{
 				Driver:   d.Name,
 				Rider:    r.Name,
 				HomeCity: home.City,
 			}
 		}
-		ctx := _39_18
-		var v1 int = _46_14
+		ctx := _42_18
+		var v1 int = _49_14
 		emitter := cff.NopEmitter()
 
 		var (
 			flowInfo = &cff.FlowInfo{
 				File:   "go.uber.org/cff/docs/ex/get-started/flow/main.go",
-				Line:   39,
+				Line:   42,
 				Column: 9,
 			}
 			flowEmitter = cff.NopFlowEmitter()
@@ -117,7 +120,7 @@ func main() {
 			}
 		}()
 
-		// go.uber.org/cff/docs/ex/get-started/flow/main.go:50:12
+		// go.uber.org/cff/docs/ex/get-started/flow/main.go:53:12
 		var (
 			v2 *Trip
 		)
@@ -147,7 +150,7 @@ func main() {
 
 			defer task0.ran.Store(true)
 
-			v2, err = _50_12(v1)
+			v2, err = _53_12(v1)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -164,7 +167,7 @@ func main() {
 		})
 		tasks = append(tasks, task0)
 
-		// go.uber.org/cff/docs/ex/get-started/flow/main.go:56:12
+		// go.uber.org/cff/docs/ex/get-started/flow/main.go:59:12
 		var (
 			v3 *Driver
 		)
@@ -194,7 +197,7 @@ func main() {
 
 			defer task1.ran.Store(true)
 
-			v3, err = _56_12(v2)
+			v3, err = _59_12(v2)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -214,7 +217,7 @@ func main() {
 		})
 		tasks = append(tasks, task1)
 
-		// go.uber.org/cff/docs/ex/get-started/flow/main.go:61:12
+		// go.uber.org/cff/docs/ex/get-started/flow/main.go:64:12
 		var (
 			v4 *Rider
 		)
@@ -244,7 +247,7 @@ func main() {
 
 			defer task2.ran.Store(true)
 
-			v4, err = _61_12(v2)
+			v4, err = _64_12(v2)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -264,7 +267,7 @@ func main() {
 		})
 		tasks = append(tasks, task2)
 
-		// go.uber.org/cff/docs/ex/get-started/flow/main.go:66:12
+		// go.uber.org/cff/docs/ex/get-started/flow/main.go:69:12
 		var (
 			v5 *Location
 		)
@@ -294,7 +297,7 @@ func main() {
 
 			defer task3.ran.Store(true)
 
-			v5, err = _66_12(v4)
+			v5, err = _69_12(v4)
 
 			if err != nil {
 				taskEmitter.TaskError(ctx, err)
@@ -314,7 +317,7 @@ func main() {
 		})
 		tasks = append(tasks, task3)
 
-		// go.uber.org/cff/docs/ex/get-started/flow/main.go:72:12
+		// go.uber.org/cff/docs/ex/get-started/flow/main.go:75:12
 		var (
 			v6 *Response
 		)
@@ -344,7 +347,7 @@ func main() {
 
 			defer task4.ran.Store(true)
 
-			v6 = _72_12(v4, v3, v5)
+			v6 = _75_12(v4, v3, v5)
 
 			taskEmitter.TaskSuccess(ctx)
 
@@ -366,14 +369,16 @@ func main() {
 			return err
 		}
 
-		*(_48_15) = v6 // *go.uber.org/cff/docs/ex/get-started/flow.Response
+		*(_51_15) = v6 // *go.uber.org/cff/docs/ex/get-started/flow.Response
 
 		flowEmitter.FlowSuccess(ctx)
 		return nil
 	}()
+	// region tail
 	if err != nil {
 		log.Fatal(err)
 	}
+	// endregion error
 
 	fmt.Println(res.Driver, "drove", res.Rider, "who lives in", res.HomeCity)
 	// endregion tail

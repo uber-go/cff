@@ -1,6 +1,9 @@
+// region directive
 //go:build cff
 
 package main
+
+// endregion directive
 
 import (
 	"context"
@@ -68,7 +71,7 @@ func main() {
 		}),
 		// endregion get-location
 		// region last-task
-		// region tail
+		// region error
 		cff.Task(func(r *Rider, d *Driver, home *Location) *Response {
 			return &Response{
 				Driver:   d.Name,
@@ -78,9 +81,11 @@ func main() {
 		}),
 		// endregion last-task
 	)
+	// region tail
 	if err != nil {
 		log.Fatal(err)
 	}
+	// endregion error
 
 	fmt.Println(res.Driver, "drove", res.Rider, "who lives in", res.HomeCity)
 	// endregion tail
