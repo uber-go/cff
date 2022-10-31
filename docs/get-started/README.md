@@ -33,4 +33,14 @@ First, set up a project.
    EOF
    ```
 
+::: tip Editor setup
+
+You don't need a fully functional editor to try out cff.
+You can copy the provided snippets into your editor for this tutorial.
+However, if you would prefer to have a working editor even for the tutorial,
+take a detour to [Editor configuration](../editor.md)
+and come back here afterwards.
+
+:::
+
 Now [write your first flow](flow.md).
