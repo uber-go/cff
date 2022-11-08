@@ -7,6 +7,7 @@ package example
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -83,7 +84,7 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			return req.LDAPGroup != "everyone"
 		}
 
-		/*line magic_gen.go:87*/
+		/*line magic_gen.go:88*/
 		ctx := _34_18
 		var v1 *Request = _35_14
 		emitter := cff.NopEmitter()
@@ -156,9 +157,16 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -198,9 +206,16 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -229,6 +244,8 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		// go.uber.org/cff/examples/magic.go:61:4
 		var p0 bool
 		var p0PanicRecover interface{}
+		var p0PanicStacktrace string
+		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff.AtomicBool
 			run func(context.Context) error
@@ -238,6 +255,7 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
+					p0PanicStacktrace = string(debug.Stack())
 				}
 			}()
 			p0 = _61_18(v2)
@@ -273,8 +291,10 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
+
 				if recovered == nil && p0PanicRecover != nil {
 					recovered = p0PanicRecover
+
 				}
 				if recovered != nil {
 					taskEmitter.TaskPanicRecovered(ctx, recovered)
@@ -312,6 +332,8 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		// go.uber.org/cff/examples/magic.go:74:4
 		var p1 bool
 		var p1PanicRecover interface{}
+		var p1PanicStacktrace string
+		_ = p1PanicStacktrace // possibly unused.
 		pred2 := new(struct {
 			ran cff.AtomicBool
 			run func(context.Context) error
@@ -321,6 +343,7 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p1PanicRecover = recovered
+					p1PanicStacktrace = string(debug.Stack())
 				}
 			}()
 			p1 = _74_18(v2)
@@ -356,12 +379,20 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered == nil && p1PanicRecover != nil {
 					recovered = p1PanicRecover
+					stacktrace = p1PanicStacktrace
 				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -410,9 +441,16 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -460,9 +498,16 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -554,7 +599,7 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		/*line magic.go:135:4*/
 		_135_4 := map[string]int{"a": 1, "b": 2, "c": 3}
 
-		/*line magic_gen.go:558*/
+		/*line magic_gen.go:603*/
 		ctx := _84_3
 		emitter := cff.NopEmitter()
 
@@ -629,9 +674,13 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -670,9 +719,13 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -711,9 +764,13 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -747,8 +804,12 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			sliceTask9.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				err = _99_4(ctx, idx, val)
@@ -772,8 +833,12 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			sliceTask10.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				err = _107_4(ctx, val)
@@ -797,8 +862,12 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			sliceTask11.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				err = _115_4(ctx, idx, val)
@@ -821,8 +890,12 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			mapTask12.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 
@@ -847,8 +920,12 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			mapTask13.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 

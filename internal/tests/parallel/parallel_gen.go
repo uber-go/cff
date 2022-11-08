@@ -6,8 +6,8 @@ package parallel
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -107,9 +107,13 @@ func TasksAndTask(m *sync.Map) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -144,9 +148,13 @@ func TasksAndTask(m *sync.Map) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -181,9 +189,13 @@ func TasksAndTask(m *sync.Map) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -293,9 +305,13 @@ func TasksWithError() error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -409,9 +425,13 @@ func TasksWithPanic() error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -528,9 +548,13 @@ func MultipleTasks(c chan<- string) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -565,9 +589,13 @@ func MultipleTasks(c chan<- string) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -682,9 +710,13 @@ func ContextErrorBefore(ctx context.Context, src, target []int) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -805,9 +837,13 @@ func ContextErrorInFlight(ctx context.Context, cancel func(), src, target []int)
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -842,9 +878,13 @@ func ContextErrorInFlight(ctx context.Context, cancel func(), src, target []int)
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -879,9 +919,13 @@ func ContextErrorInFlight(ctx context.Context, cancel func(), src, target []int)
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -991,9 +1035,13 @@ func TaskWithError() error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -1107,9 +1155,13 @@ func TaskWithPanic() error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -1227,9 +1279,13 @@ func MultipleTask(src, target []int) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -1264,9 +1320,13 @@ func MultipleTask(src, target []int) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -1407,9 +1467,13 @@ func ContinueOnError(src []int, target []int) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -1448,9 +1512,13 @@ func ContinueOnError(src []int, target []int) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -1485,9 +1553,13 @@ func ContinueOnError(src []int, target []int) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -1522,9 +1594,13 @@ func ContinueOnError(src []int, target []int) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -1659,9 +1735,13 @@ func ContinueOnErrorBoolExpr(src, target []int, fn func() bool) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -1700,9 +1780,13 @@ func ContinueOnErrorBoolExpr(src, target []int, fn func() bool) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -1737,9 +1821,13 @@ func ContinueOnErrorBoolExpr(src, target []int, fn func() bool) error {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -1852,9 +1940,13 @@ func ContinueOnErrorCancelled(ctx context.Context, src []int, target []int) erro
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -1978,9 +2070,13 @@ func ContinueOnErrorCancelledDuring(ctx context.Context, cancel func(), src []in
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -2015,9 +2111,13 @@ func ContinueOnErrorCancelledDuring(ctx context.Context, cancel func(), src []in
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -2052,9 +2152,13 @@ func ContinueOnErrorCancelledDuring(ctx context.Context, cancel func(), src []in
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -2169,8 +2273,12 @@ func SliceMultiple(srcA, srcB, targetA, targetB []int) error {
 			sliceTask26.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				err = _299_4(idx, val)
@@ -2194,8 +2302,12 @@ func SliceMultiple(srcA, srcB, targetA, targetB []int) error {
 			sliceTask27.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				_306_4(ctx, idx, val)
@@ -2303,8 +2415,12 @@ func SliceNoIndex(srcA, srcB, targetA, targetB []int) error {
 			sliceTask28.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				err = _320_4(val)
@@ -2328,8 +2444,12 @@ func SliceNoIndex(srcA, srcB, targetA, targetB []int) error {
 			sliceTask29.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				_327_4(ctx, val)
@@ -2433,8 +2553,12 @@ func SliceWrapped(src, target manyInts) error {
 			sliceTask30.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				err = _343_4(idx, val)
@@ -2547,8 +2671,12 @@ func AssignSliceItems(src, target []string, keepgoing bool) error {
 			sliceTask31.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				err = _360_4(idx, val)
@@ -2651,8 +2779,12 @@ func SliceEnd(src []int, sliceFn func(idx, val int) error, sliceEndFn func()) (e
 			sliceTask32.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				err = _383_4(idx, val)
@@ -2668,8 +2800,12 @@ func SliceEnd(src []int, sliceFn func(idx, val int) error, sliceEndFn func()) (e
 			Run: func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 
@@ -2771,8 +2907,12 @@ func SliceEndWithErr(src []int, sliceFn func(idx, val int) error, sliceEndFn fun
 			sliceTask33.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				err = _398_4(idx, val)
@@ -2788,8 +2928,12 @@ func SliceEndWithErr(src []int, sliceFn func(idx, val int) error, sliceEndFn fun
 			Run: func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 
@@ -2891,8 +3035,12 @@ func SliceEndWithCtx(src []int, sliceFn func(idx, val int) error, sliceEndFn fun
 			sliceTask34.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				err = _413_4(idx, val)
@@ -2908,8 +3056,12 @@ func SliceEndWithCtx(src []int, sliceFn func(idx, val int) error, sliceEndFn fun
 			Run: func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 
@@ -3011,8 +3163,12 @@ func SliceEndWithCtxAndErr(src []int, sliceFn func(idx, val int) error, sliceEnd
 			sliceTask35.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				err = _428_4(idx, val)
@@ -3028,8 +3184,12 @@ func SliceEndWithCtxAndErr(src []int, sliceFn func(idx, val int) error, sliceEnd
 			Run: func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 
@@ -3140,8 +3300,12 @@ func AssignMapItems(src map[string]int, keys []string, values []int, keepgoing b
 			mapTask36.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 
@@ -3250,8 +3414,12 @@ func ForEachMapItem[K comparable, V any](
 			mapTask37.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 
@@ -3268,8 +3436,13 @@ func ForEachMapItem[K comparable, V any](
 			Dependencies: mapTask37Jobs,
 			Run: func(ctx context.Context) (err error) {
 				defer func() {
-					if recovered := recover(); recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					recovered := recover()
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 
@@ -3373,8 +3546,12 @@ func ForEachMapItemError[K comparable, V any](
 			mapTask38.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 
@@ -3391,8 +3568,13 @@ func ForEachMapItemError[K comparable, V any](
 			Dependencies: mapTask38Jobs,
 			Run: func(ctx context.Context) (err error) {
 				defer func() {
-					if recovered := recover(); recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					recovered := recover()
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 
@@ -3497,8 +3679,12 @@ func ForEachMapItemContext[K comparable, V any](
 			mapTask39.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 
@@ -3515,8 +3701,13 @@ func ForEachMapItemContext[K comparable, V any](
 			Dependencies: mapTask39Jobs,
 			Run: func(ctx context.Context) (err error) {
 				defer func() {
-					if recovered := recover(); recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					recovered := recover()
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 

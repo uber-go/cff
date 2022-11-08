@@ -5,7 +5,7 @@ package sandwich
 
 import (
 	"context"
-	"fmt"
+	"runtime/debug"
 	"time"
 
 	"go.uber.org/cff"
@@ -89,9 +89,16 @@ func bFlow() (s string, err error) {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 

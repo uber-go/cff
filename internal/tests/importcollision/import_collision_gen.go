@@ -5,8 +5,8 @@ package importcollision
 
 import (
 	"context"
-	"fmt"
 	_template "html/template"
+	"runtime/debug"
 	__template "text/template"
 	"time"
 
@@ -105,9 +105,16 @@ func Flow() (string, error) {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff2.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -147,9 +154,16 @@ func Flow() (string, error) {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff2.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -189,9 +203,16 @@ func Flow() (string, error) {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff2.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -231,9 +252,16 @@ func Flow() (string, error) {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff2.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -275,9 +303,16 @@ func Flow() (string, error) {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff2.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 

@@ -5,7 +5,7 @@ package collision
 
 import (
 	"context"
-	"fmt"
+	"runtime/debug"
 	"time"
 
 	"go.uber.org/cff"
@@ -92,8 +92,12 @@ func _cffFlowfile1_15_9(
 	task0.run = func(ctx context.Context) (err error) {
 		defer func() {
 			recovered := recover()
-			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+			if recovered == nil {
+				return
+			}
+			err = &cff.PanicError{
+				Value:      recovered,
+				Stacktrace: string(debug.Stack()),
 			}
 		}()
 

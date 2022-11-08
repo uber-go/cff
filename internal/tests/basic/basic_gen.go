@@ -6,8 +6,8 @@ package basic
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
+	"runtime/debug"
 	"time"
 
 	"go.uber.org/cff"
@@ -113,9 +113,16 @@ func SimpleFlow() (string, error) {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -155,9 +162,16 @@ func SimpleFlow() (string, error) {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -202,9 +216,16 @@ func SimpleFlow() (string, error) {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -252,9 +273,16 @@ func SimpleFlow() (string, error) {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -378,9 +406,16 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -420,9 +455,16 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -551,9 +593,16 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -598,9 +647,16 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -648,9 +704,16 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -786,9 +849,16 @@ func ProduceMultiple() error {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -828,9 +898,16 @@ func ProduceMultiple() error {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 

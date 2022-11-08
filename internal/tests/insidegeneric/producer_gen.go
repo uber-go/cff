@@ -5,7 +5,7 @@ package insidegeneric
 
 import (
 	"context"
-	"fmt"
+	"runtime/debug"
 	"time"
 
 	"go.uber.org/cff"
@@ -103,9 +103,16 @@ func JoinTwo[A, B, C any](
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -150,9 +157,16 @@ func JoinTwo[A, B, C any](
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -197,9 +211,16 @@ func JoinTwo[A, B, C any](
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -317,8 +338,12 @@ func JoinMany[T any](producers ...Producer[T]) ([]T, error) {
 			sliceTask3.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered != nil {
-						err = fmt.Errorf("panic: %v", recovered)
+					if recovered == nil {
+						return
+					}
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
 					}
 				}()
 				err = _38_4(ctx, idx, val)

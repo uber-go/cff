@@ -5,7 +5,7 @@ package benchmark
 
 import (
 	"context"
-	"fmt"
+	"runtime/debug"
 	"time"
 
 	"go.uber.org/cff"
@@ -123,9 +123,16 @@ func PredicateCombined() float64 {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -165,9 +172,16 @@ func PredicateCombined() float64 {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -294,9 +308,16 @@ func PredicateSplit() float64 {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 
@@ -317,6 +338,8 @@ func PredicateSplit() float64 {
 		// go.uber.org/cff/internal/tests/benchmark/benchmark_predicate.go:77:4
 		var p0 bool
 		var p0PanicRecover interface{}
+		var p0PanicStacktrace string
+		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff.AtomicBool
 			run func(context.Context) error
@@ -326,6 +349,7 @@ func PredicateSplit() float64 {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
+					p0PanicStacktrace = string(debug.Stack())
 				}
 			}()
 			p0 = _78_5()
@@ -358,12 +382,20 @@ func PredicateSplit() float64 {
 
 			defer func() {
 				recovered := recover()
+				var stacktrace string
+				if recovered != nil {
+					stacktrace = string(debug.Stack())
+				}
 				if recovered == nil && p0PanicRecover != nil {
 					recovered = p0PanicRecover
+					stacktrace = p0PanicStacktrace
 				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: stacktrace,
+					}
 				}
 			}()
 

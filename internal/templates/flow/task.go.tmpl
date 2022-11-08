@@ -42,9 +42,18 @@
 
 	defer func() {
 		recovered := recover()
+		{{ if not .FallbackWith -}}
+		var stacktrace string
+		if recovered != nil {
+			stacktrace = string({{ import "runtime/debug" }}.Stack())
+		}
+		{{- end }}
 		{{- if .Predicate }}
 			if recovered == nil && p{{ predHash .Predicate }}PanicRecover != nil {
 				recovered = p{{ predHash .Predicate }}PanicRecover
+				{{ if not .FallbackWith -}}
+				stacktrace = p{{ predHash .Predicate }}PanicStacktrace
+				{{- end }}
 			}
 		{{- end }}
 		if recovered != nil {
@@ -55,7 +64,10 @@
 			{{- end }}{{ if gt (len .FallbackWithResults) 0 }}, {{ end }} nil
 		{{- else -}}
 			taskEmitter.TaskPanic(ctx, recovered)
-			err = {{ import "fmt" }}.Errorf("task panic: %v", recovered)
+			err = &{{ $cff }}.PanicError{
+				Value:      recovered,
+				Stacktrace: stacktrace,
+			}
 		{{- end }}
 		}
 	}()

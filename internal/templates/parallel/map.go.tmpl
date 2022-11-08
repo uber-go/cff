@@ -14,9 +14,10 @@ for key, val := range {{ expr .Map }} {
 	{{ $t }}.fn = func(ctx {{ $context }}.Context) (err error) {
 		defer func() {
 			recovered := recover()
-			if recovered != nil {
-				err = {{ import "fmt" }}.Errorf("panic: %v", recovered)
+			if recovered == nil {
+				return
 			}
+			{{ template "panicError" }}
 		}()
 
 		{{ if .Function.HasError }} err = {{ end }}{{ template "callMap" . }}
@@ -37,9 +38,11 @@ for key, val := range {{ expr .Map }} {
 		Dependencies: {{ $t }}Jobs,
 		Run: func(ctx {{ $context }}.Context) (err error) {
 			defer func() {
-				if recovered := recover(); recovered != nil {
-					err = {{ import "fmt" }}.Errorf("panic: %v", recovered)
+				recovered := recover()
+				if recovered == nil {
+					return
 				}
+				{{ template "panicError" }}
 			}()
 
 			{{ if .HasError }} err = {{ end }} {{ template "callFunc" . }}

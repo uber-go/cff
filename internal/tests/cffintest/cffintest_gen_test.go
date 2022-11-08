@@ -5,7 +5,7 @@ package cffintest
 
 import (
 	"context"
-	"fmt"
+	"runtime/debug"
 	"testing"
 	"time"
 
@@ -113,9 +113,13 @@ func TestIsOdd(t *testing.T) {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -154,9 +158,13 @@ func TestIsOdd(t *testing.T) {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -195,9 +203,13 @@ func TestIsOdd(t *testing.T) {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 
@@ -236,9 +248,13 @@ func TestIsOdd(t *testing.T) {
 
 			defer func() {
 				recovered := recover()
-				if recovered != nil {
-					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("panic: %v", recovered)
+				if recovered == nil {
+					return
+				}
+				taskEmitter.TaskPanic(ctx, recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: string(debug.Stack()),
 				}
 			}()
 

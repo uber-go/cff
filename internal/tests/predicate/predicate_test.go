@@ -1,10 +1,12 @@
 package predicate
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/cff"
 )
 
 func TestSimplePredicate(t *testing.T) {
@@ -51,7 +53,11 @@ func TestPanicRecovered(t *testing.T) {
 			err = Panicked()
 		},
 	)
-	assert.EqualError(t, err, "task panic: sad times")
+	var panicError *cff.PanicError
+	assert.Equal(t, true, errors.As(err, &panicError), "error returned should be a cff.PanicError")
+	assert.Equal(t, "sad times", panicError.Value, "PanicError.Value should be recovered value")
+	assert.Contains(t, panicError.Stacktrace, "panic({", "panic should be included in the stack trace")
+	assert.Contains(t, panicError.Stacktrace, ".Panicked.func", "function that panicked should be in the stack")
 }
 
 func TestPanicFallback(t *testing.T) {
