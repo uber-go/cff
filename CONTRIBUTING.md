@@ -15,16 +15,28 @@ If necessary, a bot will remind
 you to accept the CLA when you open your pull request.
 :::
 
-## New functionality
+## Contributing Ideas
 
 If you'd like to add new functionality to cff,
 especially if you want to add any new exported APIs to it,
 please [create a new issue](https://github.com/uber-go/cff/issues/new)
 describing the problem, your proposed solution,
 and anything else that might be relevant.
+We will respond to new issues within 30 days with suggestions.
 If you're unsure about the direction you want to take with your solution,
 feel free to [start a new discussion](https://github.com/uber-go/cff/discussions/new)
 instead and we'll assist you if we can.
+
+## Contributing Code
+Before contributing code, please follow [these steps](#new-functionality).
+
+When your feature is accepted by maintainers, follow these steps:
+
+1. Familiarize yourself with the [Design](#design) of cff.
+2. [Test](#testing) your code.
+3. Submit a pull request.
+
+We will respond to new PRs with code reviews within 30 days.
 
 ## Design
 
