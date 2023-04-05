@@ -80,3 +80,6 @@ we expect to add or modify some of these once the project is public.
 
 That said, we intend to make these changes in compliance with
 [Semantic Versioning](https://semver.org/).
+
+## License
+cff is licensed under the Apache 2.0 license.  See the LICENSE file for more information.
