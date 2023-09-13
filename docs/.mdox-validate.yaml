@@ -8,3 +8,7 @@ validators:
     type: 'githubPullsIssues'
   - regex: '(^http[s]?:\/\/)(www\.)?(github\.com\/)uber-go\/cff(\/discussions\/)'
     type: 'ignore'
+
+  # Ignore pkg.go.dev links until release.
+  - regex: '(^http[s]?:\/\/)(pkg\.)?(go\.dev\/)'
+    type: 'ignore'
