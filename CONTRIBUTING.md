@@ -28,6 +28,7 @@ feel free to [start a new discussion](https://github.com/uber-go/cff/discussions
 instead and we'll assist you if we can.
 
 ## Contributing Code
+
 Before contributing code, please follow [these steps](#contributing-ideas).
 
 When your feature is accepted by maintainers, follow these steps:
