@@ -1,13 +1,18 @@
-export GOBIN = $(shell pwd)/bin
+SHELL = /bin/bash
+
+# Cross-platform way to find the directory holding this Makefile.
+PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+export GOBIN = $(PROJECT_ROOT)/bin
 export PATH := $(GOBIN):$(PATH)
 
 MODULES ?= . ./examples ./internal/tests ./tools ./docs
 TEST_FLAGS ?= -race
 
-CFF = $(GOBIN)/cff
-MOCKGEN = $(GOBIN)/mockgen
-STATICCHECK = $(GOBIN)/staticcheck
-MDOX = $(GOBIN)/mdox
+CFF = bin/cff
+MOCKGEN = bin/mockgen
+STATICCHECK = bin/staticcheck
+MDOX = bin/mdox
 
 # 'make cover' should not run on docs by default.
 # We run that separately explicitly on a specific platform.
