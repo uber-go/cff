@@ -3,11 +3,12 @@ SHELL = /bin/bash
 # Cross-platform way to find the directory holding this Makefile.
 PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-export GOBIN = $(PROJECT_ROOT)/bin
+export GOBIN ?= $(PROJECT_ROOT)/bin
 export PATH := $(GOBIN):$(PATH)
 
 MODULES ?= . ./examples ./internal/tests ./tools ./docs
 TEST_FLAGS ?= -race
+BUILD_FLAGS ?=
 
 CFF = bin/cff
 MOCKGEN = bin/mockgen
@@ -56,6 +57,18 @@ generate: $(CFF) $(MOCKGEN)
 		go generate -tags cff -x ./... \
 	) &&) true
 
+# Run 'make generate' with a coverage-instrumented cff binary,
+# and write the coverage profile to a file.
+.PHONY: generate-cover
+generate-cover:
+	$(eval BIN := $(shell mktemp -d))
+	$(eval COVERDIR := $(shell mktemp -d))
+	GOCOVERDIR=$(COVERDIR) make generate \
+		GOBIN=$(BIN) \
+		BUILD_FLAGS="-cover -coverpkg=go.uber.org/cff/..."
+	go tool covdata textfmt -i=$(COVERDIR) -o=cover.out
+	go tool cover -html=cover.out -o cover.html
+
 .PHONY: tidy
 tidy:
 	@$(foreach dir,$(MODULES),( \
@@ -89,7 +102,7 @@ docs-check: $(MDOX)
 	@make -C docs check
 
 $(CFF): $(SRC_FILES)
-	go install go.uber.org/cff/cmd/cff
+	go install $(BUILD_FLAGS) go.uber.org/cff/cmd/cff
 
 $(MOCKGEN): go.mod
 	go install github.com/golang/mock/mockgen

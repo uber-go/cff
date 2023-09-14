@@ -27,9 +27,12 @@ jobs:
         version: latest
         args: --version  # make lint will run the linter
 
+    - run: make lint
+      name: Lint
+
     # Verify that all generated code is up-to-date.
     - name: Regenerate code
-      run: make generate
+      run: make generate-cover
     - name: Verify unchanged
       run: |
         if ! git diff --quiet; then
@@ -38,8 +41,8 @@ jobs:
           exit 1
         fi
 
-    - run: make lint
-      name: Lint
+    - name: Upload coverage to codecov.io
+      uses: codecov/codecov-action@v3
 
   build-test:
     name: Build and test
