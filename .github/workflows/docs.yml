@@ -2,7 +2,7 @@ name: GitHub Pages
 
 on:
   push:
-    branches: [master]
+    branches: [main]
 
   # This lets us publish the workflow
   # manually from the GitHub Actions UI.
