@@ -41,10 +41,7 @@ func (cm *concurrencyModifier) GenImpl(p GenParams) error {
 	if err != nil {
 		return err
 	}
-	if err := modifierTmpl.ExecuteTemplate(p.Writer, _concurrencyTmplName, cm); err != nil {
-		return err
-	}
-	return nil
+	return modifierTmpl.ExecuteTemplate(p.Writer, _concurrencyTmplName, cm)
 }
 
 func (cm *concurrencyModifier) Expr() ast.Expr {

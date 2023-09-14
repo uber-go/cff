@@ -1,3 +1,7 @@
+// Package pkg defines the interface for loading Go packages.
+//
+// It provides a pluggable means for systems like Bazel and Buck
+// to inject an alternative package loading mechanism instead of go/packages.
 package pkg
 
 import (

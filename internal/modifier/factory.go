@@ -83,10 +83,7 @@ func (fm *funcModifier) GenImpl(p GenParams) error {
 	if err != nil {
 		return err
 	}
-	if err := mt.ExecuteTemplate(p.Writer, _funcTmpl, fm); err != nil {
-		return err
-	}
-	return nil
+	return mt.ExecuteTemplate(p.Writer, _funcTmpl, fm)
 }
 
 // Expr returns the ast.Expr replaced by the modifier function.

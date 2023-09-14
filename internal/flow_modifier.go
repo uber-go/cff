@@ -112,10 +112,7 @@ func (fm *flowModifier) GenImpl(p modifier.GenParams) error {
 	if err != nil {
 		return err
 	}
-	if err := mt.ExecuteTemplate(p.Writer, _flowModifierRootTmpl, fm); err != nil {
-		return err
-	}
-	return nil
+	return mt.ExecuteTemplate(p.Writer, _flowModifierRootTmpl, fm)
 }
 
 func (fm *flowModifier) Expr() ast.Expr {

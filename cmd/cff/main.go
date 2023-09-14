@@ -1,3 +1,11 @@
+// cff is a library and code generator for Go
+// that makes it easy to write concurrent code.
+//
+// It allows you to write panic-safe code with bounded resource consumption,
+// operating on a complex dependency graph of interdependent tasks,
+// or a simple collection of independent tasks.
+//
+// See the documentation at https://uber-go.github.io/cff/ for more details.
 package main
 
 import (

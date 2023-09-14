@@ -1,3 +1,5 @@
+// Package modifier implements modifier-based code generation
+// for cff directives.
 package modifier
 
 import (

@@ -205,7 +205,9 @@ func TestScheduler_ContinueOnError(t *testing.T) {
 		// Enqueue a leaf dependency job that will error.
 		failDep := sched.Enqueue(context.Background(), Job{
 			Run: func(c context.Context) error {
-				defer blocker.Run(c)
+				defer func() {
+					assert.NoError(t, blocker.Run(c))
+				}()
 				return errors.New("sad times")
 			},
 		})
@@ -265,7 +267,9 @@ func TestScheduler_ContinueOnError(t *testing.T) {
 		// Enqueue a leaf dependency job that will error.
 		failDep := sched.Enqueue(context.Background(), Job{
 			Run: func(c context.Context) error {
-				defer blocker.Run(c)
+				defer func() {
+					assert.NoError(t, blocker.Run(c))
+				}()
 				return errors.New("sad times")
 			},
 		})

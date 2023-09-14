@@ -218,13 +218,15 @@ func (g *generator) resetMagicTokens(w io.Writer, buff *bytes.Buffer) error {
 	outputPath := filepath.Base(g.outputPath)
 	for _, magic := range magicList {
 		pos := fset.PositionFor(magic.Pos(), false)
-		w.Write(bb[offset:pos.Offset])
+		if _, err := w.Write(bb[offset:pos.Offset]); err != nil {
+			return err
+		}
 		fmt.Fprintf(w, "/*line %v:%d*/", outputPath, pos.Line+1)
 		offset = fset.PositionFor(magic.End(), false).Offset
 	}
 	// Write remaining code as-is.
-	w.Write(bb[offset:])
-	return nil
+	_, err = w.Write(bb[offset:])
+	return err
 }
 
 // generateFlow runs the cff template for the given flow and writes it to w, modifying addImports if the template
@@ -391,7 +393,14 @@ func (g *generator) predID(p *predicate) int {
 // initial variables must have raw expressions assigned to them.
 func (g *generator) printRawExpr(e ast.Expr) string {
 	var buff bytes.Buffer
-	format.Node(&buff, g.fset, e)
+	if err := format.Node(&buff, g.fset, e); err != nil {
+		// format.Node can fail with an in-memory buffer
+		// only if the ast.Expr is invalid.
+		// We are certain that that's not possible here
+		// because the node was already parsed and type-checked.
+		// So if this fails, we should panic.
+		panic(fmt.Sprintf("failed to format node: %v", err))
+	}
 	return buff.String()
 }
 
