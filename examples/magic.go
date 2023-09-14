@@ -21,13 +21,15 @@ type Response struct {
 	MessageIDs []string
 }
 
-type fooHandler struct {
+// FooHandler does things.
+type FooHandler struct {
 	mgr   *ManagerRepository
 	users *UserRepository
 	ses   *SESClient
 }
 
-func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
+// HandleFoo handles foo requests.
+func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, error) {
 	var res *Response
 	err := cff.Flow(ctx,
 		cff.Params(req),
@@ -74,6 +76,9 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			}),
 		),
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	err = cff.Parallel(
 		ctx,
@@ -130,7 +135,11 @@ func (h *fooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			map[string]int{"a": 1, "b": 2, "c": 3},
 		),
 	)
-	return res, err
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 // ManagerRepository TODO

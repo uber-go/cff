@@ -51,3 +51,10 @@ issues:
     #   for foo() { }
     - linters: [revive]
       text: 'empty-block: this block is empty, you can remove it'
+
+    # magic_gen has some generated code that writes to fields of a struct
+    # that eventually goes unused.
+    # This is a false positive -- that struct is intentionally unused.
+    - linters: [govet]
+      path: examples/magic_gen.go
+      text: 'unusedwrite: unused write to field'
