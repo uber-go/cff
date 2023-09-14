@@ -261,7 +261,6 @@ Now let's actually make requests to this interface.
     	fmt.Println(res.Driver, "drove", res.Rider, "who lives in", res.HomeCity)
     ```
 
-
 15. Finally, run `go generate` again.
     You should see a message similar to the following.
 
