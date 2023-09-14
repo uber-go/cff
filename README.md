@@ -11,18 +11,23 @@ cff can be useful when you are trying to:
 
 1. Run interdependent functions concurrently, with a guarantee that a function does not run before its dependencies.
   ```mermaid
-  flowchart TD
-    A; B; dots[...]; H
+  flowchart LR
+    A; B; C; D; E; F; G
+    dots1[...]; dots2[...]
+    X; Y;
 
-    done(( Done ))
+    A & B --> C
+    B --> D & E
+    A & C --> F
+    C & D & E --> G
+    F & G --> dots1
+    G & E --> dots2
 
-    A --> done
-    B --Error--x done
-    dots -.-> done
-    H --> done
+    dots1 --> X
+    dots2 --> Y
 
-    style done fill:none,stroke:none
-    style dots fill:none,stroke:none
+    style dots1 fill:none,stroke:none
+    style dots2 fill:none,stroke:none
   ```
 
 2. Run independent functions concurrently.
