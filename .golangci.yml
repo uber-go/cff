@@ -52,6 +52,17 @@ issues:
     - linters: [revive]
       text: 'empty-block: this block is empty, you can remove it'
 
+    # We're using a pretty pedantic style for revive.
+    # Generated files cannot always comply with it, so omit them.
+    - linters: [revive]
+      path: '_gen.go$'
+
+    # Also opt-out revive for source files used in examples.
+    # The contents of those source files affect the documentation,
+    # so we want to control their contents.
+    - linters: [revive]
+      path: 'docs/ex/.*.go$'
+
     # magic_gen has some generated code that writes to fields of a struct
     # that eventually goes unused.
     # This is a false positive -- that struct is intentionally unused.
