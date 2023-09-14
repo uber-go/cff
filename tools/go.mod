@@ -2,13 +2,9 @@ module go.uber.org/cff/tools
 
 go 1.20
 
-require (
-	github.com/bwplotka/mdox v0.9.0
-	honnef.co/go/tools v0.4.5
-)
+require github.com/bwplotka/mdox v0.9.0
 
 require (
-	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/Kunde21/markdownfmt/v2 v2.1.1-0.20210810103848-727f02f4c51c // indirect
 	github.com/PuerkitoBio/goquery v1.8.0 // indirect
 	github.com/alecthomas/chroma v0.10.0 // indirect
@@ -73,8 +69,6 @@ require (
 	github.com/theckman/yacspin v0.13.12 // indirect
 	github.com/yuin/goldmark v1.5.2 // indirect
 	github.com/yuin/goldmark-emoji v1.0.1 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20221208152030-732eee02a75a // indirect
-	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
