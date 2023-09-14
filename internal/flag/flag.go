@@ -1,3 +1,5 @@
+// Package flag implements command line flag utilities
+// for the cff command.
 package flag
 
 import "flag"

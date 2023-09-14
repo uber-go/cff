@@ -18,6 +18,9 @@ MDOX = bin/mdox
 # We run that separately explicitly on a specific platform.
 COVER_MODULES ?= $(filter-out ./docs ./tools,$(MODULES))
 
+# 'make lint' should not run on internal/tests or tools.
+LINT_MODULES ?= $(filter-out ./internal/tests ./tools,$(MODULES))
+
 SRC_FILES = $(shell find . '(' -path './.*' -o -path '*test*' -o -path '*/examples/*' -o -path './docs/*' -prune ')' -o -name '*.go' -print)
 
 # All go files are in scope for formatting -- even if they're generated.
@@ -66,20 +69,15 @@ fmt:
 	@gofmt -w -l $(GOFMT_FILES)
 
 .PHONY: lint
-lint: staticcheck checkfmt docs-check
+lint: golangci-lint docs-check
 
-.PHONY: staticcheck
-staticcheck: $(STATICCHECK)
-	$(STATICCHECK) ./...
+.PHONY: golangci-lint
+golangci-lint:
+	@$(foreach mod,$(LINT_MODULES), \
+		(cd $(mod) && \
+		echo "[lint] golangci-lint: $(mod)" && \
+		golangci-lint run --path-prefix $(mod)) &&) true
 
-.PHONY: checkfmt
-checkfmt:
-	@DIFF=$$(gofmt -d $(GOFMT_FILES)); \
-	if [[ -n "$$DIFF" ]]; then \
-		echo "--- gofmt would cause changes:"; \
-		echo "$$DIFF"; \
-		exit 1; \
-	fi
 
 .PHONY: docs
 docs:

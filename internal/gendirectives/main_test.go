@@ -10,9 +10,7 @@ import (
 )
 
 func TestRunErrors(t *testing.T) {
-	dir, err := os.MkdirTemp("", "cff.go")
-	require.NoError(t, err)
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	t.Run("too few arguments", func(t *testing.T) {
 		require.Error(t, run([]string{"foo"}))
@@ -20,7 +18,7 @@ func TestRunErrors(t *testing.T) {
 
 	t.Run("unable to parse", func(t *testing.T) {
 		input := filepath.Join(dir, "bad_syntax.go")
-		require.NoError(t, os.WriteFile(input, []byte("foo"), 0644))
+		require.NoError(t, os.WriteFile(input, []byte("foo"), 0o644))
 
 		err := run([]string{input, filepath.Join(dir, "out.go")})
 		require.Error(t, err)
@@ -29,7 +27,7 @@ func TestRunErrors(t *testing.T) {
 
 	t.Run("unable to write", func(t *testing.T) {
 		input := filepath.Join(dir, "cff.go")
-		require.NoError(t, os.WriteFile(input, []byte(_sampleFile), 0644))
+		require.NoError(t, os.WriteFile(input, []byte(_sampleFile), 0o644))
 
 		err := run([]string{input, filepath.Join(dir, "does_not_exist", "out.go")})
 		require.Error(t, err)
@@ -48,12 +46,10 @@ func (*Bar) Baz()
 `
 
 func TestRun(t *testing.T) {
-	dir, err := os.MkdirTemp("", "cff.go")
-	require.NoError(t, err)
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	input := filepath.Join(dir, "cff.go")
-	require.NoError(t, os.WriteFile(input, []byte(_sampleFile), 0644))
+	require.NoError(t, os.WriteFile(input, []byte(_sampleFile), 0o644))
 
 	output := filepath.Join(dir, "out.go")
 	require.NoError(t, run([]string{input, output}))

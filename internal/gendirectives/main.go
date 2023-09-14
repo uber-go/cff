@@ -19,6 +19,8 @@ import (
 	"log"
 	"os"
 	"text/template"
+
+	"go.uber.org/multierr"
 )
 
 func main() {
@@ -28,7 +30,7 @@ func main() {
 	}
 }
 
-func run(args []string) error {
+func run(args []string) (err error) {
 	if len(args) != 2 {
 		return fmt.Errorf("usage: %v path_to_cff.go output_file.go", os.Args[0])
 	}
@@ -61,7 +63,7 @@ func run(args []string) error {
 	if err != nil {
 		return fmt.Errorf("create %q: %w", output, err)
 	}
-	defer out.Close()
+	defer multierr.AppendInvoke(&err, multierr.Close(out))
 
 	return _tmpl.Execute(out, td)
 }

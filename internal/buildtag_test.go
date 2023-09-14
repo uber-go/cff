@@ -221,7 +221,8 @@ func TestStickyErrWriter(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		var buff bytes.Buffer
 		w := &stickyErrWriter{W: &buff}
-		io.WriteString(w, "hello")
+		_, err := io.WriteString(w, "hello")
+		assert.NoError(t, err, "stickyErrWriter should not return an error")
 		assert.NoError(t, w.Err)
 	})
 
@@ -230,8 +231,13 @@ func TestStickyErrWriter(t *testing.T) {
 		w := &stickyErrWriter{
 			W: &errWriter{Err: giveErr},
 		}
-		io.WriteString(w, "hello")
-		io.WriteString(w, "world")
+
+		_, err := io.WriteString(w, "hello")
+		assert.NoError(t, err, "stickyErrWriter should not return an error")
+
+		_, err = io.WriteString(w, "world")
+		assert.NoError(t, err, "stickyErrWriter should not return an error")
+
 		assert.ErrorIs(t, w.Err, giveErr)
 	})
 }

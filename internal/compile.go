@@ -1,3 +1,4 @@
+// Package internal is the internal implementation of the cff compiler.
 package internal
 
 import (
