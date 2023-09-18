@@ -104,15 +104,11 @@ func ParamOrder(track *orderCheck) error {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
-				if recovered != nil {
-					stacktrace = string(debug.Stack())
-				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: stacktrace,
+						Stacktrace: string(debug.Stack()),
 					}
 				}
 			}()
@@ -238,7 +234,6 @@ func NilParam() {
 
 			defer func() {
 				recovered := recover()
-
 				if recovered != nil {
 					taskEmitter.TaskPanicRecovered(ctx, recovered)
 					v4, err = nil, nil

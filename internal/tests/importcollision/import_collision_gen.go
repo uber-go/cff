@@ -105,15 +105,11 @@ func Flow() (string, error) {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
-				if recovered != nil {
-					stacktrace = string(debug.Stack())
-				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff2.PanicError{
 						Value:      recovered,
-						Stacktrace: stacktrace,
+						Stacktrace: string(debug.Stack()),
 					}
 				}
 			}()
@@ -154,15 +150,11 @@ func Flow() (string, error) {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
-				if recovered != nil {
-					stacktrace = string(debug.Stack())
-				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff2.PanicError{
 						Value:      recovered,
-						Stacktrace: stacktrace,
+						Stacktrace: string(debug.Stack()),
 					}
 				}
 			}()
@@ -203,15 +195,11 @@ func Flow() (string, error) {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
-				if recovered != nil {
-					stacktrace = string(debug.Stack())
-				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff2.PanicError{
 						Value:      recovered,
-						Stacktrace: stacktrace,
+						Stacktrace: string(debug.Stack()),
 					}
 				}
 			}()
@@ -252,15 +240,11 @@ func Flow() (string, error) {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
-				if recovered != nil {
-					stacktrace = string(debug.Stack())
-				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff2.PanicError{
 						Value:      recovered,
-						Stacktrace: stacktrace,
+						Stacktrace: string(debug.Stack()),
 					}
 				}
 			}()
@@ -303,15 +287,11 @@ func Flow() (string, error) {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
-				if recovered != nil {
-					stacktrace = string(debug.Stack())
-				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff2.PanicError{
 						Value:      recovered,
-						Stacktrace: stacktrace,
+						Stacktrace: string(debug.Stack()),
 					}
 				}
 			}()

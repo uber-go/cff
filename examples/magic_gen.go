@@ -157,15 +157,11 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
-				if recovered != nil {
-					stacktrace = string(debug.Stack())
-				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: stacktrace,
+						Stacktrace: string(debug.Stack()),
 					}
 				}
 			}()
@@ -206,15 +202,11 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
-				if recovered != nil {
-					stacktrace = string(debug.Stack())
-				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: stacktrace,
+						Stacktrace: string(debug.Stack()),
 					}
 				}
 			}()
@@ -441,15 +433,11 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
-				if recovered != nil {
-					stacktrace = string(debug.Stack())
-				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: stacktrace,
+						Stacktrace: string(debug.Stack()),
 					}
 				}
 			}()
@@ -498,15 +486,11 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
-				if recovered != nil {
-					stacktrace = string(debug.Stack())
-				}
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: stacktrace,
+						Stacktrace: string(debug.Stack()),
 					}
 				}
 			}()
@@ -599,7 +583,7 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		/*line magic.go:135:4*/
 		_135_4 := map[string]int{"a": 1, "b": 2, "c": 3}
 
-		/*line magic_gen.go:603*/
+		/*line magic_gen.go:587*/
 		ctx := _84_3
 		emitter := cff.NopEmitter()
 

@@ -96,7 +96,6 @@ func Serial(e error, r string) (string, error) {
 
 			defer func() {
 				recovered := recover()
-
 				if recovered != nil {
 					taskEmitter.TaskPanicRecovered(ctx, recovered)
 					v1, err = _22_23, nil
@@ -211,7 +210,6 @@ func NoOutput() error {
 
 			defer func() {
 				recovered := recover()
-
 				if recovered != nil {
 					taskEmitter.TaskPanicRecovered(ctx, recovered)
 					err = nil
@@ -333,7 +331,6 @@ func Panic() (string, error) {
 
 			defer func() {
 				recovered := recover()
-
 				if recovered != nil {
 					taskEmitter.TaskPanicRecovered(ctx, recovered)
 					v1, err = _51_23, nil
