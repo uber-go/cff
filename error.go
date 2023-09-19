@@ -50,8 +50,8 @@ type PanicError struct {
 	Value any
 
 	// Stacktrace contains string of what call stack looks like when the panic happened.
-	// This is automatically generated in cff.NewPanicError(), and panic() should
-	// always be at the top of the call stack.
+	// This is populated by calling runtime/debug.Stack() when a non-nil value is
+	// recovered from a cff-scheduled job.
 	Stacktrace string
 }
 

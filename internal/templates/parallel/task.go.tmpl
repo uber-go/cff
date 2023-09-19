@@ -29,11 +29,10 @@
 
 	defer func() {
 		recovered := recover()
-		if recovered == nil {
-			return
+		if recovered != nil {
+			taskEmitter.TaskPanic(ctx, recovered)
+			{{ template "panicError" }}
 		}
-		taskEmitter.TaskPanic(ctx, recovered)
-		{{ template "panicError" }}
 	}()
 
 	defer {{ $t }}.ran.Store(true)

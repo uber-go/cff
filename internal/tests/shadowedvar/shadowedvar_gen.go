@@ -227,13 +227,12 @@ func CtxConflictParallel(ctx string) (string, string, error) {
 
 			defer func() {
 				recovered := recover()
-				if recovered == nil {
-					return
-				}
-				taskEmitter.TaskPanic(ctx, recovered)
-				err = &cff2.PanicError{
-					Value:      recovered,
-					Stacktrace: string(debug.Stack()),
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = &cff2.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
+					}
 				}
 			}()
 
@@ -268,13 +267,12 @@ func CtxConflictParallel(ctx string) (string, string, error) {
 
 			defer func() {
 				recovered := recover()
-				if recovered == nil {
-					return
-				}
-				taskEmitter.TaskPanic(ctx, recovered)
-				err = &cff2.PanicError{
-					Value:      recovered,
-					Stacktrace: string(debug.Stack()),
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = &cff2.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
+					}
 				}
 			}()
 
@@ -384,12 +382,11 @@ func CtxConflictSlice(ctx string, target []string) error {
 			sliceTask3.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered == nil {
-						return
-					}
-					err = &cff2.PanicError{
-						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+					if recovered != nil {
+						err = &cff2.PanicError{
+							Value:      recovered,
+							Stacktrace: string(debug.Stack()),
+						}
 					}
 				}()
 				err = _53_4(idx, val)

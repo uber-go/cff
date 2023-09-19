@@ -658,13 +658,12 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
-				if recovered == nil {
-					return
-				}
-				taskEmitter.TaskPanic(ctx, recovered)
-				err = &cff.PanicError{
-					Value:      recovered,
-					Stacktrace: string(debug.Stack()),
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
+					}
 				}
 			}()
 
@@ -703,13 +702,12 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
-				if recovered == nil {
-					return
-				}
-				taskEmitter.TaskPanic(ctx, recovered)
-				err = &cff.PanicError{
-					Value:      recovered,
-					Stacktrace: string(debug.Stack()),
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
+					}
 				}
 			}()
 
@@ -748,13 +746,12 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 
 			defer func() {
 				recovered := recover()
-				if recovered == nil {
-					return
-				}
-				taskEmitter.TaskPanic(ctx, recovered)
-				err = &cff.PanicError{
-					Value:      recovered,
-					Stacktrace: string(debug.Stack()),
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
+					}
 				}
 			}()
 
@@ -788,12 +785,11 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			sliceTask9.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered == nil {
-						return
-					}
-					err = &cff.PanicError{
-						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+					if recovered != nil {
+						err = &cff.PanicError{
+							Value:      recovered,
+							Stacktrace: string(debug.Stack()),
+						}
 					}
 				}()
 				err = _99_4(ctx, idx, val)
@@ -817,12 +813,11 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			sliceTask10.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered == nil {
-						return
-					}
-					err = &cff.PanicError{
-						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+					if recovered != nil {
+						err = &cff.PanicError{
+							Value:      recovered,
+							Stacktrace: string(debug.Stack()),
+						}
 					}
 				}()
 				err = _107_4(ctx, val)
@@ -846,12 +841,11 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 			sliceTask11.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered == nil {
-						return
-					}
-					err = &cff.PanicError{
-						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+					if recovered != nil {
+						err = &cff.PanicError{
+							Value:      recovered,
+							Stacktrace: string(debug.Stack()),
+						}
 					}
 				}()
 				err = _115_4(ctx, idx, val)

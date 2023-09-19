@@ -113,13 +113,12 @@ func TestIsOdd(t *testing.T) {
 
 			defer func() {
 				recovered := recover()
-				if recovered == nil {
-					return
-				}
-				taskEmitter.TaskPanic(ctx, recovered)
-				err = &cff.PanicError{
-					Value:      recovered,
-					Stacktrace: string(debug.Stack()),
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
+					}
 				}
 			}()
 
@@ -158,13 +157,12 @@ func TestIsOdd(t *testing.T) {
 
 			defer func() {
 				recovered := recover()
-				if recovered == nil {
-					return
-				}
-				taskEmitter.TaskPanic(ctx, recovered)
-				err = &cff.PanicError{
-					Value:      recovered,
-					Stacktrace: string(debug.Stack()),
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
+					}
 				}
 			}()
 
@@ -203,13 +201,12 @@ func TestIsOdd(t *testing.T) {
 
 			defer func() {
 				recovered := recover()
-				if recovered == nil {
-					return
-				}
-				taskEmitter.TaskPanic(ctx, recovered)
-				err = &cff.PanicError{
-					Value:      recovered,
-					Stacktrace: string(debug.Stack()),
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
+					}
 				}
 			}()
 
@@ -248,13 +245,12 @@ func TestIsOdd(t *testing.T) {
 
 			defer func() {
 				recovered := recover()
-				if recovered == nil {
-					return
-				}
-				taskEmitter.TaskPanic(ctx, recovered)
-				err = &cff.PanicError{
-					Value:      recovered,
-					Stacktrace: string(debug.Stack()),
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: string(debug.Stack()),
+					}
 				}
 			}()
 
