@@ -78,7 +78,7 @@ func Simple(f func(), pred bool) error {
 		// go.uber.org/cff/internal/tests/predicate/predicate.go:24:4
 		var p0 bool
 		var p0PanicRecover interface{}
-		var p0PanicStacktrace string
+		var p0PanicStacktrace []byte
 		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff.AtomicBool
@@ -89,7 +89,7 @@ func Simple(f func(), pred bool) error {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
-					p0PanicStacktrace = string(debug.Stack())
+					p0PanicStacktrace = debug.Stack()
 				}
 			}()
 			p0 = _24_18()
@@ -122,9 +122,9 @@ func Simple(f func(), pred bool) error {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
+				var stacktrace []byte
 				if recovered != nil {
-					stacktrace = string(debug.Stack())
+					stacktrace = debug.Stack()
 				}
 				if recovered == nil && p0PanicRecover != nil {
 					recovered = p0PanicRecover
@@ -243,7 +243,7 @@ func SimpleWithContextTask() error {
 		// go.uber.org/cff/internal/tests/predicate/predicate.go:41:4
 		var p0 bool
 		var p0PanicRecover interface{}
-		var p0PanicStacktrace string
+		var p0PanicStacktrace []byte
 		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff.AtomicBool
@@ -254,7 +254,7 @@ func SimpleWithContextTask() error {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
-					p0PanicStacktrace = string(debug.Stack())
+					p0PanicStacktrace = debug.Stack()
 				}
 			}()
 			p0 = _42_5(v2)
@@ -287,9 +287,9 @@ func SimpleWithContextTask() error {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
+				var stacktrace []byte
 				if recovered != nil {
-					stacktrace = string(debug.Stack())
+					stacktrace = debug.Stack()
 				}
 				if recovered == nil && p0PanicRecover != nil {
 					recovered = p0PanicRecover
@@ -408,7 +408,7 @@ func SimpleWithContextPredicate() error {
 		// go.uber.org/cff/internal/tests/predicate/predicate.go:61:4
 		var p0 bool
 		var p0PanicRecover interface{}
-		var p0PanicStacktrace string
+		var p0PanicStacktrace []byte
 		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff.AtomicBool
@@ -419,7 +419,7 @@ func SimpleWithContextPredicate() error {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
-					p0PanicStacktrace = string(debug.Stack())
+					p0PanicStacktrace = debug.Stack()
 				}
 			}()
 			p0 = _62_5(ctx, v2)
@@ -452,9 +452,9 @@ func SimpleWithContextPredicate() error {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
+				var stacktrace []byte
 				if recovered != nil {
-					stacktrace = string(debug.Stack())
+					stacktrace = debug.Stack()
 				}
 				if recovered == nil && p0PanicRecover != nil {
 					recovered = p0PanicRecover
@@ -573,7 +573,7 @@ func SimpleWithContextTaskAndPredicate() error {
 		// go.uber.org/cff/internal/tests/predicate/predicate.go:81:4
 		var p0 bool
 		var p0PanicRecover interface{}
-		var p0PanicStacktrace string
+		var p0PanicStacktrace []byte
 		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff.AtomicBool
@@ -584,7 +584,7 @@ func SimpleWithContextTaskAndPredicate() error {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
-					p0PanicStacktrace = string(debug.Stack())
+					p0PanicStacktrace = debug.Stack()
 				}
 			}()
 			p0 = _82_5(ctx, v2)
@@ -617,9 +617,9 @@ func SimpleWithContextTaskAndPredicate() error {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
+				var stacktrace []byte
 				if recovered != nil {
-					stacktrace = string(debug.Stack())
+					stacktrace = debug.Stack()
 				}
 				if recovered == nil && p0PanicRecover != nil {
 					recovered = p0PanicRecover
@@ -767,7 +767,7 @@ func ExtraDependencies() error {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -812,7 +812,7 @@ func ExtraDependencies() error {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -834,7 +834,7 @@ func ExtraDependencies() error {
 		// go.uber.org/cff/internal/tests/predicate/predicate.go:107:4
 		var p0 bool
 		var p0PanicRecover interface{}
-		var p0PanicStacktrace string
+		var p0PanicStacktrace []byte
 		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff.AtomicBool
@@ -845,7 +845,7 @@ func ExtraDependencies() error {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
-					p0PanicStacktrace = string(debug.Stack())
+					p0PanicStacktrace = debug.Stack()
 				}
 			}()
 			p0 = _108_5(v3, v4)
@@ -881,9 +881,9 @@ func ExtraDependencies() error {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
+				var stacktrace []byte
 				if recovered != nil {
-					stacktrace = string(debug.Stack())
+					stacktrace = debug.Stack()
 				}
 				if recovered == nil && p0PanicRecover != nil {
 					recovered = p0PanicRecover
@@ -1007,7 +1007,7 @@ func MultiplePredicates() error {
 		// go.uber.org/cff/internal/tests/predicate/predicate.go:128:4
 		var p0 bool
 		var p0PanicRecover interface{}
-		var p0PanicStacktrace string
+		var p0PanicStacktrace []byte
 		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff.AtomicBool
@@ -1018,7 +1018,7 @@ func MultiplePredicates() error {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
-					p0PanicStacktrace = string(debug.Stack())
+					p0PanicStacktrace = debug.Stack()
 				}
 			}()
 			p0 = _128_18()
@@ -1051,9 +1051,9 @@ func MultiplePredicates() error {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
+				var stacktrace []byte
 				if recovered != nil {
-					stacktrace = string(debug.Stack())
+					stacktrace = debug.Stack()
 				}
 				if recovered == nil && p0PanicRecover != nil {
 					recovered = p0PanicRecover
@@ -1092,7 +1092,7 @@ func MultiplePredicates() error {
 		// go.uber.org/cff/internal/tests/predicate/predicate.go:134:4
 		var p1 bool
 		var p1PanicRecover interface{}
-		var p1PanicStacktrace string
+		var p1PanicStacktrace []byte
 		_ = p1PanicStacktrace // possibly unused.
 		pred2 := new(struct {
 			ran cff.AtomicBool
@@ -1103,7 +1103,7 @@ func MultiplePredicates() error {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p1PanicRecover = recovered
-					p1PanicStacktrace = string(debug.Stack())
+					p1PanicStacktrace = debug.Stack()
 				}
 			}()
 			p1 = _134_18()
@@ -1136,9 +1136,9 @@ func MultiplePredicates() error {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
+				var stacktrace []byte
 				if recovered != nil {
-					stacktrace = string(debug.Stack())
+					stacktrace = debug.Stack()
 				}
 				if recovered == nil && p1PanicRecover != nil {
 					recovered = p1PanicRecover
@@ -1255,7 +1255,7 @@ func Panicked() error {
 		// go.uber.org/cff/internal/tests/predicate/predicate.go:149:4
 		var p0 bool
 		var p0PanicRecover interface{}
-		var p0PanicStacktrace string
+		var p0PanicStacktrace []byte
 		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff.AtomicBool
@@ -1266,7 +1266,7 @@ func Panicked() error {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
-					p0PanicStacktrace = string(debug.Stack())
+					p0PanicStacktrace = debug.Stack()
 				}
 			}()
 			p0 = _150_5()
@@ -1299,9 +1299,9 @@ func Panicked() error {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
+				var stacktrace []byte
 				if recovered != nil {
-					stacktrace = string(debug.Stack())
+					stacktrace = debug.Stack()
 				}
 				if recovered == nil && p0PanicRecover != nil {
 					recovered = p0PanicRecover
@@ -1420,7 +1420,7 @@ func PanickedWithFallback() (string, error) {
 		// go.uber.org/cff/internal/tests/predicate/predicate.go:170:4
 		var p0 bool
 		var p0PanicRecover interface{}
-		var p0PanicStacktrace string
+		var p0PanicStacktrace []byte
 		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff.AtomicBool
@@ -1431,7 +1431,7 @@ func PanickedWithFallback() (string, error) {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
-					p0PanicStacktrace = string(debug.Stack())
+					p0PanicStacktrace = debug.Stack()
 				}
 			}()
 			p0 = _171_5()
@@ -1467,7 +1467,6 @@ func PanickedWithFallback() (string, error) {
 
 				if recovered == nil && p0PanicRecover != nil {
 					recovered = p0PanicRecover
-
 				}
 				if recovered != nil {
 					taskEmitter.TaskPanicRecovered(ctx, recovered)

@@ -117,7 +117,7 @@ func SimpleFlow() (string, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -162,7 +162,7 @@ func SimpleFlow() (string, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -212,7 +212,7 @@ func SimpleFlow() (string, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -265,7 +265,7 @@ func SimpleFlow() (string, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -394,7 +394,7 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -439,7 +439,7 @@ func NoParamsFlow(ctx context.Context) (io.Reader, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -573,7 +573,7 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -623,7 +623,7 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -676,7 +676,7 @@ func SerialFailableFlow(ctx context.Context, f1, f2 func() error) error {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -817,7 +817,7 @@ func ProduceMultiple() error {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -862,7 +862,7 @@ func ProduceMultiple() error {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()

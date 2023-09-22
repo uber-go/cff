@@ -102,7 +102,7 @@ func NestedType(ctx context.Context, driverUUID uuid.UUID) error {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -219,7 +219,7 @@ func ImplicitType(ctx context.Context) error {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -264,7 +264,7 @@ func ImplicitType(ctx context.Context) error {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()

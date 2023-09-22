@@ -16,10 +16,9 @@
 {{ $t }}.run = func(ctx {{ $context }}.Context) (err error) {
 	defer func() {
 		recovered := recover()
-		if recovered == nil {
-			return
+		if recovered != nil {
+			{{ template "panicError" }}
 		}
-		{{ template "panicError" }}
 	}()
 
 	{{ template "taskResultList" . }}{{ if or .Function.HasError (len .Outputs) }} = {{ end }}{{ expr .Function.Node }}{{ template "callTaskArgs" . }}

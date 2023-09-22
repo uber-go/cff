@@ -113,7 +113,7 @@ func Baseline() float64 {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -158,7 +158,7 @@ func Baseline() float64 {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -203,7 +203,7 @@ func Baseline() float64 {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()

@@ -55,8 +55,9 @@ func TestPanicRecovered(t *testing.T) {
 	var panicError *cff.PanicError
 	require.ErrorAs(t, err, &panicError, "error returned should be a cff.PanicError")
 	assert.Equal(t, "sad times", panicError.Value, "PanicError.Value should be recovered value")
-	assert.Contains(t, panicError.Stacktrace, "panic({", "panic should be included in the stack trace")
-	assert.Contains(t, panicError.Stacktrace, ".Panicked.func", "function that panicked should be in the stack")
+	stacktrace := string(panicError.Stacktrace)
+	assert.Contains(t, stacktrace, "panic({", "panic should be included in the stack trace")
+	assert.Contains(t, stacktrace, ".Panicked.func", "function that panicked should be in the stack")
 }
 
 func TestPanicFallback(t *testing.T) {

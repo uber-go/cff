@@ -34,13 +34,14 @@ func TestTasksWithError(t *testing.T) {
 func TestTasksWithPanic(t *testing.T) {
 	err := TasksWithPanic()
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "panic: sad times\nstacktrace:")
+	assert.Contains(t, err.Error(), "panic: sad times\ngoroutine")
 	// check that error returned is actually a panic error
 	var panicError *cff.PanicError
 	require.ErrorAs(t, err, &panicError, "error returned should be a cff.PanicError")
 	assert.Equal(t, "sad times", panicError.Value, "PanicError.Value should be recovered value")
-	assert.Contains(t, panicError.Stacktrace, "panic({", "panic should be included in the stack trace")
-	assert.Contains(t, panicError.Stacktrace, ".TasksWithPanic.func", "function that panicked should be in the stack")
+	stacktrace := string(panicError.Stacktrace)
+	assert.Contains(t, stacktrace, "panic({", "panic should be included in the stack trace")
+	assert.Contains(t, stacktrace, ".TasksWithPanic.func", "function that panicked should be in the stack")
 }
 
 func TestMultipleTasks(t *testing.T) {
@@ -79,13 +80,14 @@ func TestTaskWithError(t *testing.T) {
 func TestTaskWithPanic(t *testing.T) {
 	err := TaskWithPanic()
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "panic: sad times\nstacktrace:")
+	assert.Contains(t, err.Error(), "panic: sad times\ngoroutine")
 	// check that error returned is actually a panic error
 	var panicError *cff.PanicError
 	require.ErrorAs(t, err, &panicError, "error returned should be a cff.PanicError")
 	assert.Equal(t, "sad times", panicError.Value, "PanicError.Value should be recovered value")
-	assert.Contains(t, panicError.Stacktrace, "panic({", "panic should be included in the stack trace")
-	assert.Contains(t, panicError.Stacktrace, ".TaskWithPanic.func", "function that panicked should be in the stack")
+	stacktrace := string(panicError.Stacktrace)
+	assert.Contains(t, stacktrace, "panic({", "panic should be included in the stack trace")
+	assert.Contains(t, stacktrace, ".TaskWithPanic.func", "function that panicked should be in the stack")
 }
 
 func TestMultipleTask(t *testing.T) {
@@ -105,7 +107,7 @@ func TestContinueOnError(t *testing.T) {
 
 	// Contains is used instead to verify non-deterministic ordering.
 	assert.Contains(t, err.Error(), "sad times")
-	assert.Contains(t, err.Error(), "panic: sadder times\nstacktrace:")
+	assert.Contains(t, err.Error(), "panic: sadder times\ngoroutine")
 
 	assert.Equal(t, src, target)
 }
@@ -215,12 +217,13 @@ func TestSlicePanic(t *testing.T) {
 	err := AssignSliceItems(src, target, false)
 	require.Error(t, err)
 
-	assert.Contains(t, err.Error(), "panic: sadder times\nstacktrace:")
+	assert.Contains(t, err.Error(), "panic: sadder times\ngoroutine")
 	var panicError *cff.PanicError
 	require.ErrorAs(t, err, &panicError, "error returned should be a cff.PanicError")
 	assert.Equal(t, "sadder times", panicError.Value, "PanicError.Value should be recovered value")
-	assert.Contains(t, panicError.Stacktrace, "panic({", "panic should be included in the stack trace")
-	assert.Contains(t, panicError.Stacktrace, ".AssignSliceItems.func", "function that panicked should be in the stack")
+	stacktrace := string(panicError.Stacktrace)
+	assert.Contains(t, stacktrace, "panic({", "panic should be included in the stack trace")
+	assert.Contains(t, stacktrace, ".AssignSliceItems.func", "function that panicked should be in the stack")
 	assert.Equal(t, "panic", target[1])
 }
 
@@ -233,7 +236,7 @@ func TestSliceContinueOnError(t *testing.T) {
 	require.Error(t, err)
 
 	assert.Contains(t, err.Error(), "sad times")
-	assert.Contains(t, err.Error(), "panic: sadder times\nstacktrace:")
+	assert.Contains(t, err.Error(), "panic: sadder times\ngoroutine")
 	assert.Contains(t, err.Error(), "panic({", "panic should be included in the stack trace")
 	assert.Contains(t, err.Error(), ".AssignSliceItems.func", "function that panicked should be in the stack")
 	assert.Equal(t, []string{"copy", "error", "panic", "me"}, target)
@@ -242,7 +245,7 @@ func TestSliceContinueOnError(t *testing.T) {
 func TestSliceEnd(t *testing.T) {
 	var src, target []int
 	errSadTimes := errors.New("sad times")
-	errSadderTimes := errors.New("panic: sadder times\nstacktrace:")
+	errSadderTimes := errors.New("panic: sadder times\ngoroutine")
 	tests := []struct {
 		desc       string
 		sliceEndFn func()
@@ -315,7 +318,7 @@ func TestSliceEnd(t *testing.T) {
 func TestSliceEndWithErr(t *testing.T) {
 	var src, target []int
 	errSadTimes := errors.New("sad times")
-	errSadderTimes := errors.New("panic: sadder times\nstacktrace:")
+	errSadderTimes := errors.New("panic: sadder times\ngoroutine")
 	tests := []struct {
 		desc       string
 		sliceEndFn func() error
@@ -402,7 +405,7 @@ func TestSliceEndWithErr(t *testing.T) {
 func TestSliceEndWithCtx(t *testing.T) {
 	var src, target []int
 	errSadTimes := errors.New("sad times")
-	errSadderTimes := errors.New("panic: sadder times\nstacktrace:")
+	errSadderTimes := errors.New("panic: sadder times\ngoroutine")
 	tests := []struct {
 		desc       string
 		sliceEndFn func(ctx context.Context)
@@ -477,7 +480,7 @@ func TestSliceEndWithCtx(t *testing.T) {
 func TestSliceEndWithCtxAndErr(t *testing.T) {
 	var src, target []int
 	errSadTimes := errors.New("sad times")
-	errSadderTimes := errors.New("panic: sadder times\nstacktrace:")
+	errSadderTimes := errors.New("panic: sadder times\ngoroutine")
 	tests := []struct {
 		desc       string
 		sliceEndFn func(ctx context.Context) error
@@ -581,7 +584,7 @@ func TestMapPanic(t *testing.T) {
 	}
 	err := AssignMapItems(src, nil, nil, false)
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "panic: sadder times\nstacktrace:")
+	assert.ErrorContains(t, err, "panic: sadder times\ngoroutine")
 }
 
 func TestMapContinueOnError(t *testing.T) {

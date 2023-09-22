@@ -5,14 +5,14 @@
 // {{ .PosInfo.File }}:{{ .PosInfo.Line }}:{{ .PosInfo.Column }}
 var p{{ predHash . }} bool
 var p{{ predHash . }}PanicRecover interface{}
-var p{{ predHash . }}PanicStacktrace string
+var p{{ predHash . }}PanicStacktrace []byte
 _ = p{{ predHash . }}PanicStacktrace  // possibly unused.
 {{ $p }} := new({{ template "predicate" }})
 {{ $p }}.run = func(ctx {{ $context }}.Context) (err error) {
     defer func() {
 	if recovered := recover(); recovered != nil {
 	    p{{ predHash . }}PanicRecover = recovered
-        p{{ predHash . }}PanicStacktrace = string({{ import "runtime/debug" }}.Stack())
+        p{{ predHash . }}PanicStacktrace = {{ import "runtime/debug" }}.Stack()
 	}
     }()
     p{{ predHash . }} = {{ expr .Function.Node }}{{ template "callTaskArgs" . }}

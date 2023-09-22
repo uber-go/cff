@@ -52,11 +52,11 @@ type PanicError struct {
 	// Stacktrace contains string of what call stack looks like when the panic happened.
 	// This is populated by calling runtime/debug.Stack() when a non-nil value is
 	// recovered from a cff-scheduled job.
-	Stacktrace string
+	Stacktrace []byte
 }
 
 var _ error = (*PanicError)(nil)
 
 func (pe *PanicError) Error() string {
-	return fmt.Sprintf("panic: %v\nstacktrace:\n%s", pe.Value, pe.Stacktrace)
+	return fmt.Sprintf("panic: %v\n%s", pe.Value, pe.Stacktrace)
 }

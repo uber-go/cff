@@ -107,7 +107,7 @@ func JoinTwo[A, B, C any](
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -157,7 +157,7 @@ func JoinTwo[A, B, C any](
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -207,7 +207,7 @@ func JoinTwo[A, B, C any](
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -329,7 +329,7 @@ func JoinMany[T any](producers ...Producer[T]) ([]T, error) {
 					if recovered != nil {
 						err = &cff.PanicError{
 							Value:      recovered,
-							Stacktrace: string(debug.Stack()),
+							Stacktrace: debug.Stack(),
 						}
 					}
 				}()

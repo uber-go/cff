@@ -127,7 +127,7 @@ func PredicateCombined() float64 {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -172,7 +172,7 @@ func PredicateCombined() float64 {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -304,7 +304,7 @@ func PredicateSplit() float64 {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -326,7 +326,7 @@ func PredicateSplit() float64 {
 		// go.uber.org/cff/internal/tests/benchmark/benchmark_predicate.go:77:4
 		var p0 bool
 		var p0PanicRecover interface{}
-		var p0PanicStacktrace string
+		var p0PanicStacktrace []byte
 		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff.AtomicBool
@@ -337,7 +337,7 @@ func PredicateSplit() float64 {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
-					p0PanicStacktrace = string(debug.Stack())
+					p0PanicStacktrace = debug.Stack()
 				}
 			}()
 			p0 = _78_5()
@@ -370,9 +370,9 @@ func PredicateSplit() float64 {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
+				var stacktrace []byte
 				if recovered != nil {
-					stacktrace = string(debug.Stack())
+					stacktrace = debug.Stack()
 				}
 				if recovered == nil && p0PanicRecover != nil {
 					recovered = p0PanicRecover

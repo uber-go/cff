@@ -100,7 +100,7 @@ func CtxConflict(ctx string) (string, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff2.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -231,7 +231,7 @@ func CtxConflictParallel(ctx string) (string, string, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff2.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -271,7 +271,7 @@ func CtxConflictParallel(ctx string) (string, string, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff2.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -385,7 +385,7 @@ func CtxConflictSlice(ctx string, target []string) error {
 					if recovered != nil {
 						err = &cff2.PanicError{
 							Value:      recovered,
-							Stacktrace: string(debug.Stack()),
+							Stacktrace: debug.Stack(),
 						}
 					}
 				}()
@@ -488,12 +488,11 @@ func CtxConflictMap(ctx int, input map[int]int) ([]int, error) {
 			mapTask4.fn = func(ctx context.Context) (err error) {
 				defer func() {
 					recovered := recover()
-					if recovered == nil {
-						return
-					}
-					err = &cff2.PanicError{
-						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+					if recovered != nil {
+						err = &cff2.PanicError{
+							Value:      recovered,
+							Stacktrace: debug.Stack(),
+						}
 					}
 				}()
 
@@ -584,7 +583,7 @@ func PredicateCtxConflict(f func(), ctx bool) error {
 		// go.uber.org/cff/internal/tests/shadowedvar/shadowedvar.go:92:4
 		var p0 bool
 		var p0PanicRecover interface{}
-		var p0PanicStacktrace string
+		var p0PanicStacktrace []byte
 		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff2.AtomicBool
@@ -595,7 +594,7 @@ func PredicateCtxConflict(f func(), ctx bool) error {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
-					p0PanicStacktrace = string(debug.Stack())
+					p0PanicStacktrace = debug.Stack()
 				}
 			}()
 			p0 = _92_19()
@@ -628,9 +627,9 @@ func PredicateCtxConflict(f func(), ctx bool) error {
 
 			defer func() {
 				recovered := recover()
-				var stacktrace string
+				var stacktrace []byte
 				if recovered != nil {
-					stacktrace = string(debug.Stack())
+					stacktrace = debug.Stack()
 				}
 				if recovered == nil && p0PanicRecover != nil {
 					recovered = p0PanicRecover

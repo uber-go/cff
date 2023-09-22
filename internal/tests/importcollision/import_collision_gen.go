@@ -109,7 +109,7 @@ func Flow() (string, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff2.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -154,7 +154,7 @@ func Flow() (string, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff2.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -199,7 +199,7 @@ func Flow() (string, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff2.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -244,7 +244,7 @@ func Flow() (string, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff2.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()
@@ -291,7 +291,7 @@ func Flow() (string, error) {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cff2.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()

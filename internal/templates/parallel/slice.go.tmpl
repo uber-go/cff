@@ -38,10 +38,9 @@ for {{if .HasIndexParameter}} idx {{else}} _ {{end}}, val := range {{ $t }}Slice
 		Run: func(ctx {{ $context }}.Context) (err error) {
 			defer func() {
 				recovered := recover()
-				if recovered == nil {
-					return
+				if recovered != nil {
+					{{ template "panicError" }}
 				}
-				{{ template "panicError" }}
 			}()
 
 			{{ template "callSliceEndFn" . }}

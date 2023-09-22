@@ -288,12 +288,11 @@ func _cffFlowmagicv2_32_9(
 	task0.run = func(ctx context.Context) (err error) {
 		defer func() {
 			recovered := recover()
-			if recovered == nil {
-				return
-			}
-			err = &cff.PanicError{
-				Value:      recovered,
-				Stacktrace: string(debug.Stack()),
+			if recovered != nil {
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -321,12 +320,11 @@ func _cffFlowmagicv2_32_9(
 	task1.run = func(ctx context.Context) (err error) {
 		defer func() {
 			recovered := recover()
-			if recovered == nil {
-				return
-			}
-			err = &cff.PanicError{
-				Value:      recovered,
-				Stacktrace: string(debug.Stack()),
+			if recovered != nil {
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -357,12 +355,11 @@ func _cffFlowmagicv2_32_9(
 	task4.run = func(ctx context.Context) (err error) {
 		defer func() {
 			recovered := recover()
-			if recovered == nil {
-				return
-			}
-			err = &cff.PanicError{
-				Value:      recovered,
-				Stacktrace: string(debug.Stack()),
+			if recovered != nil {
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -394,12 +391,11 @@ func _cffFlowmagicv2_32_9(
 	task5.run = func(ctx context.Context) (err error) {
 		defer func() {
 			recovered := recover()
-			if recovered == nil {
-				return
-			}
-			err = &cff.PanicError{
-				Value:      recovered,
-				Stacktrace: string(debug.Stack()),
+			if recovered != nil {
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -432,12 +428,11 @@ func _cffFlowmagicv2_32_9(
 	task2.run = func(ctx context.Context) (err error) {
 		defer func() {
 			recovered := recover()
-			if recovered == nil {
-				return
-			}
-			err = &cff.PanicError{
-				Value:      recovered,
-				Stacktrace: string(debug.Stack()),
+			if recovered != nil {
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -468,12 +463,11 @@ func _cffFlowmagicv2_32_9(
 	task3.run = func(ctx context.Context) (err error) {
 		defer func() {
 			recovered := recover()
-			if recovered == nil {
-				return
-			}
-			err = &cff.PanicError{
-				Value:      recovered,
-				Stacktrace: string(debug.Stack()),
+			if recovered != nil {
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 

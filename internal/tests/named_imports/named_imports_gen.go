@@ -99,7 +99,7 @@ func run(ctx newctx.Context) error {
 					taskEmitter.TaskPanic(ctx, recovered)
 					err = &cffv2.PanicError{
 						Value:      recovered,
-						Stacktrace: string(debug.Stack()),
+						Stacktrace: debug.Stack(),
 					}
 				}
 			}()

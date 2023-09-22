@@ -92,12 +92,11 @@ func _cffFlowfile1_15_9(
 	task0.run = func(ctx context.Context) (err error) {
 		defer func() {
 			recovered := recover()
-			if recovered == nil {
-				return
-			}
-			err = &cff.PanicError{
-				Value:      recovered,
-				Stacktrace: string(debug.Stack()),
+			if recovered != nil {
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
