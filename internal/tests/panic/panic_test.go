@@ -13,7 +13,7 @@ func TestCatchesPanicParallel(t *testing.T) {
 	err := p.FlowPanicsParallel()
 	assert.ErrorContains(t, err, "panic: panic\nstacktrace:")
 	var panicError *cff.PanicError
-	assert.Equal(t, true, errors.As(err, &panicError), "error returned should be a cff.PanicError")
+	require.ErrorAs(t, err, &panicError, "error returned should be a cff.PanicError")
 	assert.Equal(t, "panic", panicError.Value, "PanicError.Value should be recovered value")
 	assert.Contains(t, panicError.Stacktrace, "panic({", "panic should be included in the stack trace")
 	assert.Contains(t, panicError.Stacktrace, ".FlowPanicsParallel.func", "function that panicked should be in the stack")
@@ -22,9 +22,9 @@ func TestCatchesPanicParallel(t *testing.T) {
 func TestCatchesPanicSerial(t *testing.T) {
 	var p Panicker
 	err := p.FlowPanicsSerial()
-	assert.ErrorContains(t, err, "panic: panic\n")
+	assert.ErrorContains(t, err, "panic: panic\nstacktrace:")
 	var panicError *cff.PanicError
-	assert.Equal(t, true, errors.As(err, &panicError), "error returned should be a cff.PanicError")
+	require.ErrorAs(t, err, &panicError, "error returned should be a cff.PanicError")
 	assert.Equal(t, "panic", panicError.Value, "PanicError.Value should be recovered value")
 	assert.Contains(t, panicError.Stacktrace, "panic({", "panic should be included in the stack trace")
 	assert.Contains(t, panicError.Stacktrace, ".FlowPanicsSerial.func", "function that panicked should be in the stack")
