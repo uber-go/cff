@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"time"
 
 	"go.uber.org/cff"
@@ -113,7 +114,10 @@ func (h *H) Swallow(ctx context.Context, req string) (err error) {
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: debug.Stack(),
+					}
 				}
 			}()
 
@@ -157,7 +161,10 @@ func (h *H) Swallow(ctx context.Context, req string) (err error) {
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: debug.Stack(),
+					}
 				}
 			}()
 
@@ -269,7 +276,10 @@ func (h *H) TripleSwallow(ctx context.Context, req string) (err error) {
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: debug.Stack(),
+					}
 				}
 			}()
 
@@ -308,7 +318,10 @@ func (h *H) TripleSwallow(ctx context.Context, req string) (err error) {
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: debug.Stack(),
+					}
 				}
 			}()
 
@@ -347,7 +360,10 @@ func (h *H) TripleSwallow(ctx context.Context, req string) (err error) {
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: debug.Stack(),
+					}
 				}
 			}()
 
@@ -472,7 +488,10 @@ func UnusedInputInvoke() error {
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: debug.Stack(),
+					}
 				}
 			}()
 
@@ -511,7 +530,10 @@ func UnusedInputInvoke() error {
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: debug.Stack(),
+					}
 				}
 			}()
 
@@ -558,7 +580,10 @@ func UnusedInputInvoke() error {
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: debug.Stack(),
+					}
 				}
 			}()
 

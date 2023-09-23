@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/cff"
 	"go.uber.org/multierr"
 	"golang.org/x/exp/maps"
 )
@@ -33,7 +34,14 @@ func TestTasksWithError(t *testing.T) {
 func TestTasksWithPanic(t *testing.T) {
 	err := TasksWithPanic()
 	require.Error(t, err)
-	assert.Equal(t, "panic: sad times", err.Error())
+	assert.Contains(t, err.Error(), "panic: sad times\ngoroutine")
+	// check that error returned is actually a panic error
+	var panicError *cff.PanicError
+	require.ErrorAs(t, err, &panicError, "error returned should be a cff.PanicError")
+	assert.Equal(t, "sad times", panicError.Value, "PanicError.Value should be recovered value")
+	stacktrace := string(panicError.Stacktrace)
+	assert.Contains(t, stacktrace, "panic({", "panic should be included in the stack trace")
+	assert.Contains(t, stacktrace, ".TasksWithPanic.func", "function that panicked should be in the stack")
 }
 
 func TestMultipleTasks(t *testing.T) {
@@ -72,7 +80,14 @@ func TestTaskWithError(t *testing.T) {
 func TestTaskWithPanic(t *testing.T) {
 	err := TaskWithPanic()
 	require.Error(t, err)
-	assert.Equal(t, "panic: sad times", err.Error())
+	assert.Contains(t, err.Error(), "panic: sad times\ngoroutine")
+	// check that error returned is actually a panic error
+	var panicError *cff.PanicError
+	require.ErrorAs(t, err, &panicError, "error returned should be a cff.PanicError")
+	assert.Equal(t, "sad times", panicError.Value, "PanicError.Value should be recovered value")
+	stacktrace := string(panicError.Stacktrace)
+	assert.Contains(t, stacktrace, "panic({", "panic should be included in the stack trace")
+	assert.Contains(t, stacktrace, ".TaskWithPanic.func", "function that panicked should be in the stack")
 }
 
 func TestMultipleTask(t *testing.T) {
@@ -92,7 +107,7 @@ func TestContinueOnError(t *testing.T) {
 
 	// Contains is used instead to verify non-deterministic ordering.
 	assert.Contains(t, err.Error(), "sad times")
-	assert.Contains(t, err.Error(), "panic: sadder times")
+	assert.Contains(t, err.Error(), "panic: sadder times\ngoroutine")
 
 	assert.Equal(t, src, target)
 }
@@ -202,7 +217,13 @@ func TestSlicePanic(t *testing.T) {
 	err := AssignSliceItems(src, target, false)
 	require.Error(t, err)
 
-	assert.Equal(t, "panic: sadder times", err.Error())
+	assert.Contains(t, err.Error(), "panic: sadder times\ngoroutine")
+	var panicError *cff.PanicError
+	require.ErrorAs(t, err, &panicError, "error returned should be a cff.PanicError")
+	assert.Equal(t, "sadder times", panicError.Value, "PanicError.Value should be recovered value")
+	stacktrace := string(panicError.Stacktrace)
+	assert.Contains(t, stacktrace, "panic({", "panic should be included in the stack trace")
+	assert.Contains(t, stacktrace, ".AssignSliceItems.func", "function that panicked should be in the stack")
 	assert.Equal(t, "panic", target[1])
 }
 
@@ -215,14 +236,16 @@ func TestSliceContinueOnError(t *testing.T) {
 	require.Error(t, err)
 
 	assert.Contains(t, err.Error(), "sad times")
-	assert.Contains(t, err.Error(), "panic: sadder times")
+	assert.Contains(t, err.Error(), "panic: sadder times\ngoroutine")
+	assert.Contains(t, err.Error(), "panic({", "panic should be included in the stack trace")
+	assert.Contains(t, err.Error(), ".AssignSliceItems.func", "function that panicked should be in the stack")
 	assert.Equal(t, []string{"copy", "error", "panic", "me"}, target)
 }
 
 func TestSliceEnd(t *testing.T) {
 	var src, target []int
 	errSadTimes := errors.New("sad times")
-	errSadderTimes := errors.New("panic: sadder times")
+	errSadderTimes := errors.New("panic: sadder times\ngoroutine")
 	tests := []struct {
 		desc       string
 		sliceEndFn func()
@@ -284,7 +307,9 @@ func TestSliceEnd(t *testing.T) {
 			src = tt.src
 			target = make([]int, len(tt.wantTarget))
 			err := SliceEnd(src, assignItemsFn, tt.sliceEndFn)
-			assert.Equal(t, tt.wantErr, err)
+			if tt.wantErr != nil {
+				assert.ErrorContains(t, err, tt.wantErr.Error())
+			}
 			assert.Equal(t, tt.wantTarget, target)
 		})
 	}
@@ -293,7 +318,7 @@ func TestSliceEnd(t *testing.T) {
 func TestSliceEndWithErr(t *testing.T) {
 	var src, target []int
 	errSadTimes := errors.New("sad times")
-	errSadderTimes := errors.New("panic: sadder times")
+	errSadderTimes := errors.New("panic: sadder times\ngoroutine")
 	tests := []struct {
 		desc       string
 		sliceEndFn func() error
@@ -369,7 +394,9 @@ func TestSliceEndWithErr(t *testing.T) {
 			src = tt.src
 			target = make([]int, len(tt.wantTarget))
 			err := SliceEndWithErr(src, assignItemsFn, tt.sliceEndFn)
-			assert.Equal(t, tt.wantErr, err)
+			if tt.wantErr != nil {
+				assert.ErrorContains(t, err, tt.wantErr.Error())
+			}
 			assert.Equal(t, tt.wantTarget, target)
 		})
 	}
@@ -378,7 +405,7 @@ func TestSliceEndWithErr(t *testing.T) {
 func TestSliceEndWithCtx(t *testing.T) {
 	var src, target []int
 	errSadTimes := errors.New("sad times")
-	errSadderTimes := errors.New("panic: sadder times")
+	errSadderTimes := errors.New("panic: sadder times\ngoroutine")
 	tests := []struct {
 		desc       string
 		sliceEndFn func(ctx context.Context)
@@ -405,7 +432,8 @@ func TestSliceEndWithCtx(t *testing.T) {
 			src:        []int{1, 2, 3},
 			wantTarget: []int{1, 2, 3},
 			wantErr:    errSadderTimes,
-		}, {
+		},
+		{
 			desc: "not called on error",
 			sliceEndFn: func(context.Context) {
 				t.Fatal("SliceEnd shouldn't run after a error")
@@ -441,7 +469,9 @@ func TestSliceEndWithCtx(t *testing.T) {
 			src = tt.src
 			target = make([]int, len(tt.wantTarget))
 			err := SliceEndWithCtx(src, assignItemsFn, tt.sliceEndFn)
-			assert.Equal(t, tt.wantErr, err)
+			if tt.wantErr != nil {
+				assert.ErrorContains(t, err, tt.wantErr.Error())
+			}
 			assert.Equal(t, tt.wantTarget, target)
 		})
 	}
@@ -450,7 +480,7 @@ func TestSliceEndWithCtx(t *testing.T) {
 func TestSliceEndWithCtxAndErr(t *testing.T) {
 	var src, target []int
 	errSadTimes := errors.New("sad times")
-	errSadderTimes := errors.New("panic: sadder times")
+	errSadderTimes := errors.New("panic: sadder times\ngoroutine")
 	tests := []struct {
 		desc       string
 		sliceEndFn func(ctx context.Context) error
@@ -479,7 +509,8 @@ func TestSliceEndWithCtxAndErr(t *testing.T) {
 			src:        []int{1, 2, 3},
 			wantTarget: []int{1, 2, 3},
 			wantErr:    errSadderTimes,
-		}, {
+		},
+		{
 			desc: "not called on error",
 			sliceEndFn: func(context.Context) error {
 				t.Fatal("SliceEnd shouldn't run after a error")
@@ -517,7 +548,9 @@ func TestSliceEndWithCtxAndErr(t *testing.T) {
 			src = tt.src
 			target = make([]int, len(tt.wantTarget))
 			err := SliceEndWithCtxAndErr(src, assignItemsFn, tt.sliceEndFn)
-			assert.Equal(t, tt.wantErr, err)
+			if tt.wantErr != nil {
+				assert.ErrorContains(t, err, tt.wantErr.Error())
+			}
 			assert.Equal(t, tt.wantTarget, target)
 		})
 	}
@@ -551,7 +584,7 @@ func TestMapPanic(t *testing.T) {
 	}
 	err := AssignMapItems(src, nil, nil, false)
 	require.Error(t, err)
-	assert.EqualError(t, err, "panic: sadder times")
+	assert.ErrorContains(t, err, "panic: sadder times\ngoroutine")
 }
 
 func TestMapContinueOnError(t *testing.T) {
@@ -570,6 +603,9 @@ func TestMapContinueOnError(t *testing.T) {
 	// Using assert.Contains here because the returned error is non-deterministic.
 	assert.Contains(t, err.Error(), "sad times")
 	assert.Contains(t, err.Error(), "panic: sadder times")
+	// Check stack trace of PanicError with assert.Contains
+	assert.Contains(t, err.Error(), "panic({", "panic should be included in the stack trace")
+	assert.Contains(t, err.Error(), ".AssignMapItems.func", "function that panicked should be in the stack")
 
 	assert.Equal(t, []string{"copy", "me"}, keys)
 	assert.Equal(t, []int{0, 1}, values)

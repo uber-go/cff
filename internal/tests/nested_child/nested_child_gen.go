@@ -5,7 +5,7 @@ package nestedchild
 
 import (
 	"context"
-	"fmt"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -98,7 +98,10 @@ func Itoa(ctx context.Context, i int) (s string, err error) {
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: debug.Stack(),
+					}
 				}
 			}()
 

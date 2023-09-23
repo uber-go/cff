@@ -1,0 +1,9 @@
+{{- define "panicError" -}}
+{{- $cff := import "go.uber.org/cff" -}}
+err = &{{ $cff }}.PanicError{
+    Value:      recovered,
+    Stacktrace: {{ import "runtime/debug" }}.Stack(),
+}
+{{- end -}}
+
+{{- /* vim:set ft=gotexttmpl noet: */ -}}

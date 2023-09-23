@@ -17,7 +17,7 @@
 	defer func() {
 		recovered := recover()
 		if recovered != nil {
-			err = {{ import "fmt" }}.Errorf("task panic: %v", recovered)
+			{{ template "panicError" }}
 		}
 	}()
 

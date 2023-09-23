@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/cff"
 )
 
 func TestSimplePredicate(t *testing.T) {
@@ -51,7 +52,12 @@ func TestPanicRecovered(t *testing.T) {
 			err = Panicked()
 		},
 	)
-	assert.EqualError(t, err, "task panic: sad times")
+	var panicError *cff.PanicError
+	require.ErrorAs(t, err, &panicError, "error returned should be a cff.PanicError")
+	assert.Equal(t, "sad times", panicError.Value, "PanicError.Value should be recovered value")
+	stacktrace := string(panicError.Stacktrace)
+	assert.Contains(t, stacktrace, "panic({", "panic should be included in the stack trace")
+	assert.Contains(t, stacktrace, ".Panicked.func", "function that panicked should be in the stack")
 }
 
 func TestPanicFallback(t *testing.T) {

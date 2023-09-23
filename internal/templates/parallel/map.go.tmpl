@@ -15,7 +15,7 @@ for key, val := range {{ expr .Map }} {
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = {{ import "fmt" }}.Errorf("panic: %v", recovered)
+				{{ template "panicError" }}
 			}
 		}()
 
@@ -37,8 +37,9 @@ for key, val := range {{ expr .Map }} {
 		Dependencies: {{ $t }}Jobs,
 		Run: func(ctx {{ $context }}.Context) (err error) {
 			defer func() {
-				if recovered := recover(); recovered != nil {
-					err = {{ import "fmt" }}.Errorf("panic: %v", recovered)
+				recovered := recover()
+				if recovered != nil {
+					{{ template "panicError" }}
 				}
 			}()
 

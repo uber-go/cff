@@ -5,7 +5,7 @@ package simple
 
 import (
 	"context"
-	"fmt"
+	"runtime/debug"
 	"time"
 
 	"go.uber.org/cff"
@@ -206,7 +206,10 @@ func _cffFlowsimple_21_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -235,7 +238,10 @@ func _cffFlowsimple_21_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -267,7 +273,10 @@ func _cffFlowsimple_21_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -299,7 +308,10 @@ func _cffFlowsimple_21_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -427,7 +439,10 @@ func _cffFlowsimple_55_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -456,7 +471,10 @@ func _cffFlowsimple_55_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -488,7 +506,10 @@ func _cffFlowsimple_55_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -610,7 +631,10 @@ func _cffFlowsimple_82_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -639,7 +663,10 @@ func _cffFlowsimple_82_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -671,7 +698,10 @@ func _cffFlowsimple_82_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -798,7 +828,10 @@ func _cffFlowsimple_106_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -827,7 +860,10 @@ func _cffFlowsimple_106_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -859,7 +895,10 @@ func _cffFlowsimple_106_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 

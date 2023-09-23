@@ -31,7 +31,7 @@
 		recovered := recover()
 		if recovered != nil {
 			taskEmitter.TaskPanic(ctx, recovered)
-			err = {{ import "fmt" }}.Errorf("panic: %v", recovered)
+			{{ template "panicError" }}
 		}
 	}()
 

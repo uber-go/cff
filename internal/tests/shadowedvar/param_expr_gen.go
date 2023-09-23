@@ -5,7 +5,7 @@ package shadowedvar
 
 import (
 	"context"
-	"fmt"
+	"runtime/debug"
 	"testing"
 	"time"
 
@@ -106,7 +106,10 @@ func ParamOrder(track *orderCheck) error {
 				recovered := recover()
 				if recovered != nil {
 					taskEmitter.TaskPanic(ctx, recovered)
-					err = fmt.Errorf("task panic: %v", recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: debug.Stack(),
+					}
 				}
 			}()
 

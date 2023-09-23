@@ -6,6 +6,7 @@ package example
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -288,7 +289,10 @@ func _cffFlowmagicv2_32_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -317,7 +321,10 @@ func _cffFlowmagicv2_32_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -349,7 +356,10 @@ func _cffFlowmagicv2_32_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -382,7 +392,10 @@ func _cffFlowmagicv2_32_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -416,7 +429,10 @@ func _cffFlowmagicv2_32_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
@@ -448,7 +464,10 @@ func _cffFlowmagicv2_32_9(
 		defer func() {
 			recovered := recover()
 			if recovered != nil {
-				err = fmt.Errorf("task panic: %v", recovered)
+				err = &cff.PanicError{
+					Value:      recovered,
+					Stacktrace: debug.Stack(),
+				}
 			}
 		}()
 
