@@ -1446,12 +1446,12 @@
     "@vuepress/types" "1.9.10"
     lodash.debounce "^4.0.8"
 
-"@vuepress/plugin-back-to-top@^1.9.7":
-  version "1.9.7"
-  resolved "https://registry.yarnpkg.com/@vuepress/plugin-back-to-top/-/plugin-back-to-top-1.9.7.tgz#249a76d79f1e0c8c71a2804485ad0245837e6bfd"
-  integrity sha512-DM1S+Q8Xn/i+zhe4zThekxb1M2abfKLklg/NKtQloklHKdNdVfk+EcxWYNmNfSii+ymDWaaG8lmH0xjVhy0iXw==
+"@vuepress/plugin-back-to-top@^1.9.10":
+  version "1.9.10"
+  resolved "https://registry.yarnpkg.com/@vuepress/plugin-back-to-top/-/plugin-back-to-top-1.9.10.tgz#7928d4da309119a20021eea90d94d4982026c791"
+  integrity sha512-iInIp66wu717CAnT2pyd9Bs/vAgrUBOBIQ7WMnfJo07cW/ZIothpyrSHnpCRSsfJ/jLivMPqW0pviqppt64BzQ==
   dependencies:
-    "@vuepress/types" "1.9.7"
+    "@vuepress/types" "1.9.10"
     lodash.debounce "^4.0.8"
 
 "@vuepress/plugin-last-updated@1.9.10":
@@ -1543,15 +1543,6 @@
   version "1.9.10"
   resolved "https://registry.yarnpkg.com/@vuepress/types/-/types-1.9.10.tgz#5b8d112a0d7dbaffce1e5d39b66754412c83ecc6"
   integrity sha512-TDNQn4og85onmBpLTTXXmncW3rUnYGr2MkuI8OIFJZetDNM49t1WbjNVlrT+kx7C6qXi6okDQgrHGYXajHZWfg==
-  dependencies:
-    "@types/markdown-it" "^10.0.0"
-    "@types/webpack-dev-server" "^3"
-    webpack-chain "^6.0.0"
-
-"@vuepress/types@1.9.7":
-  version "1.9.7"
-  resolved "https://registry.yarnpkg.com/@vuepress/types/-/types-1.9.7.tgz#aeb772fd0f7c2a10c6ec1d3c803a2e4b1d756c24"
-  integrity sha512-moLQzkX3ED2o18dimLemUm7UVDKxhcrJmGt5C0Ng3xxrLPaQu7UqbROtEKB3YnMRt4P/CA91J+Ck+b9LmGabog==
   dependencies:
     "@types/markdown-it" "^10.0.0"
     "@types/webpack-dev-server" "^3"

@@ -14,7 +14,7 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@vuepress/plugin-back-to-top": "^1.9.7",
+    "@vuepress/plugin-back-to-top": "^1.9.10",
     "@vuepress/plugin-medium-zoom": "^1.9.10",
     "vuepress": "^1.9.10",
     "vuepress-plugin-fulltext-search": "^2.2.1",
