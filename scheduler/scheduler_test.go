@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/atomic"
 	"go.uber.org/multierr"
 )
 
@@ -727,7 +727,7 @@ func TestIdleWorkers(t *testing.T) {
 func TestPredicateScheduling(t *testing.T) {
 	t.Parallel()
 
-	slowDepDone := atomic.NewBool(false)
+	var slowDepDone atomic.Bool
 
 	sched := Config{
 		Concurrency: 2,

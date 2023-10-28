@@ -5,9 +5,8 @@ go 1.19
 require (
 	github.com/golang/mock v1.6.0
 	github.com/stretchr/testify v1.8.1
-	go.uber.org/atomic v1.10.0
 	go.uber.org/goleak v1.2.0
-	go.uber.org/multierr v1.8.0
+	go.uber.org/multierr v1.11.0
 	golang.org/x/tools v0.1.12
 )
 
