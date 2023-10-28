@@ -1,7 +1,8 @@
 package cff
 
 import (
-	"go.uber.org/atomic"
+	"sync/atomic"
+
 	"go.uber.org/cff/scheduler"
 )
 
