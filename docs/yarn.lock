@@ -1462,12 +1462,12 @@
     "@vuepress/types" "1.9.10"
     cross-spawn "^6.0.5"
 
-"@vuepress/plugin-medium-zoom@^1.9.7":
-  version "1.9.7"
-  resolved "https://registry.yarnpkg.com/@vuepress/plugin-medium-zoom/-/plugin-medium-zoom-1.9.7.tgz#077330aafd23e2cc8372e0041589875345edb80a"
-  integrity sha512-P00chXEEoFyQyDWiiSw1mUIdywS6vqM9jolM/3Gv3/TywqemWEm1MKMM7mLsjGiaXJbBQZE+U3/lHmzcaroYLQ==
+"@vuepress/plugin-medium-zoom@^1.9.10":
+  version "1.9.10"
+  resolved "https://registry.yarnpkg.com/@vuepress/plugin-medium-zoom/-/plugin-medium-zoom-1.9.10.tgz#b5907613057143ddb057882973c6a9293ae21b24"
+  integrity sha512-/MsICWZ/mUTs+ZdqqA1AVtWAtNL5ksgnnGR2X24LnXaPJp+M1IB2ETcyNKh264YVODSrmVsS/Y+kbCRK0qKkdg==
   dependencies:
-    "@vuepress/types" "1.9.7"
+    "@vuepress/types" "1.9.10"
     medium-zoom "^1.0.4"
 
 "@vuepress/plugin-nprogress@1.9.10":
