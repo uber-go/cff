@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync/atomic"
 	"testing"
-
-	"go.uber.org/atomic"
 )
 
 // fakeJobController provides a customizable mock-like API to build jobs to
