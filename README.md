@@ -1,5 +1,7 @@
 # cff: a concurrency toolkit for Go
 
+![cff logo](assets/logo.png)
+
 cff (pronounce *caff* as in caffeine) is a library and code generator for Go
 that makes it easy to write concurrent code in Go.
 
