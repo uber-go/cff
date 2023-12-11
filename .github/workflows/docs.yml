@@ -25,7 +25,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '20'
           cache: 'yarn'
           cache-dependency-path: docs/yarn.lock
 
@@ -35,6 +35,8 @@ jobs:
 
       - name: Build
         run: make docs
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
