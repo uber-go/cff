@@ -35,8 +35,6 @@ jobs:
 
       - name: Build
         run: make docs
-        env:
-          NODE_OPTIONS: --openssl-legacy-provider
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
