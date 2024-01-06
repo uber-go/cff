@@ -90,3 +90,5 @@ That said, we intend to make these changes in compliance with
 
 ## License
 cff is licensed under the Apache 2.0 license.  See the LICENSE file for more information.
+
+Test: Do not allow bypassing the above settings unchecked
