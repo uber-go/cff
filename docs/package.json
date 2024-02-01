@@ -21,7 +21,7 @@
     "vuepress-plugin-mermaidjs": "1.9.1"
   },
   "dependencies": {
-    "cacheable-request": "10.2.14",
+    "cacheable-request": "11.0.0",
     "got": "14.0.0"
   }
 }
