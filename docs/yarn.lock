@@ -2431,10 +2431,10 @@ cacheable-lookup@^7.0.0:
   resolved "https://registry.yarnpkg.com/cacheable-lookup/-/cacheable-lookup-7.0.0.tgz#3476a8215d046e5a3202a9209dd13fec1f933a27"
   integrity sha512-+qJyx4xiKra8mZrcwhjMRMUhD5NR1R8esPkzIYxX96JiecFoxAXFuz/GpR3+ev4PE1WamHip78wV0vcmPQtp8w==
 
-cacheable-request@11.0.0:
-  version "11.0.0"
-  resolved "https://registry.yarnpkg.com/cacheable-request/-/cacheable-request-11.0.0.tgz#2f52224cd583476aeb3a5bbb5969b0d71245d9be"
-  integrity sha512-xV9wxF1WgWTHunnE0k+nq6jl/a68DvfjPwM+pR6F89lyGBCPTf0vmdl7ydpCA1CNjnnb7q1r2gJW8pfDPkmnlg==
+cacheable-request@12.0.0:
+  version "12.0.0"
+  resolved "https://registry.yarnpkg.com/cacheable-request/-/cacheable-request-12.0.0.tgz#5f54693c0708ced6ffadd9c1a74b5cb68b3c8a65"
+  integrity sha512-UtNTDctKsb0brJBsCarSCDUMy+OTXy/FuvTpuPOpI8GscRIRRAZc8zBxWZ8qtymmtQq6yVtRVxMTQm01RZKjrg==
   dependencies:
     "@types/http-cache-semantics" "^4.0.4"
     get-stream "^8.0.1"
