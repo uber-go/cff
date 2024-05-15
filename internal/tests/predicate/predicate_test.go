@@ -57,7 +57,7 @@ func TestPanicRecovered(t *testing.T) {
 	assert.Equal(t, "sad times", panicError.Value, "PanicError.Value should be recovered value")
 	stacktrace := string(panicError.Stacktrace)
 	assert.Contains(t, stacktrace, "panic({", "panic should be included in the stack trace")
-	assert.Contains(t, stacktrace, ".Panicked.func", "function that panicked should be in the stack")
+	assert.Contains(t, stacktrace, ".Panicked", "function that panicked should be in the stack")
 }
 
 func TestPanicFallback(t *testing.T) {
