@@ -22,6 +22,6 @@
   },
   "dependencies": {
     "cacheable-request": "12.0.0",
-    "got": "14.2.1"
+    "got": "14.4.1"
   }
 }
