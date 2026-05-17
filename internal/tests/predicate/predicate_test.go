@@ -2,6 +2,7 @@ package predicate
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -74,4 +75,12 @@ func TestPanicFallback(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, s, "predicate-fallback")
+}
+
+func TestBlockingInputs_PredicateShortCircuits(t *testing.T) {
+	slowDelay := 100 * time.Millisecond
+	elapsed, err := BlockingInputs(slowDelay)
+	require.NoError(t, err)
+	assert.Less(t, elapsed, slowDelay/10,
+		"predicate-false flow should not wait on slow input deps; got elapsed=%s, slowDelay=%s", elapsed, slowDelay)
 }

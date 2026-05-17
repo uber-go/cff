@@ -16,7 +16,7 @@
 
 	struct {
 		ran {{ $cff }}.AtomicBool
-		run func({{ $context }}.Context) error
+		run func({{ $context }}.Context) (bool, error)
 		job *{{ $cff }}.ScheduledJob
 	}
 {{- end -}}

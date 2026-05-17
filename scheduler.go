@@ -16,6 +16,16 @@ import (
 // This can change without warning.
 type Job = scheduler.Job
 
+// PredicateJob is a predicate job prepared to be enqueued to the cff
+// scheduler. Predicates returning false trigger early-dispatch of their
+// consumers, so the consumer's wrapper can fire its skip gate without
+// waiting for unrelated slow data deps.
+//
+// This is intended to be used by cff's generated code.
+// Do not use directly.
+// This can change without warning.
+type PredicateJob = scheduler.PredicateJob
+
 // AtomicBool is a type-safe means of reading and writing boolean values.
 //
 // This is intended to be used by cff's generated code.

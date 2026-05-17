@@ -764,6 +764,128 @@ func TestPredicateScheduling(t *testing.T) {
 	}
 }
 
+// TestPredicateEarlyDispatch verifies that when a PredicateJob's Run returns
+// (false, nil), the scheduler dispatches the consumer immediately, without
+// waiting for the consumer's slow data dependency to complete.
+func TestPredicateEarlyDispatch(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	sched := Config{Concurrency: 2}.New()
+
+	slowDone := make(chan struct{})
+	consumerRan := make(chan struct{}, 1)
+
+	slow := sched.Enqueue(ctx, Job{
+		Run: func(context.Context) error {
+			<-slowDone
+			return nil
+		},
+	})
+	pred := sched.EnqueuePredicate(ctx, PredicateJob{
+		Run: func(context.Context) (bool, error) {
+			return false, nil
+		},
+	})
+	sched.Enqueue(ctx, Job{
+		Run: func(context.Context) error {
+			consumerRan <- struct{}{}
+			return nil
+		},
+		Dependencies: []*ScheduledJob{slow, pred},
+	})
+
+	waitErr := make(chan error, 1)
+	go func() { waitErr <- sched.Wait(ctx) }()
+
+	select {
+	case <-consumerRan:
+		// success: consumer dispatched without slow finishing
+	case <-time.After(time.Second):
+		t.Fatal("consumer did not run early; still waiting on slow dep")
+	}
+
+	close(slowDone)
+	assert.NoError(t, <-waitErr)
+}
+
+// TestPredicateTrueWaitsForDeps verifies that when a PredicateJob returns
+// (true, nil), the consumer follows the normal completion path: it waits
+// for all of its data deps before running.
+func TestPredicateTrueWaitsForDeps(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	sched := Config{Concurrency: 2}.New()
+
+	var slowDone atomic.Bool
+	slowBlocker := make(chan struct{})
+
+	slow := sched.Enqueue(ctx, Job{
+		Run: func(context.Context) error {
+			<-slowBlocker
+			slowDone.Store(true)
+			return nil
+		},
+	})
+	pred := sched.EnqueuePredicate(ctx, PredicateJob{
+		Run: func(context.Context) (bool, error) {
+			// Predicate returns true: consumer must NOT be dispatched
+			// until the slow dep also completes.
+			return true, nil
+		},
+	})
+	sched.Enqueue(ctx, Job{
+		Run: func(context.Context) error {
+			assert.True(t, slowDone.Load(),
+				"consumer ran before slow dep when predicate returned true")
+			return nil
+		},
+		Dependencies: []*ScheduledJob{slow, pred},
+	})
+
+	waitErr := make(chan error, 1)
+	go func() { waitErr <- sched.Wait(ctx) }()
+
+	// Give the predicate time to complete and (incorrectly, if regressed)
+	// dispatch the consumer. Then unblock the slow dep.
+	time.Sleep(50 * time.Millisecond)
+	close(slowBlocker)
+
+	assert.NoError(t, <-waitErr)
+}
+
+// TestPredicateError verifies that when a PredicateJob returns a non-nil
+// error, the scheduler treats it as a normal job failure: in default mode,
+// Wait returns the error; the consumer is not early-dispatched.
+func TestPredicateError(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	sched := Config{Concurrency: 2}.New()
+
+	predErr := errors.New("predicate boom")
+
+	pred := sched.EnqueuePredicate(ctx, PredicateJob{
+		Run: func(context.Context) (bool, error) {
+			return false, predErr
+		},
+	})
+
+	consumerRan := false
+	sched.Enqueue(ctx, Job{
+		Run: func(context.Context) error {
+			consumerRan = true
+			return nil
+		},
+		Dependencies: []*ScheduledJob{pred},
+	})
+
+	err := sched.Wait(ctx)
+	assert.ErrorIs(t, err, predErr)
+	assert.False(t, consumerRan, "consumer should not run when predicate errored")
+}
+
 func TestWorkerTermination(t *testing.T) {
 	t.Parallel()
 

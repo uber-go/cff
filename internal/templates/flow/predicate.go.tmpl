@@ -8,7 +8,7 @@ var p{{ predHash . }}PanicRecover interface{}
 var p{{ predHash . }}PanicStacktrace []byte
 _ = p{{ predHash . }}PanicStacktrace  // possibly unused.
 {{ $p }} := new({{ template "predicate" }})
-{{ $p }}.run = func(ctx {{ $context }}.Context) (err error) {
+{{ $p }}.run = func(ctx {{ $context }}.Context) (result bool, err error) {
     defer func() {
 	if recovered := recover(); recovered != nil {
 	    p{{ predHash . }}PanicRecover = recovered
@@ -16,10 +16,10 @@ _ = p{{ predHash . }}PanicStacktrace  // possibly unused.
 	}
     }()
     p{{ predHash . }} = {{ expr .Function.Node }}{{ template "callTaskArgs" . }}
-    return nil
+    return p{{ predHash . }}, nil
 }
 
-{{ $p }}.job = sched.Enqueue(ctx, {{ $cff }}.Job{
+{{ $p }}.job = sched.EnqueuePredicate(ctx, {{ $cff }}.PredicateJob{
 Run: {{ $p }}.run,
     {{ if .Function.DependsOn -}}
         Dependencies: []*{{ $cff }}.ScheduledJob{

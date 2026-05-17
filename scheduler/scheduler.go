@@ -112,6 +112,10 @@ const (
 type jobResult struct {
 	Job *ScheduledJob // job that was executed
 	Err error         // failure, if any
+
+	// PredicateResult carries the bool returned by a PredicateJob's Run.
+	// Only meaningful when Job.predicateRun != nil and Err == nil.
+	PredicateResult bool
 }
 
 // errJobInvalid is a sentinel error to capture jobs that are invalidated
@@ -148,6 +152,11 @@ func worker(readyc <-chan *ScheduledJob, donec chan<- jobResult) {
 		} else if j.invalid {
 			// Don't run if marked as invalid.
 			res.Err = errJobInvalid
+		} else if j.predicateRun != nil {
+			// Predicate jobs return a bool alongside the error.
+			// The scheduler reads PredicateResult in the done branch
+			// to decide whether to early-dispatch consumers.
+			res.PredicateResult, res.Err = j.predicateRun(j.ctx)
 		} else {
 			res.Err = j.run(j.ctx)
 		}
@@ -282,6 +291,31 @@ type Job struct {
 	Dependencies []*ScheduledJob
 }
 
+// PredicateJob is a job that evaluates a boolean condition and returns
+// it to the scheduler so consumers can be early-dispatched when the
+// predicate resolves false.
+//
+// Use PredicateJob (via Scheduler.EnqueuePredicate) for the predicate of
+// a gated task. When the predicate's Run returns (false, nil), the
+// scheduler immediately dispatches all jobs that depend on the predicate,
+// without waiting for any other unrelated data dependencies they have.
+// This lets a predicated consumer skip the wait on a slow producer when
+// the predicate already says the consumer's body will be skipped.
+//
+// When the predicate returns (true, nil), behavior is identical to a
+// regular Job completing successfully. When the predicate returns a
+// non-nil error, it is treated as a regular job failure.
+type PredicateJob struct {
+	// Run evaluates the predicate. The bool is the predicate's outcome;
+	// the error reports an evaluation failure (e.g., a recovered panic
+	// converted by the caller).
+	Run func(context.Context) (bool, error)
+
+	// Dependencies are previously enqueued jobs that must run before this
+	// predicate.
+	Dependencies []*ScheduledJob
+}
+
 // ScheduledJob is a job that has been scheduled for execution by the
 // scheduler.
 type ScheduledJob struct {
@@ -292,6 +326,12 @@ type ScheduledJob struct {
 	run  func(context.Context) error
 	deps []*ScheduledJob
 
+	// predicateRun is set instead of run when this ScheduledJob was
+	// enqueued via Scheduler.EnqueuePredicate. Non-nil tags this entry
+	// as a predicate. The worker dispatches predicateRun instead of run
+	// and captures the bool result in jobResult.PredicateResult.
+	predicateRun func(context.Context) (bool, error)
+
 	// The following fields track the internal state of the job. These are
 	// read-write, but only within Scheduler.run. DO NOT read or write
 	// them outside scheduler.run, as that will introduce a data race.
@@ -301,6 +341,12 @@ type ScheduledJob struct {
 	done      bool            // whether this was run, regardless of success or failure
 	err       error           // the job error, if encountered when the job ran
 	invalid   bool            // whether the job is marked invalid and should not run
+
+	// predicateResult caches the bool returned by a predicate's Run.
+	// Only meaningful when predicateRun != nil and done && err == nil.
+	// Used by the enqueue handler so consumers enqueued AFTER the
+	// predicate completed can still trigger fast-dispatch.
+	predicateResult bool
 
 	// NOTE: DO NOT add methods to ScheduledJob. There's danger of using
 	// methods that read or write internal state outside the Scheduler.run
@@ -321,6 +367,24 @@ func (s *Scheduler) Enqueue(ctx context.Context, j Job) *ScheduledJob {
 		ctx:  ctx,
 		run:  j.Run,
 		deps: j.Dependencies,
+	}
+	s.enqueuec <- pj // panics if closed
+	return pj
+}
+
+// EnqueuePredicate queues up a predicate job for execution with the
+// scheduler. The returned object may be used as a dependency for other
+// jobs. When the predicate's Run returns (false, nil), the scheduler
+// will dispatch every job that depends on this predicate immediately,
+// even if those jobs still have unfinished data dependencies.
+//
+// EnqueuePredicate will panic if called after calling Wait.
+func (s *Scheduler) EnqueuePredicate(ctx context.Context, p PredicateJob) *ScheduledJob {
+	// Same constraints as Enqueue: do not access internal state here.
+	pj := &ScheduledJob{
+		ctx:          ctx,
+		predicateRun: p.Run,
+		deps:         p.Dependencies,
 	}
 	s.enqueuec <- pj // panics if closed
 	return pj
@@ -426,11 +490,17 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 			// unless they've already been run.
 			//
 			// If a dependency has already run and errored, mark the job as
-			// invalid.
+			// invalid. If a dependency was a predicate that resolved
+			// false, mark this job for fast-dispatch so we don't wait on
+			// any other unrelated data deps either.
+			fastDispatch := false
 			for _, dep := range job.deps {
 				if dep.done {
 					if dep.err != nil {
 						job.invalid = true
+					}
+					if dep.predicateRun != nil && dep.err == nil && !dep.predicateResult {
+						fastDispatch = true
 					}
 					continue
 				}
@@ -440,8 +510,14 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 
 			pending++
 
-			// No outstanding dependencies. Ready to run.
-			if job.remaining == 0 {
+			// No outstanding dependencies (or fast-dispatch triggered).
+			// Ready to run.
+			if fastDispatch {
+				// Bypass any remaining-dep waits. Consumers' wrappers
+				// handle the skip via their own gate.
+				job.remaining = 0
+				ready.PushBack(job)
+			} else if job.remaining == 0 {
 				ready.PushBack(job)
 			} else {
 				waiting++
@@ -450,6 +526,12 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 		case res := <-s.donec:
 			job := res.Job
 			job.done = true
+
+			// Cache the predicate's bool so late-enqueued consumers
+			// can read it in the enqueue handler below.
+			if job.predicateRun != nil {
+				job.predicateResult = res.PredicateResult
+			}
 
 			pending--
 			ongoing--
@@ -471,6 +553,36 @@ func (s *Scheduler) run(emitter Emitter, freq time.Duration) {
 				for _, consumer := range job.consumers {
 					consumer.invalid = true
 				}
+			}
+
+			// Predicate that returned (false, nil): early-dispatch its
+			// consumers. They were declared to wait on this predicate
+			// plus (possibly) unrelated data deps; bypass the data-dep
+			// wait so the consumer's own wrapper can fire its skip gate
+			// without sitting through a slow producer.
+			//
+			// The data-dep edges still exist: when the producer eventually
+			// completes, the regular consumer-notification loop below will
+			// decrement consumer.remaining past zero (no re-push, since
+			// the equality check `if remaining == 0` no longer matches).
+			//
+			// Defensive: skip consumers already done or already in ready.
+			// Today's cff codegen emits at most one predicate per task,
+			// so this can't be triggered from generated code — but the
+			// scheduler API permits a consumer to depend on multiple
+			// predicates, and a second predicate completing false would
+			// otherwise double-push a consumer the first already
+			// fast-dispatched.
+			if job.predicateRun != nil && res.Err == nil && !res.PredicateResult {
+				for _, consumer := range job.consumers {
+					if consumer.done || consumer.remaining == 0 {
+						continue
+					}
+					consumer.remaining = 0
+					waiting--
+					ready.PushBack(consumer)
+				}
+				continue
 			}
 
 			// Notify jobs waiting on this job, adding them to
