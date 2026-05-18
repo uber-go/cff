@@ -22,10 +22,18 @@ linters:
     - revive
 
 linters-settings:
+  errcheck:
+    # fmt.Fprint* writes to stdout/stderr; the returned error is
+    # conventionally ignored because there's nowhere meaningful to
+    # redirect it.
+    exclude-functions:
+      - fmt.Fprint
+      - fmt.Fprintf
+      - fmt.Fprintln
   govet:
     # These govet checks are disabled by default, but they're useful.
     enable:
-      - niliness
+      - nilness
       - reflectvaluecompare
       - sortslice
       - unusedwrite
