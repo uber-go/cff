@@ -240,10 +240,10 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff.AtomicBool
-			run func(context.Context) error
+			run func(context.Context) (bool, error)
 			job *cff.ScheduledJob
 		})
-		pred1.run = func(ctx context.Context) (err error) {
+		pred1.run = func(ctx context.Context) (result bool, err error) {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
@@ -251,10 +251,10 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 			}()
 			p0 = _61_18(v2)
-			return nil
+			return p0, nil
 		}
 
-		pred1.job = sched.Enqueue(ctx, cff.Job{
+		pred1.job = sched.EnqueuePredicate(ctx, cff.PredicateJob{
 			Run: pred1.run,
 			Dependencies: []*cff.ScheduledJob{
 				task0.job,
@@ -327,10 +327,10 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 		_ = p1PanicStacktrace // possibly unused.
 		pred2 := new(struct {
 			ran cff.AtomicBool
-			run func(context.Context) error
+			run func(context.Context) (bool, error)
 			job *cff.ScheduledJob
 		})
-		pred2.run = func(ctx context.Context) (err error) {
+		pred2.run = func(ctx context.Context) (result bool, err error) {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p1PanicRecover = recovered
@@ -338,10 +338,10 @@ func (h *FooHandler) HandleFoo(ctx context.Context, req *Request) (*Response, er
 				}
 			}()
 			p1 = _74_18(v2)
-			return nil
+			return p1, nil
 		}
 
-		pred2.job = sched.Enqueue(ctx, cff.Job{
+		pred2.job = sched.EnqueuePredicate(ctx, cff.PredicateJob{
 			Run: pred2.run,
 			Dependencies: []*cff.ScheduledJob{
 				task0.job,

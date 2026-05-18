@@ -5,6 +5,7 @@ package predicate
 
 import (
 	"context"
+	"time"
 
 	"go.uber.org/cff"
 )
@@ -177,4 +178,44 @@ func PanickedWithFallback() (string, error) {
 		),
 	)
 	return s, err
+}
+
+// BlockingInputs builds a flow that probes whether cff.Predicate
+// short-circuits the scheduler's wait on the predicated task's input
+// dependencies.
+//
+// Shape: a slow source feeds the predicated task; a fast source feeds
+// the predicate. The predicate returns false (so the task body is
+// skipped via FallbackWith). A downstream consumer measures the
+// elapsed wall-clock time from flow start.
+//
+// If predicates short-circuit input deps:
+//   elapsed ≈ 0 (slow path is not on the critical path)
+// If predicates only short-circuit the task body:
+//   elapsed ≈ slowDelay (scheduler still waits on slowOut)
+func BlockingInputs(slowDelay time.Duration) (time.Duration, error) {
+	type slowOut struct{}
+	type fastOut struct{}
+	type skippedOut struct{}
+
+	var elapsed time.Duration
+	start := time.Now()
+	err := cff.Flow(
+		context.Background(),
+		cff.Results(&elapsed),
+		cff.Task(func() slowOut {
+			time.Sleep(slowDelay)
+			return slowOut{}
+		}),
+		cff.Task(func() fastOut { return fastOut{} }),
+		cff.Task(
+			func(slowOut) (skippedOut, error) { return skippedOut{}, nil },
+			cff.Predicate(func(fastOut) bool { return false }),
+			cff.FallbackWith(skippedOut{}),
+		),
+		cff.Task(func(skippedOut) time.Duration {
+			return time.Since(start)
+		}),
+	)
+	return elapsed, err
 }

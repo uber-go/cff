@@ -587,10 +587,10 @@ func PredicateCtxConflict(f func(), ctx bool) error {
 		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff2.AtomicBool
-			run func(context.Context) error
+			run func(context.Context) (bool, error)
 			job *cff2.ScheduledJob
 		})
-		pred1.run = func(ctx context.Context) (err error) {
+		pred1.run = func(ctx context.Context) (result bool, err error) {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
@@ -598,10 +598,10 @@ func PredicateCtxConflict(f func(), ctx bool) error {
 				}
 			}()
 			p0 = _92_19()
-			return nil
+			return p0, nil
 		}
 
-		pred1.job = sched.Enqueue(ctx, cff2.Job{
+		pred1.job = sched.EnqueuePredicate(ctx, cff2.PredicateJob{
 			Run: pred1.run,
 		})
 

@@ -330,10 +330,10 @@ func PredicateSplit() float64 {
 		_ = p0PanicStacktrace // possibly unused.
 		pred1 := new(struct {
 			ran cff.AtomicBool
-			run func(context.Context) error
+			run func(context.Context) (bool, error)
 			job *cff.ScheduledJob
 		})
-		pred1.run = func(ctx context.Context) (err error) {
+		pred1.run = func(ctx context.Context) (result bool, err error) {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					p0PanicRecover = recovered
@@ -341,10 +341,10 @@ func PredicateSplit() float64 {
 				}
 			}()
 			p0 = _78_5()
-			return nil
+			return p0, nil
 		}
 
-		pred1.job = sched.Enqueue(ctx, cff.Job{
+		pred1.job = sched.EnqueuePredicate(ctx, cff.PredicateJob{
 			Run: pred1.run,
 		})
 
@@ -420,4 +420,330 @@ func PredicateSplit() float64 {
 		return nil
 	}()
 	return res
+}
+
+// PredicateFalseWithSlowDep runs a cff.Flow where a predicate returns false
+// while a sibling input task sleeps for slowDelay. Returns the elapsed
+// wall-clock time from flow start to consumer dispatch, so the benchmark
+// can report consumer_ns/op as a custom metric.
+//
+// Before scheduler-aware predicates, the consumer waited the full
+// slowDelay before its skip gate fired. After, the consumer dispatches
+// immediately on predicate=false, even though Wait() still drains the
+// slow producer.
+func PredicateFalseWithSlowDep(slowDelay time.Duration) time.Duration {
+	type slowOut struct{}
+	type fastOut struct{}
+	type skippedOut struct{}
+
+	var elapsed time.Duration
+	start := time.Now()
+	func() (err error) {
+
+		_102_3 := context.Background()
+
+		_103_19 := _concurrency
+
+		_104_15 := &elapsed
+
+		_105_12 := func() slowOut {
+			time.Sleep(slowDelay)
+			return slowOut{}
+		}
+
+		_109_12 := func() fastOut { return fastOut{} }
+
+		_111_4 := func(slowOut) (skippedOut, error) { return skippedOut{}, nil }
+
+		_112_18 := func(fastOut) bool { return false }
+
+		_113_21 := skippedOut{}
+
+		_115_12 := func(skippedOut) time.Duration {
+			return time.Since(start)
+		}
+		ctx := _102_3
+		emitter := cff.NopEmitter()
+
+		var (
+			flowInfo = &cff.FlowInfo{
+				File:   "go.uber.org/cff/internal/tests/benchmark/benchmark_predicate.go",
+				Line:   101,
+				Column: 2,
+			}
+			flowEmitter = cff.NopFlowEmitter()
+
+			schedInfo = &cff.SchedulerInfo{
+				Name:      flowInfo.Name,
+				Directive: cff.FlowDirective,
+				File:      flowInfo.File,
+				Line:      flowInfo.Line,
+				Column:    flowInfo.Column,
+			}
+
+			// possibly unused
+			_ = flowInfo
+		)
+
+		startTime := time.Now()
+		defer func() { flowEmitter.FlowDone(ctx, time.Since(startTime)) }()
+
+		schedEmitter := emitter.SchedulerInit(schedInfo)
+
+		sched := cff.NewScheduler(
+			cff.SchedulerParams{
+				Concurrency: _103_19, Emitter: schedEmitter,
+			},
+		)
+
+		var tasks []*struct {
+			emitter cff.TaskEmitter
+			ran     cff.AtomicBool
+			run     func(context.Context) error
+			job     *cff.ScheduledJob
+		}
+		defer func() {
+			for _, t := range tasks {
+				if !t.ran.Load() {
+					t.emitter.TaskSkipped(ctx, err)
+				}
+			}
+		}()
+
+		// go.uber.org/cff/internal/tests/benchmark/benchmark_predicate.go:105:12
+		var (
+			v3 slowOut
+		)
+		task4 := new(struct {
+			emitter cff.TaskEmitter
+			ran     cff.AtomicBool
+			run     func(context.Context) error
+			job     *cff.ScheduledJob
+		})
+		task4.emitter = cff.NopTaskEmitter()
+		task4.run = func(ctx context.Context) (err error) {
+			taskEmitter := task4.emitter
+			startTime := time.Now()
+			defer func() {
+				if task4.ran.Load() {
+					taskEmitter.TaskDone(ctx, time.Since(startTime))
+				}
+			}()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: debug.Stack(),
+					}
+				}
+			}()
+
+			defer task4.ran.Store(true)
+
+			v3 = _105_12()
+
+			taskEmitter.TaskSuccess(ctx)
+
+			return
+		}
+
+		task4.job = sched.Enqueue(ctx, cff.Job{
+			Run: task4.run,
+		})
+		tasks = append(tasks, task4)
+
+		// go.uber.org/cff/internal/tests/benchmark/benchmark_predicate.go:109:12
+		var (
+			v4 fastOut
+		)
+		task5 := new(struct {
+			emitter cff.TaskEmitter
+			ran     cff.AtomicBool
+			run     func(context.Context) error
+			job     *cff.ScheduledJob
+		})
+		task5.emitter = cff.NopTaskEmitter()
+		task5.run = func(ctx context.Context) (err error) {
+			taskEmitter := task5.emitter
+			startTime := time.Now()
+			defer func() {
+				if task5.ran.Load() {
+					taskEmitter.TaskDone(ctx, time.Since(startTime))
+				}
+			}()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: debug.Stack(),
+					}
+				}
+			}()
+
+			defer task5.ran.Store(true)
+
+			v4 = _109_12()
+
+			taskEmitter.TaskSuccess(ctx)
+
+			return
+		}
+
+		task5.job = sched.Enqueue(ctx, cff.Job{
+			Run: task5.run,
+		})
+		tasks = append(tasks, task5)
+
+		// go.uber.org/cff/internal/tests/benchmark/benchmark_predicate.go:112:4
+		var p0 bool
+		var p0PanicRecover interface{}
+		var p0PanicStacktrace []byte
+		_ = p0PanicStacktrace // possibly unused.
+		pred1 := new(struct {
+			ran cff.AtomicBool
+			run func(context.Context) (bool, error)
+			job *cff.ScheduledJob
+		})
+		pred1.run = func(ctx context.Context) (result bool, err error) {
+			defer func() {
+				if recovered := recover(); recovered != nil {
+					p0PanicRecover = recovered
+					p0PanicStacktrace = debug.Stack()
+				}
+			}()
+			p0 = _112_18(v4)
+			return p0, nil
+		}
+
+		pred1.job = sched.EnqueuePredicate(ctx, cff.PredicateJob{
+			Run: pred1.run,
+			Dependencies: []*cff.ScheduledJob{
+				task5.job,
+			},
+		})
+
+		// go.uber.org/cff/internal/tests/benchmark/benchmark_predicate.go:111:4
+		var (
+			v5 skippedOut
+		)
+		task6 := new(struct {
+			emitter cff.TaskEmitter
+			ran     cff.AtomicBool
+			run     func(context.Context) error
+			job     *cff.ScheduledJob
+		})
+		task6.emitter = cff.NopTaskEmitter()
+		task6.run = func(ctx context.Context) (err error) {
+			taskEmitter := task6.emitter
+			startTime := time.Now()
+			defer func() {
+				if task6.ran.Load() {
+					taskEmitter.TaskDone(ctx, time.Since(startTime))
+				}
+			}()
+
+			defer func() {
+				recovered := recover()
+
+				if recovered == nil && p0PanicRecover != nil {
+					recovered = p0PanicRecover
+				}
+				if recovered != nil {
+					taskEmitter.TaskPanicRecovered(ctx, recovered)
+					v5, err = _113_21, nil
+				}
+			}()
+
+			if !p0 {
+				return nil
+			}
+
+			defer task6.ran.Store(true)
+
+			v5, err = _111_4(v3)
+
+			if err != nil {
+				taskEmitter.TaskErrorRecovered(ctx, err)
+				v5, err = _113_21, nil
+			} else {
+				taskEmitter.TaskSuccess(ctx)
+			}
+
+			return
+		}
+
+		task6.job = sched.Enqueue(ctx, cff.Job{
+			Run: task6.run,
+			Dependencies: []*cff.ScheduledJob{
+				task4.job,
+				pred1.job,
+			},
+		})
+		tasks = append(tasks, task6)
+
+		// go.uber.org/cff/internal/tests/benchmark/benchmark_predicate.go:115:12
+		var (
+			v6 time.Duration
+		)
+		task7 := new(struct {
+			emitter cff.TaskEmitter
+			ran     cff.AtomicBool
+			run     func(context.Context) error
+			job     *cff.ScheduledJob
+		})
+		task7.emitter = cff.NopTaskEmitter()
+		task7.run = func(ctx context.Context) (err error) {
+			taskEmitter := task7.emitter
+			startTime := time.Now()
+			defer func() {
+				if task7.ran.Load() {
+					taskEmitter.TaskDone(ctx, time.Since(startTime))
+				}
+			}()
+
+			defer func() {
+				recovered := recover()
+				if recovered != nil {
+					taskEmitter.TaskPanic(ctx, recovered)
+					err = &cff.PanicError{
+						Value:      recovered,
+						Stacktrace: debug.Stack(),
+					}
+				}
+			}()
+
+			defer task7.ran.Store(true)
+
+			v6 = _115_12(v5)
+
+			taskEmitter.TaskSuccess(ctx)
+
+			return
+		}
+
+		task7.job = sched.Enqueue(ctx, cff.Job{
+			Run: task7.run,
+			Dependencies: []*cff.ScheduledJob{
+				task6.job,
+			},
+		})
+		tasks = append(tasks, task7)
+
+		if err := sched.Wait(ctx); err != nil {
+			flowEmitter.FlowError(ctx, err)
+			return err
+		}
+
+		*(_104_15) = v6 // time.Duration
+
+		flowEmitter.FlowSuccess(ctx)
+		return nil
+	}()
+	return elapsed
 }
